@@ -697,6 +697,16 @@ serve(async (req) => {
         approaches,
         hbu: hbuResult,
         market_overview: aiAdjustments.market_overview_ar,
+        inspection_analysis: inspectionAnalysis ? {
+          condition_rating: inspectionAnalysis.condition_rating,
+          condition_score: inspectionAnalysis.condition_score,
+          finishing_level: inspectionAnalysis.finishing_level,
+          quality_score: inspectionAnalysis.quality_score,
+          defects_count: (inspectionAnalysis.visible_defects as any[] || []).length,
+          risk_flags_count: (inspectionAnalysis.risk_flags as any[] || []).length,
+          physical_depreciation_pct: inspectionAnalysis.physical_depreciation_pct,
+          condition_adjustment_pct: inspectionAnalysis.condition_adjustment_pct,
+        } : null,
       };
       const reportContent = await aiGenerateReport(normalizedData, calculationSummary, hbuResult, request);
 
