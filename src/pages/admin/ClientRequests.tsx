@@ -329,8 +329,8 @@ export default function ClientRequests() {
                           </Button>
                         )}
                         {req.status === "in_production" && (
-                          <Button size="sm" onClick={() => moveToStatus(req.id, "draft_report_sent")}>
-                            <FileText className="w-3 h-3 ml-1" />إرسال المسودة
+                          <Button size="sm" onClick={() => navigate(`/valuation-production/${req.assignment_id || req.id}`)}>
+                            <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
                         {req.status === "fully_paid" && !req.draft_report_url && (
