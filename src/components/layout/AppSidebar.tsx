@@ -81,6 +81,22 @@ export default function AppSidebar() {
         )}
       </div>
 
+      {/* Department Switcher */}
+      {!collapsed && (
+        <div className="px-3 py-3 border-b border-sidebar-border">
+          <div className="flex gap-1.5">
+            <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium bg-primary/10 text-primary border border-primary/20 transition-colors">
+              <Home className="w-3.5 h-3.5" />
+              التقييم العقاري
+            </button>
+            <button className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-sidebar-muted hover:bg-muted/50 border border-transparent transition-colors cursor-not-allowed opacity-50" title="قريباً">
+              <Cog className="w-3.5 h-3.5" />
+              الآلات والمعدات
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
