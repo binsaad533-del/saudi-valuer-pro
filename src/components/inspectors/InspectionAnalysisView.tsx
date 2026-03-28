@@ -4,15 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   Brain, AlertTriangle, Shield, TrendingDown, Eye,
-  Pencil, Save, RotateCcw, Loader2, CheckCircle,
-  XCircle, Activity, Wrench, Building2,
+  Pencil, Save, RotateCcw, Loader2,
 } from "lucide-react";
 import { triggerInspectionAnalysis, overrideAnalysis } from "@/lib/inspection-analysis-api";
 
