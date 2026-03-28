@@ -60,6 +60,10 @@ export default function ClientRequests() {
   const [payments, setPayments] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [revisionDialog, setRevisionDialog] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
 
   // Pricing form
   const [pricingForm, setPricingForm] = useState({
