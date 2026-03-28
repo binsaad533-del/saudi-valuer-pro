@@ -43,10 +43,10 @@ export default function RequestDetails() {
       setUser(user);
 
       const [reqRes, msgRes, docRes, payRes] = await Promise.all([
-        supabase.from("valuation_requests").select("*").eq("id", id!).single(),
-        supabase.from("request_messages").select("*").eq("request_id", id!).order("created_at"),
-        supabase.from("request_documents").select("*").eq("request_id", id!).order("created_at"),
-        supabase.from("payment_receipts").select("*").eq("request_id", id!).order("created_at"),
+        supabase.from("valuation_requests" as any).select("*").eq("id", id!).single(),
+        supabase.from("request_messages" as any).select("*").eq("request_id", id!).order("created_at"),
+        supabase.from("request_documents" as any).select("*").eq("request_id", id!).order("created_at"),
+        supabase.from("payment_receipts" as any).select("*").eq("request_id", id!).order("created_at"),
       ]);
 
       setRequest(reqRes.data);
