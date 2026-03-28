@@ -44,6 +44,13 @@ export type Database = {
             foreignKeyName: "assignment_comparables_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "assignment_comparables_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
             referencedRelation: "valuation_assignments"
             referencedColumns: ["id"]
           },
@@ -91,6 +98,13 @@ export type Database = {
           sort_order?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "assumptions_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "assumptions_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -153,6 +167,13 @@ export type Database = {
           uploaded_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "attachments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attachments_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -227,6 +248,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "audit_logs_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "audit_logs_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -634,6 +662,13 @@ export type Database = {
             foreignKeyName: "compliance_checks_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_checks_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
             referencedRelation: "valuation_assignments"
             referencedColumns: ["id"]
           },
@@ -737,6 +772,13 @@ export type Database = {
           weather_conditions?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "inspections_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "inspections_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -1002,6 +1044,13 @@ export type Database = {
             foreignKeyName: "reconciliation_results_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: true
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reconciliation_results_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: true
             referencedRelation: "valuation_assignments"
             referencedColumns: ["id"]
           },
@@ -1167,6 +1216,13 @@ export type Database = {
             foreignKeyName: "reports_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
             referencedRelation: "valuation_assignments"
             referencedColumns: ["id"]
           },
@@ -1231,6 +1287,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "review_findings_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "review_findings_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -1306,6 +1369,13 @@ export type Database = {
             foreignKeyName: "scope_of_work_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: true
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scope_of_work_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: true
             referencedRelation: "valuation_assignments"
             referencedColumns: ["id"]
           },
@@ -1340,6 +1410,13 @@ export type Database = {
           to_status?: Database["public"]["Enums"]["assignment_status"]
         }
         Relationships: [
+          {
+            foreignKeyName: "status_history_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "status_history_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -1560,6 +1637,13 @@ export type Database = {
           zoning_en?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subjects_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subjects_assignment_id_fkey"
             columns: ["assignment_id"]
@@ -1828,6 +1912,13 @@ export type Database = {
             foreignKeyName: "valuation_methods_assignment_id_fkey"
             columns: ["assignment_id"]
             isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valuation_methods_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
             referencedRelation: "valuation_assignments"
             referencedColumns: ["id"]
           },
@@ -1835,7 +1926,87 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_assignment_pipeline: {
+        Row: {
+          count: number | null
+          status: Database["public"]["Enums"]["assignment_status"] | null
+          urgent_count: number | null
+        }
+        Relationships: []
+      }
+      v_compliance_summary: {
+        Row: {
+          assignment_id: string | null
+          mandatory_failures: number | null
+          passed: number | null
+          ready_for_issuance: boolean | null
+          total_checks: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_checks_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_checks_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_recent_assignments: {
+        Row: {
+          client_name_ar: string | null
+          client_name_en: string | null
+          created_at: string | null
+          final_value: number | null
+          id: string | null
+          is_locked: boolean | null
+          land_area: number | null
+          priority: string | null
+          property_city: string | null
+          property_district: string | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          purpose: Database["public"]["Enums"]["valuation_purpose"] | null
+          reference_number: string | null
+          reviewer_name_ar: string | null
+          status: Database["public"]["Enums"]["assignment_status"] | null
+          valuation_date: string | null
+          valuer_name_ar: string | null
+        }
+        Relationships: []
+      }
+      v_review_summary: {
+        Row: {
+          assignment_id: string | null
+          open_critical: number | null
+          open_major: number | null
+          resolved: number | null
+          review_clear: boolean | null
+          total_findings: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_findings_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_findings_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
