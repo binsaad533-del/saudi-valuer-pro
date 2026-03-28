@@ -65,17 +65,19 @@ export default function RequestDetails() {
     if (!user) { navigate("/client/login"); return; }
     setUser(user);
 
-    const [reqRes, msgRes, docRes, payRes] = await Promise.all([
+    const [reqRes, msgRes, docRes, payRes, reportRes] = await Promise.all([
       supabase.from("valuation_requests" as any).select("*").eq("id", id!).single(),
       supabase.from("request_messages" as any).select("*").eq("request_id", id!).order("created_at"),
       supabase.from("request_documents" as any).select("*").eq("request_id", id!).order("created_at"),
       supabase.from("payment_receipts" as any).select("*").eq("request_id", id!).order("created_at"),
+      reqRes2 ? supabase.from("reports" as any).select("*").eq("assignment_id", reqRes2).order("created_at", { ascending: false }) : Promise.resolve({ data: [] }),
     ]);
 
     setRequest(reqRes.data);
     setMessages(msgRes.data || []);
     setDocuments(docRes.data || []);
     setPayments(payRes.data || []);
+    setReports((reportRes.data as any[]) || []);
     setLoading(false);
   };
 
