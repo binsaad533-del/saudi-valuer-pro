@@ -46,7 +46,7 @@ const navItems: NavItem[] = [
   { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review" },
   { label: "الأرشيف", icon: Archive, path: "/archive" },
   { label: "البحث", icon: Search, path: "/search" },
-  { label: "التقارير", icon: BarChart3, path: "/reports" },
+  { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
   { label: "العملاء", icon: Users, path: "/clients" },
   { label: "الامتثال", icon: Shield, path: "/compliance" },
   { label: "الإعدادات", icon: Settings, path: "/settings" },
