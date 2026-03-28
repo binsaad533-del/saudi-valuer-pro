@@ -72,7 +72,7 @@ export default function AppSidebar() {
         {!collapsed && (
           <div className="flex flex-col">
             <span className="text-primary font-bold text-lg leading-tight">
-              جساس للتقييم
+              jsaas-valuation
             </span>
             <span className="text-sidebar-muted text-[11px]">منصة التقييم العقاري</span>
           </div>
