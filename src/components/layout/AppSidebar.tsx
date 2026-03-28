@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronLeft,
   Menu,
+  X,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -64,13 +65,13 @@ export default function AppSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   const sidebarContent = (
-    <div className="flex flex-col h-full gradient-sidebar">
+    <div className="flex flex-col h-full gradient-sidebar border-l border-sidebar-border">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
         <img src={logo} alt="بصمة" className="w-10 h-10 object-contain" />
         {!collapsed && (
           <div className="flex flex-col">
-            <span className="text-sidebar-primary-foreground font-bold text-lg leading-tight">
+            <span className="text-primary font-bold text-lg leading-tight">
               بصمة
             </span>
             <span className="text-sidebar-muted text-[11px]">منصة التقييم العقاري</span>
@@ -90,8 +91,8 @@ export default function AppSidebar() {
               <div key={item.label}>
                 <button
                   onClick={() => toggleExpand(item.label)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors
-                    ${active ? "bg-sidebar-accent text-sidebar-primary" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+                    ${active ? "bg-sidebar-accent text-primary font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                 >
                   <Icon className="w-[18px] h-[18px] shrink-0" />
                   {!collapsed && (
@@ -104,13 +105,13 @@ export default function AppSidebar() {
                   )}
                 </button>
                 {expanded && !collapsed && (
-                  <div className="mr-8 mt-0.5 space-y-0.5 border-r border-sidebar-border pr-3">
+                  <div className="mr-8 mt-0.5 space-y-0.5 border-r-2 border-primary/15 pr-3">
                     {item.children.map((child) => (
                       <Link
                         key={child.path}
                         to={child.path}
-                        className={`block px-3 py-2 rounded-md text-[13px] transition-colors
-                          ${isActive(child.path) ? "text-sidebar-primary bg-sidebar-accent" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}
+                        className={`block px-3 py-2 rounded-lg text-[13px] transition-all
+                          ${isActive(child.path) ? "text-primary bg-sidebar-accent font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}
                       >
                         {child.label}
                       </Link>
@@ -125,8 +126,8 @@ export default function AppSidebar() {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm transition-colors
-                ${active ? "bg-sidebar-accent text-sidebar-primary font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+                ${active ? "bg-sidebar-accent text-primary font-medium shadow-blue" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
             >
               <Icon className="w-[18px] h-[18px] shrink-0" />
               {!collapsed && <span>{item.label}</span>}
@@ -139,7 +140,7 @@ export default function AppSidebar() {
       {!collapsed && (
         <div className="px-5 py-4 border-t border-sidebar-border">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full gradient-accent flex items-center justify-center text-sidebar-primary-foreground font-bold text-sm">
+            <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
               أ
             </div>
             <div className="flex flex-col">
@@ -153,7 +154,7 @@ export default function AppSidebar() {
       {/* Collapse toggle */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="hidden lg:flex items-center justify-center py-3 border-t border-sidebar-border text-sidebar-muted hover:text-sidebar-foreground transition-colors"
+        className="hidden lg:flex items-center justify-center py-3 border-t border-sidebar-border text-sidebar-muted hover:text-primary transition-colors"
       >
         <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
       </button>
@@ -165,17 +166,25 @@ export default function AppSidebar() {
       {/* Mobile toggle */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-md bg-card shadow-card border border-border"
+        className="lg:hidden fixed top-4 right-4 z-50 p-2 rounded-lg bg-card shadow-card border border-border"
       >
         <Menu className="w-5 h-5 text-foreground" />
       </button>
 
       {/* Mobile overlay */}
       {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 z-40 bg-foreground/30 backdrop-blur-sm"
-          onClick={() => setMobileOpen(false)}
-        />
+        <>
+          <div
+            className="lg:hidden fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="lg:hidden fixed top-4 left-4 z-[60] p-2 rounded-lg bg-card shadow-card border border-border"
+          >
+            <X className="w-5 h-5 text-foreground" />
+          </button>
+        </>
       )}
 
       {/* Sidebar */}
