@@ -16,7 +16,7 @@ import {
 import type { ValuationEngineResult, ComplianceResult } from "@/lib/valuation-engine-api";
 import {
   Loader2, Play, CheckCircle, XCircle, AlertTriangle,
-  FileText, Shield, Brain, BarChart3, Scale, Building2,
+  FileText, Shield, Brain, Scale,
   Download, Lock, Eye, ChevronLeft, Calculator, Search,
   TrendingUp, Info,
 } from "lucide-react";
