@@ -544,6 +544,26 @@ export default function ClientRequests() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Report Revision Dialog */}
+      <Dialog open={revisionDialog} onOpenChange={setRevisionDialog}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquareText className="w-5 h-5 text-primary" />
+              مراجعات وملاحظات التقرير
+            </DialogTitle>
+          </DialogHeader>
+          {selectedReportId && selectedAssignmentId && (
+            <ReportRevisionPanel
+              reportId={selectedReportId}
+              assignmentId={selectedAssignmentId}
+              requestId={selectedRequestId || undefined}
+              isAdmin={true}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
