@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, FileText, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Clock, AlertCircle, Building2, DollarSign, Bot,
+  Clock, AlertCircle, Building2, DollarSign, Bot, Brain,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
