@@ -12,6 +12,7 @@ import ArchivePage from "@/pages/ArchivePage";
 import VerifyReport from "@/pages/VerifyReport";
 import ReportGenerator from "@/pages/ReportGenerator";
 import ClientRequests from "@/pages/admin/ClientRequests";
+import ValuationProduction from "@/pages/admin/ValuationProduction";
 import NotFound from "./pages/NotFound.tsx";
 
 // Client Portal
