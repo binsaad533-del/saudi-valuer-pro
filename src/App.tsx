@@ -28,6 +28,7 @@ const App = () => (
             <Route path="/valuations/new" element={<NewValuation />} />
             <Route path="/comparables" element={<ComparablesPage />} />
             <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/verify" element={<VerifyReport />} />
           </Route>
           <Route path="*" element={<NotFound />} />
