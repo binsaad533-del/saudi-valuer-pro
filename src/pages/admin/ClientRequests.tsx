@@ -17,35 +17,23 @@ import {
 } from "lucide-react";
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
+import { StatusBadge, StatusTransitionButton } from "@/components/workflow/StatusComponents";
+import {
+  STATUS_LABELS as WF_STATUS_LABELS,
+  STATUS_COLORS,
+  PIPELINE_PHASES,
+} from "@/lib/workflow-engine";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  draft: { label: "مسودة", color: "bg-muted text-muted-foreground" },
-  submitted: { label: "تم الإرسال", color: "bg-primary/10 text-primary" },
-  needs_clarification: { label: "يحتاج توضيح", color: "bg-warning/10 text-warning" },
-  under_pricing: { label: "قيد التسعير", color: "bg-accent text-accent-foreground" },
-  quotation_sent: { label: "عرض سعر مرسل", color: "bg-info/10 text-info" },
-  quotation_approved: { label: "عرض معتمد", color: "bg-success/10 text-success" },
-  quotation_rejected: { label: "عرض مرفوض", color: "bg-destructive/10 text-destructive" },
-  awaiting_payment: { label: "بانتظار الدفع", color: "bg-warning/10 text-warning" },
-  payment_uploaded: { label: "إيصال مرفوع", color: "bg-info/10 text-info" },
-  payment_under_review: { label: "مراجعة الدفع", color: "bg-info/10 text-info" },
-  partially_paid: { label: "مدفوع جزئياً", color: "bg-warning/10 text-warning" },
-  fully_paid: { label: "مدفوع بالكامل", color: "bg-success/10 text-success" },
-  in_production: { label: "قيد التنفيذ", color: "bg-primary/10 text-primary" },
-  draft_report_sent: { label: "مسودة التقرير", color: "bg-info/10 text-info" },
-  client_comments: { label: "ملاحظات العميل", color: "bg-warning/10 text-warning" },
-  final_payment_pending: { label: "بانتظار الدفعة النهائية", color: "bg-warning/10 text-warning" },
-  final_report_ready: { label: "التقرير جاهز", color: "bg-success/10 text-success" },
-  completed: { label: "مكتمل", color: "bg-success/10 text-success" },
-};
+const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.fromEntries(
+  Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])
+);
 
 const ADMIN_TABS = [
-  { value: "new", label: "طلبات جديدة", statuses: ["submitted", "needs_clarification"] },
-  { value: "pricing", label: "التسعير", statuses: ["under_pricing"] },
-  { value: "quotations", label: "العروض", statuses: ["quotation_sent", "quotation_approved", "quotation_rejected"] },
-  { value: "payments", label: "الدفعات", statuses: ["awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid"] },
-  { value: "production", label: "الإنتاج", statuses: ["in_production", "draft_report_sent", "client_comments"] },
-  { value: "final", label: "الإصدار", statuses: ["final_payment_pending", "final_report_ready", "completed"] },
+  { value: "intake", label: "الاستقبال", statuses: ["draft", "client_submitted", "under_ai_review", "awaiting_client_info"] },
+  { value: "pricing", label: "التسعير", statuses: ["priced", "awaiting_payment_initial", "payment_received_initial"] },
+  { value: "inspection", label: "المعاينة", statuses: ["inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted"] },
+  { value: "valuation", label: "التقييم والتقرير", statuses: ["valuation_in_progress", "draft_report_ready", "under_client_review", "revision_in_progress"] },
+  { value: "final", label: "الإصدار", statuses: ["awaiting_final_payment", "final_payment_received", "report_issued", "closed"] },
 ];
 
 export default function ClientRequests() {
