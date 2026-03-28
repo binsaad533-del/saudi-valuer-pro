@@ -19,13 +19,11 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Clock,
   Shield,
   Download,
   Plus,
   History,
   AlertTriangle,
-  CheckCircle,
   Lock,
   CalendarClock,
   RefreshCw,
@@ -80,7 +78,7 @@ export default function ReportLifecyclePanel({ assignment, reports, onRefresh }:
   const [downloading, setDownloading] = useState<string | null>(null);
   const [creatingReval, setCreatingReval] = useState(false);
 
-  const latestReport = reports[0];
+  
   const issuedReport = reports.find((r: any) => r.is_final && r.is_locked);
   const assignmentId = assignment?.id;
 
@@ -129,7 +127,7 @@ export default function ReportLifecyclePanel({ assignment, reports, onRefresh }:
     if (!assignmentId) return;
     setCreatingReval(true);
     try {
-      const result = await createRevaluation(assignmentId);
+      await createRevaluation(assignmentId);
       toast({
         title: "✅ تم إنشاء إعادة تقييم",
         description: "مهمة جديدة مرتبطة بالتقييم السابق",
