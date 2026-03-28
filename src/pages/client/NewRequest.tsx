@@ -164,6 +164,7 @@ export default function NewRequest() {
 عندما تجمع معلومات كافية، اطلب من العميل مراجعة الملخص وتأكيده.
 
 الملفات المرفوعة حالياً: ${uploadedFiles.map(f => f.name).join(", ") || "لا توجد"}
+نوع التقييم: ${valuationType === "real_estate" ? "عقاري" : valuationType === "machinery" ? "آلات ومعدات" : "مختلط"}
 البيانات المجمعة حتى الآن: ${JSON.stringify(formData)}`;
 
       const resp = await fetch(
