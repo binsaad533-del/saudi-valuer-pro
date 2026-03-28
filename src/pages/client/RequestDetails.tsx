@@ -425,29 +425,8 @@ export default function RequestDetails() {
               </Card>
             )}
 
-            {/* Payments History */}
-            {payments.length > 0 && (
-              <Card className="shadow-card">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4 text-primary" />سجل الدفعات</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {payments.map(pay => (
-                      <div key={pay.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-xs">
-                        <div>
-                          <span className="font-medium">{pay.payment_type === "first" ? "دفعة أولى" : pay.payment_type === "final" ? "دفعة نهائية" : "دفعة"}</span>
-                          <span className="text-muted-foreground mr-2">{Number(pay.amount).toLocaleString()} ر.س</span>
-                        </div>
-                        <Badge variant="secondary" className={`text-[10px] ${pay.status === "approved" ? "bg-success/10 text-success" : pay.status === "rejected" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
-                          {pay.status === "approved" ? "معتمد" : pay.status === "rejected" ? "مرفوض" : "قيد المراجعة"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Online Payments History */}
+            <PaymentHistory requestId={id!} refreshKey={paymentRefreshKey} />
 
             {/* Documents */}
             <Card className="shadow-card">
