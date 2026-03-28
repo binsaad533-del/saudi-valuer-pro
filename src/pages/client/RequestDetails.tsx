@@ -17,6 +17,7 @@ import {
 import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
+import ClientReportReview from "@/components/reports/ClientReportReview";
 
 const STATUS_TIMELINE = [
   { key: "submitted", label: "تم الإرسال" },
