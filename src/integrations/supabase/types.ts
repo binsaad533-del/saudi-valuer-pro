@@ -972,6 +972,138 @@ export type Database = {
           },
         ]
       }
+      payment_webhook_logs: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          payment_id: string | null
+          processed: boolean
+          processing_result: string | null
+          raw_payload: Json
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          payment_id?: string | null
+          processed?: boolean
+          processing_result?: string | null
+          raw_payload: Json
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          payment_id?: string | null
+          processed?: boolean
+          processing_result?: string | null
+          raw_payload?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_webhook_logs_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          assignment_id: string | null
+          callback_url: string | null
+          checkout_url: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          gateway_name: string
+          gateway_response_json: Json | null
+          id: string
+          is_mock: boolean
+          notes: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_reference: string | null
+          payment_stage: string
+          payment_status: string
+          request_id: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          assignment_id?: string | null
+          callback_url?: string | null
+          checkout_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          gateway_name?: string
+          gateway_response_json?: Json | null
+          id?: string
+          is_mock?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_stage?: string
+          payment_status?: string
+          request_id: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          assignment_id?: string | null
+          callback_url?: string | null
+          checkout_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          gateway_name?: string
+          gateway_response_json?: Json | null
+          id?: string
+          is_mock?: boolean
+          notes?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_reference?: string | null
+          payment_stage?: string
+          payment_status?: string
+          request_id?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

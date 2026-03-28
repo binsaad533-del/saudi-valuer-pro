@@ -15,6 +15,8 @@ import {
   Clock, DollarSign, Shield, AlertCircle,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import PaymentCheckout from "@/components/payments/PaymentCheckout";
+import PaymentHistory from "@/components/payments/PaymentHistory";
 
 const STATUS_TIMELINE = [
   { key: "submitted", label: "تم الإرسال" },
@@ -54,6 +56,7 @@ export default function RequestDetails() {
   const [uploading, setUploading] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentType, setPaymentType] = useState("first");
+  const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -349,42 +352,27 @@ export default function RequestDetails() {
               </Card>
             )}
 
-            {/* Payment Upload */}
+            {/* Online Payment */}
             {(needsPayment || needsFinalPayment) && (
-              <Card className="shadow-card border-warning/20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4 text-warning" />
-                    {needsFinalPayment ? "الدفعة النهائية" : "رفع إيصال الدفع"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-3 bg-warning/5 rounded-lg text-center">
-                    <p className="text-lg font-bold text-foreground" dir="ltr">
-                      {needsFinalPayment
-                        ? (request.total_fees - (request.amount_paid || 0)).toLocaleString()
-                        : (request.payment_structure === "partial" ? Number(request.first_payment_amount).toLocaleString() : Number(request.total_fees).toLocaleString())
-                      } ر.س
-                    </p>
-                    <p className="text-xs text-muted-foreground">{needsFinalPayment ? "المبلغ المتبقي" : "المبلغ المطلوب"}</p>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleUploadReceipt}
-                    className="hidden"
-                  />
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => {
-                      setPaymentType(needsFinalPayment ? "final" : "first");
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={uploading}
-                  >
-                    {uploading ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Upload className="w-4 h-4 ml-1" />}
-                    رفع إيصال الدفع
+              <PaymentCheckout
+                request={request}
+                paymentStage={needsFinalPayment ? "final" : request.payment_structure === "partial" ? "first" : "full"}
+                onPaymentComplete={() => { setPaymentRefreshKey(k => k + 1); loadData(); }}
+              />
+            )}
+
+            {/* Manual Receipt Upload (backup) */}
+            {(needsPayment || needsFinalPayment) && (
+              <Card className="shadow-card border-border">
+                <CardContent className="p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground text-center">أو رفع إيصال يدوياً (حالات استثنائية)</p>
+                  <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleUploadReceipt} className="hidden" />
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => {
+                    setPaymentType(needsFinalPayment ? "final" : "first");
+                    fileInputRef.current?.click();
+                  }} disabled={uploading}>
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin ml-1" /> : <Upload className="w-3 h-3 ml-1" />}
+                    رفع إيصال يدوي
                   </Button>
                 </CardContent>
               </Card>
@@ -437,29 +425,8 @@ export default function RequestDetails() {
               </Card>
             )}
 
-            {/* Payments History */}
-            {payments.length > 0 && (
-              <Card className="shadow-card">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4 text-primary" />سجل الدفعات</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {payments.map(pay => (
-                      <div key={pay.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 text-xs">
-                        <div>
-                          <span className="font-medium">{pay.payment_type === "first" ? "دفعة أولى" : pay.payment_type === "final" ? "دفعة نهائية" : "دفعة"}</span>
-                          <span className="text-muted-foreground mr-2">{Number(pay.amount).toLocaleString()} ر.س</span>
-                        </div>
-                        <Badge variant="secondary" className={`text-[10px] ${pay.status === "approved" ? "bg-success/10 text-success" : pay.status === "rejected" ? "bg-destructive/10 text-destructive" : "bg-warning/10 text-warning"}`}>
-                          {pay.status === "approved" ? "معتمد" : pay.status === "rejected" ? "مرفوض" : "قيد المراجعة"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Online Payments History */}
+            <PaymentHistory requestId={id!} refreshKey={paymentRefreshKey} />
 
             {/* Documents */}
             <Card className="shadow-card">

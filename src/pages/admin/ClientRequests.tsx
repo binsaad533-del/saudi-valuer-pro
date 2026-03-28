@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, FileText, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Clock, AlertCircle, Building2, DollarSign, Bot, Brain,
+  Clock, AlertCircle, Building2, DollarSign, Bot, Brain, BarChart3,
 } from "lucide-react";
+import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "مسودة", color: "bg-muted text-muted-foreground" },
@@ -272,7 +273,7 @@ export default function ClientRequests() {
       </div>
 
       <Tabs defaultValue="new" dir="rtl">
-        <TabsList className="grid w-full grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-7 h-auto">
           {ADMIN_TABS.map(tab => {
             const count = requests.filter(r => tab.statuses.includes(r.status)).length;
             return (
@@ -281,6 +282,9 @@ export default function ClientRequests() {
               </TabsTrigger>
             );
           })}
+          <TabsTrigger value="payment_mgmt" className="text-xs py-2">
+            <BarChart3 className="w-3 h-3 ml-1" />المدفوعات
+          </TabsTrigger>
         </TabsList>
 
         {ADMIN_TABS.map(tab => (
@@ -351,6 +355,11 @@ export default function ClientRequests() {
             )}
           </TabsContent>
         ))}
+
+        {/* Payment Management Tab */}
+        <TabsContent value="payment_mgmt" className="mt-4">
+          <AdminPaymentDashboard />
+        </TabsContent>
       </Tabs>
 
       {/* Pricing Dialog */}
