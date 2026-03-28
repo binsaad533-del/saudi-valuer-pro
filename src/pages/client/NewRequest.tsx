@@ -650,6 +650,7 @@ export default function NewRequest() {
                 </>
                 )}
               </CardContent>
+            </Card>
 
             {/* Files */}
             <Card className="shadow-card">
