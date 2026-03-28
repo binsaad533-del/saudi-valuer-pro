@@ -267,7 +267,6 @@ ${portfolioContext}
   }, [formData, uploadedFiles, isPortfolio, portfolioAssets, toast]);
 
   const tryExtractFormData = (content: string) => {
-    // Simple extraction from AI responses
     const updates: Partial<typeof formData> = {};
     
     if (content.includes("سكني")) updates.propertyType = updates.propertyType || "residential";
@@ -276,6 +275,37 @@ ${portfolioContext}
     
     if (Object.keys(updates).length > 0) {
       setFormData(prev => ({ ...prev, ...updates }));
+    }
+
+    // Extract portfolio assets from AI structured response
+    const portfolioMatch = content.match(/\[PORTFOLIO_ASSETS\]([\s\S]*?)\[\/PORTFOLIO_ASSETS\]/);
+    if (portfolioMatch) {
+      try {
+        const parsed = JSON.parse(portfolioMatch[1].trim());
+        if (parsed.assets && Array.isArray(parsed.assets)) {
+          const newAssets: PortfolioAsset[] = parsed.assets.map((a: any) => ({
+            id: crypto.randomUUID(),
+            asset_type: a.asset_type || "real_estate",
+            asset_category: a.asset_category || "other",
+            asset_name_ar: a.asset_name_ar || "أصل غير مسمى",
+            city_ar: a.city_ar,
+            district_ar: a.district_ar,
+            land_area: a.land_area,
+            building_area: a.building_area,
+            description_ar: a.description_ar,
+            ai_extracted: true,
+            ai_confidence: 0.85,
+          }));
+          setPortfolioAssets(prev => {
+            const existingNames = new Set(prev.map(p => p.asset_name_ar));
+            const unique = newAssets.filter(a => !existingNames.has(a.asset_name_ar));
+            return [...prev, ...unique];
+          });
+          if (!isPortfolio && newAssets.length > 1) {
+            setIsPortfolio(true);
+          }
+        }
+      } catch { /* ignore parse errors */ }
     }
   };
 
