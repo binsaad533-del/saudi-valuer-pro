@@ -45,6 +45,14 @@ export interface ReportGenerationResult {
   signature_hash?: string;
 }
 
+export type ReportVersionType =
+  | "revision"
+  | "change_intended_users"
+  | "change_purpose"
+  | "minor_update"
+  | "revaluation"
+  | "addendum";
+
 export async function runFullValuation(
   assignmentId: string,
   requestId?: string
