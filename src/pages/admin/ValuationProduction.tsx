@@ -171,8 +171,9 @@ export default function ValuationProduction() {
       </div>
 
       <Tabs defaultValue="engine" dir="rtl">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="engine">المحرك</TabsTrigger>
+          <TabsTrigger value="inspection">المعاينة</TabsTrigger>
           <TabsTrigger value="audit">مسار التدقيق</TabsTrigger>
           <TabsTrigger value="results">النتائج</TabsTrigger>
           <TabsTrigger value="compliance">الامتثال</TabsTrigger>
