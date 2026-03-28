@@ -50,6 +50,7 @@ export default function RequestDetails() {
   const [messages, setMessages] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
