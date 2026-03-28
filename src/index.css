@@ -127,7 +127,8 @@
   }
 
   body {
-    @apply bg-background text-foreground font-cairo antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Cairo', sans-serif;
   }
 
   [dir="ltr"] {
