@@ -151,6 +151,22 @@ export default function NewRequest() {
     let assistantContent = "";
 
     try {
+      const portfolioContext = isPortfolio
+        ? `\n\nهذا طلب تقييم محفظة (أصول متعددة). عدد الأصول المسجلة حالياً: ${portfolioAssets.length}
+الأصول: ${JSON.stringify(portfolioAssets.map(a => ({ name: a.asset_name_ar, type: a.asset_type, city: a.city_ar })))}
+يرجى:
+- تحليل أي ملفات مرفوعة لاستخراج قائمة الأصول
+- إذا ذكر العميل عدة أصول، نظّمها في قائمة منفصلة
+- لكل أصل حدد: نوعه (عقار/معدة)، تصنيفه، المدينة، الوصف
+- عند اكتمال قائمة الأصول، اعرض ملخص نطاق العمل للمحفظة
+- اقترح خصم محفظة إذا كان عدد الأصول أكثر من 3
+
+عند اكتشاف أصول متعددة في رسالة العميل، أجب بقائمة منظمة بالتنسيق التالي:
+[PORTFOLIO_ASSETS]
+{"assets": [{"asset_name_ar": "...", "asset_type": "real_estate|machinery", "asset_category": "land|villa|...", "city_ar": "...", "description_ar": "..."}]}
+[/PORTFOLIO_ASSETS]`
+        : "";
+
       const systemPrompt = `أنت مساعد تقييم عقاري احترافي لشركة جساس للتقييم في السعودية.
 دورك: جمع معلومات طلب التقييم من العميل بشكل منظم.
 
@@ -173,7 +189,7 @@ export default function NewRequest() {
 8. أي وثائق متوفرة
 
 عندما تجمع معلومات كافية، اطلب من العميل مراجعة الملخص وتأكيده.
-
+${portfolioContext}
 الملفات المرفوعة حالياً: ${uploadedFiles.map(f => f.name).join(", ") || "لا توجد"}
 نوع التقييم: ${valuationType === "real_estate" ? "عقاري" : valuationType === "machinery" ? "آلات ومعدات" : "مختلط"}
 البيانات المجمعة حتى الآن: ${JSON.stringify(formData)}`;
