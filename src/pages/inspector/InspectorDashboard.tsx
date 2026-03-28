@@ -27,11 +27,9 @@ interface InspectionTask {
 }
 
 export default function InspectorDashboard() {
-  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [inspections, setInspections] = useState<InspectionTask[]>([]);
   const [profile, setProfile] = useState<any>(null);
-  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
