@@ -103,6 +103,11 @@ export default function NewRequest() {
     additionalNotes: "",
   });
 
+  // Portfolio state
+  const [isPortfolio, setIsPortfolio] = useState(false);
+  const [portfolioAssets, setPortfolioAssets] = useState<PortfolioAsset[]>([]);
+  const [scopeConfirmed, setScopeConfirmed] = useState(false);
+
   // Files
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
