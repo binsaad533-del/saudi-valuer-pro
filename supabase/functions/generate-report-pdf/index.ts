@@ -13,12 +13,77 @@ function supabaseAdmin() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 }
 
+async function computeSignatureHash(reportId: string, signerName: string, signedAt: string, finalValue: number): Promise<string> {
+  const payload = `${reportId}|${signerName}|${signedAt}|${finalValue}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(payload);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { assignment_id, report_id, type } = await req.json(); // type: "draft" | "final"
+    const { assignment_id, report_id, type } = await req.json();
     const sb = supabaseAdmin();
+    const isDraft = type === "draft";
+
+    // === COMPLIANCE ENFORCEMENT FOR FINAL REPORTS ===
+    if (!isDraft) {
+      // Check compliance
+      const { data: compliance } = await sb
+        .from("compliance_checks")
+        .select("*")
+        .eq("assignment_id", assignment_id);
+
+      const mandatoryFailures = compliance?.filter((c: any) => c.is_mandatory && !c.is_passed) || [];
+      if (mandatoryFailures.length > 0) {
+        throw new Error(`Cannot issue final report: ${mandatoryFailures.length} mandatory compliance checks failed`);
+      }
+
+      // Check inspection completed
+      const { data: inspections } = await sb
+        .from("inspections")
+        .select("status")
+        .eq("assignment_id", assignment_id);
+
+      const hasCompletedInspection = inspections?.some((i: any) => i.status === "submitted" || i.status === "reviewed");
+      if (!hasCompletedInspection) {
+        throw new Error("Cannot issue final report: inspection not completed");
+      }
+
+      // Check reconciliation exists (valuation completed)
+      const { data: recon } = await sb
+        .from("reconciliation_results")
+        .select("id")
+        .eq("assignment_id", assignment_id)
+        .single();
+
+      if (!recon) {
+        throw new Error("Cannot issue final report: valuation not completed");
+      }
+
+      // Check final payment
+      const { data: assignmentCheck } = await sb
+        .from("valuation_assignments")
+        .select("id")
+        .eq("id", assignment_id)
+        .single();
+
+      if (assignmentCheck) {
+        const { data: requests } = await sb
+          .from("valuation_requests")
+          .select("payment_status")
+          .eq("assignment_id", assignment_id);
+
+        const hasFinalPayment = requests?.some((r: any) => r.payment_status === "paid" || r.payment_status === "fully_paid");
+        if (!hasFinalPayment) {
+          throw new Error("Cannot issue final report: final payment not received");
+        }
+      }
+    }
 
     // Fetch all data
     const [
@@ -41,10 +106,22 @@ serve(async (req) => {
 
     if (!assignment || !report) throw new Error("Assignment or report not found");
 
-    const isDraft = type === "draft";
     const subject = subjects?.[0] || {};
     const client = (assignment as any).clients || {};
     const content = (report.content_ar || {}) as Record<string, any>;
+
+    // Compute signature hash for final reports
+    let signatureHash: string | null = null;
+    const signedAt = new Date().toISOString();
+
+    if (!isDraft) {
+      signatureHash = await computeSignatureHash(
+        report_id,
+        "Ahmed Al-Malki",
+        signedAt,
+        recon?.final_value || 0
+      );
+    }
 
     // Build report JSON structure
     const reportJSON = {
@@ -56,8 +133,10 @@ serve(async (req) => {
         issue_date: isDraft ? null : new Date().toISOString().split("T")[0],
         language: assignment.report_language,
         version: report.version,
-        qr_code: isDraft ? null : assignment.qr_verification_code,
+        qr_code: isDraft ? null : `${SUPABASE_URL.replace('/rest/v1', '')}/verify/${assignment.reference_number}`,
+        qr_verification_url: isDraft ? null : `/verify-report/${report_id}`,
         watermark: isDraft ? "DRAFT / مسودة" : null,
+        signature_hash: signatureHash,
       },
       cover: {
         title_ar: report.title_ar || "تقرير تقييم عقاري",
@@ -116,7 +195,8 @@ serve(async (req) => {
         signer_title_ar: "مقيّم معتمد",
         signer_title_en: "Certified Valuer",
         signer_license: org?.license_number || "",
-        signed_at: new Date().toISOString(),
+        signed_at: signedAt,
+        signature_hash: signatureHash,
       },
       compliance_summary: {
         total_checks: compliance?.length || 0,
@@ -139,12 +219,19 @@ serve(async (req) => {
     const updateData: any = {
       status: isDraft ? "draft" : "final",
       is_final: !isDraft,
+      pdf_url: reportUrl,
     };
-    if (isDraft) updateData.pdf_url = reportUrl;
-    else updateData.pdf_url = reportUrl;
+
+    if (!isDraft) {
+      updateData.is_locked = true;
+      updateData.locked_at = new Date().toISOString();
+      updateData.locked_by = assignment.created_by;
+      updateData.signature_hash = signatureHash;
+    }
+
     await sb.from("reports").update(updateData).eq("id", report_id);
 
-    // If final, save signature
+    // If final, save signature with hash
     if (!isDraft) {
       await sb.from("report_signatures").insert({
         report_id,
@@ -154,10 +241,11 @@ serve(async (req) => {
         signer_title_ar: "مقيّم معتمد",
         signer_title_en: "Certified Valuer",
         signer_license: org?.license_number || "",
-        signed_at: new Date().toISOString(),
+        signed_at: signedAt,
+        signature_hash: signatureHash,
       });
 
-      // Update assignment
+      // Lock the assignment
       await sb.from("valuation_assignments").update({
         status: "completed",
         issue_date: new Date().toISOString().split("T")[0],
@@ -165,15 +253,25 @@ serve(async (req) => {
         locked_at: new Date().toISOString(),
       }).eq("id", assignment_id);
 
-      // Audit log
-      await sb.from("audit_logs").insert({
-        table_name: "reports",
-        action: "update",
-        record_id: report_id,
-        assignment_id,
-        description: "Final report issued with electronic signature",
-        new_data: { type: "final", final_value: recon?.final_value },
-      });
+      // Audit logs
+      await sb.from("audit_logs").insert([
+        {
+          table_name: "reports",
+          action: "update",
+          record_id: report_id,
+          assignment_id,
+          description: "Final report issued with electronic signature and SHA-256 hash",
+          new_data: { type: "final", final_value: recon?.final_value, signature_hash: signatureHash },
+        },
+        {
+          table_name: "reports",
+          action: "update",
+          record_id: report_id,
+          assignment_id,
+          description: "Report locked - read-only mode activated",
+          new_data: { is_locked: true, locked_at: new Date().toISOString() },
+        },
+      ]);
     }
 
     return new Response(JSON.stringify({
@@ -181,6 +279,7 @@ serve(async (req) => {
       report_url: reportUrl,
       report_json: reportJSON,
       type: isDraft ? "draft" : "final",
+      signature_hash: signatureHash,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
