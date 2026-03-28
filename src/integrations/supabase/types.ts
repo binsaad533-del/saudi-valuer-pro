@@ -3077,6 +3077,24 @@ export type Database = {
         | "archived"
         | "rejected"
         | "returned"
+        | "client_submitted"
+        | "under_ai_review"
+        | "awaiting_client_info"
+        | "priced"
+        | "awaiting_payment_initial"
+        | "payment_received_initial"
+        | "inspection_required"
+        | "inspection_assigned"
+        | "inspection_in_progress"
+        | "inspection_submitted"
+        | "valuation_in_progress"
+        | "draft_report_ready"
+        | "under_client_review"
+        | "revision_in_progress"
+        | "awaiting_final_payment"
+        | "final_payment_received"
+        | "report_issued"
+        | "closed"
       attachment_category:
         | "title_deed"
         | "building_permit"
@@ -3158,6 +3176,24 @@ export type Database = {
         | "completed"
         | "archived"
         | "cancelled"
+        | "client_submitted"
+        | "under_ai_review"
+        | "awaiting_client_info"
+        | "priced"
+        | "awaiting_payment_initial"
+        | "payment_received_initial"
+        | "inspection_required"
+        | "inspection_assigned"
+        | "inspection_in_progress"
+        | "inspection_submitted"
+        | "valuation_in_progress"
+        | "draft_report_ready"
+        | "under_client_review"
+        | "revision_in_progress"
+        | "awaiting_final_payment"
+        | "final_payment_received"
+        | "report_issued"
+        | "closed"
       review_finding_severity: "critical" | "major" | "minor" | "observation"
       valuation_approach:
         | "sales_comparison"
@@ -3348,6 +3384,24 @@ export const Constants = {
         "archived",
         "rejected",
         "returned",
+        "client_submitted",
+        "under_ai_review",
+        "awaiting_client_info",
+        "priced",
+        "awaiting_payment_initial",
+        "payment_received_initial",
+        "inspection_required",
+        "inspection_assigned",
+        "inspection_in_progress",
+        "inspection_submitted",
+        "valuation_in_progress",
+        "draft_report_ready",
+        "under_client_review",
+        "revision_in_progress",
+        "awaiting_final_payment",
+        "final_payment_received",
+        "report_issued",
+        "closed",
       ],
       attachment_category: [
         "title_deed",
@@ -3435,6 +3489,24 @@ export const Constants = {
         "completed",
         "archived",
         "cancelled",
+        "client_submitted",
+        "under_ai_review",
+        "awaiting_client_info",
+        "priced",
+        "awaiting_payment_initial",
+        "payment_received_initial",
+        "inspection_required",
+        "inspection_assigned",
+        "inspection_in_progress",
+        "inspection_submitted",
+        "valuation_in_progress",
+        "draft_report_ready",
+        "under_client_review",
+        "revision_in_progress",
+        "awaiting_final_payment",
+        "final_payment_received",
+        "report_issued",
+        "closed",
       ],
       review_finding_severity: ["critical", "major", "minor", "observation"],
       valuation_approach: [
