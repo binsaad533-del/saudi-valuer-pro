@@ -271,6 +271,24 @@ export default function ValuationProduction() {
           )}
         </TabsContent>
 
+        {/* Inspection Analysis Tab */}
+        <TabsContent value="inspection" className="space-y-4 mt-4">
+          {inspection ? (
+            <InspectionAnalysisView
+              inspectionId={inspection.id}
+              assignmentId={assignmentId!}
+              isAdmin={true}
+            />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12 text-muted-foreground">
+                <Clipboard className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p>لا توجد معاينة مرتبطة بهذه المهمة</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
         {/* Audit Trail Tab (Explainability Panel) */}
         <TabsContent value="audit" className="space-y-4 mt-4">
           <Card>
