@@ -45,6 +45,7 @@ const App = () => (
             <Route path="/client-requests" element={<ClientRequests />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
             <Route path="/inspector" element={<InspectorDashboard />} />
+            <Route path="/inspector-coverage" element={<InspectorCoverage />} />
           </Route>
 
           {/* Client Portal Routes */}
