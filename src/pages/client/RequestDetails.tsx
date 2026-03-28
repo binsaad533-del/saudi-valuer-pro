@@ -16,9 +16,6 @@ import {
   Loader2,
   Bot,
   User,
-  Upload,
-  CheckCircle,
-  Clock,
   CreditCard,
   Building2,
 } from "lucide-react";

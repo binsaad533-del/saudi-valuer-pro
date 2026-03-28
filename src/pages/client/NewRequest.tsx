@@ -21,10 +21,8 @@ import {
   Bot,
   User,
   CheckCircle,
-  AlertTriangle,
   ArrowRight,
   Building2,
-  MapPin,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
