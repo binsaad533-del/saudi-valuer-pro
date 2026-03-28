@@ -800,15 +800,48 @@ ${portfolioContext}
               </CardContent>
             </Card>
 
+            {/* Portfolio Assets */}
+            {isPortfolio && portfolioAssets.length > 0 && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-primary" />
+                    أصول المحفظة ({portfolioAssets.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PortfolioAssetList
+                    assets={portfolioAssets}
+                    onRemove={(id) => {
+                      setPortfolioAssets(prev => prev.filter(a => a.id !== id));
+                      setScopeConfirmed(false);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Portfolio Scope Confirmation */}
+            {isPortfolio && portfolioAssets.length > 0 && (
+              <PortfolioScopeConfirmation
+                assets={portfolioAssets}
+                valuationType={valuationType}
+                purpose={formData.purpose}
+                onConfirm={() => setScopeConfirmed(true)}
+                onEdit={() => setScopeConfirmed(false)}
+                confirmed={scopeConfirmed}
+              />
+            )}
+
             {/* Submit */}
             <Button
               onClick={handleSubmitRequest}
               className="w-full gap-2"
-              disabled={loading}
+              disabled={loading || (isPortfolio && portfolioAssets.length > 0 && !scopeConfirmed)}
               size="lg"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-              إرسال طلب التقييم
+              {isPortfolio ? `إرسال طلب تقييم المحفظة (${portfolioAssets.length} أصل)` : "إرسال طلب التقييم"}
             </Button>
           </div>
         </div>
