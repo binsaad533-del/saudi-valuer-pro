@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, systemPrompt, valuationType } = await req.json();
+    const { messages, systemPrompt, valuationType, isPortfolio, portfolioAssets } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
