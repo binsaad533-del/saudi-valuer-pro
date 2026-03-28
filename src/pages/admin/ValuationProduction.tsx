@@ -47,6 +47,7 @@ export default function ValuationProduction() {
   const { toast } = useToast();
 
   const [assignment, setAssignment] = useState<any>(null);
+  const [inspection, setInspection] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
   const [methods, setMethods] = useState<any[]>([]);
