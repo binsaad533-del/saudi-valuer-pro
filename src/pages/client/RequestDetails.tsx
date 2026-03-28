@@ -78,8 +78,9 @@ export default function RequestDetails() {
     setPayments(payRes.data || []);
 
     // Load reports if assignment exists
-    if (reqRes.data?.assignment_id) {
-      const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", reqRes.data.assignment_id).order("created_at", { ascending: false });
+    const reqData = reqRes.data as any;
+    if (reqData?.assignment_id) {
+      const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", reqData.assignment_id).order("created_at", { ascending: false });
       setReports((reps as any[]) || []);
     }
 
