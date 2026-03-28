@@ -238,6 +238,8 @@ serve(async (req) => {
       updateData.locked_at = new Date().toISOString();
       updateData.locked_by = assignment.created_by;
       updateData.signature_hash = signatureHash;
+      updateData.issue_date = issueDate;
+      updateData.expiry_date = expiryDate;
     }
 
     await sb.from("reports").update(updateData).eq("id", report_id);
