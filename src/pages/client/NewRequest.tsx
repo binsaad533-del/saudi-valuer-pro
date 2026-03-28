@@ -41,6 +41,12 @@ interface UploadedFile {
   aiRelevant?: boolean;
 }
 
+const VALUATION_TYPES = [
+  { value: "real_estate", label: "تقييم عقاري", icon: "🏠" },
+  { value: "machinery", label: "تقييم آلات ومعدات", icon: "⚙️" },
+  { value: "mixed", label: "تقييم مختلط (عقار + معدات)", icon: "🏗️" },
+];
+
 const PROPERTY_TYPES = [
   { value: "residential", label: "سكني" },
   { value: "commercial", label: "تجاري" },
