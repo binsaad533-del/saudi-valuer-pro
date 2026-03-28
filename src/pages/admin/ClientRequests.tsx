@@ -13,9 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, FileText, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Clock, AlertCircle, Building2, DollarSign, Bot, Brain, BarChart3,
+  Clock, AlertCircle, Building2, DollarSign, Bot, Brain, BarChart3, MessageSquareText,
 } from "lucide-react";
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
+import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "مسودة", color: "bg-muted text-muted-foreground" },
