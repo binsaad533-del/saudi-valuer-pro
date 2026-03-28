@@ -59,13 +59,7 @@ export default function ClientDashboard() {
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_CONFIG[status] || { label: status, color: "bg-muted text-muted-foreground", icon: FileText };
-    return (
-      <Badge variant="secondary" className={`${config.color} gap-1`}>
-        <config.icon className="w-3 h-3" />
-        {config.label}
-      </Badge>
-    );
+    return <StatusBadge status={status} role="client" />;
   };
 
   // Stats
