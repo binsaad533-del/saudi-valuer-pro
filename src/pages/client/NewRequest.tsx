@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
+import PortfolioAssetList, { type PortfolioAsset } from "@/components/portfolio/PortfolioAssetList";
+import PortfolioScopeConfirmation from "@/components/portfolio/PortfolioScopeConfirmation";
 import {
   Send,
   Upload,
@@ -23,6 +25,7 @@ import {
   CheckCircle,
   ArrowRight,
   Building2,
+  Briefcase,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -100,6 +103,11 @@ export default function NewRequest() {
     additionalNotes: "",
   });
 
+  // Portfolio state
+  const [isPortfolio, setIsPortfolio] = useState(false);
+  const [portfolioAssets, setPortfolioAssets] = useState<PortfolioAsset[]>([]);
+  const [scopeConfirmed, setScopeConfirmed] = useState(false);
+
   // Files
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -125,6 +133,9 @@ export default function NewRequest() {
 - ⚙️ تقييم آلات ومعدات
 - 🏗️ تقييم مختلط (عقار + معدات)
 
+**💼 لتقييم محفظة (أصول متعددة):**
+فعّل خيار "محفظة أصول" من الشريط الجانبي، ثم أرسل تفاصيل الأصول أو ارفع ملفاً يحتوي عليها.
+
 ثم أخبرني بالتفاصيل وسأقوم بتنظيم المعلومات تلقائياً.`
       }]);
     };
@@ -140,6 +151,22 @@ export default function NewRequest() {
     let assistantContent = "";
 
     try {
+      const portfolioContext = isPortfolio
+        ? `\n\nهذا طلب تقييم محفظة (أصول متعددة). عدد الأصول المسجلة حالياً: ${portfolioAssets.length}
+الأصول: ${JSON.stringify(portfolioAssets.map(a => ({ name: a.asset_name_ar, type: a.asset_type, city: a.city_ar })))}
+يرجى:
+- تحليل أي ملفات مرفوعة لاستخراج قائمة الأصول
+- إذا ذكر العميل عدة أصول، نظّمها في قائمة منفصلة
+- لكل أصل حدد: نوعه (عقار/معدة)، تصنيفه، المدينة، الوصف
+- عند اكتمال قائمة الأصول، اعرض ملخص نطاق العمل للمحفظة
+- اقترح خصم محفظة إذا كان عدد الأصول أكثر من 3
+
+عند اكتشاف أصول متعددة في رسالة العميل، أجب بقائمة منظمة بالتنسيق التالي:
+[PORTFOLIO_ASSETS]
+{"assets": [{"asset_name_ar": "...", "asset_type": "real_estate|machinery", "asset_category": "land|villa|...", "city_ar": "...", "description_ar": "..."}]}
+[/PORTFOLIO_ASSETS]`
+        : "";
+
       const systemPrompt = `أنت مساعد تقييم عقاري احترافي لشركة جساس للتقييم في السعودية.
 دورك: جمع معلومات طلب التقييم من العميل بشكل منظم.
 
@@ -162,7 +189,7 @@ export default function NewRequest() {
 8. أي وثائق متوفرة
 
 عندما تجمع معلومات كافية، اطلب من العميل مراجعة الملخص وتأكيده.
-
+${portfolioContext}
 الملفات المرفوعة حالياً: ${uploadedFiles.map(f => f.name).join(", ") || "لا توجد"}
 نوع التقييم: ${valuationType === "real_estate" ? "عقاري" : valuationType === "machinery" ? "آلات ومعدات" : "مختلط"}
 البيانات المجمعة حتى الآن: ${JSON.stringify(formData)}`;
@@ -237,10 +264,9 @@ export default function NewRequest() {
     } finally {
       setIsStreaming(false);
     }
-  }, [formData, uploadedFiles, toast]);
+  }, [formData, uploadedFiles, isPortfolio, portfolioAssets, toast]);
 
   const tryExtractFormData = (content: string) => {
-    // Simple extraction from AI responses
     const updates: Partial<typeof formData> = {};
     
     if (content.includes("سكني")) updates.propertyType = updates.propertyType || "residential";
@@ -249,6 +275,37 @@ export default function NewRequest() {
     
     if (Object.keys(updates).length > 0) {
       setFormData(prev => ({ ...prev, ...updates }));
+    }
+
+    // Extract portfolio assets from AI structured response
+    const portfolioMatch = content.match(/\[PORTFOLIO_ASSETS\]([\s\S]*?)\[\/PORTFOLIO_ASSETS\]/);
+    if (portfolioMatch) {
+      try {
+        const parsed = JSON.parse(portfolioMatch[1].trim());
+        if (parsed.assets && Array.isArray(parsed.assets)) {
+          const newAssets: PortfolioAsset[] = parsed.assets.map((a: any) => ({
+            id: crypto.randomUUID(),
+            asset_type: a.asset_type || "real_estate",
+            asset_category: a.asset_category || "other",
+            asset_name_ar: a.asset_name_ar || "أصل غير مسمى",
+            city_ar: a.city_ar,
+            district_ar: a.district_ar,
+            land_area: a.land_area,
+            building_area: a.building_area,
+            description_ar: a.description_ar,
+            ai_extracted: true,
+            ai_confidence: 0.85,
+          }));
+          setPortfolioAssets(prev => {
+            const existingNames = new Set(prev.map(p => p.asset_name_ar));
+            const unique = newAssets.filter(a => !existingNames.has(a.asset_name_ar));
+            return [...prev, ...unique];
+          });
+          if (!isPortfolio && newAssets.length > 1) {
+            setIsPortfolio(true);
+          }
+        }
+      } catch { /* ignore parse errors */ }
     }
   };
 
@@ -334,17 +391,42 @@ export default function NewRequest() {
           intended_users_ar: formData.intendedUsers || null,
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
+          is_portfolio: isPortfolio,
+          portfolio_asset_count: isPortfolio ? portfolioAssets.length : 0,
+          portfolio_scope_confirmed: isPortfolio ? scopeConfirmed : null,
           ai_intake_summary: {
             messages: messages,
             files: uploadedFiles,
             formData: formData,
             valuationType,
+            isPortfolio,
+            portfolioAssets: isPortfolio ? portfolioAssets : [],
           },
-        })
+        } as any)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Save portfolio assets
+      if (isPortfolio && portfolioAssets.length > 0 && data) {
+        const reqData = data as any;
+        const assets = portfolioAssets.map((a, i) => ({
+          request_id: reqData.id,
+          asset_type: a.asset_type,
+          asset_category: a.asset_category,
+          asset_name_ar: a.asset_name_ar,
+          city_ar: a.city_ar || null,
+          district_ar: a.district_ar || null,
+          land_area: a.land_area || null,
+          building_area: a.building_area || null,
+          description_ar: a.description_ar || null,
+          ai_extracted: a.ai_extracted || false,
+          ai_confidence: a.ai_confidence || null,
+          sort_order: i,
+        }));
+        await supabase.from("portfolio_assets" as any).insert(assets);
+      }
 
       // Save documents
       if (uploadedFiles.length > 0 && data) {
@@ -562,6 +644,21 @@ export default function NewRequest() {
                   </div>
                 </div>
 
+                {/* Portfolio Toggle */}
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => { setIsPortfolio(!isPortfolio); setScopeConfirmed(false); }}
+                    className={`w-full text-right px-3 py-2 rounded-lg border text-xs transition-all flex items-center gap-2 ${
+                      isPortfolio
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border bg-background text-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    <Briefcase className="w-3.5 h-3.5" />
+                    💼 محفظة أصول (أصول متعددة)
+                  </button>
+                </div>
+
                 {(valuationType === "real_estate" || valuationType === "mixed") && (
                 <>
                 <div className="space-y-1.5">
@@ -703,15 +800,48 @@ export default function NewRequest() {
               </CardContent>
             </Card>
 
+            {/* Portfolio Assets */}
+            {isPortfolio && portfolioAssets.length > 0 && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Briefcase className="w-4 h-4 text-primary" />
+                    أصول المحفظة ({portfolioAssets.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <PortfolioAssetList
+                    assets={portfolioAssets}
+                    onRemove={(id) => {
+                      setPortfolioAssets(prev => prev.filter(a => a.id !== id));
+                      setScopeConfirmed(false);
+                    }}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Portfolio Scope Confirmation */}
+            {isPortfolio && portfolioAssets.length > 0 && (
+              <PortfolioScopeConfirmation
+                assets={portfolioAssets}
+                valuationType={valuationType}
+                purpose={formData.purpose}
+                onConfirm={() => setScopeConfirmed(true)}
+                onEdit={() => setScopeConfirmed(false)}
+                confirmed={scopeConfirmed}
+              />
+            )}
+
             {/* Submit */}
             <Button
               onClick={handleSubmitRequest}
               className="w-full gap-2"
-              disabled={loading}
+              disabled={loading || (isPortfolio && portfolioAssets.length > 0 && !scopeConfirmed)}
               size="lg"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-              إرسال طلب التقييم
+              {isPortfolio ? `إرسال طلب تقييم المحفظة (${portfolioAssets.length} أصل)` : "إرسال طلب التقييم"}
             </Button>
           </div>
         </div>

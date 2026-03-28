@@ -1684,6 +1684,95 @@ export type Database = {
           },
         ]
       }
+      portfolio_assets: {
+        Row: {
+          address_ar: string | null
+          address_en: string | null
+          ai_confidence: number | null
+          ai_extracted: boolean | null
+          asset_category: string
+          asset_name_ar: string
+          asset_name_en: string | null
+          asset_type: string
+          assignment_id: string | null
+          attributes: Json | null
+          building_area: number | null
+          city_ar: string | null
+          city_en: string | null
+          created_at: string
+          description_ar: string | null
+          description_en: string | null
+          district_ar: string | null
+          district_en: string | null
+          id: string
+          land_area: number | null
+          request_id: string
+          sort_order: number | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          address_ar?: string | null
+          address_en?: string | null
+          ai_confidence?: number | null
+          ai_extracted?: boolean | null
+          asset_category?: string
+          asset_name_ar: string
+          asset_name_en?: string | null
+          asset_type?: string
+          assignment_id?: string | null
+          attributes?: Json | null
+          building_area?: number | null
+          city_ar?: string | null
+          city_en?: string | null
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          district_ar?: string | null
+          district_en?: string | null
+          id?: string
+          land_area?: number | null
+          request_id: string
+          sort_order?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address_ar?: string | null
+          address_en?: string | null
+          ai_confidence?: number | null
+          ai_extracted?: boolean | null
+          asset_category?: string
+          asset_name_ar?: string
+          asset_name_en?: string | null
+          asset_type?: string
+          assignment_id?: string | null
+          attributes?: Json | null
+          building_area?: number | null
+          city_ar?: string | null
+          city_en?: string | null
+          created_at?: string
+          description_ar?: string | null
+          description_en?: string | null
+          district_ar?: string | null
+          district_en?: string | null
+          id?: string
+          land_area?: number | null
+          request_id?: string
+          sort_order?: number | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_assets_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3106,10 +3195,16 @@ export type Database = {
           intended_users_ar: string | null
           intended_users_en: string | null
           is_locked: boolean | null
+          is_portfolio: boolean | null
           land_area: number | null
           organization_id: string | null
           payment_status: string | null
           payment_structure: string | null
+          portfolio_asset_count: number | null
+          portfolio_discount_pct: number | null
+          portfolio_scope_ar: string | null
+          portfolio_scope_confirmed: boolean | null
+          portfolio_scope_en: string | null
           production_started_at: string | null
           property_address_ar: string | null
           property_address_en: string | null
@@ -3165,10 +3260,16 @@ export type Database = {
           intended_users_ar?: string | null
           intended_users_en?: string | null
           is_locked?: boolean | null
+          is_portfolio?: boolean | null
           land_area?: number | null
           organization_id?: string | null
           payment_status?: string | null
           payment_structure?: string | null
+          portfolio_asset_count?: number | null
+          portfolio_discount_pct?: number | null
+          portfolio_scope_ar?: string | null
+          portfolio_scope_confirmed?: boolean | null
+          portfolio_scope_en?: string | null
           production_started_at?: string | null
           property_address_ar?: string | null
           property_address_en?: string | null
@@ -3224,10 +3325,16 @@ export type Database = {
           intended_users_ar?: string | null
           intended_users_en?: string | null
           is_locked?: boolean | null
+          is_portfolio?: boolean | null
           land_area?: number | null
           organization_id?: string | null
           payment_status?: string | null
           payment_structure?: string | null
+          portfolio_asset_count?: number | null
+          portfolio_discount_pct?: number | null
+          portfolio_scope_ar?: string | null
+          portfolio_scope_confirmed?: boolean | null
+          portfolio_scope_en?: string | null
           production_started_at?: string | null
           property_address_ar?: string | null
           property_address_en?: string | null
