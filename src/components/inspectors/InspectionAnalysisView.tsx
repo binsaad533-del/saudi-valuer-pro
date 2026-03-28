@@ -42,7 +42,7 @@ const FINISHING_LABELS: Record<string, string> = {
   unfinished: "غير مكتمل",
 };
 
-export function InspectionAnalysisView({ inspectionId, assignmentId, isAdmin = false }: Props) {
+export function InspectionAnalysisView({ inspectionId, isAdmin = false }: Props) {
   const [analysis, setAnalysis] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
