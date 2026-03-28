@@ -178,6 +178,7 @@ export default function NewRequest() {
           body: JSON.stringify({
             messages: allMessages,
             systemPrompt,
+            valuationType,
             formData,
             files: uploadedFiles.map(f => ({ name: f.name, type: f.type, category: f.aiCategory })),
           }),
