@@ -74,7 +74,7 @@ export default function AppSidebar() {
             <span className="text-primary font-bold text-lg leading-tight">
               jsaas-valuation
             </span>
-            <span className="text-sidebar-muted text-[11px]">منصة التقييم العقاري</span>
+            <span className="text-sidebar-muted text-[11px]">التقييم العقاري</span>
           </div>
         )}
       </div>
