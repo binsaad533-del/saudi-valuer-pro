@@ -340,8 +340,9 @@ export default function NewRequest() {
 
       // Save documents
       if (uploadedFiles.length > 0 && data) {
+        const reqData = data as any;
         const docs = uploadedFiles.map(f => ({
-          request_id: data.id,
+          request_id: reqData.id,
           uploaded_by: user.id,
           file_name: f.name,
           file_path: f.path,
@@ -349,21 +350,22 @@ export default function NewRequest() {
           mime_type: f.type,
           ai_category: f.aiCategory || null,
         }));
-        await supabase.from("request_documents").insert(docs);
+        await supabase.from("request_documents" as any).insert(docs);
       }
 
       // Save chat messages
       if (data) {
+        const reqData = data as any;
         const chatMsgs = messages.map(m => ({
-          request_id: data.id,
+          request_id: reqData.id,
           sender_id: m.role === "user" ? user.id : null,
           sender_type: (m.role === "user" ? "client" : "ai") as any,
           content: m.content,
         }));
-        await supabase.from("request_messages").insert(chatMsgs);
+        await supabase.from("request_messages" as any).insert(chatMsgs);
       }
 
-      setRequestId(data?.id || null);
+      setRequestId((data as any)?.id || null);
       setStep("submitted");
       toast({ title: "تم إرسال طلب التقييم بنجاح" });
     } catch (err: any) {
