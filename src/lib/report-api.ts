@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import type { ReportLanguage } from "./report-types";
 
 export async function translateReportSections(
   sections: Record<string, string>,

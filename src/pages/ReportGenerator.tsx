@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReportPreview from "@/components/reports/ReportPreview";
 import ReportSectionEditor from "@/components/reports/ReportSectionEditor";
 import ConsistencyChecker from "@/components/reports/ConsistencyChecker";
-import { REPORT_SECTIONS, type ReportLanguage, type ReportData } from "@/lib/report-types";
+import { type ReportLanguage, type ReportData } from "@/lib/report-types";
 import { translateReportSections } from "@/lib/report-api";
 
 const SAMPLE_REPORT: ReportData = {
