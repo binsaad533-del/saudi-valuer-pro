@@ -1244,6 +1244,143 @@ export type Database = {
           },
         ]
       }
+      report_change_log: {
+        Row: {
+          change_summary_ar: string | null
+          change_summary_en: string | null
+          change_type: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          related_comment_id: string | null
+          report_id: string
+          version_from: number
+          version_to: number
+        }
+        Insert: {
+          change_summary_ar?: string | null
+          change_summary_en?: string | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          related_comment_id?: string | null
+          report_id: string
+          version_from: number
+          version_to: number
+        }
+        Update: {
+          change_summary_ar?: string | null
+          change_summary_en?: string | null
+          change_type?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          related_comment_id?: string | null
+          report_id?: string
+          version_from?: number
+          version_to?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_change_log_related_comment_id_fkey"
+            columns: ["related_comment_id"]
+            isOneToOne: false
+            referencedRelation: "report_comments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_change_log_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      report_comments: {
+        Row: {
+          assignment_id: string | null
+          author_id: string | null
+          author_type: string
+          comment_text: string
+          created_at: string
+          id: string
+          report_id: string
+          report_version: number | null
+          request_id: string | null
+          resolution_note: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          section_key: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          author_id?: string | null
+          author_type?: string
+          comment_text: string
+          created_at?: string
+          id?: string
+          report_id: string
+          report_version?: number | null
+          request_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          section_key?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string | null
+          author_id?: string | null
+          author_type?: string
+          comment_text?: string
+          created_at?: string
+          id?: string
+          report_id?: string
+          report_version?: number | null
+          request_id?: string | null
+          resolution_note?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          section_key?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_comments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_comments_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_comments_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_comments_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_signatures: {
         Row: {
           id: string

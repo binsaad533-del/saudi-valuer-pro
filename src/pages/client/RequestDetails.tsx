@@ -12,11 +12,12 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowRight, FileText, MessageSquare, Send, Loader2, Bot, User,
   CreditCard, Building2, CheckCircle, XCircle, Upload, Download,
-  Clock, DollarSign, Shield, AlertCircle,
+  Clock, DollarSign, Shield, AlertCircle, MessageSquareText,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
+import ClientReportReview from "@/components/reports/ClientReportReview";
 
 const STATUS_TIMELINE = [
   { key: "submitted", label: "تم الإرسال" },
@@ -49,6 +50,7 @@ export default function RequestDetails() {
   const [messages, setMessages] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -74,6 +76,14 @@ export default function RequestDetails() {
     setMessages(msgRes.data || []);
     setDocuments(docRes.data || []);
     setPayments(payRes.data || []);
+
+    // Load reports if assignment exists
+    const reqData = reqRes.data as any;
+    if (reqData?.assignment_id) {
+      const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", reqData.assignment_id).order("created_at", { ascending: false });
+      setReports((reps as any[]) || []);
+    }
+
     setLoading(false);
   };
 
@@ -379,24 +389,23 @@ export default function RequestDetails() {
             )}
 
             {/* Draft Report */}
-            {showDraftReport && (
+            {showDraftReport && reports.length > 0 && (
+              <ClientReportReview reportId={reports[0].id} requestId={id!} />
+            )}
+            {showDraftReport && reports.length === 0 && (
               <Card className="shadow-card border-info/20">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <FileText className="w-4 h-4 text-info" />مسودة التقرير
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent>
                   <div className="p-4 bg-muted/30 rounded-lg border-2 border-dashed border-warning/30 text-center">
                     <div className="text-warning font-bold text-lg mb-1 opacity-40">DRAFT / مسودة</div>
-                    <p className="text-xs text-muted-foreground">هذه مسودة للمراجعة - ليست التقرير النهائي</p>
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <AlertCircle className="w-3 h-3" />
-                    <span>يمكنك إضافة ملاحظاتك عبر المحادثة</span>
+                    <p className="text-xs text-muted-foreground">هذه مسودة للمراجعة - يمكنك إضافة ملاحظاتك عبر المحادثة</p>
                   </div>
                   {request.draft_report_url && (
-                    <Button variant="outline" className="w-full" size="sm">
+                    <Button variant="outline" className="w-full mt-3" size="sm">
                       <Download className="w-3 h-3 ml-1" />تحميل المسودة
                     </Button>
                   )}

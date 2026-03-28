@@ -13,9 +13,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, FileText, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Clock, AlertCircle, Building2, DollarSign, Bot, Brain, BarChart3,
+  Clock, AlertCircle, Building2, DollarSign, Bot, Brain, BarChart3, MessageSquareText,
 } from "lucide-react";
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
+import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   draft: { label: "مسودة", color: "bg-muted text-muted-foreground" },
@@ -59,6 +60,10 @@ export default function ClientRequests() {
   const [payments, setPayments] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [aiSuggesting, setAiSuggesting] = useState(false);
+  const [revisionDialog, setRevisionDialog] = useState(false);
+  const [selectedReportId, setSelectedReportId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
 
   // Pricing form
   const [pricingForm, setPricingForm] = useState({
@@ -337,6 +342,21 @@ export default function ClientRequests() {
                             <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
+                        {(req.status === "draft_report_sent" || req.status === "client_comments") && (
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            // Load report for this assignment
+                            const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", req.assignment_id).order("created_at", { ascending: false }).limit(1);
+                            const report = (reps as any[])?.[0];
+                            if (report) {
+                              setSelectedReportId(report.id);
+                              setSelectedAssignmentId(req.assignment_id);
+                              setSelectedRequestId(req.id);
+                              setRevisionDialog(true);
+                            }
+                          }}>
+                            <MessageSquareText className="w-3 h-3 ml-1" />المراجعات
+                          </Button>
+                        )}
                         {req.status === "fully_paid" && !req.draft_report_url && (
                           <Button size="sm" onClick={() => moveToStatus(req.id, "in_production")}>
                             بدء الإنتاج
@@ -522,6 +542,26 @@ export default function ClientRequests() {
               <p className="text-center text-sm text-muted-foreground py-4">لا توجد إيصالات بانتظار المراجعة</p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Revision Dialog */}
+      <Dialog open={revisionDialog} onOpenChange={setRevisionDialog}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquareText className="w-5 h-5 text-primary" />
+              مراجعات وملاحظات التقرير
+            </DialogTitle>
+          </DialogHeader>
+          {selectedReportId && selectedAssignmentId && (
+            <ReportRevisionPanel
+              reportId={selectedReportId}
+              assignmentId={selectedAssignmentId}
+              requestId={selectedRequestId || undefined}
+              isAdmin={true}
+            />
+          )}
         </DialogContent>
       </Dialog>
     </div>
