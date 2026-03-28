@@ -56,6 +56,7 @@ export default function RequestDetails() {
   const [uploading, setUploading] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentType, setPaymentType] = useState("first");
+  const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
