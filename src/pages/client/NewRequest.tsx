@@ -647,8 +647,9 @@ export default function NewRequest() {
                     rows={2}
                   />
                 </div>
+                </>
+                )}
               </CardContent>
-            </Card>
 
             {/* Files */}
             <Card className="shadow-card">
