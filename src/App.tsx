@@ -21,6 +21,7 @@ import ClientRegister from "@/pages/client/ClientRegister";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
+import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 
 const queryClient = new QueryClient();
 
