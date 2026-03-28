@@ -841,6 +841,16 @@ serve(async (req) => {
           hbu: hbuResult,
           valuation: { approaches },
           reconciliation: reconResult,
+          inspection_analysis: inspectionAnalysis ? {
+            condition_rating: inspectionAnalysis.condition_rating,
+            condition_score: inspectionAnalysis.condition_score,
+            quality_score: inspectionAnalysis.quality_score,
+            depreciation: {
+              physical: inspectionAnalysis.physical_depreciation_pct,
+              functional: inspectionAnalysis.functional_obsolescence_pct,
+              external: inspectionAnalysis.external_obsolescence_pct,
+            },
+          } : null,
         },
         audit_trail: allAudit,
         calculation_errors: allCalcErrors,
