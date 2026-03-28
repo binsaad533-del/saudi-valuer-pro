@@ -22,6 +22,7 @@ import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
+import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 
 const queryClient = new QueryClient();
 
