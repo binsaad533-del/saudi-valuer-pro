@@ -74,7 +74,7 @@ export default function PortfolioAssetList({ assets, onRemove, readOnly }: Portf
 
       {/* Asset list */}
       <div className="space-y-2 max-h-[300px] overflow-y-auto">
-        {assets.map((asset, i) => (
+        {assets.map((asset) => (
           <div
             key={asset.id}
             className="flex items-start gap-2 p-2.5 rounded-lg border border-border bg-card text-xs"
