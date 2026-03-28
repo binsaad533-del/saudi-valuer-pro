@@ -51,6 +51,7 @@ const navItems: NavItem[] = [
   { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
   { label: "طلبات العملاء", icon: Users, path: "/client-requests" },
   { label: "محرك التقييم", icon: Brain, path: "/valuation-production" },
+  { label: "المعاينات الميدانية", icon: MapPin, path: "/inspector" },
   { label: "الامتثال", icon: Shield, path: "/compliance" },
   { label: "الإعدادات", icon: Settings, path: "/settings" },
 ];

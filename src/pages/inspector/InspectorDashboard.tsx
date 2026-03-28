@@ -39,8 +39,6 @@ export default function InspectorDashboard() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setLoading(false); return; }
-    setUserId(user.id);
-
     const [inspRes, profileRes] = await Promise.all([
       supabase
         .from("inspections")
