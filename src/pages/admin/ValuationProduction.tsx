@@ -26,8 +26,11 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { InspectionAnalysisView } from "@/components/inspectors/InspectionAnalysisView";
+import { Clipboard } from "lucide-react";
 
 const PIPELINE_STEPS = [
+  { key: "inspection", label: "تحليل المعاينة (AI)", icon: Clipboard, ai: true },
   { key: "classify", label: "تصنيف البيانات (AI)", icon: Brain, ai: true },
   { key: "adjustments", label: "اقتراح التعديلات (AI)", icon: TrendingUp, ai: true },
   { key: "hbu", label: "تحليل HBU (AI)", icon: Search, ai: true },
@@ -44,6 +47,7 @@ export default function ValuationProduction() {
   const { toast } = useToast();
 
   const [assignment, setAssignment] = useState<any>(null);
+  const [inspection, setInspection] = useState<any>(null);
   const [reports, setReports] = useState<any[]>([]);
   const [compliance, setCompliance] = useState<ComplianceResult | null>(null);
   const [methods, setMethods] = useState<any[]>([]);
@@ -63,13 +67,15 @@ export default function ValuationProduction() {
 
   const loadData = async () => {
     setLoading(true);
-    const [aRes, rRes, mRes, recRes] = await Promise.all([
+    const [aRes, rRes, mRes, recRes, insRes] = await Promise.all([
       supabase.from("valuation_assignments").select("*").eq("id", assignmentId!).single(),
       supabase.from("reports").select("*").eq("assignment_id", assignmentId!).order("version", { ascending: false }),
       supabase.from("valuation_methods").select("*, valuation_calculations(*)").eq("assignment_id", assignmentId!),
       supabase.from("reconciliation_results").select("*").eq("assignment_id", assignmentId!).maybeSingle(),
+      supabase.from("inspections").select("*").eq("assignment_id", assignmentId!).order("created_at", { ascending: false }).limit(1),
     ]);
     setAssignment(aRes.data);
+    setInspection((insRes.data as any)?.[0] || null);
     setReports(rRes.data || []);
     setMethods(mRes.data || []);
     setRecon(recRes.data);
@@ -165,8 +171,9 @@ export default function ValuationProduction() {
       </div>
 
       <Tabs defaultValue="engine" dir="rtl">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="engine">المحرك</TabsTrigger>
+          <TabsTrigger value="inspection">المعاينة</TabsTrigger>
           <TabsTrigger value="audit">مسار التدقيق</TabsTrigger>
           <TabsTrigger value="results">النتائج</TabsTrigger>
           <TabsTrigger value="compliance">الامتثال</TabsTrigger>
@@ -259,6 +266,24 @@ export default function ValuationProduction() {
                     {calcErrors.map((e: string, i: number) => <p key={i} className="text-xs text-destructive/80">• {e}</p>)}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        {/* Inspection Analysis Tab */}
+        <TabsContent value="inspection" className="space-y-4 mt-4">
+          {inspection ? (
+            <InspectionAnalysisView
+              inspectionId={inspection.id}
+              assignmentId={assignmentId!}
+              isAdmin={true}
+            />
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12 text-muted-foreground">
+                <Clipboard className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p>لا توجد معاينة مرتبطة بهذه المهمة</p>
               </CardContent>
             </Card>
           )}

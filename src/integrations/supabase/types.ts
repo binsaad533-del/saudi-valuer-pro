@@ -787,6 +787,133 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_analysis: {
+        Row: {
+          adjustment_factors: Json | null
+          ai_confidence: number | null
+          ai_model_used: string | null
+          ai_reasoning_ar: string | null
+          ai_reasoning_en: string | null
+          assignment_id: string
+          checklist_summary: Json | null
+          condition_adjustment_pct: number | null
+          condition_rating: string | null
+          condition_score: number | null
+          created_at: string
+          environment_quality: string | null
+          external_obsolescence_pct: number | null
+          finishing_level: string | null
+          functional_obsolescence_pct: number | null
+          id: string
+          inspection_id: string
+          inspector_notes_summary: string | null
+          is_overridden: boolean | null
+          maintenance_level: string | null
+          original_ai_data: Json | null
+          override_at: string | null
+          override_by: string | null
+          override_notes: string | null
+          photo_analysis: Json | null
+          physical_depreciation_pct: number | null
+          processed_at: string | null
+          quality_score: number | null
+          risk_flags: Json | null
+          status: string
+          updated_at: string
+          visible_defects: Json | null
+        }
+        Insert: {
+          adjustment_factors?: Json | null
+          ai_confidence?: number | null
+          ai_model_used?: string | null
+          ai_reasoning_ar?: string | null
+          ai_reasoning_en?: string | null
+          assignment_id: string
+          checklist_summary?: Json | null
+          condition_adjustment_pct?: number | null
+          condition_rating?: string | null
+          condition_score?: number | null
+          created_at?: string
+          environment_quality?: string | null
+          external_obsolescence_pct?: number | null
+          finishing_level?: string | null
+          functional_obsolescence_pct?: number | null
+          id?: string
+          inspection_id: string
+          inspector_notes_summary?: string | null
+          is_overridden?: boolean | null
+          maintenance_level?: string | null
+          original_ai_data?: Json | null
+          override_at?: string | null
+          override_by?: string | null
+          override_notes?: string | null
+          photo_analysis?: Json | null
+          physical_depreciation_pct?: number | null
+          processed_at?: string | null
+          quality_score?: number | null
+          risk_flags?: Json | null
+          status?: string
+          updated_at?: string
+          visible_defects?: Json | null
+        }
+        Update: {
+          adjustment_factors?: Json | null
+          ai_confidence?: number | null
+          ai_model_used?: string | null
+          ai_reasoning_ar?: string | null
+          ai_reasoning_en?: string | null
+          assignment_id?: string
+          checklist_summary?: Json | null
+          condition_adjustment_pct?: number | null
+          condition_rating?: string | null
+          condition_score?: number | null
+          created_at?: string
+          environment_quality?: string | null
+          external_obsolescence_pct?: number | null
+          finishing_level?: string | null
+          functional_obsolescence_pct?: number | null
+          id?: string
+          inspection_id?: string
+          inspector_notes_summary?: string | null
+          is_overridden?: boolean | null
+          maintenance_level?: string | null
+          original_ai_data?: Json | null
+          override_at?: string | null
+          override_by?: string | null
+          override_notes?: string | null
+          photo_analysis?: Json | null
+          physical_depreciation_pct?: number | null
+          processed_at?: string | null
+          quality_score?: number | null
+          risk_flags?: Json | null
+          status?: string
+          updated_at?: string
+          visible_defects?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_analysis_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_analysis_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspection_analysis_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: true
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspection_checklist_items: {
         Row: {
           category: string

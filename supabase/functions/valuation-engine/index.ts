@@ -493,6 +493,13 @@ serve(async (req) => {
         if (req) request = { ...assignment, ...req };
       }
 
+      // Fetch inspection analysis data
+      const { data: inspectionAnalysis } = await sb.from("inspection_analysis")
+        .select("*")
+        .eq("assignment_id", assignment_id)
+        .eq("status", "completed")
+        .maybeSingle();
+
       // Fetch comparables from DB
       const { data: assignmentComps } = await sb.from("assignment_comparables").select("*, comparables(*)").eq("assignment_id", assignment_id);
       const { data: allComps } = await sb.from("comparables").select("*").eq("property_type", subject.property_type || "residential").limit(10);
@@ -501,6 +508,17 @@ serve(async (req) => {
 
       const allAudit: AuditStep[] = [];
       const allCalcErrors: string[] = [];
+
+      // ── STEP 0.5: Enrich subject with inspection data ──
+      if (inspectionAnalysis) {
+        console.log("Enriching subject with inspection analysis data...");
+        if (!subject.building_condition) subject.building_condition = inspectionAnalysis.condition_rating;
+        (subject as any).inspection_condition_score = inspectionAnalysis.condition_score;
+        (subject as any).inspection_quality_score = inspectionAnalysis.quality_score;
+        (subject as any).inspection_finishing_level = inspectionAnalysis.finishing_level;
+        (subject as any).inspection_defects = inspectionAnalysis.visible_defects;
+        (subject as any).inspection_risk_flags = inspectionAnalysis.risk_flags;
+      }
 
       // ── STEP 1: AI classifies data (no calculations) ──
       console.log("Step 1: AI data classification...");
@@ -540,7 +558,10 @@ serve(async (req) => {
           location: clampAdjustment("location", c.location_adj || 0),
           size: clampAdjustment("size", c.size_adj || 0),
           age: clampAdjustment("age", c.age_adj || 0),
-          condition: clampAdjustment("condition", c.condition_adj || 0),
+          // Use inspection-derived condition adjustment if available, otherwise AI suggestion
+          condition: clampAdjustment("condition", inspectionAnalysis?.condition_adjustment_pct != null
+            ? Number(inspectionAnalysis.condition_adjustment_pct)
+            : (c.condition_adj || 0)),
           time: clampAdjustment("time", c.time_adj || 0),
         },
       }));
@@ -570,8 +591,12 @@ serve(async (req) => {
         calculations: marketResult.audit,
       }];
 
-      // Cost Approach
+      // Cost Approach — use inspection analysis for depreciation if available
       let costValue: number | null = null;
+      const inspPhysDep = inspectionAnalysis?.physical_depreciation_pct ?? null;
+      const inspFuncObs = inspectionAnalysis?.functional_obsolescence_pct ?? null;
+      const inspExtObs = inspectionAnalysis?.external_obsolescence_pct ?? null;
+
       if (decisions.use_cost && normalizedData.areas?.building_sqm > 0) {
         const costResult = calcCostApproach(
           normalizedData.areas.land_sqm || subjectArea,
@@ -579,7 +604,9 @@ serve(async (req) => {
           normalizedData.areas.building_sqm || 0,
           decisions.replacement_cost_per_sqm || 3000,
           normalizedData.building_details?.year_built ? (new Date().getFullYear() - normalizedData.building_details.year_built) : 10,
-          decisions.useful_life_years || 45
+          decisions.useful_life_years || 45,
+          inspFuncObs != null ? Number(inspFuncObs) : undefined,
+          inspExtObs != null ? Number(inspExtObs) : undefined
         );
         costValue = costResult.value;
         allAudit.push(...costResult.audit);
@@ -670,6 +697,16 @@ serve(async (req) => {
         approaches,
         hbu: hbuResult,
         market_overview: aiAdjustments.market_overview_ar,
+        inspection_analysis: inspectionAnalysis ? {
+          condition_rating: inspectionAnalysis.condition_rating,
+          condition_score: inspectionAnalysis.condition_score,
+          finishing_level: inspectionAnalysis.finishing_level,
+          quality_score: inspectionAnalysis.quality_score,
+          defects_count: (inspectionAnalysis.visible_defects as any[] || []).length,
+          risk_flags_count: (inspectionAnalysis.risk_flags as any[] || []).length,
+          physical_depreciation_pct: inspectionAnalysis.physical_depreciation_pct,
+          condition_adjustment_pct: inspectionAnalysis.condition_adjustment_pct,
+        } : null,
       };
       const reportContent = await aiGenerateReport(normalizedData, calculationSummary, hbuResult, request);
 
@@ -804,6 +841,16 @@ serve(async (req) => {
           hbu: hbuResult,
           valuation: { approaches },
           reconciliation: reconResult,
+          inspection_analysis: inspectionAnalysis ? {
+            condition_rating: inspectionAnalysis.condition_rating,
+            condition_score: inspectionAnalysis.condition_score,
+            quality_score: inspectionAnalysis.quality_score,
+            depreciation: {
+              physical: inspectionAnalysis.physical_depreciation_pct,
+              functional: inspectionAnalysis.functional_obsolescence_pct,
+              external: inspectionAnalysis.external_obsolescence_pct,
+            },
+          } : null,
         },
         audit_trail: allAudit,
         calculation_errors: allCalcErrors,
