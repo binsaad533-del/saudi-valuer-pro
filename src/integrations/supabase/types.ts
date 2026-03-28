@@ -916,6 +916,62 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_receipts: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          file_name: string
+          file_path: string
+          id: string
+          payment_type: string | null
+          request_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string | null
+          uploaded_by: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          file_name: string
+          file_path: string
+          id?: string
+          payment_type?: string | null
+          request_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          uploaded_by: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          file_name?: string
+          file_path?: string
+          id?: string
+          payment_type?: string | null
+          request_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string | null
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_receipts_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1224,6 +1280,106 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_documents: {
+        Row: {
+          ai_category: string | null
+          ai_classification_confidence: number | null
+          ai_extracted_data: Json | null
+          ai_is_relevant: boolean | null
+          ai_notes: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          manual_category: string | null
+          mime_type: string | null
+          request_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          ai_category?: string | null
+          ai_classification_confidence?: number | null
+          ai_extracted_data?: Json | null
+          ai_is_relevant?: boolean | null
+          ai_notes?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          manual_category?: string | null
+          mime_type?: string | null
+          request_id: string
+          uploaded_by: string
+        }
+        Update: {
+          ai_category?: string | null
+          ai_classification_confidence?: number | null
+          ai_extracted_data?: Json | null
+          ai_is_relevant?: boolean | null
+          ai_notes?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          manual_category?: string | null
+          mime_type?: string | null
+          request_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_documents_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      request_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          metadata: Json | null
+          request_id: string
+          sender_id: string | null
+          sender_type: Database["public"]["Enums"]["message_sender_type"]
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          request_id: string
+          sender_id?: string | null
+          sender_type: Database["public"]["Enums"]["message_sender_type"]
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          metadata?: Json | null
+          request_id?: string
+          sender_id?: string | null
+          sender_type?: Database["public"]["Enums"]["message_sender_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_messages_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
             referencedColumns: ["id"]
           },
         ]
@@ -1924,6 +2080,178 @@ export type Database = {
           },
         ]
       }
+      valuation_requests: {
+        Row: {
+          ai_complexity_level: string | null
+          ai_intake_summary: Json | null
+          ai_missing_items: Json | null
+          ai_suggested_category: string | null
+          ai_suggested_price: number | null
+          ai_suggested_turnaround: string | null
+          ai_validated: boolean | null
+          amount_paid: number | null
+          assignment_id: string | null
+          basis_of_value: Database["public"]["Enums"]["basis_of_value"] | null
+          building_area: number | null
+          client_user_id: string
+          created_at: string
+          fees_breakdown: Json | null
+          id: string
+          intended_use_ar: string | null
+          intended_use_en: string | null
+          intended_users_ar: string | null
+          intended_users_en: string | null
+          land_area: number | null
+          organization_id: string | null
+          payment_status: string | null
+          property_address_ar: string | null
+          property_address_en: string | null
+          property_city_ar: string | null
+          property_city_en: string | null
+          property_description_ar: string | null
+          property_description_en: string | null
+          property_district_ar: string | null
+          property_district_en: string | null
+          property_type: Database["public"]["Enums"]["property_type"] | null
+          purpose: Database["public"]["Enums"]["valuation_purpose"] | null
+          quotation_amount: number | null
+          quotation_currency: string | null
+          quotation_notes_ar: string | null
+          quotation_notes_en: string | null
+          quotation_response_at: string | null
+          quotation_sent_at: string | null
+          reference_number: string | null
+          scope_of_work_ar: string | null
+          scope_of_work_en: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          submitted_at: string | null
+          terms_ar: string | null
+          terms_en: string | null
+          total_fees: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_complexity_level?: string | null
+          ai_intake_summary?: Json | null
+          ai_missing_items?: Json | null
+          ai_suggested_category?: string | null
+          ai_suggested_price?: number | null
+          ai_suggested_turnaround?: string | null
+          ai_validated?: boolean | null
+          amount_paid?: number | null
+          assignment_id?: string | null
+          basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
+          building_area?: number | null
+          client_user_id: string
+          created_at?: string
+          fees_breakdown?: Json | null
+          id?: string
+          intended_use_ar?: string | null
+          intended_use_en?: string | null
+          intended_users_ar?: string | null
+          intended_users_en?: string | null
+          land_area?: number | null
+          organization_id?: string | null
+          payment_status?: string | null
+          property_address_ar?: string | null
+          property_address_en?: string | null
+          property_city_ar?: string | null
+          property_city_en?: string | null
+          property_description_ar?: string | null
+          property_description_en?: string | null
+          property_district_ar?: string | null
+          property_district_en?: string | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          purpose?: Database["public"]["Enums"]["valuation_purpose"] | null
+          quotation_amount?: number | null
+          quotation_currency?: string | null
+          quotation_notes_ar?: string | null
+          quotation_notes_en?: string | null
+          quotation_response_at?: string | null
+          quotation_sent_at?: string | null
+          reference_number?: string | null
+          scope_of_work_ar?: string | null
+          scope_of_work_en?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          submitted_at?: string | null
+          terms_ar?: string | null
+          terms_en?: string | null
+          total_fees?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_complexity_level?: string | null
+          ai_intake_summary?: Json | null
+          ai_missing_items?: Json | null
+          ai_suggested_category?: string | null
+          ai_suggested_price?: number | null
+          ai_suggested_turnaround?: string | null
+          ai_validated?: boolean | null
+          amount_paid?: number | null
+          assignment_id?: string | null
+          basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
+          building_area?: number | null
+          client_user_id?: string
+          created_at?: string
+          fees_breakdown?: Json | null
+          id?: string
+          intended_use_ar?: string | null
+          intended_use_en?: string | null
+          intended_users_ar?: string | null
+          intended_users_en?: string | null
+          land_area?: number | null
+          organization_id?: string | null
+          payment_status?: string | null
+          property_address_ar?: string | null
+          property_address_en?: string | null
+          property_city_ar?: string | null
+          property_city_en?: string | null
+          property_description_ar?: string | null
+          property_description_en?: string | null
+          property_district_ar?: string | null
+          property_district_en?: string | null
+          property_type?: Database["public"]["Enums"]["property_type"] | null
+          purpose?: Database["public"]["Enums"]["valuation_purpose"] | null
+          quotation_amount?: number | null
+          quotation_currency?: string | null
+          quotation_notes_ar?: string | null
+          quotation_notes_en?: string | null
+          quotation_response_at?: string | null
+          quotation_sent_at?: string | null
+          reference_number?: string | null
+          scope_of_work_ar?: string | null
+          scope_of_work_en?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          submitted_at?: string | null
+          terms_ar?: string | null
+          terms_en?: string | null
+          total_fees?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "valuation_requests_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valuation_requests_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valuation_requests_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_assignment_pipeline: {
@@ -2097,6 +2425,7 @@ export type Database = {
         | "liquidation_value"
         | "synergistic_value"
         | "other"
+      message_sender_type: "client" | "admin" | "ai" | "system"
       property_type:
         | "residential"
         | "commercial"
@@ -2115,6 +2444,30 @@ export type Database = {
         | "internal_draft"
         | "review_report"
         | "compliance_checklist"
+      request_status:
+        | "draft"
+        | "ai_review"
+        | "submitted"
+        | "needs_clarification"
+        | "under_pricing"
+        | "quotation_sent"
+        | "quotation_approved"
+        | "quotation_rejected"
+        | "awaiting_payment"
+        | "payment_uploaded"
+        | "payment_under_review"
+        | "partially_paid"
+        | "fully_paid"
+        | "in_production"
+        | "draft_report_sent"
+        | "client_comments"
+        | "final_payment_pending"
+        | "final_payment_uploaded"
+        | "final_payment_approved"
+        | "final_report_ready"
+        | "completed"
+        | "archived"
+        | "cancelled"
       review_finding_severity: "critical" | "major" | "minor" | "observation"
       valuation_approach:
         | "sales_comparison"
@@ -2347,6 +2700,7 @@ export const Constants = {
         "synergistic_value",
         "other",
       ],
+      message_sender_type: ["client", "admin", "ai", "system"],
       property_type: [
         "residential",
         "commercial",
@@ -2366,6 +2720,31 @@ export const Constants = {
         "internal_draft",
         "review_report",
         "compliance_checklist",
+      ],
+      request_status: [
+        "draft",
+        "ai_review",
+        "submitted",
+        "needs_clarification",
+        "under_pricing",
+        "quotation_sent",
+        "quotation_approved",
+        "quotation_rejected",
+        "awaiting_payment",
+        "payment_uploaded",
+        "payment_under_review",
+        "partially_paid",
+        "fully_paid",
+        "in_production",
+        "draft_report_sent",
+        "client_comments",
+        "final_payment_pending",
+        "final_payment_uploaded",
+        "final_payment_approved",
+        "final_report_ready",
+        "completed",
+        "archived",
+        "cancelled",
       ],
       review_finding_severity: ["critical", "major", "minor", "observation"],
       valuation_approach: [
