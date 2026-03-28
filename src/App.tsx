@@ -41,6 +41,7 @@ const App = () => (
             <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/verify" element={<VerifyReport />} />
             <Route path="/client-requests" element={<ClientRequests />} />
+            <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
           </Route>
 
           {/* Client Portal Routes */}
