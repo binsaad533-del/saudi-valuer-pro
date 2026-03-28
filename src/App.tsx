@@ -10,6 +10,7 @@ import NewValuation from "@/pages/NewValuation";
 import ComparablesPage from "@/pages/ComparablesPage";
 import ArchivePage from "@/pages/ArchivePage";
 import VerifyReport from "@/pages/VerifyReport";
+import ReportGenerator from "@/pages/ReportGenerator";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
