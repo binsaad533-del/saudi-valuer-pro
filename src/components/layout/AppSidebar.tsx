@@ -20,6 +20,7 @@ import {
   Cog,
   Brain,
   MapPin,
+  Globe,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
