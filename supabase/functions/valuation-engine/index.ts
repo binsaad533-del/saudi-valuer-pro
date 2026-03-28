@@ -14,6 +14,193 @@ function supabaseAdmin() {
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 }
 
+// ============================================================
+// ADJUSTMENT RULES (deterministic, not AI)
+// ============================================================
+const ADJUSTMENT_RULES: Record<string, { min: number; max: number }> = {
+  location: { min: -0.20, max: 0.20 },
+  size:     { min: -0.15, max: 0.15 },
+  age:      { min: -0.30, max: 0.00 },
+  condition:{ min: -0.20, max: 0.10 },
+  time:     { min: -0.10, max: 0.15 },
+};
+
+function clampAdjustment(type: string, value: number): number {
+  const rule = ADJUSTMENT_RULES[type];
+  if (!rule) return value;
+  return Math.max(rule.min, Math.min(rule.max, value));
+}
+
+function validateAdjustment(type: string, value: number): { valid: boolean; clamped: number; original: number } {
+  const rule = ADJUSTMENT_RULES[type];
+  if (!rule) return { valid: true, clamped: value, original: value };
+  const clamped = clampAdjustment(type, value);
+  return { valid: clamped === value, clamped, original: value };
+}
+
+// ============================================================
+// DETERMINISTIC CALCULATION ENGINE (NO AI)
+// ============================================================
+
+interface AuditStep {
+  step: number;
+  label_ar: string;
+  label_en: string;
+  formula: string;
+  inputs: Record<string, any>;
+  result: number;
+  unit: string;
+}
+
+// Market Approach
+function calcMarketApproach(
+  comparables: Array<{ id: string; price: number; area: number; adjustments: Record<string, number> }>,
+  subjectArea: number,
+  weights?: number[]
+): { value: number; price_per_sqm: number; audit: AuditStep[]; errors: string[] } {
+  const audit: AuditStep[] = [];
+  const errors: string[] = [];
+  let step = 1;
+
+  if (!comparables.length) return { value: 0, price_per_sqm: 0, audit, errors: ["No comparables"] };
+
+  const adjustedPrices: number[] = [];
+
+  for (const comp of comparables) {
+    const basePsm = comp.price / comp.area;
+    audit.push({ step: step++, label_ar: `سعر المتر الأساسي - مقارن`, label_en: `Base price/sqm`, formula: "price / area", inputs: { price: comp.price, area: comp.area }, result: Math.round(basePsm * 100) / 100, unit: "SAR/sqm" });
+
+    let totalAdj = 0;
+    for (const [type, pct] of Object.entries(comp.adjustments)) {
+      const v = validateAdjustment(type, pct);
+      if (!v.valid) {
+        errors.push(`Adjustment ${type}: ${(pct*100).toFixed(1)}% clamped to ${(v.clamped*100).toFixed(1)}%`);
+      }
+      totalAdj += v.clamped;
+    }
+
+    const adjPsm = basePsm * (1 + totalAdj);
+    audit.push({ step: step++, label_ar: `السعر المعدّل`, label_en: `Adjusted price/sqm`, formula: "base * (1 + Σadj)", inputs: { base: Math.round(basePsm * 100) / 100, total_adj_pct: Math.round(totalAdj * 10000) / 100 }, result: Math.round(adjPsm * 100) / 100, unit: "SAR/sqm" });
+
+    adjustedPrices.push(adjPsm);
+  }
+
+  let avgPsm: number;
+  if (weights && weights.length === comparables.length) {
+    const wSum = weights.reduce((a, b) => a + b, 0);
+    avgPsm = adjustedPrices.reduce((s, p, i) => s + p * (weights[i] / wSum), 0);
+  } else {
+    avgPsm = adjustedPrices.reduce((a, b) => a + b, 0) / adjustedPrices.length;
+  }
+
+  const value = avgPsm * subjectArea;
+  audit.push({ step: step++, label_ar: "القيمة بأسلوب المقارنة", label_en: "Market approach value", formula: "avg_price_sqm * subject_area", inputs: { avg_psm: Math.round(avgPsm * 100) / 100, area: subjectArea }, result: Math.round(value), unit: "SAR" });
+
+  return { value: Math.round(value), price_per_sqm: Math.round(avgPsm * 100) / 100, audit, errors };
+}
+
+// Cost Approach
+function calcCostApproach(
+  landArea: number, landRate: number,
+  buildingArea: number, replacementCostSqm: number,
+  ageYears: number, usefulLife: number,
+  functionalObs?: number, externalObs?: number
+): { value: number; land_value: number; building_value: number; audit: AuditStep[]; errors: string[] } {
+  const audit: AuditStep[] = [];
+  const errors: string[] = [];
+  let step = 1;
+
+  const landValue = landArea * landRate;
+  audit.push({ step: step++, label_ar: "قيمة الأرض", label_en: "Land Value", formula: "land_area * land_rate", inputs: { land_area: landArea, land_rate: landRate }, result: Math.round(landValue), unit: "SAR" });
+
+  const replCost = buildingArea * replacementCostSqm;
+  audit.push({ step: step++, label_ar: "تكلفة الإحلال", label_en: "Replacement Cost", formula: "building_area * cost_sqm", inputs: { building_area: buildingArea, cost_sqm: replacementCostSqm }, result: Math.round(replCost), unit: "SAR" });
+
+  const physDep = Math.min(ageYears / usefulLife, 1);
+  const funcDep = functionalObs ?? 0;
+  const extDep = externalObs ?? 0;
+  const totalDep = Math.min(physDep + funcDep + extDep, 1);
+
+  audit.push({ step: step++, label_ar: "الإهلاك الكلي", label_en: "Total Depreciation", formula: "min(age/life + functional + external, 1)", inputs: { age: ageYears, life: usefulLife, phys_pct: Math.round(physDep * 100), func_pct: Math.round(funcDep * 100), ext_pct: Math.round(extDep * 100), total_pct: Math.round(totalDep * 100) }, result: Math.round(replCost * totalDep), unit: "SAR" });
+
+  const depBldg = replCost * (1 - totalDep);
+  const total = landValue + depBldg;
+
+  audit.push({ step: step++, label_ar: "القيمة بأسلوب التكلفة", label_en: "Cost Approach Value", formula: "land_value + building * (1 - depreciation)", inputs: { land: Math.round(landValue), building_dep: Math.round(depBldg) }, result: Math.round(total), unit: "SAR" });
+
+  return { value: Math.round(total), land_value: Math.round(landValue), building_value: Math.round(depBldg), audit, errors };
+}
+
+// Income Approach
+function calcIncomeApproach(
+  grossIncome: number, vacancyRate: number,
+  expenses: number, capRate: number
+): { value: number; noi: number; audit: AuditStep[]; errors: string[] } {
+  const audit: AuditStep[] = [];
+  const errors: string[] = [];
+  let step = 1;
+
+  if (capRate <= 0 || capRate > 0.25) errors.push(`Cap rate ${(capRate*100).toFixed(1)}% outside 1%-25%`);
+  if (vacancyRate < 0 || vacancyRate > 1) errors.push("Invalid vacancy rate");
+
+  const egi = grossIncome * (1 - vacancyRate);
+  audit.push({ step: step++, label_ar: "الدخل الإجمالي الفعلي", label_en: "EGI", formula: "gross * (1 - vacancy)", inputs: { gross: grossIncome, vacancy_pct: Math.round(vacancyRate * 100) }, result: Math.round(egi), unit: "SAR" });
+
+  const noi = egi - expenses;
+  audit.push({ step: step++, label_ar: "صافي الدخل التشغيلي", label_en: "NOI", formula: "EGI - expenses", inputs: { egi: Math.round(egi), expenses }, result: Math.round(noi), unit: "SAR" });
+
+  const value = capRate > 0 ? noi / capRate : 0;
+  audit.push({ step: step++, label_ar: "القيمة بأسلوب الدخل", label_en: "Income Approach Value", formula: "NOI / cap_rate", inputs: { noi: Math.round(noi), cap_rate_pct: (capRate * 100).toFixed(2) }, result: Math.round(value), unit: "SAR" });
+
+  return { value: Math.round(value), noi: Math.round(noi), audit, errors };
+}
+
+// Reconciliation (deterministic)
+function calcReconciliation(
+  marketValue: number | null, costValue: number | null, incomeValue: number | null,
+  wMarket: number, wCost: number, wIncome: number
+): { final_value: number; range_low: number; range_high: number; variance_pct: number; audit: AuditStep[]; errors: string[] } {
+  const audit: AuditStep[] = [];
+  const errors: string[] = [];
+  let step = 1;
+
+  const wSum = wMarket + wCost + wIncome;
+  if (Math.abs(wSum - 1) > 0.01) errors.push(`Weights sum to ${(wSum*100).toFixed(0)}% not 100%`);
+
+  const vals = [marketValue, costValue, incomeValue].filter((v): v is number => v != null && v > 0);
+  let variance = 0;
+  if (vals.length >= 2) {
+    variance = ((Math.max(...vals) - Math.min(...vals)) / Math.min(...vals)) * 100;
+    if (variance > 30) errors.push(`High method variance: ${variance.toFixed(1)}% (>30%)`);
+  }
+
+  let total = 0;
+  if (marketValue && marketValue > 0) {
+    const c = marketValue * wMarket;
+    total += c;
+    audit.push({ step: step++, label_ar: "مساهمة المقارنة", label_en: "Market contribution", formula: "value * weight", inputs: { value: marketValue, weight_pct: Math.round(wMarket * 100) }, result: Math.round(c), unit: "SAR" });
+  }
+  if (costValue && costValue > 0) {
+    const c = costValue * wCost;
+    total += c;
+    audit.push({ step: step++, label_ar: "مساهمة التكلفة", label_en: "Cost contribution", formula: "value * weight", inputs: { value: costValue, weight_pct: Math.round(wCost * 100) }, result: Math.round(c), unit: "SAR" });
+  }
+  if (incomeValue && incomeValue > 0) {
+    const c = incomeValue * wIncome;
+    total += c;
+    audit.push({ step: step++, label_ar: "مساهمة الدخل", label_en: "Income contribution", formula: "value * weight", inputs: { value: incomeValue, weight_pct: Math.round(wIncome * 100) }, result: Math.round(c), unit: "SAR" });
+  }
+
+  const final = Math.round(total);
+  audit.push({ step: step++, label_ar: "القيمة النهائية", label_en: "Final Value", formula: "Σ(value_i * weight_i)", inputs: { methods_used: vals.length }, result: final, unit: "SAR" });
+
+  return { final_value: final, range_low: Math.round(final * 0.95), range_high: Math.round(final * 1.05), variance_pct: Math.round(variance * 100) / 100, audit, errors };
+}
+
+// ============================================================
+// AI FUNCTIONS (limited to reasoning/reporting ONLY)
+// ============================================================
+
 async function callAI(systemPrompt: string, userPrompt: string, tools?: any[], toolChoice?: any) {
   const body: any = {
     model: "google/gemini-2.5-flash",
@@ -22,21 +209,14 @@ async function callAI(systemPrompt: string, userPrompt: string, tools?: any[], t
       { role: "user", content: userPrompt },
     ],
   };
-  if (tools) {
-    body.tools = tools;
-    body.tool_choice = toolChoice;
-  }
+  if (tools) { body.tools = tools; body.tool_choice = toolChoice; }
 
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-
-  if (!resp.ok) {
-    const t = await resp.text();
-    throw new Error(`AI error ${resp.status}: ${t}`);
-  }
+  if (!resp.ok) throw new Error(`AI error ${resp.status}: ${await resp.text()}`);
   return resp.json();
 }
 
@@ -46,66 +226,26 @@ function extractToolResult(aiResponse: any): any {
   return JSON.parse(tc.function.arguments);
 }
 
-// ============================================================
-// STEP 1: Data Normalization
-// ============================================================
-async function normalizeData(request: any, subject: any) {
-  const systemPrompt = `أنت محرك تقييم عقاري متخصص متوافق مع معايير التقييم الدولية IVS 2025 وهيئة المقيّمين المعتمدين (تقييم).
-مهمتك: تطبيع وتنظيم بيانات العقار من مدخلات العميل.`;
-
-  const userPrompt = `بيانات الطلب:
-${JSON.stringify(request, null, 2)}
-
-بيانات العقار:
-${JSON.stringify(subject, null, 2)}
-
-حلل البيانات وأعد تنظيمها بشكل منهجي.`;
-
+// AI: Normalize data (classification only, no calculations)
+async function aiNormalizeData(request: any, subject: any) {
   const tools = [{
     type: "function",
     function: {
       name: "normalize_property_data",
-      description: "Normalize and structure property data for valuation",
+      description: "Classify and organize property data",
       parameters: {
         type: "object",
         properties: {
           property_type: { type: "string", enum: ["residential", "commercial", "land", "industrial", "mixed_use", "agricultural"] },
           property_subtype: { type: "string" },
-          location: {
-            type: "object",
-            properties: {
-              city_ar: { type: "string" }, city_en: { type: "string" },
-              district_ar: { type: "string" }, district_en: { type: "string" },
-              region_ar: { type: "string" }, region_en: { type: "string" },
-            },
-            required: ["city_ar"],
-          },
-          areas: {
-            type: "object",
-            properties: {
-              land_sqm: { type: "number" }, building_sqm: { type: "number" },
-              frontage_m: { type: "number" }, depth_m: { type: "number" },
-            },
-          },
-          usage: {
-            type: "object",
-            properties: {
-              current_use_ar: { type: "string" }, current_use_en: { type: "string" },
-              permitted_use_ar: { type: "string" }, permitted_use_en: { type: "string" },
-              zoning_ar: { type: "string" }, zoning_en: { type: "string" },
-            },
-          },
-          building_details: {
-            type: "object",
-            properties: {
-              year_built: { type: "number" }, condition: { type: "string" },
-              floors: { type: "number" }, units: { type: "number" },
-            },
-          },
+          location: { type: "object", properties: { city_ar: { type: "string" }, city_en: { type: "string" }, district_ar: { type: "string" }, district_en: { type: "string" }, region_ar: { type: "string" }, region_en: { type: "string" } }, required: ["city_ar"] },
+          areas: { type: "object", properties: { land_sqm: { type: "number" }, building_sqm: { type: "number" }, frontage_m: { type: "number" }, depth_m: { type: "number" } } },
+          usage: { type: "object", properties: { current_use_ar: { type: "string" }, current_use_en: { type: "string" }, permitted_use_ar: { type: "string" }, permitted_use_en: { type: "string" }, zoning_ar: { type: "string" }, zoning_en: { type: "string" } } },
+          building_details: { type: "object", properties: { year_built: { type: "number" }, condition: { type: "string" }, floors: { type: "number" }, units: { type: "number" } } },
           purpose_ar: { type: "string" }, purpose_en: { type: "string" },
           basis_of_value_ar: { type: "string" }, basis_of_value_en: { type: "string" },
-          data_quality_score: { type: "number", description: "0-100 data completeness" },
-          missing_data: { type: "array", items: { type: "object", properties: { field: { type: "string" }, importance: { type: "string", enum: ["critical", "important", "optional"] } }, required: ["field", "importance"] } },
+          data_quality_score: { type: "number" },
+          missing_data: { type: "array", items: { type: "object", properties: { field: { type: "string" }, importance: { type: "string", enum: ["critical", "important", "optional"] } } } },
         },
         required: ["property_type", "location", "areas", "data_quality_score"],
         additionalProperties: false,
@@ -113,100 +253,114 @@ ${JSON.stringify(subject, null, 2)}
     },
   }];
 
-  const result = await callAI(systemPrompt, userPrompt, tools, { type: "function", function: { name: "normalize_property_data" } });
+  const result = await callAI(
+    `أنت مصنّف بيانات عقارية. لا تقم بأي حسابات مالية. فقط نظّم وصنّف البيانات.`,
+    `بيانات الطلب:\n${JSON.stringify(request, null, 2)}\n\nبيانات العقار:\n${JSON.stringify(subject, null, 2)}`,
+    tools, { type: "function", function: { name: "normalize_property_data" } }
+  );
   return extractToolResult(result);
 }
 
-// ============================================================
-// STEP 2: Market Data Integration
-// ============================================================
-async function integrateMarketData(normalizedData: any, assignmentId: string) {
-  const sb = supabaseAdmin();
-
-  // Fetch internal comparables
-  const { data: comparables } = await sb
-    .from("comparables")
-    .select("*")
-    .eq("property_type", normalizedData.property_type === "residential" ? "residential" : normalizedData.property_type)
-    .limit(20);
-
-  // Fetch linked assignment comparables
-  const { data: assignmentComps } = await sb
-    .from("assignment_comparables")
-    .select("*, comparables(*)")
-    .eq("assignment_id", assignmentId);
-
-  const systemPrompt = `أنت محلل سوق عقاري سعودي متخصص. حلل بيانات السوق والمقارنات المتاحة.`;
-
-  const compsForAI = (assignmentComps?.length ? assignmentComps : comparables?.slice(0, 10)) || [];
-
-  const userPrompt = `بيانات العقار المقيّم:
-${JSON.stringify(normalizedData, null, 2)}
-
-المقارنات المتاحة:
-${JSON.stringify(compsForAI, null, 2)}
-
-حلل السوق وحدد أفضل المقارنات وسعر المتر المربع السائد.`;
-
+// AI: Suggest adjustments (system validates/clamps)
+async function aiSuggestAdjustments(normalizedData: any, comparables: any[]) {
   const tools = [{
     type: "function",
     function: {
-      name: "market_analysis",
-      description: "Market analysis and comparable selection",
+      name: "suggest_adjustments",
+      description: "Suggest adjustment percentages for comparables",
       parameters: {
         type: "object",
         properties: {
-          market_overview_ar: { type: "string" },
-          market_overview_en: { type: "string" },
-          market_trend: { type: "string", enum: ["rising", "stable", "declining"] },
-          avg_price_per_sqm: { type: "number" },
-          price_range_low: { type: "number" },
-          price_range_high: { type: "number" },
-          selected_comparables: {
+          comparables: {
             type: "array",
             items: {
               type: "object",
               properties: {
                 comparable_id: { type: "string" },
-                relevance_score: { type: "number" },
-                price_per_sqm: { type: "number" },
-                adjustments_needed: { type: "array", items: { type: "string" } },
+                location_adj: { type: "number", description: "Location adjustment -0.20 to +0.20" },
+                size_adj: { type: "number", description: "Size adjustment -0.15 to +0.15" },
+                age_adj: { type: "number", description: "Age adjustment -0.30 to 0" },
+                condition_adj: { type: "number", description: "Condition adjustment -0.20 to +0.10" },
+                time_adj: { type: "number", description: "Time adjustment -0.10 to +0.15" },
+                justification_ar: { type: "string" },
+                justification_en: { type: "string" },
               },
+              required: ["comparable_id", "location_adj", "size_adj", "age_adj", "condition_adj", "time_adj"],
             },
           },
-          data_sources_ar: { type: "string" },
-          data_sources_en: { type: "string" },
+          market_trend: { type: "string", enum: ["rising", "stable", "declining"] },
+          avg_price_per_sqm: { type: "number" },
+          market_overview_ar: { type: "string" },
+          market_overview_en: { type: "string" },
         },
-        required: ["market_overview_ar", "market_overview_en", "avg_price_per_sqm"],
+        required: ["comparables", "market_trend", "avg_price_per_sqm"],
         additionalProperties: false,
       },
     },
   }];
 
-  const result = await callAI(systemPrompt, userPrompt, tools, { type: "function", function: { name: "market_analysis" } });
+  const result = await callAI(
+    `أنت محلل سوق عقاري. اقترح نسب تعديل للمقارنات. النطاقات المسموحة: الموقع ±20%، المساحة ±15%، العمر -30% إلى 0%، الحالة -20% إلى +10%، الوقت -10% إلى +15%. لا تقم بأي حسابات مالية - فقط اقترح النسب.`,
+    `العقار:\n${JSON.stringify(normalizedData, null, 2)}\n\nالمقارنات:\n${JSON.stringify(comparables, null, 2)}`,
+    tools, { type: "function", function: { name: "suggest_adjustments" } }
+  );
   return extractToolResult(result);
 }
 
-// ============================================================
-// STEP 3: Highest & Best Use
-// ============================================================
-async function analyzeHBU(normalizedData: any, marketData: any) {
-  const systemPrompt = `أنت خبير تحليل الاستخدام الأعلى والأفضل (HBU) وفقاً لمعايير IVS 2025.
-يجب تحليل أربعة معايير: الجواز القانوني، الإمكانية الفيزيائية، الجدوى المالية، الإنتاجية القصوى.`;
+// AI: Decide which approaches to use and suggest weights
+async function aiDecideApproaches(normalizedData: any, marketData: any) {
+  const tools = [{
+    type: "function",
+    function: {
+      name: "approach_decisions",
+      description: "Decide which valuation approaches to use and suggest weights",
+      parameters: {
+        type: "object",
+        properties: {
+          use_market: { type: "boolean" },
+          use_cost: { type: "boolean" },
+          use_income: { type: "boolean" },
+          weight_market: { type: "number", description: "0-1, all weights must sum to 1" },
+          weight_cost: { type: "number" },
+          weight_income: { type: "number" },
+          reason_market_ar: { type: "string" }, reason_market_en: { type: "string" },
+          reason_cost_ar: { type: "string" }, reason_cost_en: { type: "string" },
+          reason_income_ar: { type: "string" }, reason_income_en: { type: "string" },
+          // Cost approach inputs (AI estimates if not available)
+          land_rate_per_sqm: { type: "number", description: "Estimated land rate SAR/sqm" },
+          replacement_cost_per_sqm: { type: "number", description: "Estimated building replacement cost SAR/sqm" },
+          useful_life_years: { type: "number", description: "Estimated useful life 30-60 years" },
+          // Income approach inputs
+          estimated_gross_income: { type: "number" },
+          estimated_vacancy_rate: { type: "number" },
+          estimated_expenses: { type: "number" },
+          estimated_cap_rate: { type: "number" },
+        },
+        required: ["use_market", "weight_market", "weight_cost", "weight_income"],
+        additionalProperties: false,
+      },
+    },
+  }];
 
-  const userPrompt = `بيانات العقار:
-${JSON.stringify(normalizedData, null, 2)}
+  const result = await callAI(
+    `أنت خبير تقييم عقاري. حدد أي أساليب التقييم مناسبة واقترح أوزان الترجيح. لا تقم بأي حسابات - فقط حدد المنهجية والمدخلات.
+القواعد:
+- أسلوب المقارنة إلزامي دائماً (use_market = true)
+- مجموع الأوزان يجب أن يساوي 1
+- الأوزان الافتراضية: مقارنة 60%، تكلفة 25%، دخل 15%`,
+    `العقار:\n${JSON.stringify(normalizedData, null, 2)}\n\nبيانات السوق:\n${JSON.stringify(marketData, null, 2)}`,
+    tools, { type: "function", function: { name: "approach_decisions" } }
+  );
+  return extractToolResult(result);
+}
 
-بيانات السوق:
-${JSON.stringify(marketData, null, 2)}
-
-أجرِ تحليل HBU كاملاً.`;
-
+// AI: HBU Analysis (qualitative only)
+async function aiHBU(normalizedData: any, marketOverview: string) {
   const tools = [{
     type: "function",
     function: {
       name: "hbu_analysis",
-      description: "Highest and Best Use analysis",
+      description: "Qualitative HBU analysis",
       parameters: {
         type: "object",
         properties: {
@@ -223,193 +377,21 @@ ${JSON.stringify(marketData, null, 2)}
     },
   }];
 
-  const result = await callAI(systemPrompt, userPrompt, tools, { type: "function", function: { name: "hbu_analysis" } });
+  const result = await callAI(
+    `أنت خبير HBU. قدّم تحليلاً نوعياً فقط. لا تقم بأي حسابات مالية.`,
+    `العقار:\n${JSON.stringify(normalizedData, null, 2)}\n\nنظرة السوق: ${marketOverview}`,
+    tools, { type: "function", function: { name: "hbu_analysis" } }
+  );
   return extractToolResult(result);
 }
 
-// ============================================================
-// STEP 4: Valuation Approaches
-// ============================================================
-async function runValuationApproaches(normalizedData: any, marketData: any, hbuResult: any) {
-  const systemPrompt = `أنت محرك تقييم عقاري محترف. طبّق أساليب التقييم المناسبة وفقاً لمعايير IVS 2025 وتقييم.
-
-القواعد:
-- أسلوب المقارنة بالمبيعات (إلزامي دائماً)
-- أسلوب التكلفة (للعقارات المبنية)
-- أسلوب الدخل (للعقارات المدرة للدخل)
-- أسلوب التطوير/المتبقي (للأراضي التطويرية)
-- يجب تبرير كل أسلوب مستخدم وغير مستخدم
-- الحسابات يجب أن تكون واقعية ومبنية على البيانات`;
-
-  const userPrompt = `بيانات العقار:
-${JSON.stringify(normalizedData, null, 2)}
-
-تحليل السوق:
-${JSON.stringify(marketData, null, 2)}
-
-تحليل HBU:
-${JSON.stringify(hbuResult, null, 2)}
-
-طبّق جميع أساليب التقييم المناسبة مع حسابات تفصيلية.`;
-
-  const tools = [{
-    type: "function",
-    function: {
-      name: "valuation_approaches",
-      description: "Apply valuation approaches with calculations",
-      parameters: {
-        type: "object",
-        properties: {
-          approaches: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                approach: { type: "string", enum: ["sales_comparison", "cost", "income", "residual", "dcf"] },
-                is_used: { type: "boolean" },
-                is_primary: { type: "boolean" },
-                reason_for_use_ar: { type: "string" },
-                reason_for_use_en: { type: "string" },
-                reason_for_rejection_ar: { type: "string" },
-                reason_for_rejection_en: { type: "string" },
-                concluded_value: { type: "number" },
-                weight: { type: "number", description: "Weight 0-1 for reconciliation" },
-                calculations: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      step_number: { type: "number" },
-                      label_ar: { type: "string" },
-                      label_en: { type: "string" },
-                      formula: { type: "string" },
-                      input_data: { type: "object" },
-                      result_value: { type: "number" },
-                      result_unit: { type: "string" },
-                      explanation_ar: { type: "string" },
-                      explanation_en: { type: "string" },
-                    },
-                    required: ["step_number", "label_ar", "result_value"],
-                  },
-                },
-                adjustments: {
-                  type: "array",
-                  items: {
-                    type: "object",
-                    properties: {
-                      label_ar: { type: "string" }, label_en: { type: "string" },
-                      adjustment_type: { type: "string", enum: ["location", "size", "age", "condition", "time", "zoning", "features", "other"] },
-                      adjustment_percentage: { type: "number" },
-                      adjustment_amount: { type: "number" },
-                      justification_ar: { type: "string" },
-                      justification_en: { type: "string" },
-                    },
-                    required: ["label_ar", "adjustment_type"],
-                  },
-                },
-              },
-              required: ["approach", "is_used", "concluded_value"],
-            },
-          },
-          approaches_considered_ar: { type: "string" },
-          approaches_considered_en: { type: "string" },
-        },
-        required: ["approaches"],
-        additionalProperties: false,
-      },
-    },
-  }];
-
-  const result = await callAI(systemPrompt, userPrompt, tools, { type: "function", function: { name: "valuation_approaches" } });
-  return extractToolResult(result);
-}
-
-// ============================================================
-// STEP 5: Reconciliation
-// ============================================================
-async function reconcile(normalizedData: any, valuationResult: any) {
-  const usedApproaches = valuationResult.approaches.filter((a: any) => a.is_used && a.concluded_value);
-
-  const systemPrompt = `أنت خبير تسوية تقييم عقاري. قم بترجيح الأساليب المستخدمة والوصول إلى القيمة النهائية.
-يجب أن تكون القيمة النهائية مبنية على ترجيح منطقي وموضوعي مع تبرير واضح.`;
-
-  const userPrompt = `نتائج أساليب التقييم:
-${JSON.stringify(usedApproaches, null, 2)}
-
-بيانات العقار:
-${JSON.stringify(normalizedData, null, 2)}
-
-أجرِ التسوية وحدد القيمة النهائية.`;
-
-  const tools = [{
-    type: "function",
-    function: {
-      name: "reconciliation",
-      description: "Reconcile valuation approaches and determine final value",
-      parameters: {
-        type: "object",
-        properties: {
-          final_value: { type: "number" },
-          final_value_text_ar: { type: "string", description: "Value in Arabic words" },
-          final_value_text_en: { type: "string", description: "Value in English words" },
-          currency: { type: "string" },
-          confidence_level: { type: "string", enum: ["high", "moderate", "low"] },
-          value_range_low: { type: "number" },
-          value_range_high: { type: "number" },
-          reasoning_ar: { type: "string" },
-          reasoning_en: { type: "string" },
-          weights_applied: {
-            type: "array",
-            items: {
-              type: "object",
-              properties: {
-                approach: { type: "string" },
-                weight: { type: "number" },
-                justification_ar: { type: "string" },
-              },
-              required: ["approach", "weight"],
-            },
-          },
-        },
-        required: ["final_value", "final_value_text_ar", "reasoning_ar", "confidence_level"],
-        additionalProperties: false,
-      },
-    },
-  }];
-
-  const result = await callAI(systemPrompt, userPrompt, tools, { type: "function", function: { name: "reconciliation" } });
-  return extractToolResult(result);
-}
-
-// ============================================================
-// STEP 6: Generate Report Content
-// ============================================================
-async function generateReportContent(
-  normalizedData: any, marketData: any, hbuResult: any,
-  valuationResult: any, reconciliationResult: any, request: any
-) {
-  const systemPrompt = `أنت كاتب تقارير تقييم عقاري محترف. اكتب محتوى تقرير تقييم كامل ثنائي اللغة متوافق مع IVS 2025 وتقييم.
-
-يجب أن يكون المحتوى:
-- مهنياً وموضوعياً
-- مفصلاً وشاملاً
-- خالياً من أي آراء شخصية خارج نطاق التقييم
-- متوافقاً مع المعايير الدولية والمحلية`;
-
-  const userPrompt = `أنشئ محتوى تقرير تقييم كامل بناءً على:
-
-بيانات العقار: ${JSON.stringify(normalizedData, null, 2)}
-تحليل السوق: ${JSON.stringify(marketData, null, 2)}
-تحليل HBU: ${JSON.stringify(hbuResult, null, 2)}
-نتائج التقييم: ${JSON.stringify(valuationResult, null, 2)}
-التسوية والقيمة النهائية: ${JSON.stringify(reconciliationResult, null, 2)}
-بيانات الطلب: ${JSON.stringify({ purpose: request.purpose, basis: request.basis_of_value }, null, 2)}`;
-
+// AI: Generate report text (narrative only, uses pre-calculated numbers)
+async function aiGenerateReport(normalizedData: any, calculationResults: any, hbu: any, request: any) {
   const tools = [{
     type: "function",
     function: {
       name: "generate_report",
-      description: "Generate full bilingual valuation report content",
+      description: "Write report narrative using pre-calculated values",
       parameters: {
         type: "object",
         properties: {
@@ -428,64 +410,62 @@ async function generateReportContent(
           special_assumptions_ar: { type: "string" }, special_assumptions_en: { type: "string" },
           limiting_conditions_ar: { type: "string" }, limiting_conditions_en: { type: "string" },
           compliance_statement_ar: { type: "string" }, compliance_statement_en: { type: "string" },
+          final_value_text_ar: { type: "string", description: "القيمة النهائية كتابةً بالعربي" },
+          final_value_text_en: { type: "string", description: "Final value in words" },
         },
-        required: [
-          "executive_summary_ar", "purpose_ar", "property_description_ar",
-          "market_analysis_ar", "valuation_methodology_ar", "value_conclusion_ar",
-          "assumptions_ar", "limiting_conditions_ar", "compliance_statement_ar",
-        ],
+        required: ["executive_summary_ar", "purpose_ar", "property_description_ar", "market_analysis_ar", "valuation_methodology_ar", "value_conclusion_ar", "assumptions_ar", "limiting_conditions_ar", "compliance_statement_ar", "final_value_text_ar"],
         additionalProperties: false,
       },
     },
   }];
 
-  const result = await callAI(systemPrompt, userPrompt, tools, { type: "function", function: { name: "generate_report" } });
+  const result = await callAI(
+    `أنت كاتب تقارير تقييم. اكتب النص الروائي للتقرير باستخدام الأرقام المحسوبة مسبقاً. لا تغيّر أي رقم. استخدم القيم المقدمة كما هي.`,
+    `العقار:\n${JSON.stringify(normalizedData, null, 2)}\n\nنتائج الحسابات:\n${JSON.stringify(calculationResults, null, 2)}\n\nتحليل HBU:\n${JSON.stringify(hbu, null, 2)}\n\nبيانات الطلب:\n${JSON.stringify({ purpose: request.purpose, basis: request.basis_of_value }, null, 2)}`,
+    tools, { type: "function", function: { name: "generate_report" } }
+  );
   return extractToolResult(result);
 }
 
 // ============================================================
-// COMPLIANCE CHECK
+// COMPLIANCE (deterministic)
 // ============================================================
-function runComplianceChecks(reportContent: any, reconciliation: any, normalizedData: any) {
+function runComplianceChecks(reportContent: any, reconciliation: any, normalizedData: any, calcErrors: string[]) {
   const checks: Array<{ code: string; name_ar: string; name_en: string; category: string; passed: boolean; mandatory: boolean; notes?: string }> = [];
-
-  const addCheck = (code: string, nameAr: string, nameEn: string, cat: string, passed: boolean, mandatory = true, notes?: string) => {
-    checks.push({ code, name_ar: nameAr, name_en: nameEn, category: cat, passed, mandatory, notes });
+  const add = (code: string, ar: string, en: string, cat: string, passed: boolean, mandatory = true, notes?: string) => {
+    checks.push({ code, name_ar: ar, name_en: en, category: cat, passed, mandatory, notes });
   };
 
   // IVS Structure
-  addCheck("IVS_EXEC_SUMMARY", "الملخص التنفيذي", "Executive Summary", "ivs_structure", !!reportContent.executive_summary_ar);
-  addCheck("IVS_PURPOSE", "غرض التقييم", "Valuation Purpose", "ivs_structure", !!reportContent.purpose_ar);
-  addCheck("IVS_SCOPE", "نطاق العمل", "Scope of Work", "ivs_structure", !!reportContent.scope_of_work_ar);
-  addCheck("IVS_PROPERTY_DESC", "وصف العقار", "Property Description", "ivs_structure", !!reportContent.property_description_ar);
-  addCheck("IVS_MARKET", "تحليل السوق", "Market Analysis", "ivs_structure", !!reportContent.market_analysis_ar);
-  addCheck("IVS_HBU", "تحليل الاستخدام الأعلى والأفضل", "HBU Analysis", "ivs_structure", !!reportContent.hbu_analysis_ar);
-  addCheck("IVS_METHODOLOGY", "منهجية التقييم", "Valuation Methodology", "ivs_structure", !!reportContent.valuation_methodology_ar);
-  addCheck("IVS_CONCLUSION", "الخلاصة والقيمة", "Value Conclusion", "ivs_structure", !!reportContent.value_conclusion_ar);
-  addCheck("IVS_ASSUMPTIONS", "الافتراضات", "Assumptions", "ivs_structure", !!reportContent.assumptions_ar);
-  addCheck("IVS_LIMITING", "القيود", "Limiting Conditions", "ivs_structure", !!reportContent.limiting_conditions_ar);
-  addCheck("IVS_COMPLIANCE", "بيان الامتثال", "Compliance Statement", "ivs_structure", !!reportContent.compliance_statement_ar);
+  add("IVS_EXEC_SUMMARY", "الملخص التنفيذي", "Executive Summary", "ivs_structure", !!reportContent.executive_summary_ar);
+  add("IVS_PURPOSE", "غرض التقييم", "Valuation Purpose", "ivs_structure", !!reportContent.purpose_ar);
+  add("IVS_SCOPE", "نطاق العمل", "Scope of Work", "ivs_structure", !!reportContent.scope_of_work_ar);
+  add("IVS_PROPERTY_DESC", "وصف العقار", "Property Description", "ivs_structure", !!reportContent.property_description_ar);
+  add("IVS_MARKET", "تحليل السوق", "Market Analysis", "ivs_structure", !!reportContent.market_analysis_ar);
+  add("IVS_HBU", "الاستخدام الأعلى والأفضل", "HBU Analysis", "ivs_structure", !!reportContent.hbu_analysis_ar);
+  add("IVS_METHODOLOGY", "منهجية التقييم", "Valuation Methodology", "ivs_structure", !!reportContent.valuation_methodology_ar);
+  add("IVS_CONCLUSION", "الخلاصة والقيمة", "Value Conclusion", "ivs_structure", !!reportContent.value_conclusion_ar);
+  add("IVS_ASSUMPTIONS", "الافتراضات", "Assumptions", "ivs_structure", !!reportContent.assumptions_ar);
+  add("IVS_LIMITING", "القيود", "Limiting Conditions", "ivs_structure", !!reportContent.limiting_conditions_ar);
+  add("IVS_COMPLIANCE", "بيان الامتثال", "Compliance Statement", "ivs_structure", !!reportContent.compliance_statement_ar);
 
   // Value checks
-  addCheck("VAL_FINAL", "القيمة النهائية محددة", "Final Value Set", "valuation", reconciliation.final_value > 0);
-  addCheck("VAL_TEXT", "القيمة كتابةً", "Value in Words", "valuation", !!reconciliation.final_value_text_ar);
-  addCheck("VAL_REASONING", "تبرير القيمة", "Value Reasoning", "valuation", !!reconciliation.reasoning_ar);
-  addCheck("VAL_RANGE", "نطاق القيمة", "Value Range", "valuation", reconciliation.value_range_low > 0 && reconciliation.value_range_high > 0, false);
+  add("VAL_FINAL", "القيمة النهائية", "Final Value", "valuation", reconciliation.final_value > 0);
+  add("VAL_TEXT", "القيمة كتابةً", "Value in Words", "valuation", !!reconciliation.final_value_text_ar);
+  add("VAL_REASONING", "تبرير القيمة", "Reasoning", "valuation", !!reconciliation.reasoning_ar);
 
-  // Data completeness
-  addCheck("DATA_AREA", "المساحات محددة", "Areas Specified", "data", normalizedData.areas?.land_sqm > 0);
-  addCheck("DATA_LOCATION", "الموقع محدد", "Location Specified", "data", !!normalizedData.location?.city_ar);
-  addCheck("DATA_TYPE", "نوع العقار", "Property Type", "data", !!normalizedData.property_type);
+  // Calculation validation
+  add("CALC_NO_ERRORS", "حسابات بدون أخطاء", "No Calculation Errors", "calculation", calcErrors.length === 0, true, calcErrors.join("; "));
+  add("CALC_ADJ_RANGE", "تعديلات ضمن النطاق", "Adjustments in Range", "calculation", !calcErrors.some(e => e.includes("clamped")));
+  add("CALC_VARIANCE", "تباين الطرق <30%", "Method Variance <30%", "calculation", !calcErrors.some(e => e.includes("variance")), false);
+
+  // Data
+  add("DATA_AREA", "المساحات", "Areas", "data", normalizedData.areas?.land_sqm > 0);
+  add("DATA_LOCATION", "الموقع", "Location", "data", !!normalizedData.location?.city_ar);
+  add("DATA_TYPE", "نوع العقار", "Property Type", "data", !!normalizedData.property_type);
 
   const mandatoryFailed = checks.filter(c => c.mandatory && !c.passed);
-  return {
-    checks,
-    total: checks.length,
-    passed: checks.filter(c => c.passed).length,
-    failed: checks.filter(c => !c.passed).length,
-    mandatory_failures: mandatoryFailed.length,
-    ready_for_issuance: mandatoryFailed.length === 0,
-  };
+  return { checks, total: checks.length, passed: checks.filter(c => c.passed).length, failed: checks.filter(c => !c.passed).length, mandatory_failures: mandatoryFailed.length, ready_for_issuance: mandatoryFailed.length === 0 };
 }
 
 // ============================================================
@@ -501,52 +481,208 @@ serve(async (req) => {
     const sb = supabaseAdmin();
 
     if (action === "run_full_valuation") {
-      // Fetch assignment data
-      const { data: assignment, error: aErr } = await sb
-        .from("valuation_assignments")
-        .select("*")
-        .eq("id", assignment_id)
-        .single();
+      const { data: assignment, error: aErr } = await sb.from("valuation_assignments").select("*").eq("id", assignment_id).single();
       if (aErr || !assignment) throw new Error("Assignment not found");
 
-      // Fetch subject
       const { data: subjects } = await sb.from("subjects").select("*").eq("assignment_id", assignment_id);
       const subject = subjects?.[0] || {};
 
-      // Fetch request if linked
       let request = assignment;
       if (request_id) {
         const { data: req } = await sb.from("valuation_requests").select("*").eq("id", request_id).single();
         if (req) request = { ...assignment, ...req };
       }
 
-      // Pipeline
-      console.log("Step 1: Normalizing data...");
-      const normalizedData = await normalizeData(request, subject);
+      // Fetch comparables from DB
+      const { data: assignmentComps } = await sb.from("assignment_comparables").select("*, comparables(*)").eq("assignment_id", assignment_id);
+      const { data: allComps } = await sb.from("comparables").select("*").eq("property_type", subject.property_type || "residential").limit(10);
 
-      console.log("Step 2: Market data integration...");
-      const marketData = await integrateMarketData(normalizedData, assignment_id);
+      const rawComps = assignmentComps?.length ? assignmentComps.map((ac: any) => ac.comparables).filter(Boolean) : (allComps || []);
 
-      console.log("Step 3: HBU Analysis...");
-      const hbuResult = await analyzeHBU(normalizedData, marketData);
+      const allAudit: AuditStep[] = [];
+      const allCalcErrors: string[] = [];
 
-      console.log("Step 4: Valuation approaches...");
-      const valuationResult = await runValuationApproaches(normalizedData, marketData, hbuResult);
+      // ── STEP 1: AI classifies data (no calculations) ──
+      console.log("Step 1: AI data classification...");
+      const normalizedData = await aiNormalizeData(request, subject);
 
-      console.log("Step 5: Reconciliation...");
-      const reconciliationResult = await reconcile(normalizedData, valuationResult);
+      // ── STEP 2: AI suggests adjustments (system validates) ──
+      console.log("Step 2: AI adjustment suggestions...");
+      const aiAdjustments = await aiSuggestAdjustments(normalizedData, rawComps);
 
-      console.log("Step 6: Report content generation...");
-      const reportContent = await generateReportContent(
-        normalizedData, marketData, hbuResult, valuationResult, reconciliationResult, request
-      );
+      // ── STEP 3: AI HBU (qualitative) ──
+      console.log("Step 3: AI HBU analysis...");
+      const hbuResult = await aiHBU(normalizedData, aiAdjustments.market_overview_ar || "");
 
-      console.log("Step 7: Compliance checks...");
-      const compliance = runComplianceChecks(reportContent, reconciliationResult, normalizedData);
+      // ── STEP 4: AI decides approaches + inputs ──
+      console.log("Step 4: AI approach decisions...");
+      const decisions = await aiDecideApproaches(normalizedData, aiAdjustments);
 
-      // Save results to DB
-      // Save valuation methods
-      for (const approach of valuationResult.approaches) {
+      // Enforce: market always used
+      decisions.use_market = true;
+      // Enforce: weights sum to 1
+      let wM = decisions.weight_market || 0.60;
+      let wC = decisions.weight_cost || 0.25;
+      let wI = decisions.weight_income || 0.15;
+      const wTotal = wM + wC + wI;
+      if (Math.abs(wTotal - 1) > 0.01) { wM /= wTotal; wC /= wTotal; wI /= wTotal; }
+
+      // ── STEP 5: DETERMINISTIC CALCULATIONS ──
+      console.log("Step 5: Deterministic calculations...");
+
+      // Market Approach (mandatory)
+      const subjectArea = normalizedData.areas?.land_sqm || subject.land_area || 500;
+      const marketComps = (aiAdjustments.comparables || []).map((c: any) => ({
+        id: c.comparable_id || "unknown",
+        price: rawComps.find((rc: any) => rc.id === c.comparable_id)?.price || aiAdjustments.avg_price_per_sqm * subjectArea,
+        area: rawComps.find((rc: any) => rc.id === c.comparable_id)?.land_area || subjectArea,
+        adjustments: {
+          location: clampAdjustment("location", c.location_adj || 0),
+          size: clampAdjustment("size", c.size_adj || 0),
+          age: clampAdjustment("age", c.age_adj || 0),
+          condition: clampAdjustment("condition", c.condition_adj || 0),
+          time: clampAdjustment("time", c.time_adj || 0),
+        },
+      }));
+
+      // Fallback if no comparables: use avg price
+      if (marketComps.length === 0 && aiAdjustments.avg_price_per_sqm) {
+        marketComps.push({
+          id: "market-avg",
+          price: aiAdjustments.avg_price_per_sqm * subjectArea,
+          area: subjectArea,
+          adjustments: { location: 0, size: 0, age: 0, condition: 0, time: 0 },
+        });
+      }
+
+      const marketResult = calcMarketApproach(marketComps, subjectArea);
+      allAudit.push(...marketResult.audit);
+      allCalcErrors.push(...marketResult.errors);
+
+      const approaches: any[] = [{
+        approach: "sales_comparison",
+        is_used: true,
+        is_primary: true,
+        concluded_value: marketResult.value,
+        weight: wM,
+        reason_for_use_ar: decisions.reason_market_ar || "أسلوب المقارنة بالمبيعات إلزامي",
+        reason_for_use_en: decisions.reason_market_en || "Sales comparison is mandatory",
+        calculations: marketResult.audit,
+      }];
+
+      // Cost Approach
+      let costValue: number | null = null;
+      if (decisions.use_cost && normalizedData.areas?.building_sqm > 0) {
+        const costResult = calcCostApproach(
+          normalizedData.areas.land_sqm || subjectArea,
+          decisions.land_rate_per_sqm || aiAdjustments.avg_price_per_sqm || 2000,
+          normalizedData.areas.building_sqm || 0,
+          decisions.replacement_cost_per_sqm || 3000,
+          normalizedData.building_details?.year_built ? (new Date().getFullYear() - normalizedData.building_details.year_built) : 10,
+          decisions.useful_life_years || 45
+        );
+        costValue = costResult.value;
+        allAudit.push(...costResult.audit);
+        allCalcErrors.push(...costResult.errors);
+        approaches.push({
+          approach: "cost",
+          is_used: true,
+          is_primary: false,
+          concluded_value: costResult.value,
+          weight: wC,
+          reason_for_use_ar: decisions.reason_cost_ar || "مناسب للعقارات المبنية",
+          reason_for_use_en: decisions.reason_cost_en || "Applicable for improved properties",
+          calculations: costResult.audit,
+        });
+      } else {
+        approaches.push({
+          approach: "cost",
+          is_used: false,
+          is_primary: false,
+          concluded_value: 0,
+          weight: 0,
+          reason_for_rejection_ar: decisions.reason_cost_ar || "غير مناسب لنوع العقار",
+          reason_for_rejection_en: decisions.reason_cost_en || "Not applicable",
+          calculations: [],
+        });
+        // Redistribute weight
+        wM += wC; wC = 0;
+      }
+
+      // Income Approach
+      let incomeValue: number | null = null;
+      if (decisions.use_income && (subject.annual_income || decisions.estimated_gross_income)) {
+        const incResult = calcIncomeApproach(
+          decisions.estimated_gross_income || subject.annual_income || 0,
+          decisions.estimated_vacancy_rate || 0.05,
+          decisions.estimated_expenses || 0,
+          decisions.estimated_cap_rate || 0.08
+        );
+        incomeValue = incResult.value;
+        allAudit.push(...incResult.audit);
+        allCalcErrors.push(...incResult.errors);
+        approaches.push({
+          approach: "income",
+          is_used: true,
+          is_primary: false,
+          concluded_value: incResult.value,
+          weight: wI,
+          reason_for_use_ar: decisions.reason_income_ar || "العقار مدر للدخل",
+          reason_for_use_en: decisions.reason_income_en || "Income producing property",
+          calculations: incResult.audit,
+        });
+      } else {
+        approaches.push({
+          approach: "income",
+          is_used: false,
+          is_primary: false,
+          concluded_value: 0,
+          weight: 0,
+          reason_for_rejection_ar: decisions.reason_income_ar || "العقار غير مدر للدخل",
+          reason_for_rejection_en: decisions.reason_income_en || "Not income producing",
+          calculations: [],
+        });
+        wM += wI; wI = 0;
+      }
+
+      // Renormalize weights
+      const finalWSum = wM + wC + wI;
+      if (finalWSum > 0) { wM /= finalWSum; wC /= finalWSum; wI /= finalWSum; }
+
+      // ── STEP 6: DETERMINISTIC RECONCILIATION ──
+      console.log("Step 6: Deterministic reconciliation...");
+      const reconResult = calcReconciliation(marketResult.value, costValue, incomeValue, wM, wC, wI);
+      allAudit.push(...reconResult.audit);
+      allCalcErrors.push(...reconResult.errors);
+
+      // ── STEP 7: AI writes report narrative (no calculations) ──
+      console.log("Step 7: AI report narrative...");
+      const calculationSummary = {
+        final_value: reconResult.final_value,
+        range_low: reconResult.range_low,
+        range_high: reconResult.range_high,
+        variance_pct: reconResult.variance_pct,
+        market_value: marketResult.value,
+        market_price_sqm: marketResult.price_per_sqm,
+        cost_value: costValue,
+        income_value: incomeValue,
+        weights: { market: wM, cost: wC, income: wI },
+        approaches,
+        hbu: hbuResult,
+        market_overview: aiAdjustments.market_overview_ar,
+      };
+      const reportContent = await aiGenerateReport(normalizedData, calculationSummary, hbuResult, request);
+
+      // ── STEP 8: Compliance ──
+      console.log("Step 8: Compliance checks...");
+      const compliance = runComplianceChecks(reportContent, { ...reconResult, final_value_text_ar: reportContent.final_value_text_ar, reasoning_ar: reportContent.reconciliation_ar || reportContent.value_conclusion_ar }, normalizedData, allCalcErrors);
+
+      // ── SAVE TO DB ──
+      // Delete old methods for re-run
+      await sb.from("valuation_methods").delete().eq("assignment_id", assignment_id);
+      await sb.from("compliance_checks").delete().eq("assignment_id", assignment_id);
+
+      for (const approach of approaches) {
         const { data: method } = await sb.from("valuation_methods").insert({
           assignment_id,
           approach: approach.approach,
@@ -561,41 +697,39 @@ serve(async (req) => {
           currency: "SAR",
         }).select().single();
 
-        if (method && approach.calculations) {
+        if (method && approach.calculations?.length) {
           for (const calc of approach.calculations) {
             await sb.from("valuation_calculations").insert({
               method_id: method.id,
-              step_number: calc.step_number,
+              step_number: calc.step,
               label_ar: calc.label_ar,
               label_en: calc.label_en || "",
               formula: calc.formula || "",
-              input_data: calc.input_data || {},
-              result_value: calc.result_value,
-              result_unit: calc.result_unit || "SAR",
-              explanation_ar: calc.explanation_ar || "",
-              explanation_en: calc.explanation_en || "",
+              input_data: calc.inputs || {},
+              result_value: calc.result,
+              result_unit: calc.unit || "SAR",
+              explanation_ar: "",
+              explanation_en: "",
             });
           }
         }
       }
 
-      // Save reconciliation
       await sb.from("reconciliation_results").upsert({
         assignment_id,
-        final_value: reconciliationResult.final_value,
-        final_value_text_ar: reconciliationResult.final_value_text_ar,
-        final_value_text_en: reconciliationResult.final_value_text_en || "",
-        currency: reconciliationResult.currency || "SAR",
-        confidence_level: reconciliationResult.confidence_level,
-        value_range_low: reconciliationResult.value_range_low || 0,
-        value_range_high: reconciliationResult.value_range_high || 0,
-        reasoning_ar: reconciliationResult.reasoning_ar,
-        reasoning_en: reconciliationResult.reasoning_en || "",
+        final_value: reconResult.final_value,
+        final_value_text_ar: reportContent.final_value_text_ar || "",
+        final_value_text_en: reportContent.final_value_text_en || "",
+        currency: "SAR",
+        confidence_level: reconResult.variance_pct < 10 ? "high" : reconResult.variance_pct < 20 ? "moderate" : "low",
+        value_range_low: reconResult.range_low,
+        value_range_high: reconResult.range_high,
+        reasoning_ar: reportContent.reconciliation_ar || reportContent.value_conclusion_ar || "",
+        reasoning_en: reportContent.reconciliation_en || reportContent.value_conclusion_en || "",
         highest_best_use_ar: hbuResult.conclusion_ar,
         highest_best_use_en: hbuResult.conclusion_en || "",
       }, { onConflict: "assignment_id" });
 
-      // Save compliance checks
       for (const check of compliance.checks) {
         await sb.from("compliance_checks").insert({
           assignment_id,
@@ -611,7 +745,6 @@ serve(async (req) => {
         });
       }
 
-      // Save report
       const { data: report } = await sb.from("reports").insert({
         assignment_id,
         title_ar: `تقرير تقييم - ${normalizedData.location?.city_ar || ""}`,
@@ -621,56 +754,44 @@ serve(async (req) => {
         content_ar: reportContent,
         content_en: reportContent,
         cover_page: {
-          title_ar: `تقرير تقييم عقار - ${normalizedData.property_type}`,
-          title_en: `Property Valuation Report - ${normalizedData.property_type}`,
+          title_ar: `تقرير تقييم عقار`,
+          title_en: `Property Valuation Report`,
           reference_number: assignment.reference_number,
           valuation_date: assignment.valuation_date || new Date().toISOString().split("T")[0],
           report_date: new Date().toISOString().split("T")[0],
-          final_value: reconciliationResult.final_value,
+          final_value: reconResult.final_value,
           currency: "SAR",
         },
         status: compliance.ready_for_issuance ? "draft" : "needs_review",
-        generated_by: "ai_engine",
+        generated_by: "calculation_engine_v2",
         version: 1,
       }).select().single();
 
-      // Save assumptions
-      const assumptions = [
-        { text_ar: reportContent.assumptions_ar, text_en: reportContent.assumptions_en, special: false },
-        { text_ar: reportContent.special_assumptions_ar, text_en: reportContent.special_assumptions_en, special: true },
-      ];
-      for (const a of assumptions) {
-        if (a.text_ar) {
-          await sb.from("assumptions").insert({
-            assignment_id,
-            assumption_ar: a.text_ar,
-            assumption_en: a.text_en || "",
-            is_special: a.special,
-          });
-        }
-      }
-
-      // Log
+      // Audit log with full trail
       await sb.from("audit_logs").insert({
         table_name: "valuation_assignments",
         action: "update",
         record_id: assignment_id,
         assignment_id,
-        description: "AI valuation engine completed full valuation pipeline",
+        description: "Calculation engine v2: deterministic calculations + AI reasoning",
         new_data: {
-          final_value: reconciliationResult.final_value,
-          approaches_used: valuationResult.approaches.filter((a: any) => a.is_used).length,
+          engine_version: "v2_deterministic",
+          final_value: reconResult.final_value,
+          approaches_used: approaches.filter((a: any) => a.is_used).length,
           compliance_score: `${compliance.passed}/${compliance.total}`,
-          ready_for_issuance: compliance.ready_for_issuance,
+          calc_errors: allCalcErrors,
+          audit_steps: allAudit.length,
+          ai_role: "classification, adjustments suggestion, HBU, report writing",
+          deterministic: "market calc, cost calc, income calc, reconciliation, compliance",
         },
       });
 
       return new Response(JSON.stringify({
         success: true,
         report_id: report?.id,
-        final_value: reconciliationResult.final_value,
-        final_value_text_ar: reconciliationResult.final_value_text_ar,
-        confidence_level: reconciliationResult.confidence_level,
+        final_value: reconResult.final_value,
+        final_value_text_ar: reportContent.final_value_text_ar || "",
+        confidence_level: reconResult.variance_pct < 10 ? "high" : reconResult.variance_pct < 20 ? "moderate" : "low",
         compliance: {
           ready: compliance.ready_for_issuance,
           passed: compliance.passed,
@@ -679,37 +800,28 @@ serve(async (req) => {
         },
         pipeline_steps: {
           normalized_data: normalizedData,
-          market_data: marketData,
+          market_data: aiAdjustments,
           hbu: hbuResult,
-          valuation: valuationResult,
-          reconciliation: reconciliationResult,
+          valuation: { approaches },
+          reconciliation: reconResult,
         },
-      }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+        audit_trail: allAudit,
+        calculation_errors: allCalcErrors,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     if (action === "compliance_check") {
-      // Run standalone compliance check for an assignment
       const { data: report } = await sb.from("reports").select("*").eq("assignment_id", assignment_id).order("version", { ascending: false }).limit(1).single();
       const { data: recon } = await sb.from("reconciliation_results").select("*").eq("assignment_id", assignment_id).single();
       const { data: subjects } = await sb.from("subjects").select("*").eq("assignment_id", assignment_id);
-
       if (!report || !recon) throw new Error("Report or reconciliation data not found");
-
-      const compliance = runComplianceChecks(report.content_ar || {}, recon, subjects?.[0] || {});
-
-      return new Response(JSON.stringify(compliance), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      const compliance = runComplianceChecks(report.content_ar || {}, recon, subjects?.[0] || {}, []);
+      return new Response(JSON.stringify(compliance), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     throw new Error(`Unknown action: ${action}`);
   } catch (e) {
     console.error("valuation-engine error:", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
   }
 });
