@@ -293,8 +293,6 @@ export default function MobileInspectionFlow() {
   };
 
   // Counts
-  const extPhotos = photos.filter(p => ["exterior_front", "exterior_back", "exterior_left", "exterior_right", "street_view", "surroundings"].includes(p.category));
-  const intPhotos = photos.filter(p => ["interior_living", "interior_kitchen", "interior_bathroom", "interior_bedroom"].includes(p.category));
   const requiredPhotoDone = PHOTO_CATEGORIES.filter(c => c.required).filter(c => photos.some(p => p.category === c.key)).length;
   const requiredPhotoTotal = PHOTO_CATEGORIES.filter(c => c.required).length;
   const checkedRequired = checklist.filter(c => c.is_required && c.is_checked).length;
