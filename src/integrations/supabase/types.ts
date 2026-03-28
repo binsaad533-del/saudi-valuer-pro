@@ -2140,8 +2140,11 @@ export type Database = {
           created_at: string
           created_by: string | null
           id: string
+          reason_ar: string | null
+          reason_en: string | null
           report_id: string
           version_number: number
+          version_type: string | null
         }
         Insert: {
           change_summary?: string | null
@@ -2149,8 +2152,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          reason_ar?: string | null
+          reason_en?: string | null
           report_id: string
           version_number: number
+          version_type?: string | null
         }
         Update: {
           change_summary?: string | null
@@ -2158,8 +2164,11 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           id?: string
+          reason_ar?: string | null
+          reason_en?: string | null
           report_id?: string
           version_number?: number
+          version_type?: string | null
         }
         Relationships: [
           {
@@ -2179,10 +2188,13 @@ export type Database = {
           cover_page: Json | null
           created_at: string
           created_by: string | null
+          expired_at: string | null
+          expiry_date: string | null
           generated_by: string | null
           id: string
           is_final: boolean | null
           is_locked: boolean | null
+          issue_date: string | null
           language: Database["public"]["Enums"]["report_language"]
           locked_at: string | null
           locked_by: string | null
@@ -2206,10 +2218,13 @@ export type Database = {
           cover_page?: Json | null
           created_at?: string
           created_by?: string | null
+          expired_at?: string | null
+          expiry_date?: string | null
           generated_by?: string | null
           id?: string
           is_final?: boolean | null
           is_locked?: boolean | null
+          issue_date?: string | null
           language?: Database["public"]["Enums"]["report_language"]
           locked_at?: string | null
           locked_by?: string | null
@@ -2233,10 +2248,13 @@ export type Database = {
           cover_page?: Json | null
           created_at?: string
           created_by?: string | null
+          expired_at?: string | null
+          expiry_date?: string | null
           generated_by?: string | null
           id?: string
           is_final?: boolean | null
           is_locked?: boolean | null
+          issue_date?: string | null
           language?: Database["public"]["Enums"]["report_language"]
           locked_at?: string | null
           locked_by?: string | null
@@ -2931,6 +2949,7 @@ export type Database = {
           assigned_inspector_id: string | null
           assigned_reviewer_id: string | null
           assigned_valuer_id: string | null
+          assignment_type: string
           basis_of_value: Database["public"]["Enums"]["basis_of_value"]
           client_id: string
           created_at: string
@@ -2944,11 +2963,13 @@ export type Database = {
           intended_users_ar: string | null
           intended_users_en: string | null
           is_locked: boolean
+          is_retrospective: boolean | null
           issue_date: string | null
           locked_at: string | null
           locked_by: string | null
           notes: string | null
           organization_id: string
+          previous_assignment_id: string | null
           priority: string | null
           property_type: Database["public"]["Enums"]["property_type"]
           purpose: Database["public"]["Enums"]["valuation_purpose"]
@@ -2956,6 +2977,8 @@ export type Database = {
           reference_number: string
           report_date: string | null
           report_language: Database["public"]["Enums"]["report_language"]
+          retrospective_note_ar: string | null
+          retrospective_note_en: string | null
           sequential_number: number
           status: Database["public"]["Enums"]["assignment_status"]
           updated_at: string
@@ -2966,6 +2989,7 @@ export type Database = {
           assigned_inspector_id?: string | null
           assigned_reviewer_id?: string | null
           assigned_valuer_id?: string | null
+          assignment_type?: string
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"]
           client_id: string
           created_at?: string
@@ -2979,11 +3003,13 @@ export type Database = {
           intended_users_ar?: string | null
           intended_users_en?: string | null
           is_locked?: boolean
+          is_retrospective?: boolean | null
           issue_date?: string | null
           locked_at?: string | null
           locked_by?: string | null
           notes?: string | null
           organization_id: string
+          previous_assignment_id?: string | null
           priority?: string | null
           property_type: Database["public"]["Enums"]["property_type"]
           purpose: Database["public"]["Enums"]["valuation_purpose"]
@@ -2991,6 +3017,8 @@ export type Database = {
           reference_number: string
           report_date?: string | null
           report_language?: Database["public"]["Enums"]["report_language"]
+          retrospective_note_ar?: string | null
+          retrospective_note_en?: string | null
           sequential_number: number
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
@@ -3001,6 +3029,7 @@ export type Database = {
           assigned_inspector_id?: string | null
           assigned_reviewer_id?: string | null
           assigned_valuer_id?: string | null
+          assignment_type?: string
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"]
           client_id?: string
           created_at?: string
@@ -3014,11 +3043,13 @@ export type Database = {
           intended_users_ar?: string | null
           intended_users_en?: string | null
           is_locked?: boolean
+          is_retrospective?: boolean | null
           issue_date?: string | null
           locked_at?: string | null
           locked_by?: string | null
           notes?: string | null
           organization_id?: string
+          previous_assignment_id?: string | null
           priority?: string | null
           property_type?: Database["public"]["Enums"]["property_type"]
           purpose?: Database["public"]["Enums"]["valuation_purpose"]
@@ -3026,6 +3057,8 @@ export type Database = {
           reference_number?: string
           report_date?: string | null
           report_language?: Database["public"]["Enums"]["report_language"]
+          retrospective_note_ar?: string | null
+          retrospective_note_en?: string | null
           sequential_number?: number
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
@@ -3545,6 +3578,7 @@ export type Database = {
         | "final_payment_received"
         | "report_issued"
         | "closed"
+      assignment_type: "new" | "revaluation"
       attachment_category:
         | "title_deed"
         | "building_permit"
@@ -3854,6 +3888,7 @@ export const Constants = {
         "report_issued",
         "closed",
       ],
+      assignment_type: ["new", "revaluation"],
       attachment_category: [
         "title_deed",
         "building_permit",
