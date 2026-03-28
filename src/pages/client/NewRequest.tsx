@@ -321,6 +321,7 @@ export default function NewRequest() {
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
+          valuation_type: valuationType as any,
           property_type: (formData.propertyType || null) as any,
           property_description_ar: formData.propertyDescription || null,
           property_address_ar: formData.propertyAddress || null,
@@ -337,6 +338,7 @@ export default function NewRequest() {
             messages: messages,
             files: uploadedFiles,
             formData: formData,
+            valuationType,
           },
         })
         .select()
