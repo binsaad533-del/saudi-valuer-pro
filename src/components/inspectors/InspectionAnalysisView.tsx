@@ -139,7 +139,7 @@ export function InspectionAnalysisView({ inspectionId, isAdmin = false }: Props)
 
   const defects = (analysis.visible_defects as any[]) || [];
   const riskFlags = (analysis.risk_flags as any[]) || [];
-  const photoInsights = (analysis.photo_analysis as any[]) || [];
+  const _photoInsights = (analysis.photo_analysis as any[]) || [];
 
   return (
     <div className="space-y-4">

@@ -288,6 +288,21 @@ export default function MobileInspectionFlow() {
     }).eq("id", inspectionId);
 
     toast.success("تم إرسال المعاينة بنجاح");
+
+    // Trigger AI analysis in background
+    try {
+      toast.info("جاري تحليل المعاينة بالذكاء الاصطناعي...");
+      supabase.functions.invoke("analyze-inspection", {
+        body: { inspection_id: inspectionId },
+      }).then(({ error }) => {
+        if (error) {
+          console.error("AI analysis error:", error);
+        }
+      });
+    } catch (err) {
+      console.error("Failed to trigger AI analysis:", err);
+    }
+
     setSubmitting(false);
     navigate("/inspector");
   };
