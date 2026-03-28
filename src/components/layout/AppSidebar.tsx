@@ -18,6 +18,7 @@ import {
   X,
   Home,
   Cog,
+  Brain,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
