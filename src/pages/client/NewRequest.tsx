@@ -41,6 +41,12 @@ interface UploadedFile {
   aiRelevant?: boolean;
 }
 
+const VALUATION_TYPES = [
+  { value: "real_estate", label: "تقييم عقاري", icon: "🏠" },
+  { value: "machinery", label: "تقييم آلات ومعدات", icon: "⚙️" },
+  { value: "mixed", label: "تقييم مختلط (عقار + معدات)", icon: "🏗️" },
+];
+
 const PROPERTY_TYPES = [
   { value: "residential", label: "سكني" },
   { value: "commercial", label: "تجاري" },
@@ -79,6 +85,7 @@ export default function NewRequest() {
   const [isStreaming, setIsStreaming] = useState(false);
 
   // Form data collected via AI
+  const [valuationType, setValuationType] = useState<string>("real_estate");
   const [formData, setFormData] = useState({
     propertyType: "",
     purpose: "",
@@ -109,19 +116,16 @@ export default function NewRequest() {
       // Start AI conversation
       setMessages([{
         role: "assistant",
-        content: `أهلاً بك في نظام طلبات التقييم لجساس للتقييم العقاري.
+        content: `أهلاً بك في نظام طلبات التقييم لجساس للتقييم.
 
 أنا مساعد التقييم الذكي، وسأساعدك في إعداد طلب التقييم بشكل منظم ومكتمل.
 
-لنبدأ بالمعلومات الأساسية:
+**يرجى اختيار نوع التقييم من القائمة الجانبية أولاً:**
+- 🏠 تقييم عقاري
+- ⚙️ تقييم آلات ومعدات
+- 🏗️ تقييم مختلط (عقار + معدات)
 
-**1. ما نوع العقار المراد تقييمه؟**
-(سكني، تجاري، أرض، صناعي، مختلط، زراعي، فندقي)
-
-**2. ما هو الغرض من التقييم؟**
-(بيع/شراء، رهن عقاري، تقارير مالية، تأمين، ضريبي، قضائي، استثمار)
-
-يمكنك الإجابة بشكل حر وسأقوم بتنظيم المعلومات تلقائياً.`
+ثم أخبرني بالتفاصيل وسأقوم بتنظيم المعلومات تلقائياً.`
       }]);
     };
     checkAuth();
@@ -160,6 +164,7 @@ export default function NewRequest() {
 عندما تجمع معلومات كافية، اطلب من العميل مراجعة الملخص وتأكيده.
 
 الملفات المرفوعة حالياً: ${uploadedFiles.map(f => f.name).join(", ") || "لا توجد"}
+نوع التقييم: ${valuationType === "real_estate" ? "عقاري" : valuationType === "machinery" ? "آلات ومعدات" : "مختلط"}
 البيانات المجمعة حتى الآن: ${JSON.stringify(formData)}`;
 
       const resp = await fetch(
@@ -173,6 +178,7 @@ export default function NewRequest() {
           body: JSON.stringify({
             messages: allMessages,
             systemPrompt,
+            valuationType,
             formData,
             files: uploadedFiles.map(f => ({ name: f.name, type: f.type, category: f.aiCategory })),
           }),
@@ -315,6 +321,7 @@ export default function NewRequest() {
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
+          valuation_type: valuationType as any,
           property_type: (formData.propertyType || null) as any,
           property_description_ar: formData.propertyDescription || null,
           property_address_ar: formData.propertyAddress || null,
@@ -331,6 +338,7 @@ export default function NewRequest() {
             messages: messages,
             files: uploadedFiles,
             formData: formData,
+            valuationType,
           },
         })
         .select()
@@ -534,6 +542,28 @@ export default function NewRequest() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Valuation Type Selector */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">نوع التقييم</Label>
+                  <div className="space-y-1.5">
+                    {VALUATION_TYPES.map(t => (
+                      <button
+                        key={t.value}
+                        onClick={() => setValuationType(t.value)}
+                        className={`w-full text-right px-3 py-2 rounded-lg border text-xs transition-all ${
+                          valuationType === t.value
+                            ? "border-primary bg-primary/10 text-primary font-medium"
+                            : "border-border bg-background text-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {t.icon} {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(valuationType === "real_estate" || valuationType === "mixed") && (
+                <>
                 <div className="space-y-1.5">
                   <Label className="text-xs">نوع العقار</Label>
                   <Select value={formData.propertyType} onValueChange={(v) => setFormData(p => ({ ...p, propertyType: v }))}>
@@ -617,6 +647,8 @@ export default function NewRequest() {
                     rows={2}
                   />
                 </div>
+                </>
+                )}
               </CardContent>
             </Card>
 

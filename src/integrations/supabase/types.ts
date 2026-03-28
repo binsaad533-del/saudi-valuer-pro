@@ -1302,6 +1302,72 @@ export type Database = {
           },
         ]
       }
+      machinery_valuations: {
+        Row: {
+          approach: string
+          assignment_id: string
+          audit_trail: Json | null
+          concluded_value: number | null
+          created_at: string
+          economic_obsolescence_pct: number | null
+          final_value: number | null
+          functional_obsolescence_pct: number | null
+          id: string
+          income_value: number | null
+          market_comparable_value: number | null
+          notes: string | null
+          physical_depreciation_pct: number | null
+          replacement_cost_new: number | null
+          subject_machinery_id: string
+          updated_at: string
+          weight_cost: number | null
+          weight_income: number | null
+          weight_market: number | null
+        }
+        Insert: {
+          approach?: string
+          assignment_id: string
+          audit_trail?: Json | null
+          concluded_value?: number | null
+          created_at?: string
+          economic_obsolescence_pct?: number | null
+          final_value?: number | null
+          functional_obsolescence_pct?: number | null
+          id?: string
+          income_value?: number | null
+          market_comparable_value?: number | null
+          notes?: string | null
+          physical_depreciation_pct?: number | null
+          replacement_cost_new?: number | null
+          subject_machinery_id: string
+          updated_at?: string
+          weight_cost?: number | null
+          weight_income?: number | null
+          weight_market?: number | null
+        }
+        Update: {
+          approach?: string
+          assignment_id?: string
+          audit_trail?: Json | null
+          concluded_value?: number | null
+          created_at?: string
+          economic_obsolescence_pct?: number | null
+          final_value?: number | null
+          functional_obsolescence_pct?: number | null
+          id?: string
+          income_value?: number | null
+          market_comparable_value?: number | null
+          notes?: string | null
+          physical_depreciation_pct?: number | null
+          replacement_cost_new?: number | null
+          subject_machinery_id?: string
+          updated_at?: string
+          weight_cost?: number | null
+          weight_income?: number | null
+          weight_market?: number | null
+        }
+        Relationships: []
+      }
       market_zones: {
         Row: {
           avg_price_per_sqm: number | null
@@ -2640,6 +2706,102 @@ export type Database = {
           },
         ]
       }
+      subjects_machinery: {
+        Row: {
+          asset_category: string
+          asset_name_ar: string
+          asset_name_en: string | null
+          assignment_id: string
+          capacity: string | null
+          condition: string | null
+          condition_score: number | null
+          created_at: string
+          depreciation_method: string | null
+          description_ar: string | null
+          description_en: string | null
+          id: string
+          is_operational: boolean | null
+          location_ar: string | null
+          location_en: string | null
+          manufacturer: string | null
+          model: string | null
+          notes: string | null
+          original_cost: number | null
+          photo_urls: string[] | null
+          remaining_useful_life: number | null
+          replacement_cost: number | null
+          serial_number: string | null
+          sort_order: number | null
+          specifications: Json | null
+          total_useful_life: number | null
+          updated_at: string
+          year_installed: number | null
+          year_manufactured: number | null
+        }
+        Insert: {
+          asset_category?: string
+          asset_name_ar: string
+          asset_name_en?: string | null
+          assignment_id: string
+          capacity?: string | null
+          condition?: string | null
+          condition_score?: number | null
+          created_at?: string
+          depreciation_method?: string | null
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          is_operational?: boolean | null
+          location_ar?: string | null
+          location_en?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          notes?: string | null
+          original_cost?: number | null
+          photo_urls?: string[] | null
+          remaining_useful_life?: number | null
+          replacement_cost?: number | null
+          serial_number?: string | null
+          sort_order?: number | null
+          specifications?: Json | null
+          total_useful_life?: number | null
+          updated_at?: string
+          year_installed?: number | null
+          year_manufactured?: number | null
+        }
+        Update: {
+          asset_category?: string
+          asset_name_ar?: string
+          asset_name_en?: string | null
+          assignment_id?: string
+          capacity?: string | null
+          condition?: string | null
+          condition_score?: number | null
+          created_at?: string
+          depreciation_method?: string | null
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          is_operational?: boolean | null
+          location_ar?: string | null
+          location_en?: string | null
+          manufacturer?: string | null
+          model?: string | null
+          notes?: string | null
+          original_cost?: number | null
+          photo_urls?: string[] | null
+          remaining_useful_life?: number | null
+          replacement_cost?: number | null
+          serial_number?: string | null
+          sort_order?: number | null
+          specifications?: Json | null
+          total_useful_life?: number | null
+          updated_at?: string
+          year_installed?: number | null
+          year_manufactured?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           granted_at: string
@@ -2709,6 +2871,7 @@ export type Database = {
           status: Database["public"]["Enums"]["assignment_status"]
           updated_at: string
           valuation_date: string | null
+          valuation_type: Database["public"]["Enums"]["valuation_type"]
         }
         Insert: {
           assigned_inspector_id?: string | null
@@ -2743,6 +2906,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
           valuation_date?: string | null
+          valuation_type?: Database["public"]["Enums"]["valuation_type"]
         }
         Update: {
           assigned_inspector_id?: string | null
@@ -2777,6 +2941,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
           valuation_date?: string | null
+          valuation_type?: Database["public"]["Enums"]["valuation_type"]
         }
         Relationships: [
           {
@@ -2972,6 +3137,7 @@ export type Database = {
           terms_en: string | null
           total_fees: number | null
           updated_at: string
+          valuation_type: Database["public"]["Enums"]["valuation_type"] | null
         }
         Insert: {
           ai_complexity_level?: string | null
@@ -3030,6 +3196,7 @@ export type Database = {
           terms_en?: string | null
           total_fees?: number | null
           updated_at?: string
+          valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
         }
         Update: {
           ai_complexity_level?: string | null
@@ -3088,6 +3255,7 @@ export type Database = {
           terms_en?: string | null
           total_fees?: number | null
           updated_at?: string
+          valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
         }
         Relationships: [
           {
@@ -3390,6 +3558,7 @@ export type Database = {
         | "internal_decision"
         | "regulatory"
         | "other"
+      valuation_type: "real_estate" | "machinery" | "mixed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3706,6 +3875,7 @@ export const Constants = {
         "regulatory",
         "other",
       ],
+      valuation_type: ["real_estate", "machinery", "mixed"],
     },
   },
 } as const
