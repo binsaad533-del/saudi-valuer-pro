@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, FileText, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Clock, AlertCircle, Building2, DollarSign, Bot,
+  Clock, AlertCircle, Building2, DollarSign, Bot, Brain,
 } from "lucide-react";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -48,6 +48,7 @@ const ADMIN_TABS = [
 
 export default function ClientRequests() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -328,8 +329,8 @@ export default function ClientRequests() {
                           </Button>
                         )}
                         {req.status === "in_production" && (
-                          <Button size="sm" onClick={() => moveToStatus(req.id, "draft_report_sent")}>
-                            <FileText className="w-3 h-3 ml-1" />إرسال المسودة
+                          <Button size="sm" onClick={() => navigate(`/valuation-production/${req.assignment_id || req.id}`)}>
+                            <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
                         {req.status === "fully_paid" && !req.draft_report_url && (

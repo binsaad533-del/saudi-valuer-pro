@@ -18,6 +18,7 @@ import {
   X,
   Home,
   Cog,
+  Brain,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -48,6 +49,7 @@ const navItems: NavItem[] = [
   { label: "البحث", icon: Search, path: "/search" },
   { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
   { label: "طلبات العملاء", icon: Users, path: "/client-requests" },
+  { label: "محرك التقييم", icon: Brain, path: "/valuation-production" },
   { label: "الامتثال", icon: Shield, path: "/compliance" },
   { label: "الإعدادات", icon: Settings, path: "/settings" },
 ];
