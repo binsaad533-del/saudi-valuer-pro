@@ -150,7 +150,7 @@ export default function MobileInspectionFlow() {
         value: c.value ?? undefined, notes: c.notes ?? undefined,
       })));
     } else {
-      setChecklist(DEFAULT_CHECKLIST.map((c, i) => ({
+      setChecklist(DEFAULT_CHECKLIST.map((c) => ({
         ...c, is_checked: false, value: undefined, notes: undefined,
       })));
     }
