@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import {
   CreditCard, CheckCircle, XCircle, Clock, Loader2, Eye, Shield,
-  AlertTriangle, RefreshCw, FileText,
+  AlertTriangle, FileText,
 } from "lucide-react";
 
 export default function AdminPaymentDashboard() {

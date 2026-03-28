@@ -21,7 +21,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>("mada");
   const [processing, setProcessing] = useState(false);
   const [paymentResult, setPaymentResult] = useState<"success" | "failed" | null>(null);
-  const [currentPaymentId, setCurrentPaymentId] = useState<string | null>(null);
+  const [, setCurrentPaymentId] = useState<string | null>(null);
 
   const amount = paymentStage === "first"
     ? request.first_payment_amount || request.total_fees
