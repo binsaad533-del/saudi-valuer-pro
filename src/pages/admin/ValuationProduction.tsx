@@ -67,13 +67,15 @@ export default function ValuationProduction() {
 
   const loadData = async () => {
     setLoading(true);
-    const [aRes, rRes, mRes, recRes] = await Promise.all([
+    const [aRes, rRes, mRes, recRes, insRes] = await Promise.all([
       supabase.from("valuation_assignments").select("*").eq("id", assignmentId!).single(),
       supabase.from("reports").select("*").eq("assignment_id", assignmentId!).order("version", { ascending: false }),
       supabase.from("valuation_methods").select("*, valuation_calculations(*)").eq("assignment_id", assignmentId!),
       supabase.from("reconciliation_results").select("*").eq("assignment_id", assignmentId!).maybeSingle(),
+      supabase.from("inspections").select("*").eq("assignment_id", assignmentId!).order("created_at", { ascending: false }).limit(1),
     ]);
     setAssignment(aRes.data);
+    setInspection((insRes.data as any)?.[0] || null);
     setReports(rRes.data || []);
     setMethods(mRes.data || []);
     setRecon(recRes.data);
