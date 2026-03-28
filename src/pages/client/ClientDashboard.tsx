@@ -3,41 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Plus,
   FileText,
   Clock,
   CheckCircle,
   AlertCircle,
-  CreditCard,
-  MessageSquare,
-  Archive,
   LogOut,
   Loader2,
   Building2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  draft: { label: "مسودة", color: "bg-muted text-muted-foreground", icon: FileText },
-  ai_review: { label: "مراجعة ذكية", color: "bg-info/10 text-info", icon: Clock },
-  submitted: { label: "تم الإرسال", color: "bg-primary/10 text-primary", icon: CheckCircle },
-  needs_clarification: { label: "يحتاج توضيح", color: "bg-warning/10 text-warning", icon: AlertCircle },
-  under_pricing: { label: "قيد التسعير", color: "bg-accent text-accent-foreground", icon: CreditCard },
-  quotation_sent: { label: "عرض سعر مرسل", color: "bg-info/10 text-info", icon: FileText },
-  quotation_approved: { label: "عرض سعر معتمد", color: "bg-success/10 text-success", icon: CheckCircle },
-  awaiting_payment: { label: "بانتظار الدفع", color: "bg-warning/10 text-warning", icon: CreditCard },
-  payment_uploaded: { label: "إيصال مرفوع", color: "bg-info/10 text-info", icon: CreditCard },
-  partially_paid: { label: "مدفوع جزئياً", color: "bg-warning/10 text-warning", icon: CreditCard },
-  fully_paid: { label: "مدفوع بالكامل", color: "bg-success/10 text-success", icon: CheckCircle },
-  in_production: { label: "قيد التنفيذ", color: "bg-primary/10 text-primary", icon: Building2 },
-  draft_report_sent: { label: "تقرير مسودة", color: "bg-info/10 text-info", icon: FileText },
-  client_comments: { label: "ملاحظات العميل", color: "bg-warning/10 text-warning", icon: MessageSquare },
-  final_report_ready: { label: "التقرير النهائي جاهز", color: "bg-success/10 text-success", icon: CheckCircle },
-  completed: { label: "مكتمل", color: "bg-success/10 text-success", icon: CheckCircle },
-  archived: { label: "مؤرشف", color: "bg-muted text-muted-foreground", icon: Archive },
-};
+import { StatusBadge, StatusProgress } from "@/components/workflow/StatusComponents";
+import { CLIENT_STATUS_MAP } from "@/lib/workflow-engine";
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
