@@ -2094,16 +2094,24 @@ export type Database = {
           basis_of_value: Database["public"]["Enums"]["basis_of_value"] | null
           building_area: number | null
           client_user_id: string
+          completed_at: string | null
           created_at: string
+          draft_report_url: string | null
           fees_breakdown: Json | null
+          final_report_url: string | null
+          first_payment_amount: number | null
+          first_payment_percentage: number | null
           id: string
           intended_use_ar: string | null
           intended_use_en: string | null
           intended_users_ar: string | null
           intended_users_en: string | null
+          is_locked: boolean | null
           land_area: number | null
           organization_id: string | null
           payment_status: string | null
+          payment_structure: string | null
+          production_started_at: string | null
           property_address_ar: string | null
           property_address_en: string | null
           property_city_ar: string | null
@@ -2115,6 +2123,7 @@ export type Database = {
           property_type: Database["public"]["Enums"]["property_type"] | null
           purpose: Database["public"]["Enums"]["valuation_purpose"] | null
           quotation_amount: number | null
+          quotation_approved_at: string | null
           quotation_currency: string | null
           quotation_notes_ar: string | null
           quotation_notes_en: string | null
@@ -2143,16 +2152,24 @@ export type Database = {
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
           building_area?: number | null
           client_user_id: string
+          completed_at?: string | null
           created_at?: string
+          draft_report_url?: string | null
           fees_breakdown?: Json | null
+          final_report_url?: string | null
+          first_payment_amount?: number | null
+          first_payment_percentage?: number | null
           id?: string
           intended_use_ar?: string | null
           intended_use_en?: string | null
           intended_users_ar?: string | null
           intended_users_en?: string | null
+          is_locked?: boolean | null
           land_area?: number | null
           organization_id?: string | null
           payment_status?: string | null
+          payment_structure?: string | null
+          production_started_at?: string | null
           property_address_ar?: string | null
           property_address_en?: string | null
           property_city_ar?: string | null
@@ -2164,6 +2181,7 @@ export type Database = {
           property_type?: Database["public"]["Enums"]["property_type"] | null
           purpose?: Database["public"]["Enums"]["valuation_purpose"] | null
           quotation_amount?: number | null
+          quotation_approved_at?: string | null
           quotation_currency?: string | null
           quotation_notes_ar?: string | null
           quotation_notes_en?: string | null
@@ -2192,16 +2210,24 @@ export type Database = {
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
           building_area?: number | null
           client_user_id?: string
+          completed_at?: string | null
           created_at?: string
+          draft_report_url?: string | null
           fees_breakdown?: Json | null
+          final_report_url?: string | null
+          first_payment_amount?: number | null
+          first_payment_percentage?: number | null
           id?: string
           intended_use_ar?: string | null
           intended_use_en?: string | null
           intended_users_ar?: string | null
           intended_users_en?: string | null
+          is_locked?: boolean | null
           land_area?: number | null
           organization_id?: string | null
           payment_status?: string | null
+          payment_structure?: string | null
+          production_started_at?: string | null
           property_address_ar?: string | null
           property_address_en?: string | null
           property_city_ar?: string | null
@@ -2213,6 +2239,7 @@ export type Database = {
           property_type?: Database["public"]["Enums"]["property_type"] | null
           purpose?: Database["public"]["Enums"]["valuation_purpose"] | null
           quotation_amount?: number | null
+          quotation_approved_at?: string | null
           quotation_currency?: string | null
           quotation_notes_ar?: string | null
           quotation_notes_en?: string | null

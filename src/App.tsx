@@ -11,6 +11,7 @@ import ComparablesPage from "@/pages/ComparablesPage";
 import ArchivePage from "@/pages/ArchivePage";
 import VerifyReport from "@/pages/VerifyReport";
 import ReportGenerator from "@/pages/ReportGenerator";
+import ClientRequests from "@/pages/admin/ClientRequests";
 import NotFound from "./pages/NotFound.tsx";
 
 // Client Portal
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/archive" element={<ArchivePage />} />
             <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/verify" element={<VerifyReport />} />
+            <Route path="/client-requests" element={<ClientRequests />} />
           </Route>
 
           {/* Client Portal Routes */}
