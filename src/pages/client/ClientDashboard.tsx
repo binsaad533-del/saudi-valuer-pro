@@ -14,8 +14,7 @@ import {
   Building2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-import { StatusBadge, StatusProgress } from "@/components/workflow/StatusComponents";
-import { CLIENT_STATUS_MAP } from "@/lib/workflow-engine";
+import { StatusBadge } from "@/components/workflow/StatusComponents";
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
