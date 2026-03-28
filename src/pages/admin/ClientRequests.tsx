@@ -355,6 +355,11 @@ export default function ClientRequests() {
             )}
           </TabsContent>
         ))}
+
+        {/* Payment Management Tab */}
+        <TabsContent value="payment_mgmt" className="mt-4">
+          <AdminPaymentDashboard />
+        </TabsContent>
       </Tabs>
 
       {/* Pricing Dialog */}
