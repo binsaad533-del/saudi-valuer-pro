@@ -15,6 +15,8 @@ import {
   Clock, DollarSign, Shield, AlertCircle,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import PaymentCheckout from "@/components/payments/PaymentCheckout";
+import PaymentHistory from "@/components/payments/PaymentHistory";
 
 const STATUS_TIMELINE = [
   { key: "submitted", label: "تم الإرسال" },
