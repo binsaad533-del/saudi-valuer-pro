@@ -124,13 +124,24 @@ serve(async (req) => {
     }
 
     // Build report JSON structure
+    const issueDate = isDraft ? null : new Date().toISOString().split("T")[0];
+    const expiryDate = isDraft ? null : (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 90);
+      return d.toISOString().split("T")[0];
+    })();
+    const isRetrospective = assignment.is_retrospective || false;
+
     const reportJSON = {
       metadata: {
         type: isDraft ? "DRAFT" : "FINAL",
         reference_number: assignment.reference_number,
         report_date: new Date().toISOString().split("T")[0],
-        valuation_date: assignment.valuation_date,
-        issue_date: isDraft ? null : new Date().toISOString().split("T")[0],
+        valuation_date: assignment.valuation_date || new Date().toISOString().split("T")[0],
+        issue_date: issueDate,
+        expiry_date: expiryDate,
+        is_retrospective: isRetrospective,
+        retrospective_note: isRetrospective ? (assignment.retrospective_note_ar || "تقييم بأثر رجعي") : null,
         language: assignment.report_language,
         version: report.version,
         qr_code: isDraft ? null : `${SUPABASE_URL.replace('/rest/v1', '')}/verify/${assignment.reference_number}`,
