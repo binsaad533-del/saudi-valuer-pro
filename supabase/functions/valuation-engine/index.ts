@@ -558,7 +558,10 @@ serve(async (req) => {
           location: clampAdjustment("location", c.location_adj || 0),
           size: clampAdjustment("size", c.size_adj || 0),
           age: clampAdjustment("age", c.age_adj || 0),
-          condition: clampAdjustment("condition", c.condition_adj || 0),
+          // Use inspection-derived condition adjustment if available, otherwise AI suggestion
+          condition: clampAdjustment("condition", inspectionAnalysis?.condition_adjustment_pct != null
+            ? Number(inspectionAnalysis.condition_adjustment_pct)
+            : (c.condition_adj || 0)),
           time: clampAdjustment("time", c.time_adj || 0),
         },
       }));
