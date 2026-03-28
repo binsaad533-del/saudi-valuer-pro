@@ -16,6 +16,8 @@ import {
   ChevronLeft,
   Menu,
   X,
+  Home,
+  Cog,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
