@@ -1901,6 +1901,7 @@ export type Database = {
           ip_address: string | null
           is_valid: boolean | null
           report_id: string
+          signature_hash: string | null
           signature_image_url: string | null
           signed_at: string
           signer_id: string
@@ -1915,6 +1916,7 @@ export type Database = {
           ip_address?: string | null
           is_valid?: boolean | null
           report_id: string
+          signature_hash?: string | null
           signature_image_url?: string | null
           signed_at?: string
           signer_id: string
@@ -1929,6 +1931,7 @@ export type Database = {
           ip_address?: string | null
           is_valid?: boolean | null
           report_id?: string
+          signature_hash?: string | null
           signature_image_url?: string | null
           signed_at?: string
           signer_id?: string
@@ -1947,6 +1950,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      report_verification_log: {
+        Row: {
+          id: string
+          ip_address: string | null
+          report_id: string
+          result: string
+          user_agent: string | null
+          verified_at: string
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          report_id: string
+          result?: string
+          user_agent?: string | null
+          verified_at?: string
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          report_id?: string
+          result?: string
+          user_agent?: string | null
+          verified_at?: string
+        }
+        Relationships: []
       }
       report_versions: {
         Row: {
@@ -1997,12 +2027,18 @@ export type Database = {
           generated_by: string | null
           id: string
           is_final: boolean | null
+          is_locked: boolean | null
           language: Database["public"]["Enums"]["report_language"]
+          locked_at: string | null
+          locked_by: string | null
           pdf_url: string | null
           pdf_url_bilingual: string | null
           pdf_url_en: string | null
+          previous_version_id: string | null
           report_type: Database["public"]["Enums"]["report_type"]
+          signature_hash: string | null
           status: string | null
+          superseded_by: string | null
           title_ar: string | null
           title_en: string | null
           updated_at: string
@@ -2018,12 +2054,18 @@ export type Database = {
           generated_by?: string | null
           id?: string
           is_final?: boolean | null
+          is_locked?: boolean | null
           language?: Database["public"]["Enums"]["report_language"]
+          locked_at?: string | null
+          locked_by?: string | null
           pdf_url?: string | null
           pdf_url_bilingual?: string | null
           pdf_url_en?: string | null
+          previous_version_id?: string | null
           report_type?: Database["public"]["Enums"]["report_type"]
+          signature_hash?: string | null
           status?: string | null
+          superseded_by?: string | null
           title_ar?: string | null
           title_en?: string | null
           updated_at?: string
@@ -2039,12 +2081,18 @@ export type Database = {
           generated_by?: string | null
           id?: string
           is_final?: boolean | null
+          is_locked?: boolean | null
           language?: Database["public"]["Enums"]["report_language"]
+          locked_at?: string | null
+          locked_by?: string | null
           pdf_url?: string | null
           pdf_url_bilingual?: string | null
           pdf_url_en?: string | null
+          previous_version_id?: string | null
           report_type?: Database["public"]["Enums"]["report_type"]
+          signature_hash?: string | null
           status?: string | null
+          superseded_by?: string | null
           title_ar?: string | null
           title_en?: string | null
           updated_at?: string

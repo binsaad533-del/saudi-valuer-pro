@@ -42,6 +42,7 @@ export interface ReportGenerationResult {
   report_url: string;
   report_json: any;
   type: "draft" | "final";
+  signature_hash?: string;
 }
 
 export async function runFullValuation(
@@ -92,4 +93,60 @@ export async function generateReportPDF(
   if (error) throw new Error(error.message || "Report generation failed");
   if (data?.error) throw new Error(data.error);
   return data;
+}
+
+export async function createNewReportVersion(
+  assignmentId: string,
+  previousReportId: string
+): Promise<{ report_id: string; version: number }> {
+  // Fetch previous report
+  const { data: prevReport, error: fetchErr } = await supabase
+    .from("reports")
+    .select("*")
+    .eq("id", previousReportId)
+    .single();
+
+  if (fetchErr || !prevReport) throw new Error("Previous report not found");
+
+  const newVersion = (prevReport.version || 1) + 1;
+
+  // Create new version
+  const { data: newReport, error: createErr } = await supabase
+    .from("reports")
+    .insert({
+      assignment_id: assignmentId,
+      report_type: prevReport.report_type,
+      language: prevReport.language,
+      title_ar: prevReport.title_ar,
+      title_en: prevReport.title_en,
+      content_ar: prevReport.content_ar as any,
+      content_en: prevReport.content_en as any,
+      cover_page: prevReport.cover_page as any,
+      version: newVersion,
+      status: "draft",
+      is_final: false,
+      previous_version_id: previousReportId,
+    })
+    .select()
+    .single();
+
+  if (createErr || !newReport) throw new Error("Failed to create new report version");
+
+  // Mark previous as superseded
+  await supabase
+    .from("reports")
+    .update({ superseded_by: newReport.id } as any)
+    .eq("id", previousReportId);
+
+  // Log the version creation
+  await supabase.from("report_change_log").insert({
+    report_id: newReport.id,
+    version_from: prevReport.version,
+    version_to: newVersion,
+    change_type: "new_version",
+    change_summary_ar: `إنشاء إصدار جديد ${newVersion} من التقرير`,
+    change_summary_en: `Created new version ${newVersion} of the report`,
+  });
+
+  return { report_id: newReport.id, version: newVersion };
 }
