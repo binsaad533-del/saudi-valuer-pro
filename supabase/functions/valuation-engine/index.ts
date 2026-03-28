@@ -577,8 +577,12 @@ serve(async (req) => {
         calculations: marketResult.audit,
       }];
 
-      // Cost Approach
+      // Cost Approach — use inspection analysis for depreciation if available
       let costValue: number | null = null;
+      const inspPhysDep = inspectionAnalysis?.physical_depreciation_pct ?? null;
+      const inspFuncObs = inspectionAnalysis?.functional_obsolescence_pct ?? null;
+      const inspExtObs = inspectionAnalysis?.external_obsolescence_pct ?? null;
+
       if (decisions.use_cost && normalizedData.areas?.building_sqm > 0) {
         const costResult = calcCostApproach(
           normalizedData.areas.land_sqm || subjectArea,
@@ -586,7 +590,9 @@ serve(async (req) => {
           normalizedData.areas.building_sqm || 0,
           decisions.replacement_cost_per_sqm || 3000,
           normalizedData.building_details?.year_built ? (new Date().getFullYear() - normalizedData.building_details.year_built) : 10,
-          decisions.useful_life_years || 45
+          decisions.useful_life_years || 45,
+          inspFuncObs != null ? Number(inspFuncObs) : undefined,
+          inspExtObs != null ? Number(inspExtObs) : undefined
         );
         costValue = costResult.value;
         allAudit.push(...costResult.audit);
