@@ -22,6 +22,7 @@ import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
+import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/client-requests" element={<ClientRequests />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
             <Route path="/inspector" element={<InspectorDashboard />} />
+            <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
           </Route>
 

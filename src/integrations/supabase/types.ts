@@ -787,15 +787,126 @@ export type Database = {
         }
         Relationships: []
       }
+      inspection_checklist_items: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          inspection_id: string
+          is_checked: boolean | null
+          is_required: boolean | null
+          label_ar: string
+          label_en: string | null
+          notes: string | null
+          sort_order: number | null
+          value: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          inspection_id: string
+          is_checked?: boolean | null
+          is_required?: boolean | null
+          label_ar: string
+          label_en?: string | null
+          notes?: string | null
+          sort_order?: number | null
+          value?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          inspection_id?: string
+          is_checked?: boolean | null
+          is_required?: boolean | null
+          label_ar?: string
+          label_en?: string | null
+          notes?: string | null
+          sort_order?: number | null
+          value?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_checklist_items_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspection_photos: {
+        Row: {
+          caption_ar: string | null
+          caption_en: string | null
+          category: string
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          inspection_id: string
+          latitude: number | null
+          longitude: number | null
+          mime_type: string | null
+          taken_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          caption_ar?: string | null
+          caption_en?: string | null
+          category: string
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          inspection_id: string
+          latitude?: number | null
+          longitude?: number | null
+          mime_type?: string | null
+          taken_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          caption_ar?: string | null
+          caption_en?: string | null
+          category?: string
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          inspection_id?: string
+          latitude?: number | null
+          longitude?: number | null
+          mime_type?: string | null
+          taken_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspection_photos_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspections: {
         Row: {
           access_granted: boolean | null
           assignment_id: string
+          auto_saved_data: Json | null
           completed: boolean | null
           created_at: string
           duration_minutes: number | null
           findings_ar: string | null
           findings_en: string | null
+          gps_verified: boolean | null
           id: string
           inspection_date: string
           inspection_time: string | null
@@ -804,6 +915,10 @@ export type Database = {
           longitude: number | null
           notes_ar: string | null
           notes_en: string | null
+          reviewed_at: string | null
+          started_at: string | null
+          status: string
+          submitted_at: string | null
           type: string | null
           updated_at: string
           weather_conditions: string | null
@@ -811,11 +926,13 @@ export type Database = {
         Insert: {
           access_granted?: boolean | null
           assignment_id: string
+          auto_saved_data?: Json | null
           completed?: boolean | null
           created_at?: string
           duration_minutes?: number | null
           findings_ar?: string | null
           findings_en?: string | null
+          gps_verified?: boolean | null
           id?: string
           inspection_date: string
           inspection_time?: string | null
@@ -824,6 +941,10 @@ export type Database = {
           longitude?: number | null
           notes_ar?: string | null
           notes_en?: string | null
+          reviewed_at?: string | null
+          started_at?: string | null
+          status?: string
+          submitted_at?: string | null
           type?: string | null
           updated_at?: string
           weather_conditions?: string | null
@@ -831,11 +952,13 @@ export type Database = {
         Update: {
           access_granted?: boolean | null
           assignment_id?: string
+          auto_saved_data?: Json | null
           completed?: boolean | null
           created_at?: string
           duration_minutes?: number | null
           findings_ar?: string | null
           findings_en?: string | null
+          gps_verified?: boolean | null
           id?: string
           inspection_date?: string
           inspection_time?: string | null
@@ -844,6 +967,10 @@ export type Database = {
           longitude?: number | null
           notes_ar?: string | null
           notes_en?: string | null
+          reviewed_at?: string | null
+          started_at?: string | null
+          status?: string
+          submitted_at?: string | null
           type?: string | null
           updated_at?: string
           weather_conditions?: string | null
