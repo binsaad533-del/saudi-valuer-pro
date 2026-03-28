@@ -391,17 +391,42 @@ ${portfolioContext}
           intended_users_ar: formData.intendedUsers || null,
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
+          is_portfolio: isPortfolio,
+          portfolio_asset_count: isPortfolio ? portfolioAssets.length : 0,
+          portfolio_scope_confirmed: isPortfolio ? scopeConfirmed : null,
           ai_intake_summary: {
             messages: messages,
             files: uploadedFiles,
             formData: formData,
             valuationType,
+            isPortfolio,
+            portfolioAssets: isPortfolio ? portfolioAssets : [],
           },
-        })
+        } as any)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Save portfolio assets
+      if (isPortfolio && portfolioAssets.length > 0 && data) {
+        const reqData = data as any;
+        const assets = portfolioAssets.map((a, i) => ({
+          request_id: reqData.id,
+          asset_type: a.asset_type,
+          asset_category: a.asset_category,
+          asset_name_ar: a.asset_name_ar,
+          city_ar: a.city_ar || null,
+          district_ar: a.district_ar || null,
+          land_area: a.land_area || null,
+          building_area: a.building_area || null,
+          description_ar: a.description_ar || null,
+          ai_extracted: a.ai_extracted || false,
+          ai_confidence: a.ai_confidence || null,
+          sort_order: i,
+        }));
+        await supabase.from("portfolio_assets" as any).insert(assets);
+      }
 
       // Save documents
       if (uploadedFiles.length > 0 && data) {
