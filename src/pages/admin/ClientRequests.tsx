@@ -273,7 +273,7 @@ export default function ClientRequests() {
       </div>
 
       <Tabs defaultValue="new" dir="rtl">
-        <TabsList className="grid w-full grid-cols-6 h-auto">
+        <TabsList className="grid w-full grid-cols-7 h-auto">
           {ADMIN_TABS.map(tab => {
             const count = requests.filter(r => tab.statuses.includes(r.status)).length;
             return (
@@ -282,6 +282,9 @@ export default function ClientRequests() {
               </TabsTrigger>
             );
           })}
+          <TabsTrigger value="payment_mgmt" className="text-xs py-2">
+            <BarChart3 className="w-3 h-3 ml-1" />المدفوعات
+          </TabsTrigger>
         </TabsList>
 
         {ADMIN_TABS.map(tab => (
