@@ -264,7 +264,7 @@ ${portfolioContext}
     } finally {
       setIsStreaming(false);
     }
-  }, [formData, uploadedFiles, toast]);
+  }, [formData, uploadedFiles, isPortfolio, portfolioAssets, toast]);
 
   const tryExtractFormData = (content: string) => {
     // Simple extraction from AI responses
