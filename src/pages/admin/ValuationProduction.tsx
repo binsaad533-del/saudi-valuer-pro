@@ -26,8 +26,11 @@ import {
 import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { InspectionAnalysisView } from "@/components/inspectors/InspectionAnalysisView";
+import { Clipboard } from "lucide-react";
 
 const PIPELINE_STEPS = [
+  { key: "inspection", label: "تحليل المعاينة (AI)", icon: Clipboard, ai: true },
   { key: "classify", label: "تصنيف البيانات (AI)", icon: Brain, ai: true },
   { key: "adjustments", label: "اقتراح التعديلات (AI)", icon: TrendingUp, ai: true },
   { key: "hbu", label: "تحليل HBU (AI)", icon: Search, ai: true },
