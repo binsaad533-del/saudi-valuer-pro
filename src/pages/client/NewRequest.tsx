@@ -542,6 +542,28 @@ export default function NewRequest() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Valuation Type Selector */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">نوع التقييم</Label>
+                  <div className="space-y-1.5">
+                    {VALUATION_TYPES.map(t => (
+                      <button
+                        key={t.value}
+                        onClick={() => setValuationType(t.value)}
+                        className={`w-full text-right px-3 py-2 rounded-lg border text-xs transition-all ${
+                          valuationType === t.value
+                            ? "border-primary bg-primary/10 text-primary font-medium"
+                            : "border-border bg-background text-foreground hover:border-primary/30"
+                        }`}
+                      >
+                        {t.icon} {t.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {(valuationType === "real_estate" || valuationType === "mixed") && (
+                <>
                 <div className="space-y-1.5">
                   <Label className="text-xs">نوع العقار</Label>
                   <Select value={formData.propertyType} onValueChange={(v) => setFormData(p => ({ ...p, propertyType: v }))}>
