@@ -342,6 +342,21 @@ export default function ClientRequests() {
                             <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
+                        {(req.status === "draft_report_sent" || req.status === "client_comments") && (
+                          <Button size="sm" variant="outline" onClick={async () => {
+                            // Load report for this assignment
+                            const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", req.assignment_id).order("created_at", { ascending: false }).limit(1);
+                            const report = (reps as any[])?.[0];
+                            if (report) {
+                              setSelectedReportId(report.id);
+                              setSelectedAssignmentId(req.assignment_id);
+                              setSelectedRequestId(req.id);
+                              setRevisionDialog(true);
+                            }
+                          }}>
+                            <MessageSquareText className="w-3 h-3 ml-1" />المراجعات
+                          </Button>
+                        )}
                         {req.status === "fully_paid" && !req.draft_report_url && (
                           <Button size="sm" onClick={() => moveToStatus(req.id, "in_production")}>
                             بدء الإنتاج
