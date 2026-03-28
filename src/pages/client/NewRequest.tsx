@@ -85,6 +85,7 @@ export default function NewRequest() {
   const [isStreaming, setIsStreaming] = useState(false);
 
   // Form data collected via AI
+  const [valuationType, setValuationType] = useState<string>("real_estate");
   const [formData, setFormData] = useState({
     propertyType: "",
     purpose: "",
