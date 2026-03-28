@@ -64,7 +64,7 @@ export default function ClientDashboard() {
 
       // Fetch requests
       const { data } = await supabase
-        .from("valuation_requests")
+        .from("valuation_requests" as any)
         .select("*")
         .eq("client_user_id", user.id)
         .order("created_at", { ascending: false });

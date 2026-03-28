@@ -13,6 +13,13 @@ import VerifyReport from "@/pages/VerifyReport";
 import ReportGenerator from "@/pages/ReportGenerator";
 import NotFound from "./pages/NotFound.tsx";
 
+// Client Portal
+import ClientLogin from "@/pages/client/ClientLogin";
+import ClientRegister from "@/pages/client/ClientRegister";
+import ClientDashboard from "@/pages/client/ClientDashboard";
+import NewRequest from "@/pages/client/NewRequest";
+import RequestDetails from "@/pages/client/RequestDetails";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -22,6 +29,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Admin Routes */}
           <Route element={<AppLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/valuations" element={<ValuationsList />} />
@@ -31,6 +39,14 @@ const App = () => (
             <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/verify" element={<VerifyReport />} />
           </Route>
+
+          {/* Client Portal Routes */}
+          <Route path="/client/login" element={<ClientLogin />} />
+          <Route path="/client/register" element={<ClientRegister />} />
+          <Route path="/client" element={<ClientDashboard />} />
+          <Route path="/client/new-request" element={<NewRequest />} />
+          <Route path="/client/request/:id" element={<RequestDetails />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

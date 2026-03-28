@@ -71,7 +71,7 @@ export default function RequestDetails() {
     if (!newMessage.trim() || !user) return;
     setSending(true);
     try {
-      const { error } = await supabase.from("request_messages").insert({
+      const { error } = await supabase.from("request_messages" as any).insert({
         request_id: id!,
         sender_id: user.id,
         sender_type: "client" as any,
