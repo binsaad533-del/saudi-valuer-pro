@@ -556,53 +556,66 @@ export default function ValuationProduction() {
 
         {/* Reports Tab */}
         <TabsContent value="reports" className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-yellow-600" />
-                  مسودة التقرير
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">مسودة مع علامة DRAFT المائية</p>
-                <Button onClick={() => handleGenerateReport("draft")} disabled={generatingDraft || !reports[0]} className="w-full gap-2" variant="outline">
-                  {generatingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
-                  إنشاء مسودة
-                </Button>
-                {reports.find(r => r.status === "draft") && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded">
-                    <CheckCircle className="w-4 h-4 text-green-600" /><span>متاحة</span>
-                    <Button size="sm" variant="ghost" className="mr-auto"><Eye className="w-3 h-3" /></Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-yellow-600" />
+                      مسودة التقرير
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">مسودة مع علامة DRAFT المائية</p>
+                    <Button onClick={() => handleGenerateReport("draft")} disabled={generatingDraft || !reports[0]} className="w-full gap-2" variant="outline">
+                      {generatingDraft ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+                      إنشاء مسودة
+                    </Button>
+                    {reports.find(r => r.status === "draft") && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/30 p-2 rounded">
+                        <CheckCircle className="w-4 h-4 text-green-600" /><span>متاحة</span>
+                        <Button size="sm" variant="ghost" className="mr-auto"><Eye className="w-3 h-3" /></Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-green-600" />
-                  التقرير النهائي
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">توقيع إلكتروني + QR</p>
-                <Button onClick={() => handleGenerateReport("final")} disabled={generatingFinal || !reports[0] || (compliance ? !compliance.ready_for_issuance : true)} className="w-full gap-2">
-                  {generatingFinal ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                  إصدار نهائي
-                </Button>
-                {(!compliance || !compliance.ready_for_issuance) && (
-                  <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle className="w-3 h-3" />يجب اجتياز فحص الامتثال</p>
-                )}
-                {reports.find(r => r.is_final) && (
-                  <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 dark:bg-green-950/20 p-2 rounded">
-                    <CheckCircle className="w-4 h-4" /><span>صادر</span>
-                    <Button size="sm" variant="ghost" className="mr-auto"><Download className="w-3 h-3" /></Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Shield className="w-5 h-5 text-green-600" />
+                      التقرير النهائي
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">توقيع إلكتروني + QR | صالح 90 يوم</p>
+                    <Button onClick={() => handleGenerateReport("final")} disabled={generatingFinal || !reports[0] || (compliance ? !compliance.ready_for_issuance : true)} className="w-full gap-2">
+                      {generatingFinal ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                      إصدار نهائي
+                    </Button>
+                    {(!compliance || !compliance.ready_for_issuance) && (
+                      <p className="text-xs text-destructive flex items-center gap-1"><AlertTriangle className="w-3 h-3" />يجب اجتياز فحص الامتثال</p>
+                    )}
+                    {reports.find(r => r.is_final) && (
+                      <div className="flex items-center gap-2 text-sm text-green-700 bg-green-50 dark:bg-green-950/20 p-2 rounded">
+                        <CheckCircle className="w-4 h-4" /><span>صادر</span>
+                        <Button size="sm" variant="ghost" className="mr-auto"><Download className="w-3 h-3" /></Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            {/* Report Lifecycle Sidebar */}
+            <div>
+              <ReportLifecyclePanel
+                assignment={assignment}
+                reports={reports}
+                onRefresh={loadData}
+              />
+            </div>
           </div>
         </TabsContent>
       </Tabs>
