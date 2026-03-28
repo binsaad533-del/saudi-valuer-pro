@@ -644,6 +644,21 @@ ${portfolioContext}
                   </div>
                 </div>
 
+                {/* Portfolio Toggle */}
+                <div className="space-y-1.5">
+                  <button
+                    onClick={() => { setIsPortfolio(!isPortfolio); setScopeConfirmed(false); }}
+                    className={`w-full text-right px-3 py-2 rounded-lg border text-xs transition-all flex items-center gap-2 ${
+                      isPortfolio
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border bg-background text-foreground hover:border-primary/30"
+                    }`}
+                  >
+                    <Briefcase className="w-3.5 h-3.5" />
+                    💼 محفظة أصول (أصول متعددة)
+                  </button>
+                </div>
+
                 {(valuationType === "real_estate" || valuationType === "mixed") && (
                 <>
                 <div className="space-y-1.5">
