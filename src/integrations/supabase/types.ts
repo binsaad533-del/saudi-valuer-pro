@@ -264,6 +264,42 @@ export type Database = {
           },
         ]
       }
+      cities: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name_ar: string
+          name_en: string | null
+          region_ar: string | null
+          region_en: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name_ar: string
+          name_en?: string | null
+          region_ar?: string | null
+          region_en?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name_ar?: string
+          name_en?: string | null
+          region_ar?: string | null
+          region_en?: string | null
+        }
+        Relationships: []
+      }
       clients: {
         Row: {
           address_ar: string | null
@@ -674,6 +710,47 @@ export type Database = {
           },
         ]
       }
+      districts: {
+        Row: {
+          city_id: string
+          created_at: string
+          id: string
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name_ar: string
+          name_en: string | null
+        }
+        Insert: {
+          city_id: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name_ar: string
+          name_en?: string | null
+        }
+        Update: {
+          city_id?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name_ar?: string
+          name_en?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "districts_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glossary_terms: {
         Row: {
           category: string | null
@@ -788,58 +865,128 @@ export type Database = {
           },
         ]
       }
+      inspector_coverage_areas: {
+        Row: {
+          city_id: string
+          coverage_radius_km: number | null
+          created_at: string
+          district_id: string | null
+          id: string
+          inspector_profile_id: string
+          is_primary: boolean | null
+        }
+        Insert: {
+          city_id: string
+          coverage_radius_km?: number | null
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          inspector_profile_id: string
+          is_primary?: boolean | null
+        }
+        Update: {
+          city_id?: string
+          coverage_radius_km?: number | null
+          created_at?: string
+          district_id?: string | null
+          id?: string
+          inspector_profile_id?: string
+          is_primary?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspector_coverage_areas_city_id_fkey"
+            columns: ["city_id"]
+            isOneToOne: false
+            referencedRelation: "cities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspector_coverage_areas_district_id_fkey"
+            columns: ["district_id"]
+            isOneToOne: false
+            referencedRelation: "districts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspector_coverage_areas_inspector_profile_id_fkey"
+            columns: ["inspector_profile_id"]
+            isOneToOne: false
+            referencedRelation: "inspector_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspector_profiles: {
         Row: {
           availability_status: string
+          avg_completion_hours: number | null
+          avg_response_hours: number | null
           cities_ar: string[] | null
           cities_en: string[] | null
           created_at: string
           current_workload: number | null
+          home_latitude: number | null
+          home_longitude: number | null
           id: string
           is_active: boolean
           max_concurrent_tasks: number | null
           notes: string | null
           organization_id: string | null
           phone: string | null
+          quality_score: number | null
           regions_ar: string[] | null
           regions_en: string[] | null
           specializations: string[] | null
+          total_completed: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
           availability_status?: string
+          avg_completion_hours?: number | null
+          avg_response_hours?: number | null
           cities_ar?: string[] | null
           cities_en?: string[] | null
           created_at?: string
           current_workload?: number | null
+          home_latitude?: number | null
+          home_longitude?: number | null
           id?: string
           is_active?: boolean
           max_concurrent_tasks?: number | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          quality_score?: number | null
           regions_ar?: string[] | null
           regions_en?: string[] | null
           specializations?: string[] | null
+          total_completed?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
           availability_status?: string
+          avg_completion_hours?: number | null
+          avg_response_hours?: number | null
           cities_ar?: string[] | null
           cities_en?: string[] | null
           created_at?: string
           current_workload?: number | null
+          home_latitude?: number | null
+          home_longitude?: number | null
           id?: string
           is_active?: boolean
           max_concurrent_tasks?: number | null
           notes?: string | null
           organization_id?: string | null
           phone?: string | null
+          quality_score?: number | null
           regions_ar?: string[] | null
           regions_en?: string[] | null
           specializations?: string[] | null
+          total_completed?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -2756,6 +2903,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      haversine_distance: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
       }
     }
     Enums: {
