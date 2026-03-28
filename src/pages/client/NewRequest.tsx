@@ -314,7 +314,7 @@ export default function NewRequest() {
 
     try {
       const { data, error } = await supabase
-        .from("valuation_requests")
+        .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
           property_type: (formData.propertyType || null) as any,
