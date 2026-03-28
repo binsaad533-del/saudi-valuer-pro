@@ -509,6 +509,17 @@ serve(async (req) => {
       const allAudit: AuditStep[] = [];
       const allCalcErrors: string[] = [];
 
+      // ── STEP 0.5: Enrich subject with inspection data ──
+      if (inspectionAnalysis) {
+        console.log("Enriching subject with inspection analysis data...");
+        if (!subject.building_condition) subject.building_condition = inspectionAnalysis.condition_rating;
+        (subject as any).inspection_condition_score = inspectionAnalysis.condition_score;
+        (subject as any).inspection_quality_score = inspectionAnalysis.quality_score;
+        (subject as any).inspection_finishing_level = inspectionAnalysis.finishing_level;
+        (subject as any).inspection_defects = inspectionAnalysis.visible_defects;
+        (subject as any).inspection_risk_flags = inspectionAnalysis.risk_flags;
+      }
+
       // ── STEP 1: AI classifies data (no calculations) ──
       console.log("Step 1: AI data classification...");
       const normalizedData = await aiNormalizeData(request, subject);
