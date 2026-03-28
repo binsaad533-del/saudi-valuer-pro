@@ -190,7 +190,7 @@ export default function MobileInspectionFlow() {
         setGpsLoading(false);
         toast.success("تم تحديد الموقع بنجاح");
       },
-      (err) => {
+      () => {
         setGpsError("تعذر تحديد الموقع. يرجى تفعيل GPS");
         setGpsLoading(false);
       },
