@@ -48,6 +48,7 @@ const ADMIN_TABS = [
 
 export default function ClientRequests() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
