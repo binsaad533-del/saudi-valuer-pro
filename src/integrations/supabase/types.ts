@@ -788,6 +788,119 @@ export type Database = {
           },
         ]
       }
+      inspector_profiles: {
+        Row: {
+          availability_status: string
+          cities_ar: string[] | null
+          cities_en: string[] | null
+          created_at: string
+          current_workload: number | null
+          id: string
+          is_active: boolean
+          max_concurrent_tasks: number | null
+          notes: string | null
+          organization_id: string | null
+          phone: string | null
+          regions_ar: string[] | null
+          regions_en: string[] | null
+          specializations: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability_status?: string
+          cities_ar?: string[] | null
+          cities_en?: string[] | null
+          created_at?: string
+          current_workload?: number | null
+          id?: string
+          is_active?: boolean
+          max_concurrent_tasks?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          regions_ar?: string[] | null
+          regions_en?: string[] | null
+          specializations?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability_status?: string
+          cities_ar?: string[] | null
+          cities_en?: string[] | null
+          created_at?: string
+          current_workload?: number | null
+          id?: string
+          is_active?: boolean
+          max_concurrent_tasks?: number | null
+          notes?: string | null
+          organization_id?: string | null
+          phone?: string | null
+          regions_ar?: string[] | null
+          regions_en?: string[] | null
+          specializations?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspector_profiles_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspector_reassignment_log: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          id: string
+          inspection_was_started: boolean | null
+          new_inspector_id: string
+          previous_inspector_id: string | null
+          reason: string | null
+          reassigned_by: string
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          id?: string
+          inspection_was_started?: boolean | null
+          new_inspector_id: string
+          previous_inspector_id?: string | null
+          reason?: string | null
+          reassigned_by: string
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          inspection_was_started?: boolean | null
+          new_inspector_id?: string
+          previous_inspector_id?: string | null
+          reason?: string | null
+          reassigned_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inspector_reassignment_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inspector_reassignment_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       market_zones: {
         Row: {
           avg_price_per_sqm: number | null
@@ -2115,6 +2228,7 @@ export type Database = {
       }
       valuation_assignments: {
         Row: {
+          assigned_inspector_id: string | null
           assigned_reviewer_id: string | null
           assigned_valuer_id: string | null
           basis_of_value: Database["public"]["Enums"]["basis_of_value"]
@@ -2148,6 +2262,7 @@ export type Database = {
           valuation_date: string | null
         }
         Insert: {
+          assigned_inspector_id?: string | null
           assigned_reviewer_id?: string | null
           assigned_valuer_id?: string | null
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"]
@@ -2181,6 +2296,7 @@ export type Database = {
           valuation_date?: string | null
         }
         Update: {
+          assigned_inspector_id?: string | null
           assigned_reviewer_id?: string | null
           assigned_valuer_id?: string | null
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"]
