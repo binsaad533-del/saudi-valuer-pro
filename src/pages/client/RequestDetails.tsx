@@ -352,42 +352,27 @@ export default function RequestDetails() {
               </Card>
             )}
 
-            {/* Payment Upload */}
+            {/* Online Payment */}
             {(needsPayment || needsFinalPayment) && (
-              <Card className="shadow-card border-warning/20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><CreditCard className="w-4 h-4 text-warning" />
-                    {needsFinalPayment ? "الدفعة النهائية" : "رفع إيصال الدفع"}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-3 bg-warning/5 rounded-lg text-center">
-                    <p className="text-lg font-bold text-foreground" dir="ltr">
-                      {needsFinalPayment
-                        ? (request.total_fees - (request.amount_paid || 0)).toLocaleString()
-                        : (request.payment_structure === "partial" ? Number(request.first_payment_amount).toLocaleString() : Number(request.total_fees).toLocaleString())
-                      } ر.س
-                    </p>
-                    <p className="text-xs text-muted-foreground">{needsFinalPayment ? "المبلغ المتبقي" : "المبلغ المطلوب"}</p>
-                  </div>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleUploadReceipt}
-                    className="hidden"
-                  />
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={() => {
-                      setPaymentType(needsFinalPayment ? "final" : "first");
-                      fileInputRef.current?.click();
-                    }}
-                    disabled={uploading}
-                  >
-                    {uploading ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Upload className="w-4 h-4 ml-1" />}
-                    رفع إيصال الدفع
+              <PaymentCheckout
+                request={request}
+                paymentStage={needsFinalPayment ? "final" : request.payment_structure === "partial" ? "first" : "full"}
+                onPaymentComplete={() => { setPaymentRefreshKey(k => k + 1); loadData(); }}
+              />
+            )}
+
+            {/* Manual Receipt Upload (backup) */}
+            {(needsPayment || needsFinalPayment) && (
+              <Card className="shadow-card border-border">
+                <CardContent className="p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground text-center">أو رفع إيصال يدوياً (حالات استثنائية)</p>
+                  <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleUploadReceipt} className="hidden" />
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => {
+                    setPaymentType(needsFinalPayment ? "final" : "first");
+                    fileInputRef.current?.click();
+                  }} disabled={uploading}>
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin ml-1" /> : <Upload className="w-3 h-3 ml-1" />}
+                    رفع إيصال يدوي
                   </Button>
                 </CardContent>
               </Card>
