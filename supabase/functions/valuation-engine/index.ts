@@ -493,6 +493,13 @@ serve(async (req) => {
         if (req) request = { ...assignment, ...req };
       }
 
+      // Fetch inspection analysis data
+      const { data: inspectionAnalysis } = await sb.from("inspection_analysis")
+        .select("*")
+        .eq("assignment_id", assignment_id)
+        .eq("status", "completed")
+        .maybeSingle();
+
       // Fetch comparables from DB
       const { data: assignmentComps } = await sb.from("assignment_comparables").select("*, comparables(*)").eq("assignment_id", assignment_id);
       const { data: allComps } = await sb.from("comparables").select("*").eq("property_type", subject.property_type || "residential").limit(10);
