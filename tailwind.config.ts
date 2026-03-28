@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        cairo: ["Almarai", "sans-serif"],
+        cairo: ["Cairo", "sans-serif"],
         inter: ["Inter", "sans-serif"],
       },
       colors: {
