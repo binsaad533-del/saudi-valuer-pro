@@ -12,7 +12,7 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowRight, FileText, MessageSquare, Send, Loader2, Bot, User,
   CreditCard, Building2, CheckCircle, XCircle, Upload, Download,
-  Clock, DollarSign, Shield, AlertCircle,
+  Clock, DollarSign, Shield, AlertCircle, MessageSquareText,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
