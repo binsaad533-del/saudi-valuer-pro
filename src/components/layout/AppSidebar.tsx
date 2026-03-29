@@ -130,7 +130,8 @@ export default function AppSidebar() {
 
   const canSee = (roles?: string[]) => {
     if (!roles) return true;
-    return roles.includes(role || "");
+    if (!role) return true; // show all while loading
+    return roles.includes(role);
   };
 
   const filteredSections = navSections
