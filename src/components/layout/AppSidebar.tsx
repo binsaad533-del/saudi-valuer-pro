@@ -48,7 +48,7 @@ const adminRoles = ["super_admin", "firm_admin"];
 const navSections: NavSection[] = [
   {
     items: [
-      { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: allRoles },
+      { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: ["super_admin"] },
       { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: allRoles },
     ],
   },
