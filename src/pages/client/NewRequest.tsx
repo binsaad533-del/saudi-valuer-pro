@@ -592,6 +592,15 @@ export default function NewRequest() {
                     />
                   </div>
                 </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-sm">مستخدمو التقرير</Label>
+                  <Input
+                    value={clientInfo.intendedUsers}
+                    onChange={(e) => setClientInfo(p => ({ ...p, intendedUsers: e.target.value }))}
+                    placeholder="مثال: البنك، المستثمر، الجهة الحكومية..."
+                  />
+                </div>
               </CardContent>
             </Card>
 
