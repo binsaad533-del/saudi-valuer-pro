@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  AlertTriangle, Plus, Trash2, MessageSquare, Filter,
+  AlertTriangle, Plus, Trash2, MessageSquare, Filter, CheckCircle, XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
