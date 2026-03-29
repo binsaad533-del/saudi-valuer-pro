@@ -5,9 +5,9 @@ import {
   AlertTriangle,
   Users,
   MapPin,
-  DollarSign,
   BarChart3,
 } from "lucide-react";
+import saudiRiyalIcon from "@/assets/saudi-riyal.png";
 import TopBar from "@/components/layout/TopBar";
 import StatCard from "@/components/dashboard/StatCard";
 import RecentAssignments from "@/components/dashboard/RecentAssignments";
