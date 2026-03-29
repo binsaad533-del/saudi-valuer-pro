@@ -14,9 +14,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
-  MapPin, Camera, ClipboardCheck, StickyNote,
+  MapPin, Camera, ClipboardCheck,
   Send, ChevronRight, ChevronLeft, Loader2,
-  CheckCircle, AlertTriangle, Navigation, ImagePlus,
+  CheckCircle, AlertTriangle, Navigation,
   Trash2, Eye, Info, Building2, Ruler, Wrench,
   Zap, TrendingUp, ShieldAlert, FileCheck, UserCheck,
 } from "lucide-react";
