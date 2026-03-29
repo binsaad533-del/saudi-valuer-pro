@@ -96,10 +96,17 @@ const navSections: NavSection[] = [
 ];
 
 export default function AppSidebar() {
+  const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("تم تسجيل الخروج");
+    navigate("/client/login");
+  };
 
   const toggleExpand = (label: string) => {
     setExpandedItems((prev) =>
