@@ -29,7 +29,7 @@ const iconStyles = {
 
 export default function StatCard({ title, value, subtitle, icon, trend, variant = "default", href, details }: StatCardProps) {
   const content = (
-    <div className={`rounded-lg border p-5 shadow-card animate-fade-in transition-all ${variantStyles[variant]} ${href ? "hover:shadow-md hover:scale-[1.02] cursor-pointer" : ""}`}>
+    <div className={`rounded-lg border p-5 shadow-card animate-fade-in transition-all h-full flex flex-col ${variantStyles[variant]} ${href ? "hover:shadow-md hover:scale-[1.02] cursor-pointer" : ""}`}>
       <div className="flex items-start justify-between">
         <div className="flex flex-col flex-1">
           <span className="text-sm text-muted-foreground">{title}</span>
@@ -56,7 +56,7 @@ export default function StatCard({ title, value, subtitle, icon, trend, variant 
         </div>
       )}
       {href && (
-        <div className="mt-3 pt-2 border-t border-border/50 flex items-center gap-1 text-xs text-primary font-medium">
+        <div className="mt-auto pt-3 border-t border-border/50 flex items-center gap-1 text-xs text-primary font-medium">
           <span>عرض التفاصيل</span>
           <ChevronLeft className="w-3.5 h-3.5" />
         </div>
