@@ -78,28 +78,33 @@ export default function InspectorsListPage() {
   const fetchInspectors = async () => {
     setLoading(true);
     try {
-      const { data: profiles, error: pErr } = await supabase
-        .from("inspector_profiles")
-        .select("*")
-        .limit(100);
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("timeout")), 5000)
+      );
+      const query = supabase.from("inspector_profiles").select("*").limit(100);
+      const { data: profiles, error: pErr } = await Promise.race([query, timeout]);
 
       if (pErr || !profiles || profiles.length === 0) {
         setInspectors(mockInspectors);
+        setLoading(false);
         return;
       }
 
       const userIds = profiles.map((p) => p.user_id);
 
-      const [profilesRes, inspectionsRes] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name_ar, email, phone").in("user_id", userIds),
-        supabase.from("inspections").select("inspector_id, status, created_at, completed").in("inspector_id", userIds),
+      const [profilesRes, inspectionsRes] = await Promise.race([
+        Promise.all([
+          supabase.from("profiles").select("user_id, full_name_ar, email, phone").in("user_id", userIds),
+          supabase.from("inspections").select("inspector_id, status, created_at, completed").in("inspector_id", userIds),
+        ]),
+        timeout,
       ]);
 
       const profileMap: Record<string, any> = {};
-      (profilesRes.data || []).forEach((p) => { profileMap[p.user_id] = p; });
+      (profilesRes.data || []).forEach((p: any) => { profileMap[p.user_id] = p; });
 
       const inspectionsByUser: Record<string, any[]> = {};
-      (inspectionsRes.data || []).forEach((i) => {
+      (inspectionsRes.data || []).forEach((i: any) => {
         if (!inspectionsByUser[i.inspector_id]) inspectionsByUser[i.inspector_id] = [];
         inspectionsByUser[i.inspector_id].push(i);
       });
@@ -107,7 +112,7 @@ export default function InspectorsListPage() {
       const combined: InspectorRow[] = profiles.map((ip) => {
         const prof = profileMap[ip.user_id] || {};
         const tasks = inspectionsByUser[ip.user_id] || [];
-        const completed = tasks.filter((t) => t.status === "submitted" || t.status === "reviewed" || t.completed);
+        const completed = tasks.filter((t: any) => t.status === "submitted" || t.status === "reviewed" || t.completed);
         const lastTask = [...tasks].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
         return {
