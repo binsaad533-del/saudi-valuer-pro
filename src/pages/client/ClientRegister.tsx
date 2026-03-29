@@ -207,7 +207,7 @@ export default function ClientRegister() {
             <Link to="/client/login" className="text-primary font-medium hover:underline">تسجيل الدخول</Link>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-6">© {new Date().getFullYear()} جساس للتقييم العقاري - جميع الحقوق محفوظة</p>
+        <p className="text-center text-xs text-muted-foreground mt-6">© {new Date().getFullYear()} جساس للتقييم - جميع الحقوق محفوظة</p>
       </div>
     </div>
   );
