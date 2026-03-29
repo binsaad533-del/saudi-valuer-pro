@@ -212,7 +212,7 @@ export default function ClientsManagement() {
 
   // ── Stats ──
   const stats = useMemo(() => {
-    const clients = users.filter((u) => u.role === "client" || !u.role);
+    const _clients = users.filter((u) => u.role === "client" || !u.role);
     return {
       total: users.length,
       vip: users.filter((u) => u.client_category === "vip").length,
