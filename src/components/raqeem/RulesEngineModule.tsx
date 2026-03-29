@@ -81,7 +81,7 @@ export default function RulesEngineModule() {
 
   const addPresetRule = async (preset: typeof PRESET_RULES[0]) => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { toast.error("يجب تسجيل الدخول أولاً"); return; }
     const { error } = await supabase.from("raqeem_rules").insert({
       rule_title_ar: preset.title,
       rule_content: preset.content,
