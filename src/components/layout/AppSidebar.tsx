@@ -120,60 +120,72 @@ export default function AppSidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.path);
-          const expanded = expandedItems.includes(item.label);
-
-          if (item.children) {
-            return (
-              <div key={item.label}>
-                <button
-                  onClick={() => toggleExpand(item.label)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                    ${active ? "bg-sidebar-accent text-primary font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
-                >
-                  <Icon className="w-[18px] h-[18px] shrink-0" />
-                  {!collapsed && (
-                    <>
-                      <span className="flex-1 text-right">{item.label}</span>
-                      <ChevronDown
-                        className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
-                      />
-                    </>
-                  )}
-                </button>
-                {expanded && !collapsed && (
-                  <div className="mr-8 mt-0.5 space-y-0.5 border-r-2 border-primary/15 pr-3">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.path}
-                        to={child.path}
-                        className={`block px-3 py-2 rounded-lg text-[13px] transition-all
-                          ${isActive(child.path) ? "text-primary bg-sidebar-accent font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
+      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+        {navSections.map((section, sIdx) => (
+          <div key={sIdx}>
+            {section.title && !collapsed && (
+              <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-sidebar-muted/70 uppercase tracking-wider">
+                {section.title}
               </div>
-            );
-          }
+            )}
+            {section.title && collapsed && <div className="my-2 mx-3 border-t border-sidebar-border" />}
+            <div className="space-y-0.5">
+              {section.items.map((item) => {
+                const Icon = item.icon;
+                const active = isActive(item.path);
+                const expanded = expandedItems.includes(item.label);
 
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
-                ${active ? "bg-sidebar-accent text-primary font-medium shadow-blue" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
-            >
-              <Icon className="w-[18px] h-[18px] shrink-0" />
-              {!collapsed && <span>{item.label}</span>}
-            </Link>
-          );
-        })}
+                if (item.children) {
+                  return (
+                    <div key={item.label}>
+                      <button
+                        onClick={() => toggleExpand(item.label)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+                          ${active ? "bg-sidebar-accent text-primary font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                      >
+                        <Icon className="w-[18px] h-[18px] shrink-0" />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 text-right">{item.label}</span>
+                            <ChevronDown
+                              className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
+                            />
+                          </>
+                        )}
+                      </button>
+                      {expanded && !collapsed && (
+                        <div className="mr-8 mt-0.5 space-y-0.5 border-r-2 border-primary/15 pr-3">
+                          {item.children.map((child) => (
+                            <Link
+                              key={child.path}
+                              to={child.path}
+                              className={`block px-3 py-2 rounded-lg text-[13px] transition-all
+                                ${isActive(child.path) ? "text-primary bg-sidebar-accent font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}
+                            >
+                              {child.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
+                      ${active ? "bg-sidebar-accent text-primary font-medium shadow-blue" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
+                  >
+                    <Icon className="w-[18px] h-[18px] shrink-0" />
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Footer */}
