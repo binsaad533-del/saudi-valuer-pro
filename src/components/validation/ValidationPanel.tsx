@@ -82,6 +82,19 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
         supabase.from("inspection_analysis").select("*").eq("assignment_id", assignmentId).maybeSingle(),
       ]);
 
+      // Get inspection photos by inspection ID if we have an inspection
+      const inspectionRecord = (insRes.data as any)?.[0] || null;
+      let inspectionPhotos: any[] = [];
+      let inspectionChecklist: any[] = [];
+      if (inspectionRecord?.id) {
+        const [photosRes, checklistRes] = await Promise.all([
+          supabase.from("inspection_photos").select("*").eq("inspection_id", inspectionRecord.id),
+          supabase.from("inspection_checklist_items").select("*").eq("inspection_id", inspectionRecord.id),
+        ]);
+        inspectionPhotos = (photosRes.data as any[]) || [];
+        inspectionChecklist = (checklistRes.data as any[]) || [];
+      }
+
       const validationResult = runFullValidation({
         assignment: aRes.data,
         subject: (subRes.data as any)?.[0] || null,
@@ -90,7 +103,10 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
         methods: (methRes.data as any[]) || [],
         reconciliation: reconRes.data,
         report: (repRes.data as any)?.[0] || null,
-        inspection: (insRes.data as any)?.[0] || null,
+        inspection: inspectionRecord,
+        inspectionAnalysis: insAnalysisRes.data || null,
+        inspectionPhotos,
+        inspectionChecklist,
       });
 
       setResult(validationResult);
