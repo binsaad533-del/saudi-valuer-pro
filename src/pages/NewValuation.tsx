@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import { Progress } from "@/components/ui/progress";
@@ -14,29 +14,28 @@ import {
   Send,
   Loader2,
   Sparkles,
-  MapPin,
-  Building2,
-  Cog,
+  X,
+  FolderUp,
+  Brain,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// ── Step definitions (4 steps — discipline determined by AI) ──
+// ── Steps ──
 const STEPS = [
-  { id: 1, label: "العميل والمستندات" },
-  { id: 2, label: "تفاصيل الأصل" },
+  { id: 1, label: "رفع الوثائق" },
+  { id: 2, label: "البيانات المستخرجة" },
   { id: 3, label: "عرض التقييم" },
-  { id: 4, label: "المراجعة" },
+  { id: 4, label: "المراجعة والإرسال" },
 ] as const;
 
-// ── Valuation purposes ──
+// ── Purposes ──
 const PURPOSES = [
   "بيع / شراء", "تمويل عقاري", "إعادة تقييم", "نزع ملكية للمنفعة العامة",
   "تصفية / تسوية", "تقارير مالية (IFRS)", "ضمان بنكي", "استثمار",
   "تأمين", "أغراض ضريبية", "نقل ملكية", "أخرى",
 ];
 
-// ── Value bases ──
 const VALUE_BASES = [
   "القيمة السوقية (Market Value)",
   "قيمة الاستثمار (Investment Value)",
@@ -45,60 +44,39 @@ const VALUE_BASES = [
   "قيمة الاستخدام الحالي (Existing Use Value)",
 ];
 
-// ── Document list (universal — AI will identify relevance) ──
-const ALL_DOCS = [
-  "صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار",
-  "عقود الإيجار (إن وجدت)", "فاتورة الشراء", "شهادة الصيانة",
-  "صور المعدات", "كتالوج المصنع", "تقرير فني سابق", "مستندات إضافية",
-];
-
-// ── Asset fields — comprehensive (AI will classify which apply) ──
-const ASSET_FIELDS = [
-  // Location / General
-  { key: "assetDescription", label: "وصف الأصل", placeholder: "صف الأصل المراد تقييمه (عقار، آلة، مزيج...)", required: true, section: "general" },
-  { key: "city", label: "المدينة", placeholder: "اختر المدينة", required: true, section: "location" },
-  { key: "district", label: "الحي / الموقع", placeholder: "اسم الحي أو موقع الأصل", required: true, section: "location" },
-  { key: "address", label: "العنوان التفصيلي", placeholder: "العنوان الكامل", required: false, section: "location" },
-  { key: "coordinates", label: "الإحداثيات", placeholder: "خط الطول، خط العرض", required: false, section: "location" },
-  // Property-related
-  { key: "deedNumber", label: "رقم الصك / وثيقة الملكية", placeholder: "رقم صك الملكية أو وثيقة الأصل", required: false, section: "property" },
-  { key: "area", label: "المساحة (م²)", placeholder: "المساحة بالمتر المربع", required: false, section: "property" },
-  { key: "plotNumber", label: "رقم القطعة", placeholder: "رقم القطعة", required: false, section: "property" },
-  { key: "planNumber", label: "رقم المخطط", placeholder: "رقم المخطط", required: false, section: "property" },
-  { key: "classification", label: "التصنيف / الاستخدام", placeholder: "سكني، تجاري، صناعي، مختلط", required: false, section: "property" },
-  // Machinery-related
-  { key: "machineName", label: "اسم المعدة / الآلة", placeholder: "أدخل اسم المعدة (إن وجد)", required: false, section: "machinery" },
-  { key: "manufacturer", label: "الشركة المصنعة", placeholder: "الشركة المصنعة", required: false, section: "machinery" },
-  { key: "model", label: "الموديل", placeholder: "رقم الموديل", required: false, section: "machinery" },
-  { key: "yearMade", label: "سنة الصنع", placeholder: "سنة التصنيع", required: false, section: "machinery" },
-  { key: "serialNumber", label: "الرقم التسلسلي", placeholder: "الرقم التسلسلي", required: false, section: "machinery" },
-  { key: "assetCondition", label: "حالة الأصل", placeholder: "جديد، جيد، متوسط، يحتاج صيانة", required: false, section: "general" },
-];
-
-// ── Client fields ──
-const CLIENT_FIELDS = [
-  { key: "clientName", label: "اسم العميل / الجهة", placeholder: "أدخل اسم العميل", required: true },
-  { key: "idNumber", label: "رقم الهوية / السجل التجاري", placeholder: "أدخل رقم التعريف", required: true },
-  { key: "phone", label: "رقم الجوال", placeholder: "05XXXXXXXX", required: true },
-  { key: "email", label: "البريد الإلكتروني", placeholder: "email@example.com", required: false },
-  { key: "clientAddress", label: "العنوان", placeholder: "عنوان العميل", required: false },
-  { key: "intendedUser", label: "المستخدم المقصود", placeholder: "الجهة المستفيدة من التقرير", required: true },
-];
-
 // ── Types ──
-interface FormData {
-  clientFields: Record<string, string>;
-  uploadedDocs: string[];
-  assetFields: Record<string, string>;
-  purpose: string;
-  valueBasis: string;
-  valuationDate: string;
+interface UploadedFile {
+  file: File;
+  name: string;
+  size: number;
+  category?: string;
+  relevance?: string;
 }
 
-interface ValidationResult {
-  valid: boolean;
-  errors: string[];
-  warnings: string[];
+interface ExtractedData {
+  discipline: string;
+  discipline_label: string;
+  confidence: number;
+  client: {
+    clientName?: string;
+    idNumber?: string;
+    phone?: string;
+    email?: string;
+  };
+  asset: {
+    description?: string;
+    city?: string;
+    district?: string;
+    area?: string;
+    deedNumber?: string;
+    classification?: string;
+    machineName?: string;
+    manufacturer?: string;
+    model?: string;
+  };
+  suggestedPurpose?: string;
+  notes: string[];
+  documentCategories: { fileName: string; category: string; relevance: string }[];
 }
 
 interface ActivityEntry {
@@ -107,33 +85,26 @@ interface ActivityEntry {
   timestamp: Date;
 }
 
-// ── AI-detected discipline label ──
-function detectDisciplineFromFields(fields: Record<string, string>): { id: string; label: string } {
-  const hasRE = !!(fields.deedNumber?.trim() || fields.area?.trim() || fields.plotNumber?.trim() || fields.planNumber?.trim());
-  const hasMA = !!(fields.machineName?.trim() || fields.manufacturer?.trim() || fields.model?.trim() || fields.serialNumber?.trim());
-  if (hasRE && hasMA) return { id: "mixed", label: "تقييم مختلط (عقاري + آلات)" };
-  if (hasMA) return { id: "machinery", label: "تقييم آلات ومعدات" };
-  if (hasRE) return { id: "real_estate", label: "تقييم عقاري" };
-  // Default from description
-  const desc = (fields.assetDescription || "").toLowerCase();
-  if (desc.includes("آل") || desc.includes("معد") || desc.includes("machine")) return { id: "machinery", label: "تقييم آلات ومعدات" };
-  return { id: "real_estate", label: "تقييم عقاري" };
-}
-
 export default function NewValuation() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
+  const [extracting, setExtracting] = useState(false);
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
 
-  const [formData, setFormData] = useState<FormData>({
-    clientFields: {},
-    uploadedDocs: [],
-    assetFields: {},
-    purpose: "",
-    valueBasis: VALUE_BASES[0],
-    valuationDate: "",
-  });
+  // Step 1: uploaded files
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+
+  // Step 2: AI extracted data (editable)
+  const [extracted, setExtracted] = useState<ExtractedData | null>(null);
+  const [clientFields, setClientFields] = useState<Record<string, string>>({});
+  const [assetFields, setAssetFields] = useState<Record<string, string>>({});
+
+  // Step 3: purpose & valuation config
+  const [purpose, setPurpose] = useState("");
+  const [valueBasis, setValueBasis] = useState(VALUE_BASES[0]);
+  const [valuationDate, setValuationDate] = useState("");
 
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
@@ -141,47 +112,109 @@ export default function NewValuation() {
     setActivityLog(prev => [...prev, { step, action, timestamp: new Date() }]);
   }, []);
 
-  // ── AI-detected discipline ──
-  const detectedDiscipline = useMemo(() => detectDisciplineFromFields(formData.assetFields), [formData.assetFields]);
+  // ── File handling ──
+  const handleFilesSelected = useCallback((files: FileList | null) => {
+    if (!files) return;
+    const newFiles: UploadedFile[] = Array.from(files).map(f => ({
+      file: f,
+      name: f.name,
+      size: f.size,
+    }));
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+    logActivity(1, `رفع ${newFiles.length} ملف`);
+  }, [logActivity]);
 
-  // ── Per-step validation ──
-  const validateStep = useCallback((step: number): ValidationResult => {
+  const removeFile = useCallback((index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // ── AI Extraction ──
+  const runExtraction = useCallback(async () => {
+    if (uploadedFiles.length === 0) {
+      toast.error("يجب رفع ملف واحد على الأقل");
+      return;
+    }
+
+    setExtracting(true);
+    logActivity(1, "بدء التحليل الذكي للوثائق");
+
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-documents", {
+        body: {
+          fileNames: uploadedFiles.map(f => f.name),
+          fileDescriptions: uploadedFiles.map(f => f.category || ""),
+        },
+      });
+
+      if (error) throw error;
+
+      const result = data as ExtractedData;
+      setExtracted(result);
+
+      // Pre-fill editable fields from AI
+      setClientFields({
+        clientName: result.client?.clientName || "",
+        idNumber: result.client?.idNumber || "",
+        phone: result.client?.phone || "",
+        email: result.client?.email || "",
+      });
+      setAssetFields({
+        description: result.asset?.description || "",
+        city: result.asset?.city || "",
+        district: result.asset?.district || "",
+        area: result.asset?.area || "",
+        deedNumber: result.asset?.deedNumber || "",
+        classification: result.asset?.classification || "",
+        machineName: result.asset?.machineName || "",
+        manufacturer: result.asset?.manufacturer || "",
+        model: result.asset?.model || "",
+      });
+      if (result.suggestedPurpose) setPurpose(result.suggestedPurpose);
+
+      // Update file categories from AI
+      if (result.documentCategories) {
+        setUploadedFiles(prev => prev.map(f => {
+          const cat = result.documentCategories.find(dc => dc.fileName === f.name);
+          return cat ? { ...f, category: cat.category, relevance: cat.relevance } : f;
+        }));
+      }
+
+      setCompletedSteps(prev => new Set(prev).add(1));
+      setCurrentStep(2);
+      logActivity(1, `تم التحليل — نوع التقييم: ${result.discipline_label} (ثقة ${result.confidence}%)`);
+      toast.success("تم تحليل الوثائق بنجاح");
+    } catch (err: any) {
+      console.error("Extraction error:", err);
+      toast.error(err?.message || "حدث خطأ أثناء تحليل الوثائق");
+    } finally {
+      setExtracting(false);
+    }
+  }, [uploadedFiles, logActivity]);
+
+  // ── Validation ──
+  const validateStep = useCallback((step: number) => {
     const errors: string[] = [];
     const warnings: string[] = [];
 
     switch (step) {
-      case 1: {
-        const requiredClient = CLIENT_FIELDS.filter(f => f.required);
-        requiredClient.forEach(f => {
-          if (!formData.clientFields[f.key]?.trim()) errors.push(`حقل "${f.label}" مطلوب`);
-        });
-        if (formData.uploadedDocs.length === 0) warnings.push("لم يتم رفع أي مستندات بعد");
-        const optionalClient = CLIENT_FIELDS.filter(f => !f.required);
-        optionalClient.forEach(f => {
-          if (!formData.clientFields[f.key]?.trim()) warnings.push(`حقل "${f.label}" غير مكتمل`);
-        });
+      case 1:
+        if (uploadedFiles.length === 0) errors.push("يجب رفع ملف واحد على الأقل");
+        if (!extracted) errors.push("يجب تشغيل التحليل الذكي");
         break;
-      }
-
-      case 2: {
-        const requiredAsset = ASSET_FIELDS.filter(f => f.required);
-        requiredAsset.forEach(f => {
-          if (!formData.assetFields[f.key]?.trim()) errors.push(`حقل "${f.label}" مطلوب`);
-        });
-        // Warn if neither RE nor MA fields are filled
-        const hasAnyDetail = ASSET_FIELDS.filter(f => f.section === "property" || f.section === "machinery")
-          .some(f => formData.assetFields[f.key]?.trim());
-        if (!hasAnyDetail) warnings.push("يُنصح بإدخال تفاصيل إضافية (عقارية أو آلات) لتحسين دقة التصنيف");
+      case 2:
+        if (!clientFields.clientName?.trim()) errors.push("اسم العميل مطلوب");
+        if (!assetFields.description?.trim()) warnings.push("وصف الأصل غير مكتمل");
         break;
-      }
-
       case 3:
-        if (!formData.purpose) errors.push("يجب تحديد غرض التقييم");
-        if (!formData.valuationDate) errors.push("يجب تحديد تاريخ التقييم");
-        if (!completedSteps.has(1)) errors.push("يجب إكمال بيانات العميل والمستندات أولاً");
-        if (!completedSteps.has(2)) errors.push("يجب إكمال تفاصيل الأصل أولاً");
+        if (!purpose) errors.push("يجب تحديد غرض التقييم");
+        if (!valuationDate) errors.push("يجب تحديد تاريخ التقييم");
         break;
-
       case 4:
         for (let s = 1; s <= 3; s++) {
           const sv = validateStep(s);
@@ -189,47 +222,34 @@ export default function NewValuation() {
         }
         break;
     }
-
     return { valid: errors.length === 0, errors, warnings };
-  }, [formData, completedSteps]);
+  }, [uploadedFiles, extracted, clientFields, assetFields, purpose, valuationDate]);
 
-  // ── Progress % ──
   const progressPercent = useMemo(() => {
     let total = 0;
-    // Step 1: client = 25%
-    const clientReq = CLIENT_FIELDS.filter(f => f.required);
-    const clientFilled = clientReq.filter(f => formData.clientFields[f.key]?.trim()).length;
-    total += Math.round((clientFilled / Math.max(clientReq.length, 1)) * 20);
-    if (formData.uploadedDocs.length > 0) total += 5;
-    // Step 2: asset = 25%
-    const assetReq = ASSET_FIELDS.filter(f => f.required);
-    const assetFilled = assetReq.filter(f => formData.assetFields[f.key]?.trim()).length;
-    total += Math.round((assetFilled / Math.max(assetReq.length, 1)) * 25);
-    // Step 3: purpose + date = 25%
-    if (formData.purpose) total += 12;
-    if (formData.valuationDate) total += 13;
+    if (uploadedFiles.length > 0) total += 15;
+    if (extracted) total += 15;
+    if (clientFields.clientName?.trim()) total += 15;
+    if (assetFields.description?.trim()) total += 10;
+    const filledAsset = Object.values(assetFields).filter(v => v?.trim()).length;
+    total += Math.min(filledAsset * 2, 15);
+    if (purpose) total += 15;
+    if (valuationDate) total += 15;
     return Math.min(total, 100);
-  }, [formData]);
+  }, [uploadedFiles, extracted, clientFields, assetFields, purpose, valuationDate]);
 
-  // ── Step access control ──
-  const canGoToStep = useCallback((targetStep: number): boolean => {
-    if (targetStep === 1) return true;
-    for (let s = 1; s < targetStep; s++) {
-      const v = validateStep(s);
-      if (v.errors.length > 0) return false;
+  const canGoToStep = useCallback((target: number): boolean => {
+    if (target === 1) return true;
+    for (let s = 1; s < target; s++) {
+      if (!completedSteps.has(s)) return false;
     }
     return true;
-  }, [validateStep]);
+  }, [completedSteps]);
 
   const goNext = useCallback(() => {
-    const validation = validateStep(currentStep);
-    if (!validation.valid) {
-      validation.errors.forEach(e => toast.error(e));
-      return;
-    }
-    if (validation.warnings.length > 0) {
-      validation.warnings.forEach(w => toast.warning(w));
-    }
+    const v = validateStep(currentStep);
+    if (!v.valid) { v.errors.forEach(e => toast.error(e)); return; }
+    if (v.warnings.length > 0) v.warnings.forEach(w => toast.warning(w));
     setCompletedSteps(prev => new Set(prev).add(currentStep));
     logActivity(currentStep, `إكمال الخطوة ${currentStep}`);
     if (currentStep < STEPS.length) setCurrentStep(currentStep + 1);
@@ -241,36 +261,29 @@ export default function NewValuation() {
 
   // ── Submit ──
   const handleSubmit = useCallback(async () => {
-    const validation = validateStep(4);
-    if (!validation.valid) {
-      validation.errors.forEach(e => toast.error(e));
-      return;
-    }
+    const v = validateStep(4);
+    if (!v.valid) { v.errors.forEach(e => toast.error(e)); return; }
 
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("يجب تسجيل الدخول أولاً");
-        setSubmitting(false);
-        return;
-      }
+      if (!user) { toast.error("يجب تسجيل الدخول أولاً"); setSubmitting(false); return; }
 
       const { error: reqErr } = await supabase
         .from("valuation_requests")
         .insert({
           client_user_id: user.id,
-          discipline: detectedDiscipline.id as any,
-          purpose_ar: formData.purpose,
-          value_basis_ar: formData.valueBasis,
-          valuation_date: formData.valuationDate || new Date().toISOString().split("T")[0],
+          discipline: (extracted?.discipline || "real_estate") as any,
+          purpose_ar: purpose,
+          value_basis_ar: valueBasis,
+          valuation_date: valuationDate || new Date().toISOString().split("T")[0],
           status: "submitted",
-          client_name_ar: formData.clientFields.clientName || "",
-          client_id_number: formData.clientFields.idNumber || "",
-          client_phone: formData.clientFields.phone || "",
-          client_email: formData.clientFields.email || "",
-          intended_user_ar: formData.clientFields.intendedUser || "",
-          asset_data: formData.assetFields as any,
+          client_name_ar: clientFields.clientName || "",
+          client_id_number: clientFields.idNumber || "",
+          client_phone: clientFields.phone || "",
+          client_email: clientFields.email || "",
+          intended_user_ar: clientFields.clientName || "",
+          asset_data: { ...assetFields, ai_extracted: true, ai_confidence: extracted?.confidence } as any,
         })
         .select("id")
         .single();
@@ -278,60 +291,28 @@ export default function NewValuation() {
       if (reqErr) throw reqErr;
 
       logActivity(4, "تم إرسال الطلب");
-      toast.success("تم إرسال طلب التقييم بنجاح");
-      navigate("/client");
+      toast.success("تم إنشاء ملف التقييم بنجاح");
+      navigate("/");
     } catch (err: any) {
-      toast.error(err?.message || "حدث خطأ أثناء إرسال الطلب");
+      toast.error(err?.message || "حدث خطأ أثناء الإرسال");
     } finally {
       setSubmitting(false);
     }
-  }, [formData, detectedDiscipline, validateStep, logActivity, navigate]);
+  }, [extracted, clientFields, assetFields, purpose, valueBasis, valuationDate, validateStep, logActivity, navigate]);
 
-  // ── Helpers ──
-  const updateClientField = (key: string, value: string) => {
-    setFormData(prev => ({ ...prev, clientFields: { ...prev.clientFields, [key]: value } }));
-  };
-  const updateAssetField = (key: string, value: string) => {
-    setFormData(prev => ({ ...prev, assetFields: { ...prev.assetFields, [key]: value } }));
-  };
-  const toggleDoc = (doc: string) => {
-    setFormData(prev => ({
-      ...prev,
-      uploadedDocs: prev.uploadedDocs.includes(doc)
-        ? prev.uploadedDocs.filter(d => d !== doc)
-        : [...prev.uploadedDocs, doc],
-    }));
-  };
+  const allStepValidations = useMemo(() => STEPS.map(s => ({ step: s, validation: validateStep(s.id) })), [validateStep]);
 
-  const allStepValidations = useMemo(() => {
-    return STEPS.map(s => ({ step: s, validation: validateStep(s.id) }));
-  }, [validateStep]);
-
-  // Group asset fields by section
-  const sectionLabels: Record<string, { label: string; icon: typeof MapPin }> = {
-    general: { label: "معلومات عامة", icon: Sparkles },
-    location: { label: "الموقع", icon: MapPin },
-    property: { label: "بيانات عقارية", icon: Building2 },
-    machinery: { label: "بيانات الآلات والمعدات", icon: Cog },
-  };
-
-  const fieldsBySection = useMemo(() => {
-    const sections: Record<string, typeof ASSET_FIELDS> = {};
-    ASSET_FIELDS.forEach(f => {
-      if (!sections[f.section]) sections[f.section] = [];
-      sections[f.section].push(f);
-    });
-    return sections;
-  }, []);
+  // ── Drag & drop ──
+  const [dragOver, setDragOver] = useState(false);
 
   return (
     <div className="min-h-screen">
       <TopBar />
       <div className="p-6 max-w-4xl mx-auto space-y-6">
-        {/* Header + Progress */}
+        {/* Header */}
         <div>
           <h2 className="text-lg font-bold text-foreground">طلب تقييم جديد</h2>
-          <p className="text-sm text-muted-foreground mb-3">أكمل الخطوات التالية لإنشاء ملف تقييم جديد</p>
+          <p className="text-sm text-muted-foreground mb-3">ارفع الوثائق وسيتولى الذكاء الاصطناعي استخراج البيانات وتصنيف الطلب تلقائياً</p>
           <div className="flex items-center gap-3">
             <Progress value={progressPercent} className="h-2 flex-1" />
             <span className="text-xs font-semibold text-primary whitespace-nowrap">{progressPercent}%</span>
@@ -352,14 +333,10 @@ export default function NewValuation() {
                       onClick={() => accessible && setCurrentStep(step.id)}
                       disabled={!accessible}
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-colors
-                        ${isCurrent
-                          ? "gradient-primary text-primary-foreground"
-                          : isDone
-                            ? "bg-success text-success-foreground"
-                            : accessible
-                              ? "bg-muted text-muted-foreground hover:bg-primary/10 cursor-pointer"
-                              : "bg-muted/50 text-muted-foreground/50 cursor-not-allowed"
-                        }`}
+                        ${isCurrent ? "gradient-primary text-primary-foreground"
+                          : isDone ? "bg-success text-success-foreground"
+                          : accessible ? "bg-muted text-muted-foreground hover:bg-primary/10 cursor-pointer"
+                          : "bg-muted/50 text-muted-foreground/50 cursor-not-allowed"}`}
                     >
                       {isDone && !isCurrent ? <CheckCircle2 className="w-4 h-4" /> : step.id}
                     </button>
@@ -367,148 +344,216 @@ export default function NewValuation() {
                       {step.label}
                     </span>
                   </div>
-                  {i < STEPS.length - 1 && (
-                    <div className={`flex-1 h-px mx-2 ${isDone ? "bg-success" : "bg-border"}`} />
-                  )}
+                  {i < STEPS.length - 1 && <div className={`flex-1 h-px mx-2 ${isDone ? "bg-success" : "bg-border"}`} />}
                 </div>
               );
             })}
           </div>
         </div>
 
-        {/* Current stage + AI discipline detection */}
+        {/* Stage label */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>المرحلة الحالية:</span>
-            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
-              مسودة — الخطوة {currentStep} من {STEPS.length}
-            </span>
+            <span>المرحلة:</span>
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">الخطوة {currentStep} من {STEPS.length}</span>
           </div>
-          {/* Show AI-detected discipline badge */}
-          {(formData.assetFields.assetDescription?.trim() || 
-            ASSET_FIELDS.filter(f => f.section === "property" || f.section === "machinery").some(f => formData.assetFields[f.key]?.trim())) && (
+          {extracted && (
             <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent border border-accent text-accent-foreground">
               <Sparkles className="w-3 h-3" />
-              <span>نوع التقييم: <strong>{detectedDiscipline.label}</strong></span>
+              <span>{extracted.discipline_label} — ثقة {extracted.confidence}%</span>
             </div>
           )}
         </div>
 
-        {/* Step Content */}
+        {/* Content */}
         <div className="bg-card rounded-lg border border-border shadow-card p-6 animate-fade-in">
 
-          {/* ─── Step 1: Client + Documents ─── */}
+          {/* ─── Step 1: Bulk Upload ─── */}
           {currentStep === 1 && (
-            <div className="space-y-8">
+            <div className="space-y-6">
               <div>
-                <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
-                <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
+                <h3 className="font-semibold text-foreground mb-1">رفع الوثائق</h3>
+                <p className="text-sm text-muted-foreground mb-5">ارفع جميع المستندات المتوفرة دفعة واحدة (صكوك، رخص، صور، فواتير، تقارير...)</p>
+              </div>
+
+              {/* Drop zone */}
+              <div
+                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => { e.preventDefault(); setDragOver(false); handleFilesSelected(e.dataTransfer.files); }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all
+                  ${dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/40 hover:bg-muted/30"}`}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.tif,.tiff"
+                  onChange={(e) => handleFilesSelected(e.target.files)}
+                />
+                <FolderUp className={`w-12 h-12 mx-auto mb-3 ${dragOver ? "text-primary" : "text-muted-foreground"}`} />
+                <p className="text-sm font-medium text-foreground mb-1">اسحب الملفات هنا أو اضغط للاختيار</p>
+                <p className="text-xs text-muted-foreground">PDF, صور, Word, Excel — بدون حد لعدد الملفات</p>
+              </div>
+
+              {/* File list */}
+              {uploadedFiles.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-foreground">{uploadedFiles.length} ملف مرفوع</span>
+                    <button onClick={() => fileInputRef.current?.click()} className="text-xs text-primary hover:underline">+ إضافة المزيد</button>
+                  </div>
+                  <div className="space-y-1.5 max-h-60 overflow-y-auto">
+                    {uploadedFiles.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm text-foreground truncate">{f.name}</p>
+                            <p className="text-[10px] text-muted-foreground">{formatFileSize(f.size)}</p>
+                          </div>
+                        </div>
+                        <button onClick={() => removeFile(i)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* AI Analysis button */}
+              {uploadedFiles.length > 0 && (
+                <button
+                  onClick={runExtraction}
+                  disabled={extracting}
+                  className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
+                >
+                  {extracting ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" />جارٍ تحليل الوثائق بالذكاء الاصطناعي...</>
+                  ) : (
+                    <><Brain className="w-4 h-4" />تحليل الوثائق بالذكاء الاصطناعي</>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* ─── Step 2: Extracted Data (editable) ─── */}
+          {currentStep === 2 && extracted && (
+            <div className="space-y-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-foreground">البيانات المستخرجة</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-5">تم استخراج البيانات التالية تلقائياً — يمكنك التعديل أو الإكمال</p>
+              </div>
+
+              {/* AI Notes */}
+              {extracted.notes.length > 0 && (
+                <div className="p-4 rounded-lg bg-accent/50 border border-accent text-sm">
+                  <div className="flex items-center gap-2 mb-2 text-accent-foreground font-medium">
+                    <Brain className="w-4 h-4" />
+                    <span>ملاحظات الذكاء الاصطناعي</span>
+                  </div>
+                  <ul className="space-y-1 text-accent-foreground/80">
+                    {extracted.notes.map((n, i) => <li key={i} className="text-xs">• {n}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              {/* Client data */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">بيانات العميل</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {CLIENT_FIELDS.map((field) => (
-                    <div key={field.key}>
+                  {[
+                    { key: "clientName", label: "اسم العميل / الجهة", required: true },
+                    { key: "idNumber", label: "رقم الهوية / السجل التجاري", required: false },
+                    { key: "phone", label: "رقم الجوال", required: false },
+                    { key: "email", label: "البريد الإلكتروني", required: false },
+                  ].map(f => (
+                    <div key={f.key}>
                       <label className="block text-sm font-medium text-foreground mb-1.5">
-                        {field.label}
-                        {field.required && <span className="text-destructive mr-1">*</span>}
+                        {f.label} {f.required && <span className="text-destructive">*</span>}
                       </label>
                       <input
                         type="text"
-                        value={formData.clientFields[field.key] || ""}
-                        onChange={(e) => updateClientField(field.key, e.target.value)}
-                        placeholder={field.placeholder}
-                        dir={field.key === "email" ? "ltr" : "rtl"}
-                        className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-                          ${field.required && !formData.clientFields[field.key]?.trim() ? "border-destructive/50" : "border-input"}`}
+                        value={clientFields[f.key] || ""}
+                        onChange={(e) => setClientFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                        dir={f.key === "email" ? "ltr" : "rtl"}
+                        className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring
+                          ${f.required && !clientFields[f.key]?.trim() ? "border-destructive/50" : "border-input"}`}
                       />
                     </div>
                   ))}
                 </div>
               </div>
-              <div className="border-t border-border pt-6">
-                <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
-                <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المتوفرة — سيحدد الذكاء الاصطناعي المستندات المطلوبة تلقائياً</p>
-                <div className="space-y-3">
-                  {ALL_DOCS.map((doc) => {
-                    const uploaded = formData.uploadedDocs.includes(doc);
-                    return (
-                      <div key={doc} className={`flex items-center justify-between p-4 rounded-lg border transition-colors
-                        ${uploaded ? "border-success/40 bg-success/5" : "border-dashed border-border hover:border-primary/40"}`}>
-                        <div className="flex items-center gap-3">
-                          {uploaded ? <CheckCircle2 className="w-5 h-5 text-success" /> : <FileText className="w-5 h-5 text-muted-foreground" />}
-                          <span className="text-sm text-foreground">{doc}</span>
-                        </div>
-                        <button
-                          onClick={() => { toggleDoc(doc); logActivity(1, uploaded ? `إلغاء رفع: ${doc}` : `رفع مستند: ${doc}`); }}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors
-                            ${uploaded ? "bg-success/10 text-success hover:bg-destructive/10 hover:text-destructive" : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"}`}
-                        >
-                          <Upload className="w-3.5 h-3.5" />
-                          {uploaded ? "تم الرفع" : "رفع"}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* ─── Step 2: Asset Details (unified — AI classifies) ─── */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
+              {/* Asset data */}
               <div>
-                <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
-                <p className="text-sm text-muted-foreground mb-2">أدخل البيانات المتوفرة — سيحدد الذكاء الاصطناعي نوع التقييم والتصنيف تلقائياً</p>
-                <div className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded bg-accent/50 border border-accent text-accent-foreground w-fit mb-5">
-                  <Sparkles className="w-3.5 h-3.5" />
-                  <span>نوع التقييم المكتشف: <strong>{detectedDiscipline.label}</strong></span>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">بيانات الأصل</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">وصف الأصل</label>
+                    <textarea
+                      value={assetFields.description || ""}
+                      onChange={(e) => setAssetFields(prev => ({ ...prev, description: e.target.value }))}
+                      rows={3}
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {[
+                      { key: "city", label: "المدينة" },
+                      { key: "district", label: "الحي / الموقع" },
+                      { key: "area", label: "المساحة (م²)" },
+                      { key: "deedNumber", label: "رقم الصك" },
+                      { key: "classification", label: "التصنيف" },
+                      { key: "machineName", label: "اسم المعدة" },
+                      { key: "manufacturer", label: "الشركة المصنعة" },
+                      { key: "model", label: "الموديل" },
+                    ].map(f => (
+                      <div key={f.key}>
+                        <label className="block text-sm font-medium text-foreground mb-1.5">{f.label}</label>
+                        <input
+                          type="text"
+                          value={assetFields[f.key] || ""}
+                          onChange={(e) => setAssetFields(prev => ({ ...prev, [f.key]: e.target.value }))}
+                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {Object.entries(fieldsBySection).map(([section, fields]) => {
-                const meta = sectionLabels[section];
-                const Icon = meta.icon;
-                return (
-                  <div key={section} className="space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground border-b border-border pb-2">
-                      <Icon className="w-4 h-4 text-primary" />
-                      {meta.label}
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {fields.map((field) => (
-                        <div key={field.key} className={field.key === "assetDescription" ? "sm:col-span-2" : ""}>
-                          <label className="block text-sm font-medium text-foreground mb-1.5">
-                            {field.label}
-                            {field.required && <span className="text-destructive mr-1">*</span>}
-                          </label>
-                          {field.key === "assetDescription" ? (
-                            <textarea
-                              value={formData.assetFields[field.key] || ""}
-                              onChange={(e) => updateAssetField(field.key, e.target.value)}
-                              placeholder={field.placeholder}
-                              rows={3}
-                              className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none
-                                ${field.required && !formData.assetFields[field.key]?.trim() ? "border-destructive/50" : "border-input"}`}
-                            />
-                          ) : (
-                            <input
-                              type="text"
-                              value={formData.assetFields[field.key] || ""}
-                              onChange={(e) => updateAssetField(field.key, e.target.value)}
-                              placeholder={field.placeholder}
-                              className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-                                ${field.required && !formData.assetFields[field.key]?.trim() ? "border-destructive/50" : "border-input"}`}
-                            />
-                          )}
+              {/* Document categories from AI */}
+              {extracted.documentCategories.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">تصنيف الوثائق</h4>
+                  <div className="space-y-1.5">
+                    {extracted.documentCategories.map((dc, i) => (
+                      <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 text-sm">
+                        <span className="text-foreground">{dc.fileName}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-muted-foreground text-xs">{dc.category}</span>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded
+                            ${dc.relevance === "high" ? "bg-success/10 text-success" : dc.relevance === "medium" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"}`}>
+                            {dc.relevance === "high" ? "مهم" : dc.relevance === "medium" ? "متوسط" : "منخفض"}
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           )}
 
-          {/* ─── Step 3: Valuation Presentation (عرض التقييم) ─── */}
+          {/* ─── Step 3: Valuation Presentation ─── */}
           {currentStep === 3 && (
             <div className="space-y-6">
               <div>
@@ -516,74 +561,45 @@ export default function NewValuation() {
                   <Eye className="w-5 h-5 text-primary" />
                   <h3 className="font-semibold text-foreground">عرض التقييم</h3>
                 </div>
-                <p className="text-sm text-muted-foreground mb-5">معاينة نطاق العمل والمدخلات قبل الإرسال — لا يتضمن نتائج تقييم أو تسعير</p>
+                <p className="text-sm text-muted-foreground mb-5">معاينة نطاق العمل — لا يتضمن نتائج تقييم أو تسعير</p>
               </div>
 
-              {/* Scope summary */}
               <div className="space-y-4">
+                {/* Scope */}
                 <div className="p-4 rounded-lg bg-muted/50 border border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-3">نطاق العمل</h4>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">نوع التقييم (مكتشف بالذكاء)</span>
-                      <span className="font-medium text-foreground flex items-center gap-1">
-                        <Sparkles className="w-3 h-3 text-primary" />
-                        {detectedDiscipline.label}
-                      </span>
-                    </div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{formData.clientFields.clientName || "-"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">المستندات المرفوعة</span><span className="font-medium text-foreground">{formData.uploadedDocs.length} من {ALL_DOCS.length}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{formData.assetFields.assetDescription || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">نوع التقييم</span><span className="font-medium text-foreground flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" />{extracted?.discipline_label || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{clientFields.clientName || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">الوثائق</span><span className="font-medium text-foreground">{uploadedFiles.length} ملف</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetFields.description || "-"}</span></div>
                   </div>
                 </div>
 
-                {/* Asset data preview */}
-                <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                  <h4 className="text-sm font-semibold text-foreground mb-3">ملخص بيانات الأصل</h4>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    {ASSET_FIELDS.filter(f => formData.assetFields[f.key]?.trim()).map(f => (
-                      <div key={f.key} className="flex justify-between">
-                        <span className="text-muted-foreground">{f.label}</span>
-                        <span className="font-medium text-foreground">{formData.assetFields[f.key]}</span>
-                      </div>
-                    ))}
+                {/* Purpose */}
+                <div className="p-4 rounded-lg bg-muted/50 border border-border space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">غرض التقييم <span className="text-destructive">*</span></label>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {PURPOSES.map((p) => (
+                        <button key={p} onClick={() => setPurpose(p)}
+                          className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${purpose === p ? "border-primary bg-primary/5 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/30"}`}>
+                          {p}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-
-                {/* Purpose & basis */}
-                <div className="p-4 rounded-lg bg-muted/50 border border-border">
-                  <h4 className="text-sm font-semibold text-foreground mb-3">غرض التقييم وأساس القيمة</h4>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">غرض التقييم <span className="text-destructive">*</span></label>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {PURPOSES.map((p) => (
-                          <button
-                            key={p}
-                            onClick={() => setFormData(prev => ({ ...prev, purpose: p }))}
-                            className={`px-3 py-2.5 rounded-lg border text-sm transition-all
-                              ${formData.purpose === p ? "border-primary bg-primary/5 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/30"}`}
-                          >
-                            {p}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">أساس القيمة</label>
-                      <select
-                        value={formData.valueBasis}
-                        onChange={(e) => setFormData(prev => ({ ...prev, valueBasis: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      >
-                        {VALUE_BASES.map(vb => <option key={vb}>{vb}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">تاريخ التقييم <span className="text-destructive">*</span></label>
-                      <input type="date" value={formData.valuationDate} onChange={(e) => setFormData(prev => ({ ...prev, valuationDate: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
-                    </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">أساس القيمة</label>
+                    <select value={valueBasis} onChange={(e) => setValueBasis(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                      {VALUE_BASES.map(vb => <option key={vb}>{vb}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-1.5">تاريخ التقييم <span className="text-destructive">*</span></label>
+                    <input type="date" value={valuationDate} onChange={(e) => setValuationDate(e.target.value)}
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
                 </div>
 
@@ -591,7 +607,7 @@ export default function NewValuation() {
                 <div className="p-4 rounded-lg bg-muted/50 border border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-3">الافتراضات المبدئية</h4>
                   <ul className="space-y-1.5 text-sm text-muted-foreground list-disc list-inside">
-                    <li>يفترض أن المعلومات المقدمة من العميل صحيحة ودقيقة</li>
+                    <li>يفترض أن المعلومات المقدمة صحيحة ودقيقة</li>
                     <li>يفترض عدم وجود تلوث بيئي أو تعديات نظامية</li>
                     <li>التقييم مبني على الوضع الراهن وقت المعاينة</li>
                     <li>لا يشمل التقييم أي أصول غير مذكورة في النطاق</li>
@@ -600,7 +616,7 @@ export default function NewValuation() {
 
                 <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="text-sm font-semibold text-primary mb-2">المخرج المتوقع</h4>
-                  <p className="text-sm text-primary/80">تقرير تقييم شامل وفق المعايير الدولية (IVS) ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم)</p>
+                  <p className="text-sm text-primary/80">تقرير تقييم شامل وفق المعايير الدولية (IVS) ومعايير تقييم</p>
                 </div>
               </div>
             </div>
@@ -611,19 +627,20 @@ export default function NewValuation() {
             <div className="space-y-6">
               <div>
                 <h3 className="font-semibold text-foreground mb-1">المراجعة النهائية</h3>
-                <p className="text-sm text-muted-foreground mb-5">راجع جميع البيانات قبل إرسال طلب التقييم</p>
+                <p className="text-sm text-muted-foreground mb-5">راجع البيانات قبل إنشاء ملف التقييم</p>
               </div>
 
               <div className="space-y-3">
                 {[
-                  { label: "نوع التقييم (ذكاء اصطناعي)", value: detectedDiscipline.label },
-                  { label: "العميل", value: formData.clientFields.clientName || "-" },
-                  { label: "رقم الهوية", value: formData.clientFields.idNumber || "-" },
-                  { label: "المستندات المرفوعة", value: `${formData.uploadedDocs.length} مستند` },
-                  { label: "وصف الأصل", value: formData.assetFields.assetDescription || "-" },
-                  { label: "غرض التقييم", value: formData.purpose || "-" },
-                  { label: "أساس القيمة", value: formData.valueBasis },
-                  { label: "تاريخ التقييم", value: formData.valuationDate || "-" },
+                  { label: "نوع التقييم (ذكاء اصطناعي)", value: extracted?.discipline_label || "-" },
+                  { label: "مستوى الثقة", value: `${extracted?.confidence || 0}%` },
+                  { label: "العميل", value: clientFields.clientName || "-" },
+                  { label: "رقم الهوية", value: clientFields.idNumber || "-" },
+                  { label: "عدد الوثائق", value: `${uploadedFiles.length} ملف` },
+                  { label: "وصف الأصل", value: assetFields.description || "-" },
+                  { label: "غرض التقييم", value: purpose || "-" },
+                  { label: "أساس القيمة", value: valueBasis },
+                  { label: "تاريخ التقييم", value: valuationDate || "-" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                     <span className="text-sm text-muted-foreground">{item.label}</span>
@@ -634,34 +651,20 @@ export default function NewValuation() {
 
               {allStepValidations.some(sv => sv.validation.warnings.length > 0) && (
                 <div className="p-4 rounded-lg bg-warning/10 border border-warning/30 space-y-2">
-                  <div className="flex items-center gap-2 text-warning font-medium text-sm">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span>تنبيهات (لا تمنع الإرسال)</span>
-                  </div>
-                  {allStepValidations.flatMap(sv =>
-                    sv.validation.warnings.map((w, i) => (
-                      <p key={`${sv.step.id}-w-${i}`} className="text-xs text-warning/80 mr-6">• {w}</p>
-                    ))
-                  )}
+                  <div className="flex items-center gap-2 text-warning font-medium text-sm"><AlertTriangle className="w-4 h-4" /><span>تنبيهات</span></div>
+                  {allStepValidations.flatMap(sv => sv.validation.warnings.map((w, i) => <p key={`${sv.step.id}-${i}`} className="text-xs text-warning/80 mr-6">• {w}</p>))}
                 </div>
               )}
 
               {allStepValidations.some(sv => sv.validation.errors.length > 0 && sv.step.id < 4) && (
                 <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 space-y-2">
-                  <div className="flex items-center gap-2 text-destructive font-medium text-sm">
-                    <AlertCircle className="w-4 h-4" />
-                    <span>بيانات ناقصة (يجب إكمالها)</span>
-                  </div>
-                  {allStepValidations.filter(sv => sv.step.id < 4).flatMap(sv =>
-                    sv.validation.errors.map((e, i) => (
-                      <p key={`${sv.step.id}-e-${i}`} className="text-xs text-destructive/80 mr-6">• {e}</p>
-                    ))
-                  )}
+                  <div className="flex items-center gap-2 text-destructive font-medium text-sm"><AlertCircle className="w-4 h-4" /><span>بيانات ناقصة</span></div>
+                  {allStepValidations.filter(sv => sv.step.id < 4).flatMap(sv => sv.validation.errors.map((e, i) => <p key={`${sv.step.id}-${i}`} className="text-xs text-destructive/80 mr-6">• {e}</p>))}
                 </div>
               )}
 
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm text-primary">
-                سيتم إنشاء رقم مرجعي فريد للملف وإشعار فريق التقييم لبدء العمل على الطلب. بعد الإرسال لن تتمكن من تعديل البيانات.
+                سيتم إنشاء رقم مرجعي فريد وبدء سير العمل التلقائي.
               </div>
 
               {activityLog.length > 0 && (
@@ -685,20 +688,24 @@ export default function NewValuation() {
         <div className="flex items-center justify-between">
           <button onClick={goPrev} disabled={currentStep === 1}
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
-            <ChevronRight className="w-4 h-4" />
-            السابق
+            <ChevronRight className="w-4 h-4" />السابق
           </button>
 
           {currentStep === STEPS.length ? (
             <button onClick={handleSubmit} disabled={submitting || !validateStep(4).valid}
               className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-              {submitting ? (<><Loader2 className="w-4 h-4 animate-spin" />جارٍ الإرسال...</>) : (<><Send className="w-4 h-4" />إرسال الطلب</>)}
+              {submitting ? <><Loader2 className="w-4 h-4 animate-spin" />جارٍ الإنشاء...</> : <><Send className="w-4 h-4" />إنشاء ملف التقييم</>}
             </button>
+          ) : currentStep === 1 ? (
+            // Step 1 needs AI analysis first
+            uploadedFiles.length > 0 && extracted ? (
+              <button onClick={goNext} className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all">
+                التالي<ChevronLeft className="w-4 h-4" />
+              </button>
+            ) : null
           ) : (
-            <button onClick={goNext}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all">
-              التالي
-              <ChevronLeft className="w-4 h-4" />
+            <button onClick={goNext} className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all">
+              التالي<ChevronLeft className="w-4 h-4" />
             </button>
           )}
         </div>
