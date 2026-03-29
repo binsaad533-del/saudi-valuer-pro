@@ -14,11 +14,9 @@ export default function ClientLogin() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
-  // Email + Password
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Phone OTP
   const [phone, setPhone] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
@@ -41,9 +39,11 @@ export default function ClientLogin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const formattedPhone = phone.startsWith("+") ? phone : `+966${phone.replace(/^0/, "")}`;
-      const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
+      const { data, error } = await supabase.functions.invoke("phone-otp", {
+        body: { action: "send", phone },
+      });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       setPhoneOtpSent(true);
       toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
     } catch (err: any) {
@@ -57,14 +57,23 @@ export default function ClientLogin() {
     e.preventDefault();
     setLoading(true);
     try {
-      const formattedPhone = phone.startsWith("+") ? phone : `+966${phone.replace(/^0/, "")}`;
-      const { error } = await supabase.auth.verifyOtp({
-        phone: formattedPhone,
-        token: phoneOtpCode,
-        type: "sms",
+      const { data, error } = await supabase.functions.invoke("phone-otp", {
+        body: { action: "verify", phone, code: phoneOtpCode },
       });
       if (error) throw error;
-      navigate("/client");
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.valid && data?.token_hash) {
+        // Use the token to verify OTP via magic link
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: data.token_hash,
+          type: "magiclink",
+        });
+        if (verifyError) throw verifyError;
+        navigate("/client");
+      } else if (data?.valid && data?.email) {
+        toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
+      }
     } catch (err: any) {
       toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
     } finally {
@@ -75,7 +84,6 @@ export default function ClientLogin() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="جساس" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground">بوابة العملاء</h1>
@@ -89,7 +97,6 @@ export default function ClientLogin() {
               <TabsTrigger value="phone" className="text-sm">رقم الجوال</TabsTrigger>
             </TabsList>
 
-            {/* Email + Password Tab */}
             <TabsContent value="password">
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
@@ -102,9 +109,7 @@ export default function ClientLogin() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">كلمة المرور</Label>
-                    <Link to="/client/forgot-password" className="text-xs text-primary hover:underline">
-                      نسيت كلمة المرور؟
-                    </Link>
+                    <Link to="/client/forgot-password" className="text-xs text-primary hover:underline">نسيت كلمة المرور؟</Link>
                   </div>
                   <div className="relative">
                     <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -118,7 +123,6 @@ export default function ClientLogin() {
               </form>
             </TabsContent>
 
-            {/* Phone OTP Tab */}
             <TabsContent value="phone">
               {!phoneOtpSent ? (
                 <form onSubmit={handleSendPhoneOtp} className="space-y-4">
@@ -151,9 +155,7 @@ export default function ClientLogin() {
                     {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                     تحقق وسجّل الدخول
                   </Button>
-                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setPhoneOtpSent(false)}>
-                    تغيير الرقم
-                  </Button>
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setPhoneOtpSent(false)}>تغيير الرقم</Button>
                 </form>
               )}
             </TabsContent>
@@ -161,9 +163,7 @@ export default function ClientLogin() {
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             ليس لديك حساب؟{" "}
-            <Link to="/client/register" className="text-primary font-medium hover:underline">
-              إنشاء حساب جديد
-            </Link>
+            <Link to="/client/register" className="text-primary font-medium hover:underline">إنشاء حساب جديد</Link>
           </div>
         </div>
 
