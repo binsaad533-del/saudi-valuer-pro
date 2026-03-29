@@ -70,6 +70,8 @@ const App = () => (
             <Route path="/raqeem" element={<RaqeemPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/clients-management" element={<ClientsManagementPage />} />
+            <Route path="/inspectors" element={<InspectorsListPage />} />
+            <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
           </Route>
 
           {/* Auditor Routes */}
