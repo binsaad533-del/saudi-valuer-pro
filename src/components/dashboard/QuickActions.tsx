@@ -9,16 +9,25 @@ import {
   Users,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
-const actions = [
-  { label: "طلب تقييم جديد", icon: FolderPlus, path: "/valuations/new", variant: "primary" as const },
-  { label: "جميع التقييمات", icon: FileText, path: "/valuations", variant: "default" as const },
-  { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review", variant: "default" as const },
-  { label: "المقارنات السوقية", icon: Building2, path: "/comparables", variant: "default" as const },
-  { label: "بحث متقدم", icon: Search, path: "/search", variant: "default" as const },
-  { label: "تصدير التقارير", icon: FileDown, path: "/reports", variant: "default" as const },
-  { label: "إدارة العملاء", icon: Users, path: "/clients", variant: "default" as const },
-  { label: "الامتثال", icon: Shield, path: "/compliance", variant: "default" as const },
+interface QuickAction {
+  label: string;
+  icon: React.ElementType;
+  path: string;
+  variant: "primary" | "default";
+  roles?: string[];
+}
+
+const actions: QuickAction[] = [
+  { label: "طلب تقييم جديد", icon: FolderPlus, path: "/valuations/new", variant: "primary" },
+  { label: "جميع التقييمات", icon: FileText, path: "/valuations", variant: "default" },
+  { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review", variant: "default" },
+  { label: "المقارنات السوقية", icon: Building2, path: "/comparables", variant: "default", roles: ["super_admin", "valuer"] },
+  { label: "بحث متقدم", icon: Search, path: "/search", variant: "default" },
+  { label: "تصدير التقارير", icon: FileDown, path: "/reports", variant: "default" },
+  { label: "إدارة العملاء", icon: Users, path: "/clients", variant: "default" },
+  { label: "الامتثال", icon: Shield, path: "/compliance", variant: "default" },
 ];
 
 export default function QuickActions() {
