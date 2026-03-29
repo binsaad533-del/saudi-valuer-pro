@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import { InspectionAnalysisView } from "@/components/inspectors/InspectionAnalysisView";
 import ReportLifecyclePanel from "@/components/reports/ReportLifecyclePanel";
+import ValidationPanel from "@/components/validation/ValidationPanel";
 import { Clipboard } from "lucide-react";
 
 const PIPELINE_STEPS = [
