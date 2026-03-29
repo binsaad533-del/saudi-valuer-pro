@@ -1,11 +1,44 @@
-import { Bell, CalendarDays, ChevronLeft, Globe } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Bell, CalendarDays, Globe, ArrowRight } from "lucide-react";
 
 export default function TopBar() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
+  const [profileName, setProfileName] = useState("");
+  const isHome = location.pathname === "/";
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name_ar")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setProfileName(data.full_name_ar);
+      });
+  }, [user]);
+
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">لوحة التحكم</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">مرحباً، أحمد المالكي</p>
+      <div className="flex items-center gap-3">
+        {!isHome && (
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+            title="رجوع"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        )}
+        <div>
+          <h1 className="text-xl font-bold text-foreground">لوحة التحكم</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">مرحباً، {profileName || "..."}</p>
+        </div>
       </div>
       <div className="flex items-center gap-3">
         <button className="p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground">
