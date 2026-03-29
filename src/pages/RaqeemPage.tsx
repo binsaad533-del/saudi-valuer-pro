@@ -273,7 +273,7 @@ export default function RaqeemPage() {
         </div>
 
         {/* Chat Tab */}
-        <TabsContent value="chat" className="flex-1 flex flex-col mt-0 overflow-hidden">
+        <TabsContent value="chat" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
           <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef as any}>
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
