@@ -25,10 +25,6 @@ export default function ClientRegister() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({ title: "كلمات المرور غير متطابقة", variant: "destructive" });
-      return;
-    }
     if (password.length < 6) {
       toast({ title: "كلمة المرور يجب أن تكون 6 أحرف على الأقل", variant: "destructive" });
       return;
