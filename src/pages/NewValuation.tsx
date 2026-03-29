@@ -54,12 +54,11 @@ const valuationPurposes = [
 
 const steps = [
   { id: 1, label: "نوع التقييم" },
-  { id: 2, label: "المستندات" },
+  { id: 2, label: "العميل والمستندات" },
   { id: 3, label: "تصنيف الأصول" },
-  { id: 4, label: "بيانات العميل" },
-  { id: 5, label: "تفاصيل الأصل" },
-  { id: 6, label: "غرض التقييم" },
-  { id: 7, label: "المراجعة" },
+  { id: 4, label: "تفاصيل الأصل" },
+  { id: 5, label: "غرض التقييم" },
+  { id: 6, label: "المراجعة" },
 ];
 
 export default function NewValuation() {
@@ -220,35 +219,10 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 4: Client Data */}
-          {currentStep === 4 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
-              <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: "اسم العميل / الجهة", placeholder: "أدخل اسم العميل" },
-                  { label: "رقم الهوية / السجل التجاري", placeholder: "أدخل رقم التعريف" },
-                  { label: "رقم الجوال", placeholder: "05XXXXXXXX" },
-                  { label: "البريد الإلكتروني", placeholder: "email@example.com" },
-                  { label: "العنوان", placeholder: "عنوان العميل" },
-                  { label: "المستخدم المقصود", placeholder: "الجهة المستفيدة من التقرير" },
-                ].map((field) => (
-                  <div key={field.label}>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}</label>
-                    <input
-                      type="text"
-                      placeholder={field.placeholder}
-                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Step 5: Asset Details */}
-          {currentStep === 5 && (
+
+          {/* Step 4: Asset Details */}
+          {currentStep === 4 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للأصل المراد تقييمه</p>
@@ -288,8 +262,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 6: Purpose */}
-          {currentStep === 6 && (
+          {/* Step 5: Purpose */}
+          {currentStep === 5 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">غرض التقييم وأساس القيمة</h3>
               <p className="text-sm text-muted-foreground mb-5">حدد الغرض من التقييم وفقاً لمعايير التقييم الدولية</p>
@@ -333,33 +307,58 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 2: Documents */}
+          {/* Step 2: Client + Documents (merged) */}
           {currentStep === 2 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
-              <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المطلوبة لإتمام عملية التقييم</p>
-              <div className="space-y-3">
-                {(selectedDiscipline === "machinery"
-                  ? ["فاتورة الشراء", "شهادة الصيانة", "صور المعدات", "كتالوج المصنع", "تقرير فني سابق", "مستندات إضافية"]
-                  : ["صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار", "عقود الإيجار (إن وجدت)", "مستندات إضافية"]
-                ).map((doc) => (
-                  <div key={doc} className="flex items-center justify-between p-4 rounded-lg border border-dashed border-border hover:border-primary/40 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <FileText className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-sm text-foreground">{doc}</span>
+            <div className="space-y-8">
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
+                <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {[
+                    { label: "اسم العميل / الجهة", placeholder: "أدخل اسم العميل" },
+                    { label: "رقم الهوية / السجل التجاري", placeholder: "أدخل رقم التعريف" },
+                    { label: "رقم الجوال", placeholder: "05XXXXXXXX" },
+                    { label: "البريد الإلكتروني", placeholder: "email@example.com" },
+                    { label: "العنوان", placeholder: "عنوان العميل" },
+                    { label: "المستخدم المقصود", placeholder: "الجهة المستفيدة من التقرير" },
+                  ].map((field) => (
+                    <div key={field.label}>
+                      <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}</label>
+                      <input
+                        type="text"
+                        placeholder={field.placeholder}
+                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
                     </div>
-                    <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-xs hover:bg-primary/10 hover:text-primary transition-colors">
-                      <Upload className="w-3.5 h-3.5" />
-                      رفع
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+              <div className="border-t border-border pt-6">
+                <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
+                <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المطلوبة لإتمام عملية التقييم</p>
+                <div className="space-y-3">
+                  {(selectedDiscipline === "machinery"
+                    ? ["فاتورة الشراء", "شهادة الصيانة", "صور المعدات", "كتالوج المصنع", "تقرير فني سابق", "مستندات إضافية"]
+                    : ["صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار", "عقود الإيجار (إن وجدت)", "مستندات إضافية"]
+                  ).map((doc) => (
+                    <div key={doc} className="flex items-center justify-between p-4 rounded-lg border border-dashed border-border hover:border-primary/40 transition-colors">
+                      <div className="flex items-center gap-3">
+                        <FileText className="w-5 h-5 text-muted-foreground" />
+                        <span className="text-sm text-foreground">{doc}</span>
+                      </div>
+                      <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-muted text-muted-foreground text-xs hover:bg-primary/10 hover:text-primary transition-colors">
+                        <Upload className="w-3.5 h-3.5" />
+                        رفع
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
 
-          {/* Step 7: Review */}
-          {currentStep === 7 && (
+          {/* Step 6: Review */}
+          {currentStep === 6 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">مراجعة الطلب</h3>
               <p className="text-sm text-muted-foreground mb-5">راجع جميع البيانات قبل إرسال طلب التقييم</p>
