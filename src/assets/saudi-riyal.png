@@ -1,0 +1,4 @@
+WARNING: The convert command is deprecated in IMv7, use "magick" instead of "convert" or "magick convert"
+
+convert: unable to open image '//Saudi_Riyal_Symbol-3-2.eps': No such file or directory @ error/blob.c/OpenBlob/3596.
+convert: no images defined `png:-' @ error/deprecate.c/ConvertImageCommand/3368.
