@@ -1,26 +1,23 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
   FileText,
-  FolderPlus,
   Search,
   Users,
   Settings,
   Building2,
   ClipboardCheck,
   Archive,
-  BarChart3,
   Shield,
   ChevronDown,
   ChevronLeft,
   Menu,
   X,
-  Brain,
   MapPin,
-  Globe,
   Sparkles,
   LogOut,
 } from "lucide-react";
@@ -36,55 +33,86 @@ interface NavItem {
   icon: React.ElementType;
   path: string;
   children?: NavChild[];
+  roles?: string[]; // which roles can see this item
 }
 
 interface NavSection {
   title?: string;
   items: NavItem[];
+  roles?: string[]; // which roles can see this section
 }
+
+const allRoles = ["super_admin", "firm_admin", "valuer", "reviewer"];
+const adminRoles = ["super_admin", "firm_admin"];
 
 const navSections: NavSection[] = [
   {
     items: [
-      { label: "رقيم", icon: Sparkles, path: "/raqeem" },
-      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
+      { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: allRoles },
+      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: allRoles },
     ],
   },
   {
     title: "التقييم",
     items: [
-      { label: "التقييمات", icon: FileText, path: "/valuations" },
-      { label: "المقارنات السوقية", icon: Building2, path: "/comparables" },
+      { label: "التقييمات", icon: FileText, path: "/valuations", roles: allRoles },
+      { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["super_admin", "firm_admin", "valuer"] },
     ],
   },
   {
     title: "العمليات",
     items: [
-      { label: "المعاينات", icon: MapPin, path: "/inspectors" },
-      { label: "العملاء", icon: Users, path: "/clients-management" },
+      { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: adminRoles },
+      { label: "العملاء", icon: Users, path: "/clients-management", roles: adminRoles },
     ],
+    roles: adminRoles,
   },
   {
     title: "السجلات",
     items: [
-      { label: "الأرشيف", icon: Archive, path: "/archive" },
+      { label: "الأرشيف", icon: Archive, path: "/archive", roles: allRoles },
     ],
   },
   {
     title: "النظام",
     items: [
-      { label: "الامتثال", icon: Shield, path: "/compliance" },
-      { label: "الإعدادات", icon: Settings, path: "/settings" },
+      { label: "الامتثال", icon: Shield, path: "/compliance", roles: adminRoles },
+      { label: "الإعدادات", icon: Settings, path: "/settings", roles: adminRoles },
     ],
+    roles: adminRoles,
   },
 ];
+
+const roleLabels: Record<string, string> = {
+  super_admin: "مالك المنصة",
+  firm_admin: "مدير الشركة",
+  valuer: "مقيّم معتمد",
+  reviewer: "مراجع",
+  inspector: "معاين",
+  auditor: "مدقق",
+  client: "عميل",
+};
 
 export default function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, role } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [profileName, setProfileName] = useState<string>("");
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("full_name_ar")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setProfileName(data.full_name_ar);
+      });
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -99,6 +127,21 @@ export default function AppSidebar() {
   };
 
   const isActive = (path: string) => location.pathname === path;
+
+  const canSee = (roles?: string[]) => {
+    if (!roles) return true;
+    return roles.includes(role || "");
+  };
+
+  const filteredSections = navSections
+    .filter((s) => canSee(s.roles))
+    .map((s) => ({
+      ...s,
+      items: s.items.filter((item) => canSee(item.roles)),
+    }))
+    .filter((s) => s.items.length > 0);
+
+  const initials = profileName ? profileName.charAt(0) : "م";
 
   const sidebarContent = (
     <div className="flex flex-col h-full gradient-sidebar border-l border-sidebar-border">
@@ -117,7 +160,7 @@ export default function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto scrollbar-none py-3 px-3 space-y-1">
-        {navSections.map((section, sIdx) => (
+        {filteredSections.map((section, sIdx) => (
           <div key={sIdx}>
             {section.title && !collapsed && (
               <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-sidebar-muted/70 uppercase tracking-wider">
@@ -189,11 +232,15 @@ export default function AppSidebar() {
         <div className="px-5 py-4 border-t border-sidebar-border space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
-              أ
+              {initials}
             </div>
             <div className="flex flex-col flex-1">
-              <span className="text-sidebar-foreground text-sm font-medium">أحمد المالكي</span>
-              <span className="text-sidebar-muted text-[11px]">مقيّم معتمد</span>
+              <span className="text-sidebar-foreground text-sm font-medium">
+                {profileName || "..."}
+              </span>
+              <span className="text-sidebar-muted text-[11px]">
+                {roleLabels[role || ""] || role || ""}
+              </span>
             </div>
           </div>
           <button
