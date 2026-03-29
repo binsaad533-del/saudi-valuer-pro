@@ -22,13 +22,27 @@ export default function ClientLogin() {
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
 
+  const getRedirectPath = async (userId: string) => {
+    const { data } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId)
+      .single();
+    const role = data?.role;
+    if (role === "super_admin" || role === "admin" || role === "moderator") {
+      return "/";
+    }
+    return "/client";
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      navigate("/client");
+      const path = await getRedirectPath(authData.user.id);
+      navigate(path);
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
