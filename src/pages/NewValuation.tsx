@@ -2,10 +2,7 @@ import { useState } from "react";
 import TopBar from "@/components/layout/TopBar";
 import {
   Building2,
-  Home,
-  Landmark,
-  MapPin,
-  DollarSign,
+  ChevronLeft,
   ChevronLeft,
   ChevronRight,
   Upload,
