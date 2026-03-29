@@ -1880,6 +1880,7 @@ export type Database = {
           corrected_answer: string
           corrected_by: string
           correction_reason: string | null
+          correction_type: string | null
           created_at: string
           id: string
           is_active: boolean
@@ -1891,6 +1892,7 @@ export type Database = {
           corrected_answer: string
           corrected_by: string
           correction_reason?: string | null
+          correction_type?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1902,6 +1904,7 @@ export type Database = {
           corrected_answer?: string
           corrected_by?: string
           correction_reason?: string | null
+          correction_type?: string | null
           created_at?: string
           id?: string
           is_active?: boolean
@@ -1917,8 +1920,10 @@ export type Database = {
           created_at: string
           file_name: string | null
           file_path: string | null
+          file_size: number | null
           id: string
           is_active: boolean
+          mime_type: string | null
           priority: number
           source_type: string
           title_ar: string
@@ -1932,8 +1937,10 @@ export type Database = {
           created_at?: string
           file_name?: string | null
           file_path?: string | null
+          file_size?: number | null
           id?: string
           is_active?: boolean
+          mime_type?: string | null
           priority?: number
           source_type?: string
           title_ar: string
@@ -1947,14 +1954,52 @@ export type Database = {
           created_at?: string
           file_name?: string | null
           file_path?: string | null
+          file_size?: number | null
           id?: string
           is_active?: boolean
+          mime_type?: string | null
           priority?: number
           source_type?: string
           title_ar?: string
           title_en?: string | null
           updated_at?: string
           uploaded_by?: string
+        }
+        Relationships: []
+      }
+      raqeem_performance_snapshots: {
+        Row: {
+          avg_accuracy: number
+          created_at: string
+          id: string
+          recorded_by: string
+          snapshot_date: string
+          total_corrections: number
+          total_knowledge_docs: number
+          total_rules: number
+          total_tests: number
+        }
+        Insert: {
+          avg_accuracy?: number
+          created_at?: string
+          id?: string
+          recorded_by: string
+          snapshot_date?: string
+          total_corrections?: number
+          total_knowledge_docs?: number
+          total_rules?: number
+          total_tests?: number
+        }
+        Update: {
+          avg_accuracy?: number
+          created_at?: string
+          id?: string
+          recorded_by?: string
+          snapshot_date?: string
+          total_corrections?: number
+          total_knowledge_docs?: number
+          total_rules?: number
+          total_tests?: number
         }
         Relationships: []
       }
@@ -1994,6 +2039,48 @@ export type Database = {
           rule_title_ar?: string
           rule_title_en?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      raqeem_test_sessions: {
+        Row: {
+          accuracy_score: number
+          correct_answers: number
+          created_at: string
+          id: string
+          notes: string | null
+          questions: Json
+          results: Json
+          test_name: string
+          test_type: string
+          tested_by: string
+          total_questions: number
+        }
+        Insert: {
+          accuracy_score?: number
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          questions?: Json
+          results?: Json
+          test_name: string
+          test_type?: string
+          tested_by: string
+          total_questions?: number
+        }
+        Update: {
+          accuracy_score?: number
+          correct_answers?: number
+          created_at?: string
+          id?: string
+          notes?: string | null
+          questions?: Json
+          results?: Json
+          test_name?: string
+          test_type?: string
+          tested_by?: string
+          total_questions?: number
         }
         Relationships: []
       }

@@ -20,6 +20,7 @@ import {
   MapPin,
   Globe,
   Sparkles,
+  GraduationCap,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -44,6 +45,7 @@ const navSections: NavSection[] = [
   {
     items: [
       { label: "رقيم", icon: Sparkles, path: "/raqeem" },
+      { label: "تدريب رقيم", icon: GraduationCap, path: "/raqeem/training" },
       { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
     ],
   },
