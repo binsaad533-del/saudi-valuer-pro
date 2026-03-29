@@ -109,7 +109,11 @@ export default function AppSidebar() {
   }, [user]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore signOut errors
+    }
     toast.success("تم تسجيل الخروج");
     navigate("/client/login");
   };
