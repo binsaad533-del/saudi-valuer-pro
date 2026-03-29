@@ -109,14 +109,20 @@ export default function InspectorDashboard() {
           </h1>
           <p className="text-xs text-muted-foreground">المعاينات المسندة إليك</p>
         </div>
-        {profile && (
-          <Badge className={profile.availability_status === "available"
-            ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
-            : "bg-muted text-muted-foreground"
-          }>
-            {profile.availability_status === "available" ? "متاح" : profile.availability_status === "busy" ? "مشغول" : "غير متاح"}
-          </Badge>
-        )}
+        <div className="flex items-center gap-2">
+          {profile && (
+            <Badge className={profile.availability_status === "available"
+              ? "bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300"
+              : "bg-muted text-muted-foreground"
+            }>
+              {profile.availability_status === "available" ? "متاح" : profile.availability_status === "busy" ? "مشغول" : "غير متاح"}
+            </Badge>
+          )}
+          <Button variant="ghost" size="sm" onClick={async () => { await supabase.auth.signOut(); navigate("/client/login"); }}>
+            <LogOut className="w-4 h-4 ml-1" />
+            خروج
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
