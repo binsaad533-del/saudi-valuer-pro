@@ -201,17 +201,34 @@ export default function AppSidebar() {
       </nav>
 
       {/* Footer */}
-      {!collapsed && (
-        <div className="px-5 py-4 border-t border-sidebar-border">
+      {!collapsed ? (
+        <div className="px-5 py-4 border-t border-sidebar-border space-y-3">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full gradient-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
               أ
             </div>
-            <div className="flex flex-col">
+            <div className="flex flex-col flex-1">
               <span className="text-sidebar-foreground text-sm font-medium">أحمد المالكي</span>
               <span className="text-sidebar-muted text-[11px]">مقيّم معتمد</span>
             </div>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs text-destructive hover:bg-destructive/10 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            تسجيل الخروج
+          </button>
+        </div>
+      ) : (
+        <div className="px-2 py-3 border-t border-sidebar-border flex justify-center">
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
+            title="تسجيل الخروج"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       )}
 
