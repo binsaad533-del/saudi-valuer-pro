@@ -119,6 +119,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={7}
             title="متوسط التقييم"
             value="4.8"
             subtitle="من 5.0"
