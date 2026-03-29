@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound } from "lucide-react";
+import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function ClientRegister() {
@@ -13,22 +13,18 @@ export default function ClientRegister() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"form" | "verify-phone" | "done">("form");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
 
   const formatPhone = (p: string) => p.startsWith("+") ? p : `+966${p.replace(/^0/, "")}`;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({ title: "كلمات المرور غير متطابقة", variant: "destructive" });
-      return;
-    }
     if (password.length < 6) {
       toast({ title: "كلمة المرور يجب أن تكون 6 أحرف على الأقل", variant: "destructive" });
       return;
@@ -195,14 +191,10 @@ export default function ClientRegister() {
               <Label htmlFor="reg-password">كلمة المرور</Label>
               <div className="relative">
                 <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="reg-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10" required dir="ltr" minLength={6} />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
-              <div className="relative">
-                <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="confirm-password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pr-10" required dir="ltr" minLength={6} />
+                <Input id="reg-password" type={showPassword ? "text" : "password"} placeholder="أدخل كلمة المرور" value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10 pl-10" required dir="ltr" minLength={6} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute left-3 top-3 text-muted-foreground hover:text-foreground">
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
