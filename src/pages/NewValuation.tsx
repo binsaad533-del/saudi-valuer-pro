@@ -40,10 +40,9 @@ const valuationPurposes = [
 const steps = [
   { id: 1, label: "نوع التقييم" },
   { id: 2, label: "العميل والمستندات" },
-  { id: 3, label: "تصنيف الأصول" },
-  { id: 4, label: "تفاصيل الأصل" },
-  { id: 5, label: "غرض التقييم" },
-  { id: 6, label: "المراجعة" },
+  { id: 3, label: "تفاصيل الأصل" },
+  { id: 4, label: "غرض التقييم" },
+  { id: 5, label: "المراجعة" },
 ];
 
 export default function NewValuation() {
