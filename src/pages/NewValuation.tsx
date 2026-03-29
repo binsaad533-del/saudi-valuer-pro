@@ -125,88 +125,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 3: Asset Classification */}
+          {/* Step 3: Asset Details */}
           {currentStep === 3 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">تصنيف الأصول</h3>
-              <p className="text-sm text-muted-foreground mb-5">
-                {selectedDiscipline === "real_estate" && "حدد الفئة الرئيسية للعقار المراد تقييمه"}
-                {selectedDiscipline === "machinery" && "حدد نوع الآلات والمعدات المراد تقييمها"}
-                {selectedDiscipline === "mixed" && "حدد أنواع الأصول العقارية والآلات المراد تقييمها"}
-              </p>
-
-              {(selectedDiscipline === "real_estate" || selectedDiscipline === "mixed") && (
-                <div className="mb-5">
-                  {selectedDiscipline === "mixed" && (
-                    <h4 className="text-sm font-medium text-foreground mb-3">الأصول العقارية</h4>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {propertyTypes.map((pt) => {
-                      const Icon = pt.icon;
-                      return (
-                        <button
-                          key={pt.id}
-                          onClick={() => setSelectedType(pt.id)}
-                          className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-all text-right
-                            ${selectedType === pt.id
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/30 hover:bg-muted/30"
-                            }`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0
-                            ${selectedType === pt.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm text-foreground">{pt.label}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{pt.desc}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {(selectedDiscipline === "machinery" || selectedDiscipline === "mixed") && (
-                <div>
-                  {selectedDiscipline === "mixed" && (
-                    <h4 className="text-sm font-medium text-foreground mb-3">الآلات والمعدات</h4>
-                  )}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {machineryTypes.map((mt) => {
-                      const Icon = mt.icon;
-                      return (
-                        <button
-                          key={mt.id}
-                          onClick={() => selectedDiscipline === "machinery" ? setSelectedType(mt.id) : null}
-                          className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-all text-right
-                            ${selectedType === mt.id
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/30 hover:bg-muted/30"
-                            }`}
-                        >
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0
-                            ${selectedType === mt.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                            <Icon className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <div className="font-medium text-sm text-foreground">{mt.label}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{mt.desc}</div>
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-
-
-          {/* Step 4: Asset Details */}
-          {currentStep === 4 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للأصل المراد تقييمه</p>
