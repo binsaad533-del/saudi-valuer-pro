@@ -54,11 +54,11 @@ const valuationPurposes = [
 
 const steps = [
   { id: 1, label: "نوع التقييم" },
-  { id: 2, label: "تصنيف الأصول" },
-  { id: 3, label: "بيانات العميل" },
-  { id: 4, label: "تفاصيل الأصل" },
-  { id: 5, label: "غرض التقييم" },
-  { id: 6, label: "المستندات" },
+  { id: 2, label: "المستندات" },
+  { id: 3, label: "تصنيف الأصول" },
+  { id: 4, label: "بيانات العميل" },
+  { id: 5, label: "تفاصيل الأصل" },
+  { id: 6, label: "غرض التقييم" },
   { id: 7, label: "المراجعة" },
 ];
 
@@ -142,8 +142,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 2: Asset Classification */}
-          {currentStep === 2 && (
+          {/* Step 3: Asset Classification */}
+          {currentStep === 3 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">تصنيف الأصول</h3>
               <p className="text-sm text-muted-foreground mb-5">
@@ -220,8 +220,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 3: Client Data */}
-          {currentStep === 3 && (
+          {/* Step 4: Client Data */}
+          {currentStep === 4 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
@@ -247,8 +247,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 4: Asset Details */}
-          {currentStep === 4 && (
+          {/* Step 5: Asset Details */}
+          {currentStep === 5 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للأصل المراد تقييمه</p>
@@ -288,8 +288,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 5: Purpose */}
-          {currentStep === 5 && (
+          {/* Step 6: Purpose */}
+          {currentStep === 6 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">غرض التقييم وأساس القيمة</h3>
               <p className="text-sm text-muted-foreground mb-5">حدد الغرض من التقييم وفقاً لمعايير التقييم الدولية</p>
@@ -333,8 +333,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 6: Documents */}
-          {currentStep === 6 && (
+          {/* Step 2: Documents */}
+          {currentStep === 2 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
               <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المطلوبة لإتمام عملية التقييم</p>
