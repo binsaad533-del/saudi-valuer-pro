@@ -19,6 +19,7 @@ import {
   Brain,
   MapPin,
   Globe,
+  Sparkles,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
