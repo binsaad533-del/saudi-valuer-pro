@@ -16,6 +16,7 @@ export default function ClientLogin() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [phone, setPhone] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
