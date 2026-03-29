@@ -128,8 +128,7 @@ export default function AppSidebar() {
 
   const canSee = (roles?: string[]) => {
     if (!roles) return true;
-    if (!role && !user) return true; // no auth — show all for demo
-    if (!role) return false; // loading — hide restricted
+    if (!role) return false;
     return roles.includes(role);
   };
 
