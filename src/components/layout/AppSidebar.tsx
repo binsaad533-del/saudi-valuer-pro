@@ -65,9 +65,8 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "التقارير",
+    title: "السجلات",
     items: [
-      { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
       { label: "الأرشيف", icon: Archive, path: "/archive" },
     ],
   },
