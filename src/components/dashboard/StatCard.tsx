@@ -18,14 +18,14 @@ interface StatCardProps {
 const variantStyles = {
   default: "bg-card border-border",
   primary: "bg-primary/5 border-primary/20",
-  accent: "bg-accent/5 border-accent/20",
+  accent: "bg-success/5 border-success/20",
   warning: "bg-warning/5 border-warning/20",
 };
 
 const iconStyles = {
   default: "bg-muted text-muted-foreground",
   primary: "bg-primary/10 text-primary",
-  accent: "bg-accent/10 text-accent",
+  accent: "bg-success/10 text-success",
   warning: "bg-warning/10 text-warning",
 };
 
