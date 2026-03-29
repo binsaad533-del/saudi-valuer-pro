@@ -86,11 +86,13 @@ export default function NewRequest() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
-  // Client basic info
+  // Report client info (not the logged-in user)
   const [clientInfo, setClientInfo] = useState({
     contactName: "",
     contactPhone: "",
     contactEmail: "",
+    idNumber: "",
+    clientType: "",
     additionalNotes: "",
     purpose: "",
   });
@@ -104,21 +106,7 @@ export default function NewRequest() {
       }
       setUser(user);
 
-      // Pre-fill client info from profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name_ar, phone, email")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        setClientInfo(prev => ({
-          ...prev,
-          contactName: profile.full_name_ar || "",
-          contactPhone: profile.phone || "",
-          contactEmail: profile.email || user.email || "",
-        }));
-      }
+      // No pre-fill - client info is for the report client, not the logged-in user
     };
     checkAuth();
   }, [navigate]);
@@ -430,7 +418,7 @@ export default function NewRequest() {
     { key: "upload", label: "رفع الوثائق", icon: Upload },
     { key: "processing", label: "تحليل ذكي", icon: Brain },
     { key: "extracted", label: "مراجعة البيانات", icon: FileCheck },
-    { key: "client_info", label: "معلوماتك", icon: UserIcon },
+    { key: "client_info", label: "عميل التقرير", icon: UserIcon },
   ];
 
     const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
@@ -735,7 +723,7 @@ export default function NewRequest() {
                 رجوع
               </Button>
               <Button onClick={() => setStep("client_info")} className="flex-1 gap-2" size="lg">
-                التالي: معلوماتك الأساسية
+                التالي: بيانات عميل التقرير
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </div>
@@ -747,12 +735,12 @@ export default function NewRequest() {
           <div className="space-y-4">
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+               <CardTitle className="flex items-center gap-2 text-lg">
                   <UserIcon className="w-5 h-5 text-primary" />
-                  معلوماتك الأساسية
+                  بيانات عميل التقرير
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  تأكد من صحة بيانات التواصل ثم أرسل الطلب.
+                  أدخل بيانات الشخص أو الجهة التي سيُعد التقرير لصالحها (وليس بياناتك كمستخدم).
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -784,16 +772,43 @@ export default function NewRequest() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm">الاسم الكامل</Label>
+                  <Label className="text-sm">نوع العميل <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={clientInfo.clientType}
+                    onValueChange={(val) => setClientInfo(p => ({ ...p, clientType: val }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="فرد أو جهة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">فرد</SelectItem>
+                      <SelectItem value="company">شركة / مؤسسة</SelectItem>
+                      <SelectItem value="government">جهة حكومية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm">اسم عميل التقرير <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <UserIcon className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={clientInfo.contactName}
                       onChange={(e) => setClientInfo(p => ({ ...p, contactName: e.target.value }))}
-                      placeholder="الاسم الكامل"
+                      placeholder="اسم الشخص أو الجهة"
                       className="pr-10"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm">رقم الهوية / السجل التجاري</Label>
+                  <Input
+                    value={clientInfo.idNumber}
+                    onChange={(e) => setClientInfo(p => ({ ...p, idNumber: e.target.value }))}
+                    placeholder="رقم الهوية الوطنية أو السجل التجاري"
+                    dir="ltr"
+                  />
                 </div>
 
                 <div className="space-y-2">
