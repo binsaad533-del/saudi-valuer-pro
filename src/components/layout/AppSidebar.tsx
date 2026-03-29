@@ -54,27 +54,21 @@ const navSections: NavSection[] = [
     title: "التقييم",
     items: [
       { label: "التقييمات", icon: FileText, path: "/valuations" },
-      { label: "محرك التقييم", icon: Brain, path: "/valuation-production" },
       { label: "المقارنات السوقية", icon: Building2, path: "/comparables" },
     ],
   },
   {
     title: "العمليات",
     items: [
-      { label: "المعاينات الميدانية", icon: MapPin, path: "/inspector" },
-      { label: "إدارة المعاينين", icon: Users, path: "/inspectors" },
-      { label: "التغطية الجغرافية", icon: Globe, path: "/inspector-coverage" },
-      { label: "طلبات العملاء", icon: Users, path: "/client-requests" },
-      { label: "إدارة المستخدمين", icon: Users, path: "/clients-management" },
+      { label: "المعاينات", icon: MapPin, path: "/inspectors" },
+      { label: "العملاء", icon: Users, path: "/clients-management" },
     ],
   },
   {
-    title: "التقارير والأرشيف",
+    title: "التقارير",
     items: [
       { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
-      { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review" },
       { label: "الأرشيف", icon: Archive, path: "/archive" },
-      { label: "البحث", icon: Search, path: "/search" },
     ],
   },
   {
