@@ -5,9 +5,9 @@ import {
   AlertTriangle,
   Users,
   MapPin,
-  DollarSign,
   BarChart3,
 } from "lucide-react";
+import saudiRiyalIcon from "@/assets/saudi-riyal.png";
 import TopBar from "@/components/layout/TopBar";
 import StatCard from "@/components/dashboard/StatCard";
 import RecentAssignments from "@/components/dashboard/RecentAssignments";
@@ -110,7 +110,7 @@ export default function Dashboard() {
             title="الإيرادات الشهرية"
             value="385,000"
             subtitle="ريال سعودي"
-            icon={<span className="w-5 h-5 font-bold text-sm flex items-center justify-center">﷼</span>}
+            icon={<img src={saudiRiyalIcon} alt="ريال سعودي" className="w-5 h-5 object-contain" />}
             href="/settings"
             trend={{ value: "+15% عن الشهر السابق", positive: true }}
             details={[
