@@ -103,7 +103,7 @@ export default function NewValuation() {
                   return (
                     <button
                       key={d.id}
-                      onClick={() => { setSelectedDiscipline(d.id); setSelectedType(""); }}
+                      onClick={() => { setSelectedDiscipline(d.id); }}
                       className={`flex items-start gap-3 p-5 rounded-lg border-2 transition-all text-right
                         ${selectedDiscipline === d.id
                           ? "border-primary bg-primary/5"
