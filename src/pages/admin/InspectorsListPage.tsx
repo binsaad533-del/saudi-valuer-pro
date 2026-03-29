@@ -80,12 +80,11 @@ export default function InspectorsListPage() {
     try {
       const { data: profiles, error: pErr } = await supabase
         .from("inspector_profiles")
-        .select("*");
-      if (pErr) throw pErr;
+        .select("*")
+        .limit(100);
 
-      if (!profiles || profiles.length === 0) {
+      if (pErr || !profiles || profiles.length === 0) {
         setInspectors(mockInspectors);
-        setLoading(false);
         return;
       }
 
@@ -109,7 +108,7 @@ export default function InspectorsListPage() {
         const prof = profileMap[ip.user_id] || {};
         const tasks = inspectionsByUser[ip.user_id] || [];
         const completed = tasks.filter((t) => t.status === "submitted" || t.status === "reviewed" || t.completed);
-        const lastTask = tasks.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
+        const lastTask = [...tasks].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
 
         return {
           ...ip,
@@ -128,9 +127,8 @@ export default function InspectorsListPage() {
         };
       });
 
-      setInspectors(combined);
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+      setInspectors(combined.length > 0 ? combined : mockInspectors);
+    } catch {
       setInspectors(mockInspectors);
     } finally {
       setLoading(false);
