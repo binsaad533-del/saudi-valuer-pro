@@ -29,6 +29,7 @@ import RequestDetails from "@/pages/client/RequestDetails";
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
+import RaqeemPage from "@/pages/RaqeemPage";
 
 const queryClient = new QueryClient();
 
