@@ -32,6 +32,8 @@ import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 import RaqeemPage from "@/pages/RaqeemPage";
+import AuditorDashboard from "@/pages/auditor/AuditorDashboard";
+import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
 
 
 const queryClient = new QueryClient();
@@ -65,7 +67,11 @@ const App = () => (
             <Route path="/compliance" element={<CompliancePage />} />
             <Route path="/raqeem" element={<RaqeemPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/clients-management" element={<ClientsManagementPage />} />
           </Route>
+
+          {/* Auditor Routes */}
+          <Route path="/auditor" element={<AuditorDashboard />} />
 
           {/* Client Portal Routes */}
           <Route path="/client/login" element={<ClientLogin />} />

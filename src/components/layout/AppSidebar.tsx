@@ -75,6 +75,7 @@ const navSections: NavSection[] = [
       { label: "المعاينات الميدانية", icon: MapPin, path: "/inspector" },
       { label: "التغطية الجغرافية", icon: Globe, path: "/inspector-coverage" },
       { label: "طلبات العملاء", icon: Users, path: "/client-requests" },
+      { label: "إدارة المستخدمين", icon: Users, path: "/clients-management" },
     ],
   },
   {

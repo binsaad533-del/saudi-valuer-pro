@@ -23,6 +23,19 @@ export default function ClientLogin() {
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
 
   const getRedirectPath = async (userId: string) => {
+    // Check account status
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("account_status")
+      .eq("user_id", userId)
+      .single();
+    
+    if (profile?.account_status === "suspended") {
+      await supabase.auth.signOut();
+      toast({ title: "الحساب موقوف", description: "تم إيقاف حسابك. تواصل مع الإدارة.", variant: "destructive" });
+      return null;
+    }
+
     const { data } = await supabase
       .from("user_roles")
       .select("role")
@@ -32,8 +45,11 @@ export default function ClientLogin() {
     if (role === "super_admin" || role === "firm_admin" || role === "valuer" || role === "reviewer") {
       return "/";
     }
-    if (role === "inspector" as string) {
+    if (role === "inspector") {
       return "/inspector";
+    }
+    if (role === "auditor") {
+      return "/auditor";
     }
     return "/client";
   };
@@ -45,7 +61,7 @@ export default function ClientLogin() {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const path = await getRedirectPath(authData.user.id);
-      navigate(path);
+      if (path) navigate(path);
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
