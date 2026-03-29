@@ -574,7 +574,7 @@ export default function NewRequest() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-sm">رقم الجوال</Label>
+                    <Label className="text-sm">رقم الجوال <span className="text-destructive">*</span></Label>
                     <Input
                       value={clientInfo.contactPhone}
                       onChange={(e) => setClientInfo(p => ({ ...p, contactPhone: e.target.value }))}
