@@ -110,12 +110,12 @@ export default function AppSidebar() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch {
       // ignore signOut errors
     }
     toast.success("تم تسجيل الخروج");
-    navigate("/client/login");
+    window.location.href = "/client/login";
   };
 
   const toggleExpand = (label: string) => {
