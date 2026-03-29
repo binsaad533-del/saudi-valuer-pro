@@ -504,6 +504,11 @@ export default function ValuationProduction() {
           )}
         </TabsContent>
 
+        {/* Validation Tab */}
+        <TabsContent value="validation" className="space-y-4 mt-4">
+          <ValidationPanel assignmentId={assignmentId!} />
+        </TabsContent>
+
         {/* Compliance Tab */}
         <TabsContent value="compliance" className="space-y-4 mt-4">
           <Card>
