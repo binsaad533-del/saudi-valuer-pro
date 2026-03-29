@@ -13,12 +13,12 @@ export default function ClientRegister() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"form" | "verify-phone" | "done">("form");
+  const [showPassword, setShowPassword] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
 
   const formatPhone = (p: string) => p.startsWith("+") ? p : `+966${p.replace(/^0/, "")}`;
