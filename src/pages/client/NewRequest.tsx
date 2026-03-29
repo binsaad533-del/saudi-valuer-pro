@@ -757,6 +757,33 @@ export default function NewRequest() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
+                  <div className="relative">
+                    <Target className="absolute right-3 top-3 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
+                    <Select
+                      value={clientInfo.purpose}
+                      onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}
+                    >
+                      <SelectTrigger className="pr-10">
+                        <SelectValue placeholder="اختر الغرض من التقييم" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sale_purchase">بيع / شراء</SelectItem>
+                        <SelectItem value="mortgage">رهن عقاري</SelectItem>
+                        <SelectItem value="financial_reporting">تقارير مالية</SelectItem>
+                        <SelectItem value="insurance">تأمين</SelectItem>
+                        <SelectItem value="taxation">ضريبي</SelectItem>
+                        <SelectItem value="litigation">قضائي</SelectItem>
+                        <SelectItem value="investment">استثمار</SelectItem>
+                        <SelectItem value="zakat">زكاة</SelectItem>
+                        <SelectItem value="expropriation">نزع ملكية</SelectItem>
+                        <SelectItem value="other">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label className="text-sm">الاسم الكامل</Label>
                   <div className="relative">
                     <UserIcon className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
