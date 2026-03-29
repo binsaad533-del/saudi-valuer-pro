@@ -23,6 +23,7 @@ export default function Dashboard() {
         {/* Stats Row 1 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
+            index={0}
             title="إجمالي التقييمات"
             value={142}
             subtitle="منذ بداية العام"
