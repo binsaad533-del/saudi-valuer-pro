@@ -37,6 +37,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={1}
             title="قيد التنفيذ"
             value={18}
             subtitle="تقييم نشط"
