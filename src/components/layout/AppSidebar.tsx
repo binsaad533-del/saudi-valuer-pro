@@ -68,12 +68,6 @@ const navSections: NavSection[] = [
     roles: adminRoles,
   },
   {
-    title: "السجلات",
-    items: [
-      { label: "الأرشيف", icon: Archive, path: "/archive", roles: allRoles },
-    ],
-  },
-  {
     title: "النظام",
     items: [
       { label: "الامتثال", icon: Shield, path: "/compliance", roles: adminRoles },
