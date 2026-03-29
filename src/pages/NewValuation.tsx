@@ -64,6 +64,7 @@ const steps = [
 
 export default function NewValuation() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedDiscipline, setSelectedDiscipline] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedPurpose, setSelectedPurpose] = useState("");
 
