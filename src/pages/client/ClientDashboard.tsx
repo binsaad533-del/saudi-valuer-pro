@@ -136,8 +136,12 @@ export default function ClientDashboard() {
               <div className="text-center py-12">
                 <Building2 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm mb-4">لا توجد طلبات تقييم بعد</p>
-                <Button onClick={() => navigate("/client/new-request")} variant="outline" className="gap-2">
-                  <Plus className="w-4 h-4" />
+                <Button 
+                  onClick={() => navigate("/client/new-request")} 
+                  size="lg"
+                  className="gap-2 bg-gradient-to-l from-primary to-primary/80 text-primary-foreground shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 px-8 py-3 text-base font-semibold rounded-xl"
+                >
+                  <Plus className="w-5 h-5" />
                   ابدأ طلب تقييم جديد
                 </Button>
               </div>
