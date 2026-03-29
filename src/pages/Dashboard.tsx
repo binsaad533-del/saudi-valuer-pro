@@ -23,6 +23,7 @@ export default function Dashboard() {
         {/* Stats Row 1 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
+            index={0}
             title="إجمالي التقييمات"
             value={142}
             subtitle="منذ بداية العام"
@@ -36,6 +37,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={1}
             title="قيد التنفيذ"
             value={18}
             subtitle="تقييم نشط"
@@ -49,6 +51,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={2}
             title="مكتملة هذا الشهر"
             value={24}
             subtitle="تقرير معتمد"
@@ -62,6 +65,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={3}
             title="تنبيهات الامتثال"
             value={3}
             subtitle="تحتاج مراجعة"
@@ -78,6 +82,7 @@ export default function Dashboard() {
         {/* Stats Row 2 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
+            index={4}
             title="العملاء النشطين"
             value={36}
             subtitle="عميل مسجّل"
@@ -89,6 +94,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={5}
             title="المعاينات اليوم"
             value={5}
             subtitle="معاينة مجدولة"
@@ -100,6 +106,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={6}
             title="الإيرادات الشهرية"
             value="385,000"
             subtitle="ريال سعودي"
@@ -112,6 +119,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={7}
             title="متوسط التقييم"
             value="4.8"
             subtitle="من 5.0"
