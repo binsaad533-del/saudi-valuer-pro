@@ -723,7 +723,7 @@ export default function NewRequest() {
                 رجوع
               </Button>
               <Button onClick={() => setStep("client_info")} className="flex-1 gap-2" size="lg">
-                التالي: معلوماتك الأساسية
+                التالي: بيانات عميل التقرير
                 <ArrowLeft className="w-4 h-4" />
               </Button>
             </div>
