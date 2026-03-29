@@ -51,6 +51,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={2}
             title="مكتملة هذا الشهر"
             value={24}
             subtitle="تقرير معتمد"
