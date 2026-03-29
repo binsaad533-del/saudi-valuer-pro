@@ -494,88 +494,185 @@ export default function NewRequest() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 pb-8">
-        {/* === STEP 1: Upload === */}
+        {/* === STEP 1: Client Info + Upload === */}
         {step === "upload" && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Upload className="w-5 h-5 text-primary" />
-                ارفع جميع الوثائق المتعلقة بطلب التقييم
-              </CardTitle>
-              <p className="text-sm text-muted-foreground mt-1">
-                ارفع صكوك الملكية، المخططات، التقارير، الصور، أو أي مستندات ذات صلة.
-                الذكاء الاصطناعي سيقوم بتحليلها واستخراج جميع البيانات تلقائياً.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Drop zone */}
-              <div
-                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-                  dragOver
-                    ? "border-primary bg-primary/5 scale-[1.01]"
-                    : "border-border hover:border-primary/40 hover:bg-muted/30"
-                }`}
-                onClick={() => fileInputRef.current?.click()}
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
-              >
-                <Upload className={`w-12 h-12 mx-auto mb-3 ${dragOver ? "text-primary" : "text-muted-foreground/40"}`} />
-                <p className="text-sm font-medium text-foreground mb-1">
-                  {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات هنا أو اضغط للاختيار"}
+          <div className="space-y-4">
+            {/* Report Client Info */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <UserIcon className="w-5 h-5 text-primary" />
+                  بيانات عميل التقرير
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  أدخل بيانات الشخص أو الجهة التي سيُعد التقرير لصالحها.
                 </p>
-                <p className="text-xs text-muted-foreground">
-                  PDF, صور, Word, Excel — يمكنك رفع عدة ملفات دفعة واحدة
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
+                    <Select
+                      value={clientInfo.purpose}
+                      onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="اختر الغرض" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sale_purchase">بيع / شراء</SelectItem>
+                        <SelectItem value="mortgage">رهن عقاري</SelectItem>
+                        <SelectItem value="financial_reporting">تقارير مالية</SelectItem>
+                        <SelectItem value="insurance">تأمين</SelectItem>
+                        <SelectItem value="taxation">ضريبي</SelectItem>
+                        <SelectItem value="litigation">قضائي</SelectItem>
+                        <SelectItem value="investment">استثمار</SelectItem>
+                        <SelectItem value="zakat">زكاة</SelectItem>
+                        <SelectItem value="expropriation">نزع ملكية</SelectItem>
+                        <SelectItem value="other">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">نوع العميل <span className="text-destructive">*</span></Label>
+                    <Select
+                      value={clientInfo.clientType}
+                      onValueChange={(val) => setClientInfo(p => ({ ...p, clientType: val }))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="فرد أو جهة" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="individual">فرد</SelectItem>
+                        <SelectItem value="company">شركة / مؤسسة</SelectItem>
+                        <SelectItem value="government">جهة حكومية</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">اسم عميل التقرير <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={clientInfo.contactName}
+                      onChange={(e) => setClientInfo(p => ({ ...p, contactName: e.target.value }))}
+                      placeholder="اسم الشخص أو الجهة"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">رقم الهوية / السجل التجاري</Label>
+                    <Input
+                      value={clientInfo.idNumber}
+                      onChange={(e) => setClientInfo(p => ({ ...p, idNumber: e.target.value }))}
+                      placeholder="رقم الهوية أو السجل"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">رقم الجوال</Label>
+                    <Input
+                      value={clientInfo.contactPhone}
+                      onChange={(e) => setClientInfo(p => ({ ...p, contactPhone: e.target.value }))}
+                      placeholder="05XXXXXXXX"
+                      dir="ltr"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-sm">البريد الإلكتروني</Label>
+                    <Input
+                      value={clientInfo.contactEmail}
+                      onChange={(e) => setClientInfo(p => ({ ...p, contactEmail: e.target.value }))}
+                      placeholder="example@email.com"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Documents Upload */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Upload className="w-5 h-5 text-primary" />
+                  الوثائق المتعلقة بالتقييم
+                </CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  ارفع صكوك الملكية، المخططات، التقارير، الصور، أو أي مستندات ذات صلة.
                 </p>
-                {uploading && (
-                  <div className="mt-3 flex items-center justify-center gap-2 text-primary">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">جارٍ الرفع...</span>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div
+                  className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+                    dragOver
+                      ? "border-primary bg-primary/5 scale-[1.01]"
+                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                >
+                  <Upload className={`w-8 h-8 mx-auto mb-2 ${dragOver ? "text-primary" : "text-muted-foreground/40"}`} />
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات هنا أو اضغط للاختيار"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    PDF, صور, Word, Excel
+                  </p>
+                  {uploading && (
+                    <div className="mt-2 flex items-center justify-center gap-2 text-primary">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">جارٍ الرفع...</span>
+                    </div>
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleInputChange}
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt,.tif,.tiff"
+                />
+
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground">
+                      الملفات المرفوعة ({uploadedFiles.length})
+                    </p>
+                    {uploadedFiles.map(file => (
+                      <div key={file.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                        {getFileIcon(file.type)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-foreground truncate">{file.name}</p>
+                          <p className="text-[11px] text-muted-foreground">{formatFileSize(file.size)}</p>
+                        </div>
+                        <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                multiple
-                className="hidden"
-                onChange={handleInputChange}
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt,.tif,.tiff"
-              />
+              </CardContent>
+            </Card>
 
-              {/* File list */}
-              {uploadedFiles.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-muted-foreground">
-                    الملفات المرفوعة ({uploadedFiles.length})
-                  </p>
-                  {uploadedFiles.map(file => (
-                    <div key={file.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/50">
-                      {getFileIcon(file.type)}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-foreground truncate">{file.name}</p>
-                        <p className="text-[11px] text-muted-foreground">{formatFileSize(file.size)}</p>
-                      </div>
-                      <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* Next button */}
-              <Button
-                onClick={processWithAI}
-                className="w-full gap-2"
-                size="lg"
-                disabled={uploadedFiles.length === 0 || uploading}
-              >
-                <Sparkles className="w-4 h-4" />
-                تحليل الوثائق بالذكاء الاصطناعي
-              </Button>
-            </CardContent>
-          </Card>
+            {/* Next button */}
+            <Button
+              onClick={processWithAI}
+              className="w-full gap-2"
+              size="lg"
+              disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType}
+            >
+              <Sparkles className="w-4 h-4" />
+              تحليل الوثائق والمتابعة
+            </Button>
+          </div>
         )}
 
         {/* === STEP 2: Processing === */}
