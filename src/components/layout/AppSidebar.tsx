@@ -120,7 +120,7 @@ export default function AppSidebar() {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
+      <nav className="flex-1 overflow-y-auto scrollbar-none py-3 px-3 space-y-1">
         {navSections.map((section, sIdx) => (
           <div key={sIdx}>
             {section.title && !collapsed && (
