@@ -434,37 +434,27 @@ export default function RaqeemPage() {
         {/* Other Tabs */}
         <TabsContent value="knowledge" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full px-4 sm:px-6 py-4">
-            <div className="max-w-4xl mx-auto">
-              <KnowledgeBaseModule />
-            </div>
+            <KnowledgeBaseModule />
           </ScrollArea>
         </TabsContent>
         <TabsContent value="corrections" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full px-4 sm:px-6 py-4">
-            <div className="max-w-4xl mx-auto">
-              <CorrectionsModule />
-            </div>
+            <CorrectionsModule />
           </ScrollArea>
         </TabsContent>
         <TabsContent value="rules" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full px-4 sm:px-6 py-4">
-            <div className="max-w-4xl mx-auto">
-              <RulesEngineModule />
-            </div>
+            <RulesEngineModule />
           </ScrollArea>
         </TabsContent>
         <TabsContent value="tests" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full px-4 sm:px-6 py-4">
-            <div className="max-w-4xl mx-auto">
-              <TestHistoryModule />
-            </div>
+            <TestHistoryModule />
           </ScrollArea>
         </TabsContent>
         <TabsContent value="performance" className="flex-1 mt-0 overflow-hidden">
           <ScrollArea className="h-full px-4 sm:px-6 py-4">
-            <div className="max-w-4xl mx-auto">
-              <PerformanceDashboard />
-            </div>
+            <PerformanceDashboard />
           </ScrollArea>
         </TabsContent>
       </Tabs>
