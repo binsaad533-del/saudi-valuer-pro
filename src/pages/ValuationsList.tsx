@@ -16,6 +16,15 @@ import {
 
 type Tab = "all" | "review" | "completed";
 
+type Discipline = "all" | "real_estate" | "machinery" | "mixed";
+
+const disciplineLabels: Record<Discipline, string> = {
+  all: "الكل",
+  real_estate: "عقار",
+  machinery: "آلات ومعدات",
+  mixed: "مختلط",
+};
+
 type Status = "all" | "new" | "in_progress" | "review" | "completed" | "archived";
 
 const statusLabels: Record<Status, string> = {
