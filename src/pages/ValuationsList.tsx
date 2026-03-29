@@ -120,6 +120,20 @@ export default function ValuationsList() {
             ))}
           </div>
         </div>
+        {/* Discipline Filter */}
+        <div className="flex gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground self-center ml-2">نوع التقييم:</span>
+          {(Object.keys(disciplineLabels) as Discipline[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setActiveDiscipline(d)}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors
+                ${activeDiscipline === d ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+            >
+              {disciplineLabels[d]}
+            </button>
+          ))}
+        </div>
 
         {/* Table */}
         <div className="bg-card rounded-lg border border-border shadow-card overflow-hidden">
