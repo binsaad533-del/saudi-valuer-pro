@@ -1777,6 +1777,9 @@ export type Database = {
         Row: {
           account_status: string
           avatar_url: string | null
+          client_category: string | null
+          client_category_manual: boolean | null
+          client_value_score: number | null
           created_at: string
           email: string | null
           full_name_ar: string
@@ -1799,6 +1802,9 @@ export type Database = {
         Insert: {
           account_status?: string
           avatar_url?: string | null
+          client_category?: string | null
+          client_category_manual?: boolean | null
+          client_value_score?: number | null
           created_at?: string
           email?: string | null
           full_name_ar: string
@@ -1821,6 +1827,9 @@ export type Database = {
         Update: {
           account_status?: string
           avatar_url?: string | null
+          client_category?: string | null
+          client_category_manual?: boolean | null
+          client_value_score?: number | null
           created_at?: string
           email?: string | null
           full_name_ar?: string
