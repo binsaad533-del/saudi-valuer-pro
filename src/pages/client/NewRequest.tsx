@@ -10,6 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Upload,
   FileText,
   Image,
@@ -26,6 +33,7 @@ import {
   Mail,
   FileCheck,
   Brain,
+  Target,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
