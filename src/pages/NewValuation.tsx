@@ -357,8 +357,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 7: Review */}
-          {currentStep === 7 && (
+          {/* Step 6: Review */}
+          {currentStep === 6 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">مراجعة الطلب</h3>
               <p className="text-sm text-muted-foreground mb-5">راجع جميع البيانات قبل إرسال طلب التقييم</p>
