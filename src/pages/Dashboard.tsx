@@ -100,6 +100,7 @@ export default function Dashboard() {
             value={5}
             subtitle="معاينة مجدولة"
             icon={<MapPin className="w-5 h-5" />}
+            variant="warning"
             href="/inspectors"
             details={[
               { label: "مكتملة", value: 2 },
