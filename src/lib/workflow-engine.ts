@@ -56,6 +56,7 @@ export const BLOCKING_RULES: Record<string, string> = {
   final_payment_received: "يجب استلام الدفعة النهائية",
   report_issued: "يجب اجتياز فحوصات الامتثال واستلام الدفعة النهائية",
   draft_report_ready: "يجب إنشاء مسودة التقرير",
+  valuation_in_progress: "يجب إكمال المعاينة الميدانية وتسليم البيانات قبل بدء التقييم",
 };
 
 // ── Status labels (Arabic) for each role ──
