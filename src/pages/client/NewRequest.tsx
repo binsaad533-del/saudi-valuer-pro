@@ -677,7 +677,7 @@ export default function NewRequest() {
               onClick={processWithAI}
               className="w-full gap-2"
               size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType}
+              disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
             >
               <Sparkles className="w-4 h-4" />
               تحليل الوثائق والمتابعة
