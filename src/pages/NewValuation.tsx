@@ -262,8 +262,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 6: Purpose */}
-          {currentStep === 6 && (
+          {/* Step 5: Purpose */}
+          {currentStep === 5 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">غرض التقييم وأساس القيمة</h3>
               <p className="text-sm text-muted-foreground mb-5">حدد الغرض من التقييم وفقاً لمعايير التقييم الدولية</p>
