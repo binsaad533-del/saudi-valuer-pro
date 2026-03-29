@@ -735,12 +735,12 @@ export default function NewRequest() {
           <div className="space-y-4">
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
+               <CardTitle className="flex items-center gap-2 text-lg">
                   <UserIcon className="w-5 h-5 text-primary" />
-                  معلوماتك الأساسية
+                  بيانات عميل التقرير
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  تأكد من صحة بيانات التواصل ثم أرسل الطلب.
+                  أدخل بيانات الشخص أو الجهة التي سيُعد التقرير لصالحها (وليس بياناتك كمستخدم).
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -772,16 +772,43 @@ export default function NewRequest() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm">الاسم الكامل</Label>
+                  <Label className="text-sm">نوع العميل <span className="text-destructive">*</span></Label>
+                  <Select
+                    value={clientInfo.clientType}
+                    onValueChange={(val) => setClientInfo(p => ({ ...p, clientType: val }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="فرد أو جهة" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="individual">فرد</SelectItem>
+                      <SelectItem value="company">شركة / مؤسسة</SelectItem>
+                      <SelectItem value="government">جهة حكومية</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm">اسم عميل التقرير <span className="text-destructive">*</span></Label>
                   <div className="relative">
                     <UserIcon className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={clientInfo.contactName}
                       onChange={(e) => setClientInfo(p => ({ ...p, contactName: e.target.value }))}
-                      placeholder="الاسم الكامل"
+                      placeholder="اسم الشخص أو الجهة"
                       className="pr-10"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-sm">رقم الهوية / السجل التجاري</Label>
+                  <Input
+                    value={clientInfo.idNumber}
+                    onChange={(e) => setClientInfo(p => ({ ...p, idNumber: e.target.value }))}
+                    placeholder="رقم الهوية الوطنية أو السجل التجاري"
+                    dir="ltr"
+                  />
                 </div>
 
                 <div className="space-y-2">
