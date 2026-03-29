@@ -142,8 +142,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 2: Asset Classification */}
-          {currentStep === 2 && (
+          {/* Step 3: Asset Classification */}
+          {currentStep === 3 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">تصنيف الأصول</h3>
               <p className="text-sm text-muted-foreground mb-5">
