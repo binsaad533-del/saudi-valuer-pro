@@ -68,7 +68,7 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
     setLoading(true);
     try {
       // Fetch all required data
-      const [aRes, compRes, adjRes, methRes, reconRes, repRes, insRes, subRes] = await Promise.all([
+      const [aRes, compRes, adjRes, methRes, reconRes, repRes, insRes, subRes, insPhotosRes, insCheckRes, insAnalysisRes] = await Promise.all([
         supabase.from("valuation_assignments").select("*").eq("id", assignmentId).single(),
         supabase.from("comparables").select("*").limit(20),
         supabase.from("comparable_adjustments").select("*").limit(100),
@@ -77,6 +77,9 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
         supabase.from("reports").select("*").eq("assignment_id", assignmentId).order("version", { ascending: false }).limit(1),
         supabase.from("inspections").select("*").eq("assignment_id", assignmentId).order("created_at", { ascending: false }).limit(1),
         supabase.from("subjects" as any).select("*").eq("assignment_id", assignmentId).limit(1),
+        supabase.from("inspection_photos").select("*").eq("inspection_id", assignmentId).limit(50),
+        supabase.from("inspection_checklist_items").select("*").limit(50),
+        supabase.from("inspection_analysis").select("*").eq("assignment_id", assignmentId).maybeSingle(),
       ]);
 
       const validationResult = runFullValidation({
