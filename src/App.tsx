@@ -70,6 +70,8 @@ const App = () => (
           {/* Client Portal Routes */}
           <Route path="/client/login" element={<ClientLogin />} />
           <Route path="/client/register" element={<ClientRegister />} />
+          <Route path="/client/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/client" element={<ClientDashboard />} />
           <Route path="/client/new-request" element={<NewRequest />} />
           <Route path="/client/request/:id" element={<RequestDetails />} />
