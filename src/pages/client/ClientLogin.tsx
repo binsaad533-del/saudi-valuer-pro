@@ -172,7 +172,7 @@ export default function ClientLogin() {
         </div>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          © {new Date().getFullYear()} جساس للتقييم العقاري - جميع الحقوق محفوظة
+          © {new Date().getFullYear()} جساس للتقييم - جميع الحقوق محفوظة
         </p>
       </div>
     </div>
