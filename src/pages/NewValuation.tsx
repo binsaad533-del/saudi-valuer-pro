@@ -74,7 +74,7 @@ export default function NewValuation() {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h2 className="text-lg font-bold text-foreground">طلب تقييم عقاري جديد</h2>
+          <h2 className="text-lg font-bold text-foreground">طلب تقييم جديد</h2>
           <p className="text-sm text-muted-foreground">أكمل الخطوات التالية لإنشاء ملف تقييم جديد</p>
         </div>
 
