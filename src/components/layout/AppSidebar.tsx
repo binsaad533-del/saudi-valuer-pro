@@ -16,8 +16,6 @@ import {
   ChevronLeft,
   Menu,
   X,
-  Home,
-  Cog,
   Brain,
   MapPin,
   Globe,
