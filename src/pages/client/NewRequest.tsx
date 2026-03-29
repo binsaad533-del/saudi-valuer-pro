@@ -106,21 +106,7 @@ export default function NewRequest() {
       }
       setUser(user);
 
-      // Pre-fill client info from profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name_ar, phone, email")
-        .eq("user_id", user.id)
-        .single();
-
-      if (profile) {
-        setClientInfo(prev => ({
-          ...prev,
-          contactName: profile.full_name_ar || "",
-          contactPhone: profile.phone || "",
-          contactEmail: profile.email || user.email || "",
-        }));
-      }
+      // No pre-fill - client info is for the report client, not the logged-in user
     };
     checkAuth();
   }, [navigate]);
