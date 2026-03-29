@@ -415,10 +415,9 @@ export default function NewRequest() {
 
   // Step indicators
   const steps = [
-    { key: "upload", label: "رفع الوثائق", icon: Upload },
+    { key: "upload", label: "البيانات والوثائق", icon: Upload },
     { key: "processing", label: "تحليل ذكي", icon: Brain },
-    { key: "extracted", label: "مراجعة البيانات", icon: FileCheck },
-    { key: "client_info", label: "عميل التقرير", icon: UserIcon },
+    { key: "extracted", label: "مراجعة وإرسال", icon: FileCheck },
   ];
 
     const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
