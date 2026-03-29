@@ -92,6 +92,7 @@ export default function NewRequest() {
     contactPhone: "",
     contactEmail: "",
     additionalNotes: "",
+    purpose: "",
   });
 
   useEffect(() => {
