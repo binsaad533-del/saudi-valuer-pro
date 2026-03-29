@@ -242,7 +242,7 @@ export default function AppSidebar() {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 right-0 h-screen z-50 transition-all duration-300
-          ${mobileOpen ? "translate-x-0" : "translate-x-full"} lg:translate-x-0 lg:static
+          ${mobileOpen ? "translate-x-0" : "translate-x-full"} lg:translate-x-0 lg:sticky lg:top-0 lg:shrink-0
           ${collapsed ? "w-[68px]" : "w-[260px]"}`}
       >
         {sidebarContent}
