@@ -23,6 +23,8 @@ import NotFound from "./pages/NotFound.tsx";
 // Client Portal
 import ClientLogin from "@/pages/client/ClientLogin";
 import ClientRegister from "@/pages/client/ClientRegister";
+import ForgotPassword from "@/pages/client/ForgotPassword";
+import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
@@ -68,6 +70,8 @@ const App = () => (
           {/* Client Portal Routes */}
           <Route path="/client/login" element={<ClientLogin />} />
           <Route path="/client/register" element={<ClientRegister />} />
+          <Route path="/client/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/client" element={<ClientDashboard />} />
           <Route path="/client/new-request" element={<NewRequest />} />
           <Route path="/client/request/:id" element={<RequestDetails />} />

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, KeyRound, Loader2 } from "lucide-react";
+import { Mail, Lock, Phone, KeyRound, Loader2 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function ClientLogin() {
@@ -18,10 +18,10 @@ export default function ClientLogin() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // OTP
-  const [otpEmail, setOtpEmail] = useState("");
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
+  // Phone OTP
+  const [phone, setPhone] = useState("");
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [phoneOtpCode, setPhoneOtpCode] = useState("");
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,14 +37,15 @@ export default function ClientLogin() {
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleSendPhoneOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({ email: otpEmail });
+      const formattedPhone = phone.startsWith("+") ? phone : `+966${phone.replace(/^0/, "")}`;
+      const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
       if (error) throw error;
-      setOtpSent(true);
-      toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من بريدك الإلكتروني" });
+      setPhoneOtpSent(true);
+      toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -52,14 +53,15 @@ export default function ClientLogin() {
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyPhoneOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
+      const formattedPhone = phone.startsWith("+") ? phone : `+966${phone.replace(/^0/, "")}`;
       const { error } = await supabase.auth.verifyOtp({
-        email: otpEmail,
-        token: otpCode,
-        type: "email",
+        phone: formattedPhone,
+        token: phoneOtpCode,
+        type: "sms",
       });
       if (error) throw error;
       navigate("/client");
@@ -83,42 +85,30 @@ export default function ClientLogin() {
         <div className="bg-card rounded-xl border border-border shadow-card p-6">
           <Tabs defaultValue="password" dir="rtl">
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="password" className="text-sm">كلمة المرور</TabsTrigger>
-              <TabsTrigger value="otp" className="text-sm">رمز التحقق</TabsTrigger>
+              <TabsTrigger value="password" className="text-sm">البريد الإلكتروني</TabsTrigger>
+              <TabsTrigger value="phone" className="text-sm">رقم الجوال</TabsTrigger>
             </TabsList>
 
+            {/* Email + Password Tab */}
             <TabsContent value="password">
               <form onSubmit={handleEmailLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">البريد الإلكتروني</Label>
                   <div className="relative">
                     <Mail className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pr-10"
-                      required
-                      dir="ltr"
-                    />
+                    <Input id="email" type="email" placeholder="example@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pr-10" required dir="ltr" />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">كلمة المرور</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">كلمة المرور</Label>
+                    <Link to="/client/forgot-password" className="text-xs text-primary hover:underline">
+                      نسيت كلمة المرور؟
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pr-10"
-                      required
-                      dir="ltr"
-                    />
+                    <Input id="password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10" required dir="ltr" />
                   </div>
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
@@ -128,24 +118,17 @@ export default function ClientLogin() {
               </form>
             </TabsContent>
 
-            <TabsContent value="otp">
-              {!otpSent ? (
-                <form onSubmit={handleSendOtp} className="space-y-4">
+            {/* Phone OTP Tab */}
+            <TabsContent value="phone">
+              {!phoneOtpSent ? (
+                <form onSubmit={handleSendPhoneOtp} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="otp-email">البريد الإلكتروني</Label>
+                    <Label htmlFor="phone-login">رقم الجوال</Label>
                     <div className="relative">
-                      <Mail className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="otp-email"
-                        type="email"
-                        placeholder="example@email.com"
-                        value={otpEmail}
-                        onChange={(e) => setOtpEmail(e.target.value)}
-                        className="pr-10"
-                        required
-                        dir="ltr"
-                      />
+                      <Phone className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="phone-login" type="tel" placeholder="05XXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} className="pr-10" required dir="ltr" />
                     </div>
+                    <p className="text-xs text-muted-foreground">سيتم إرسال رمز تحقق إلى جوالك</p>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
@@ -153,37 +136,23 @@ export default function ClientLogin() {
                   </Button>
                 </form>
               ) : (
-                <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <form onSubmit={handleVerifyPhoneOtp} className="space-y-4">
                   <p className="text-sm text-muted-foreground text-center">
-                    تم إرسال رمز التحقق إلى <span className="font-medium text-foreground" dir="ltr">{otpEmail}</span>
+                    تم إرسال رمز التحقق إلى <span className="font-medium text-foreground" dir="ltr">{phone}</span>
                   </p>
                   <div className="space-y-2">
-                    <Label htmlFor="otp-code">رمز التحقق</Label>
+                    <Label htmlFor="phone-otp-code">رمز التحقق</Label>
                     <div className="relative">
                       <KeyRound className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="otp-code"
-                        type="text"
-                        placeholder="123456"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
-                        className="pr-10 text-center tracking-widest"
-                        required
-                        dir="ltr"
-                      />
+                      <Input id="phone-otp-code" type="text" placeholder="123456" value={phoneOtpCode} onChange={(e) => setPhoneOtpCode(e.target.value)} className="pr-10 text-center tracking-widest" required dir="ltr" />
                     </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                     تحقق وسجّل الدخول
                   </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="w-full text-sm"
-                    onClick={() => setOtpSent(false)}
-                  >
-                    إعادة إرسال الرمز
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setPhoneOtpSent(false)}>
+                    تغيير الرقم
                   </Button>
                 </form>
               )}
