@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/collapsible";
 import { InspectionAnalysisView } from "@/components/inspectors/InspectionAnalysisView";
 import ReportLifecyclePanel from "@/components/reports/ReportLifecyclePanel";
+import ValidationPanel from "@/components/validation/ValidationPanel";
 import { Clipboard } from "lucide-react";
 
 const PIPELINE_STEPS = [
@@ -172,11 +173,12 @@ export default function ValuationProduction() {
       </div>
 
       <Tabs defaultValue="engine" dir="rtl">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="engine">المحرك</TabsTrigger>
           <TabsTrigger value="inspection">المعاينة</TabsTrigger>
           <TabsTrigger value="audit">مسار التدقيق</TabsTrigger>
           <TabsTrigger value="results">النتائج</TabsTrigger>
+          <TabsTrigger value="validation">التحقق</TabsTrigger>
           <TabsTrigger value="compliance">الامتثال</TabsTrigger>
           <TabsTrigger value="reports">التقارير</TabsTrigger>
         </TabsList>
@@ -500,6 +502,11 @@ export default function ValuationProduction() {
               </CardContent>
             </Card>
           )}
+        </TabsContent>
+
+        {/* Validation Tab */}
+        <TabsContent value="validation" className="space-y-4 mt-4">
+          <ValidationPanel assignmentId={assignmentId!} />
         </TabsContent>
 
         {/* Compliance Tab */}
