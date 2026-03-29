@@ -1,13 +1,21 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Bot, User, Paperclip, Trash2, Sparkles, FileText, X, Settings2, Edit3 } from "lucide-react";
+import {
+  Send, Bot, User, Paperclip, Trash2, Sparkles, FileText, X, Edit3,
+  BookOpen, MessageSquare, Scale, FlaskConical, BarChart3, PanelLeftClose, PanelLeftOpen,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
-import RaqeemKnowledgePanel from "@/components/raqeem/RaqeemKnowledgePanel";
+import KnowledgeBaseModule from "@/components/raqeem/KnowledgeBaseModule";
+import CorrectionsModule from "@/components/raqeem/CorrectionsModule";
+import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
+import PerformanceDashboard from "@/components/raqeem/PerformanceDashboard";
+import TestHistoryModule from "@/components/raqeem/TestHistoryModule";
 
 interface Message {
   role: "user" | "assistant";
@@ -24,12 +32,20 @@ const SUGGESTED_PROMPTS = [
   "كيف أحسب معدل الرسملة للعقارات الاستثمارية؟",
 ];
 
+const SMART_PANEL_TABS = [
+  { value: "knowledge", label: "المعرفة", icon: BookOpen },
+  { value: "corrections", label: "التصحيحات", icon: MessageSquare },
+  { value: "rules", label: "القواعد", icon: Scale },
+  { value: "tests", label: "الاختبارات", icon: FlaskConical },
+  { value: "performance", label: "الأداء", icon: BarChart3 },
+];
+
 export default function RaqeemPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [showKnowledge, setShowKnowledge] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [correctionDialog, setCorrectionDialog] = useState<{
     open: boolean;
     msgIndex: number;
@@ -179,7 +195,6 @@ export default function RaqeemPage() {
 
   const submitCorrection = async () => {
     const { msgIndex, correctedAnswer, reason } = correctionDialog;
-    // Find the user question before this assistant message
     let question = "";
     for (let i = msgIndex - 1; i >= 0; i--) {
       if (messages[i].role === "user") { question = messages[i].content; break; }
@@ -213,34 +228,36 @@ export default function RaqeemPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)]">
-      {/* Chat Area */}
+    <div className="flex h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden">
+      {/* ═══ CENTER: Main Chat Area ═══ */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-foreground">رقيم</h1>
-              <p className="text-xs text-muted-foreground">
-                مساعد التقييم الذكي — تعلّم متحكم به بالكامل
+              <h1 className="text-base font-bold text-foreground">رقيم — مركز التقييم الذكي</h1>
+              <p className="text-[11px] text-muted-foreground hidden sm:block">
+                مساعد التقييم الذكي الموحد لإدارة المعرفة، التدريب، التحليل، والتقييم
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {messages.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground">
-                <Trash2 className="w-4 h-4 ml-1" /> محادثة جديدة
+              <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs">
+                <Trash2 className="w-3.5 h-3.5 ml-1" /> جديدة
               </Button>
             )}
             <Button
-              variant={showKnowledge ? "default" : "outline"}
+              variant={panelOpen ? "default" : "outline"}
               size="sm"
-              onClick={() => setShowKnowledge(!showKnowledge)}
+              onClick={() => setPanelOpen(!panelOpen)}
+              className="text-xs gap-1.5"
             >
-              <Settings2 className="w-4 h-4 ml-1" /> إدارة المعرفة
+              {panelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />}
+              <span className="hidden sm:inline">لوحة التحكم</span>
             </Button>
           </div>
         </div>
@@ -248,18 +265,18 @@ export default function RaqeemPage() {
         {/* Messages */}
         <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef as any}>
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-8 py-16">
-              <div className="w-20 h-20 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
-                <Sparkles className="w-10 h-10 text-primary-foreground" />
+            <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
+              <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
+                <Sparkles className="w-8 h-8 text-primary-foreground" />
               </div>
-              <div className="text-center space-y-2">
-                <h2 className="text-2xl font-bold text-foreground">مرحباً، أنا رقيم</h2>
-                <p className="text-muted-foreground max-w-md">
-                  مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به. يمكنك تصحيحي
-                  وإضافة قواعد ومستندات من لوحة إدارة المعرفة.
+              <div className="text-center space-y-1.5">
+                <h2 className="text-xl font-bold text-foreground">مرحباً، أنا رقيم</h2>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به.
+                  استخدم لوحة التحكم لإدارة المعرفة والقواعد والتصحيحات.
                 </p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full">
                 {SUGGESTED_PROMPTS.map((prompt, i) => (
                   <button
                     key={i}
@@ -270,31 +287,25 @@ export default function RaqeemPage() {
                   </button>
                 ))}
               </div>
-              {/* Knowledge status badges */}
               <div className="flex flex-wrap gap-2 justify-center">
                 <Badge variant="outline" className="text-xs gap-1">
                   <FileText className="w-3 h-3" /> تعلّم متحكم به
                 </Badge>
-                <Badge variant="outline" className="text-xs gap-1">
-                  لا يتعلم ذاتياً
-                </Badge>
-                <Badge variant="outline" className="text-xs gap-1">
-                  IVS 2025 + تقييم
-                </Badge>
+                <Badge variant="outline" className="text-xs gap-1">IVS 2025 + تقييم</Badge>
               </div>
             </div>
           ) : (
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="max-w-3xl mx-auto space-y-5">
               {messages.map((msg, i) => (
                 <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                   <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
                       msg.role === "user"
                         ? "bg-primary text-primary-foreground"
                         : "gradient-primary text-primary-foreground"
                     }`}
                   >
-                    {msg.role === "user" ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                    {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                   </div>
                   <div
                     className={`flex-1 rounded-xl px-4 py-3 text-sm leading-relaxed ${
@@ -322,7 +333,6 @@ export default function RaqeemPage() {
                     {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
                       <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse mr-1 rounded-sm" />
                     )}
-                    {/* Correction button for assistant messages */}
                     {msg.role === "assistant" && !isLoading && (
                       <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
                         <Button
@@ -340,8 +350,8 @@ export default function RaqeemPage() {
               ))}
               {isLoading && messages[messages.length - 1]?.role === "user" && (
                 <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center shrink-0 text-primary-foreground">
-                    <Bot className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shrink-0 text-primary-foreground">
+                    <Bot className="w-3.5 h-3.5" />
                   </div>
                   <div className="bg-card border border-border rounded-xl px-4 py-3">
                     <div className="flex gap-1">
@@ -358,7 +368,7 @@ export default function RaqeemPage() {
 
         {/* Attached files */}
         {attachedFiles.length > 0 && (
-          <div className="px-6 pt-2 flex gap-2 flex-wrap">
+          <div className="px-4 sm:px-6 pt-2 flex gap-2 flex-wrap shrink-0">
             {attachedFiles.map((file, i) => (
               <Badge key={i} variant="secondary" className="gap-1.5 py-1 px-2.5">
                 <FileText className="w-3 h-3" />
@@ -370,7 +380,7 @@ export default function RaqeemPage() {
         )}
 
         {/* Input */}
-        <div className="px-6 py-4 border-t border-border bg-card">
+        <div className="px-4 sm:px-6 py-3 border-t border-border bg-card shrink-0">
           <div className="max-w-3xl mx-auto flex items-end gap-2">
             <input
               type="file"
@@ -410,10 +420,43 @@ export default function RaqeemPage() {
         </div>
       </div>
 
-      {/* Knowledge Panel */}
-      {showKnowledge && (
-        <div className="w-[380px] border-r border-border bg-card shrink-0 hidden lg:block">
-          <RaqeemKnowledgePanel />
+      {/* ═══ LEFT: Smart Panel (collapsible) ═══ */}
+      {panelOpen && (
+        <div className="w-[420px] border-r border-border bg-card shrink-0 hidden lg:flex flex-col overflow-hidden">
+          <Tabs defaultValue="knowledge" className="flex-1 flex flex-col" dir="rtl">
+            <TabsList className="mx-3 mt-3 mb-0 flex flex-wrap gap-1 h-auto bg-muted/50 p-1 rounded-lg">
+              {SMART_PANEL_TABS.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="text-[11px] gap-1 px-2 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1"
+                  >
+                    <Icon className="w-3 h-3" />
+                    {tab.label}
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+            <ScrollArea className="flex-1 px-3 py-3">
+              <TabsContent value="knowledge" className="mt-0">
+                <KnowledgeBaseModule />
+              </TabsContent>
+              <TabsContent value="corrections" className="mt-0">
+                <CorrectionsModule />
+              </TabsContent>
+              <TabsContent value="rules" className="mt-0">
+                <RulesEngineModule />
+              </TabsContent>
+              <TabsContent value="tests" className="mt-0">
+                <TestHistoryModule />
+              </TabsContent>
+              <TabsContent value="performance" className="mt-0">
+                <PerformanceDashboard />
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
         </div>
       )}
 
