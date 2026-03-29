@@ -64,7 +64,7 @@ interface AIExtractedData {
   summary: string;
 }
 
-type Step = "upload" | "processing" | "extracted" | "client_info" | "submitted";
+type Step = "upload" | "processing" | "extracted" | "submitted";
 
 export default function NewRequest() {
   const navigate = useNavigate();
