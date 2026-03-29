@@ -221,8 +221,8 @@ export default function NewValuation() {
 
 
 
-          {/* Step 5: Asset Details */}
-          {currentStep === 5 && (
+          {/* Step 4: Asset Details */}
+          {currentStep === 4 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للأصل المراد تقييمه</p>
