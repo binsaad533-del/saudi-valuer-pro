@@ -117,6 +117,7 @@ export default function Dashboard() {
             subtitle="من 5.0"
             icon={<BarChart3 className="w-5 h-5" />}
             variant="accent"
+            href="/review"
             details={[
               { label: "جودة التقارير", value: "4.9" },
               { label: "سرعة الإنجاز", value: "4.6" },
