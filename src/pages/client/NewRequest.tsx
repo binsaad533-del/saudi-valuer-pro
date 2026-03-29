@@ -845,7 +845,7 @@ export default function NewRequest() {
                 onClick={handleSubmitRequest}
                 className="flex-1 gap-2"
                 size="lg"
-                disabled={loading || !clientInfo.contactName.trim()}
+                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 إرسال طلب التقييم
