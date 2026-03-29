@@ -53,6 +53,7 @@ const PART_LABELS: Record<string, string> = {
   results: "التحقق من النتائج",
   methods: "التحقق من المنهجية",
   compliance: "الامتثال (IVS + تقييم)",
+  inspection: "المعاينة الميدانية",
 };
 
 export default function ValidationPanel({ assignmentId }: ValidationPanelProps) {
