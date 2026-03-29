@@ -442,6 +442,9 @@ export function runFullValidation(data: {
   reconciliation: any;
   report: any;
   inspection: any;
+  inspectionAnalysis?: any;
+  inspectionPhotos?: any[];
+  inspectionChecklist?: any[];
 }): ValidationResult {
   const input = validateInputs(data.assignment, data.subject);
   const comparables = validateComparables(data.comparables, data.assignment);
@@ -450,6 +453,54 @@ export function runFullValidation(data: {
   const methods = validateMethods(data.methods, data.assignment);
   const compliance = validateCompliance(data.assignment, data.report, data.inspection);
 
+  // Part 7: Detailed inspection validation
+  const inspectionResult = validateInspection(
+    data.inspection,
+    data.inspectionAnalysis || null,
+    data.inspectionPhotos || [],
+    data.inspectionChecklist || []
+  );
+
+  // Calculate inspection quality score
+  const inspectionQuality = calculateInspectionQuality(
+    data.inspection,
+    data.inspectionAnalysis || null,
+    data.inspectionPhotos || [],
+    data.inspectionChecklist || []
+  );
+
+  // Detect data discrepancies
+  const discrepancyFlags = detectDiscrepancies(
+    data.inspection,
+    data.inspectionAnalysis || null,
+    data.subject,
+    data.assignment
+  );
+  inspectionResult.flags.push(...discrepancyFlags);
+  if (discrepancyFlags.some(f => f.severity === "error")) {
+    inspectionResult.passed = false;
+  }
+
+  // Add inspection quality warnings
+  if (inspectionQuality.risk_level === "critical") {
+    inspectionResult.flags.push({
+      code: "INSP_QUALITY_CRITICAL",
+      part: "inspection",
+      severity: "error",
+      message_ar: `جودة المعاينة حرجة (${inspectionQuality.overall}%) - التقييم عالي المخاطر`,
+      message_en: `Critical inspection quality (${inspectionQuality.overall}%) - valuation is high risk`,
+    });
+    inspectionResult.passed = false;
+  } else if (inspectionQuality.risk_level === "high") {
+    inspectionResult.flags.push({
+      code: "INSP_QUALITY_LOW",
+      part: "inspection",
+      severity: "warning",
+      message_ar: `جودة المعاينة منخفضة (${inspectionQuality.overall}%) - يُنصح بتحسين التوثيق`,
+      message_en: `Low inspection quality (${inspectionQuality.overall}%) - improved documentation recommended`,
+    });
+  }
+
   const allFlags = [
     ...input.flags,
     ...comparables.flags,
@@ -457,6 +508,7 @@ export function runFullValidation(data: {
     ...results.flags,
     ...methods.flags,
     ...compliance.flags,
+    ...inspectionResult.flags,
   ];
 
   const errors = allFlags.filter(f => f.severity === "error").length;
@@ -482,7 +534,8 @@ export function runFullValidation(data: {
       warnings,
       errors,
     },
-    parts: { input, comparables, adjustments, results, methods, compliance },
+    parts: { input, comparables, adjustments, results, methods, compliance, inspection: inspectionResult },
+    inspection_quality: inspectionQuality,
     can_issue: status === "APPROVED",
     override_allowed: status === "NEEDS_REVIEW",
     validated_at: new Date().toISOString(),
