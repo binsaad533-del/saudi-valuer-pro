@@ -69,6 +69,7 @@ export default function ValuationsList() {
 
   const filtered = mockValuations.filter((v) => {
     if (activeStatus !== "all" && v.status !== activeStatus) return false;
+    if (activeDiscipline !== "all" && v.discipline !== activeDiscipline) return false;
     if (searchQuery && !v.ref.includes(searchQuery) && !v.client.includes(searchQuery) && !v.city.includes(searchQuery))
       return false;
     return true;
