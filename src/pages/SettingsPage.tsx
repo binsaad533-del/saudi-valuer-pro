@@ -22,7 +22,16 @@ const adminTabs = [
 ];
 
 export default function SettingsPage() {
-  const { role } = useAuth();
+  const { role, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   const isOwner = role === "super_admin";
   const tabs = isOwner ? ownerTabs : adminTabs;
   const defaultTab = isOwner ? "company" : "valuer";
@@ -60,12 +69,16 @@ export default function SettingsPage() {
           </TabsList>
         )}
 
-        <TabsContent value="company"><CompanySettings /></TabsContent>
         <TabsContent value="valuer"><ValuerSettings /></TabsContent>
-        <TabsContent value="reports"><ReportSettings /></TabsContent>
-        <TabsContent value="system"><SystemSettings /></TabsContent>
-        <TabsContent value="backup"><BackupSettings /></TabsContent>
-        <TabsContent value="integrations"><IntegrationSettings /></TabsContent>
+        {isOwner && (
+          <>
+            <TabsContent value="company"><CompanySettings /></TabsContent>
+            <TabsContent value="reports"><ReportSettings /></TabsContent>
+            <TabsContent value="system"><SystemSettings /></TabsContent>
+            <TabsContent value="backup"><BackupSettings /></TabsContent>
+            <TabsContent value="integrations"><IntegrationSettings /></TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );
