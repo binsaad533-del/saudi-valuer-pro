@@ -1,4 +1,5 @@
 import TopBar from "@/components/layout/TopBar";
+import { useAuth } from "@/hooks/useAuth";
 import { Search, Filter, Building2, MapPin, TrendingUp, Star, Plus } from "lucide-react";
 
 const comparables = [
