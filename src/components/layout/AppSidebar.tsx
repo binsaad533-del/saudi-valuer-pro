@@ -53,18 +53,7 @@ const navSections: NavSection[] = [
   {
     title: "التقييم",
     items: [
-      {
-        label: "التقييمات",
-        icon: FileText,
-        path: "/valuations",
-        children: [
-          { label: "جميع التقييمات", path: "/valuations" },
-          { label: "طلب تقييم جديد", path: "/valuations/new" },
-          { label: "قيد المراجعة", path: "/valuations/review" },
-          { label: "المكتملة", path: "/valuations/completed" },
-        ],
-      },
-      { label: "طلب جديد", icon: FolderPlus, path: "/valuations/new" },
+      { label: "التقييمات", icon: FileText, path: "/valuations" },
       { label: "محرك التقييم", icon: Brain, path: "/valuation-production" },
       { label: "المقارنات السوقية", icon: Building2, path: "/comparables" },
     ],
