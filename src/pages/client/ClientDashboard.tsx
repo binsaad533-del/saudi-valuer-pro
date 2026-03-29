@@ -98,10 +98,6 @@ export default function ClientDashboard() {
             <h1 className="text-xl font-bold text-foreground">مرحباً، {userName}</h1>
             <p className="text-sm text-muted-foreground">إدارة طلبات التقييم والتقارير</p>
           </div>
-          <Button onClick={() => navigate("/client/new-request")} className="gap-2">
-            <Plus className="w-4 h-4" />
-            طلب تقييم جديد
-          </Button>
         </div>
 
         {/* Stats */}
