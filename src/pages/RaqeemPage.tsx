@@ -439,7 +439,7 @@ export default function RaqeemPage() {
         </TabsContent>
         <TabsContent value="corrections" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
           <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
-            <KnowledgeBaseModule />
+            <CorrectionsModule />
           </ScrollArea>
         </TabsContent>
         <TabsContent value="rules" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
