@@ -220,8 +220,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 3: Client Data */}
-          {currentStep === 3 && (
+          {/* Step 4: Client Data */}
+          {currentStep === 4 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
