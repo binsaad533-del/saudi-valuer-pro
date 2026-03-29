@@ -405,10 +405,10 @@ export function validateCompliance(
     flags.push({ code: "IVS_NO_BASIS", part: "compliance", severity: "error", message_ar: "أساس القيمة مطلوب (IVS)", message_en: "Basis of value required (IVS)" });
   }
 
-  // Inspection required
+  // Inspection required (basic check; detailed inspection validation is in Part 7)
   if (!inspection) {
     flags.push({ code: "TAQEEM_NO_INSPECTION", part: "compliance", severity: "error", message_ar: "المعاينة الميدانية مطلوبة (تقييم)", message_en: "Field inspection required (Taqeem)" });
-  } else if (inspection.status !== "completed" && !inspection.completed) {
+  } else if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
     flags.push({ code: "TAQEEM_INSPECTION_INCOMPLETE", part: "compliance", severity: "error", message_ar: "المعاينة غير مكتملة (تقييم)", message_en: "Inspection not completed (Taqeem)" });
   }
 
