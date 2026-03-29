@@ -67,6 +67,14 @@ export default function InspectorsListPage() {
   const [sortField, setSortField] = useState<SortField>("rating");
   const [sortAsc, setSortAsc] = useState(false);
 
+  const mockInspectors: InspectorRow[] = [
+    { id: "m1", user_id: "u1", is_active: true, availability_status: "available", quality_score: 92, total_completed: 48, current_workload: 3, avg_response_hours: 1.5, avg_completion_hours: 3.2, cities_ar: ["الرياض", "الدرعية"], regions_ar: ["الرياض"], specializations: ["سكني", "تجاري"], inspector_category: "top_performer", overall_score: 95, avg_rating: 4.8, complaints_count: 0, approved_count: 46, rejected_count: 2, full_name_ar: "خالد العتيبي", email: "khalid@example.com", phone: "0551234567", assignedTasks: 51, completedTasks: 48, lastActivity: "2026-03-28" },
+    { id: "m2", user_id: "u2", is_active: true, availability_status: "available", quality_score: 85, total_completed: 32, current_workload: 5, avg_response_hours: 2.1, avg_completion_hours: 4.0, cities_ar: ["جدة", "مكة المكرمة"], regions_ar: ["مكة المكرمة"], specializations: ["سكني", "أراضي"], inspector_category: "good", overall_score: 82, avg_rating: 4.5, complaints_count: 1, approved_count: 30, rejected_count: 2, full_name_ar: "عبدالله الغامدي", email: "abdullah@example.com", phone: "0559876543", assignedTasks: 35, completedTasks: 32, lastActivity: "2026-03-27" },
+    { id: "m3", user_id: "u3", is_active: true, availability_status: "busy", quality_score: 78, total_completed: 21, current_workload: 6, avg_response_hours: 3.0, avg_completion_hours: 5.5, cities_ar: ["الدمام", "الخبر"], regions_ar: ["الشرقية"], specializations: ["صناعي", "آلات"], inspector_category: "good", overall_score: 75, avg_rating: 4.2, complaints_count: 2, approved_count: 19, rejected_count: 2, full_name_ar: "سعد الدوسري", email: "saad@example.com", phone: "0553334444", assignedTasks: 27, completedTasks: 21, lastActivity: "2026-03-29" },
+    { id: "m4", user_id: "u4", is_active: false, availability_status: "unavailable", quality_score: 60, total_completed: 12, current_workload: 0, avg_response_hours: 5.0, avg_completion_hours: 8.0, cities_ar: ["المدينة المنورة"], regions_ar: ["المدينة المنورة"], specializations: ["سكني"], inspector_category: "needs_improvement", overall_score: 55, avg_rating: 3.5, complaints_count: 4, approved_count: 10, rejected_count: 2, full_name_ar: "فهد القحطاني", email: "fahad@example.com", phone: "0557778888", assignedTasks: 14, completedTasks: 12, lastActivity: "2026-03-10" },
+    { id: "m5", user_id: "u5", is_active: true, availability_status: "available", quality_score: 88, total_completed: 55, current_workload: 2, avg_response_hours: 1.2, avg_completion_hours: 2.8, cities_ar: ["الرياض", "الخرج"], regions_ar: ["الرياض"], specializations: ["تجاري", "صناعي", "آلات ومعدات"], inspector_category: "top_performer", overall_score: 91, avg_rating: 4.9, complaints_count: 0, approved_count: 54, rejected_count: 1, full_name_ar: "محمد الشمري", email: "mohammed@example.com", phone: "0552223333", assignedTasks: 58, completedTasks: 55, lastActivity: "2026-03-29" },
+  ];
+
   const fetchInspectors = async () => {
     setLoading(true);
     try {
@@ -75,7 +83,13 @@ export default function InspectorsListPage() {
         .select("*");
       if (pErr) throw pErr;
 
-      const userIds = (profiles || []).map((p) => p.user_id);
+      if (!profiles || profiles.length === 0) {
+        setInspectors(mockInspectors);
+        setLoading(false);
+        return;
+      }
+
+      const userIds = profiles.map((p) => p.user_id);
 
       const [profilesRes, inspectionsRes] = await Promise.all([
         supabase.from("profiles").select("user_id, full_name_ar, email, phone").in("user_id", userIds),
@@ -91,7 +105,7 @@ export default function InspectorsListPage() {
         inspectionsByUser[i.inspector_id].push(i);
       });
 
-      const combined: InspectorRow[] = (profiles || []).map((ip) => {
+      const combined: InspectorRow[] = profiles.map((ip) => {
         const prof = profileMap[ip.user_id] || {};
         const tasks = inspectionsByUser[ip.user_id] || [];
         const completed = tasks.filter((t) => t.status === "submitted" || t.status === "reviewed" || t.completed);
@@ -117,6 +131,7 @@ export default function InspectorsListPage() {
       setInspectors(combined);
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
+      setInspectors(mockInspectors);
     } finally {
       setLoading(false);
     }
