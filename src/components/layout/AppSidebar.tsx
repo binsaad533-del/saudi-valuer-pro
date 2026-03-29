@@ -24,38 +24,72 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
+interface NavChild {
+  label: string;
+  path: string;
+}
+
 interface NavItem {
   label: string;
   icon: React.ElementType;
   path: string;
-  children?: { label: string; path: string }[];
+  children?: NavChild[];
 }
 
-const navItems: NavItem[] = [
-  { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
+interface NavSection {
+  title?: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
   {
-    label: "التقييمات",
-    icon: FileText,
-    path: "/valuations",
-    children: [
-      { label: "جميع التقييمات", path: "/valuations" },
-      { label: "طلب تقييم جديد", path: "/valuations/new" },
-      { label: "قيد المراجعة", path: "/valuations/review" },
-      { label: "المكتملة", path: "/valuations/completed" },
+    items: [
+      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
     ],
   },
-  { label: "طلب جديد", icon: FolderPlus, path: "/valuations/new" },
-  { label: "المقارنات السوقية", icon: Building2, path: "/comparables" },
-  { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review" },
-  { label: "الأرشيف", icon: Archive, path: "/archive" },
-  { label: "البحث", icon: Search, path: "/search" },
-  { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
-  { label: "طلبات العملاء", icon: Users, path: "/client-requests" },
-  { label: "محرك التقييم", icon: Brain, path: "/valuation-production" },
-  { label: "المعاينات الميدانية", icon: MapPin, path: "/inspector" },
-  { label: "التغطية الجغرافية", icon: Globe, path: "/inspector-coverage" },
-  { label: "الامتثال", icon: Shield, path: "/compliance" },
-  { label: "الإعدادات", icon: Settings, path: "/settings" },
+  {
+    title: "التقييم",
+    items: [
+      {
+        label: "التقييمات",
+        icon: FileText,
+        path: "/valuations",
+        children: [
+          { label: "جميع التقييمات", path: "/valuations" },
+          { label: "طلب تقييم جديد", path: "/valuations/new" },
+          { label: "قيد المراجعة", path: "/valuations/review" },
+          { label: "المكتملة", path: "/valuations/completed" },
+        ],
+      },
+      { label: "طلب جديد", icon: FolderPlus, path: "/valuations/new" },
+      { label: "محرك التقييم", icon: Brain, path: "/valuation-production" },
+      { label: "المقارنات السوقية", icon: Building2, path: "/comparables" },
+    ],
+  },
+  {
+    title: "العمليات",
+    items: [
+      { label: "المعاينات الميدانية", icon: MapPin, path: "/inspector" },
+      { label: "التغطية الجغرافية", icon: Globe, path: "/inspector-coverage" },
+      { label: "طلبات العملاء", icon: Users, path: "/client-requests" },
+    ],
+  },
+  {
+    title: "التقارير والأرشيف",
+    items: [
+      { label: "التقارير", icon: BarChart3, path: "/reports/generate" },
+      { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review" },
+      { label: "الأرشيف", icon: Archive, path: "/archive" },
+      { label: "البحث", icon: Search, path: "/search" },
+    ],
+  },
+  {
+    title: "النظام",
+    items: [
+      { label: "الامتثال", icon: Shield, path: "/compliance" },
+      { label: "الإعدادات", icon: Settings, path: "/settings" },
+    ],
+  },
 ];
 
 export default function AppSidebar() {
