@@ -19,6 +19,7 @@ import {
   Brain,
   MapPin,
   Globe,
+  Sparkles,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -79,6 +80,12 @@ const navSections: NavSection[] = [
       { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review" },
       { label: "الأرشيف", icon: Archive, path: "/archive" },
       { label: "البحث", icon: Search, path: "/search" },
+    ],
+  },
+  {
+    title: "الذكاء الاصطناعي",
+    items: [
+      { label: "رقيم", icon: Sparkles, path: "/raqeem" },
     ],
   },
   {
