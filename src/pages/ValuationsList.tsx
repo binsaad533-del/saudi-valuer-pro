@@ -16,12 +16,6 @@ import {
 
 type Tab = "all" | "review" | "completed";
 
-const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
-  { key: "all", label: "جميع التقييمات", icon: FileText },
-  { key: "review", label: "قيد المراجعة", icon: ClipboardCheck },
-  { key: "completed", label: "المكتملة", icon: CheckCircle },
-];
-
 type Status = "all" | "new" | "in_progress" | "review" | "completed" | "archived";
 
 const statusLabels: Record<Status, string> = {
