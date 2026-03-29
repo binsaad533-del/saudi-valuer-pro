@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  MapPin, Clock, CheckCircle, Calendar, Loader2, Building2, Play, Eye,
+  MapPin, Clock, CheckCircle, Calendar, Loader2, Building2, Play, Eye, LogOut,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
