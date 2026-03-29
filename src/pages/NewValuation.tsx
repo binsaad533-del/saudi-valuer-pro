@@ -3,38 +3,31 @@ import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import { Progress } from "@/components/ui/progress";
 import {
-  Building2,
   ChevronLeft,
   ChevronRight,
   Upload,
   FileText,
   CheckCircle2,
-  Cog,
-  Layers,
   AlertTriangle,
   AlertCircle,
   Eye,
   Send,
   Loader2,
+  Sparkles,
+  MapPin,
+  Building2,
+  Cog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-// ── Step definitions ──
+// ── Step definitions (4 steps — discipline determined by AI) ──
 const STEPS = [
-  { id: 1, label: "نوع التقييم" },
-  { id: 2, label: "العميل والمستندات" },
-  { id: 3, label: "تفاصيل الأصل" },
-  { id: 4, label: "عرض التقييم" },
-  { id: 5, label: "المراجعة" },
+  { id: 1, label: "العميل والمستندات" },
+  { id: 2, label: "تفاصيل الأصل" },
+  { id: 3, label: "عرض التقييم" },
+  { id: 4, label: "المراجعة" },
 ] as const;
-
-// ── Valuation disciplines ──
-const DISCIPLINES = [
-  { id: "real_estate", label: "تقييم عقاري", icon: Building2, desc: "تقييم الأراضي والمباني والعقارات بجميع أنواعها" },
-  { id: "machinery", label: "تقييم آلات ومعدات", icon: Cog, desc: "تقييم المعدات الصناعية والآلات والأصول المنقولة" },
-  { id: "mixed", label: "تقييم مختلط", icon: Layers, desc: "تقييم عقاري وآلات ومعدات معاً في ملف واحد" },
-];
 
 // ── Valuation purposes ──
 const PURPOSES = [
@@ -52,32 +45,34 @@ const VALUE_BASES = [
   "قيمة الاستخدام الحالي (Existing Use Value)",
 ];
 
-// ── Document lists by discipline ──
-const DOCS_REAL_ESTATE = ["صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار", "عقود الإيجار (إن وجدت)", "مستندات إضافية"];
-const DOCS_MACHINERY = ["فاتورة الشراء", "شهادة الصيانة", "صور المعدات", "كتالوج المصنع", "تقرير فني سابق", "مستندات إضافية"];
-
-// ── Real estate fields ──
-const RE_FIELDS = [
-  { key: "city", label: "المدينة", placeholder: "اختر المدينة", required: true },
-  { key: "district", label: "الحي", placeholder: "اسم الحي", required: true },
-  { key: "deedNumber", label: "رقم الصك", placeholder: "رقم صك الملكية", required: true },
-  { key: "area", label: "المساحة (م²)", placeholder: "المساحة بالمتر المربع", required: true },
-  { key: "plotNumber", label: "رقم القطعة", placeholder: "رقم القطعة", required: false },
-  { key: "planNumber", label: "رقم المخطط", placeholder: "رقم المخطط", required: false },
-  { key: "coordinates", label: "الإحداثيات", placeholder: "خط الطول، خط العرض", required: false },
-  { key: "classification", label: "التصنيف حسب النظام", placeholder: "سكني، تجاري، مختلط", required: true },
+// ── Document list (universal — AI will identify relevance) ──
+const ALL_DOCS = [
+  "صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار",
+  "عقود الإيجار (إن وجدت)", "فاتورة الشراء", "شهادة الصيانة",
+  "صور المعدات", "كتالوج المصنع", "تقرير فني سابق", "مستندات إضافية",
 ];
 
-// ── Machinery fields ──
-const MA_FIELDS = [
-  { key: "machineName", label: "اسم المعدة / الآلة", placeholder: "أدخل اسم المعدة", required: true },
-  { key: "manufacturer", label: "الشركة المصنعة", placeholder: "الشركة المصنعة", required: true },
-  { key: "model", label: "الموديل", placeholder: "رقم الموديل", required: true },
-  { key: "yearMade", label: "سنة الصنع", placeholder: "سنة التصنيع", required: true },
-  { key: "serialNumber", label: "الرقم التسلسلي", placeholder: "الرقم التسلسلي", required: false },
-  { key: "condition", label: "الحالة", placeholder: "جديد، مستعمل، متوقف", required: true },
-  { key: "location", label: "الموقع", placeholder: "موقع المعدة", required: true },
-  { key: "operatingHours", label: "ساعات التشغيل", placeholder: "عدد ساعات التشغيل", required: false },
+// ── Asset fields — comprehensive (AI will classify which apply) ──
+const ASSET_FIELDS = [
+  // Location / General
+  { key: "assetDescription", label: "وصف الأصل", placeholder: "صف الأصل المراد تقييمه (عقار، آلة، مزيج...)", required: true, section: "general" },
+  { key: "city", label: "المدينة", placeholder: "اختر المدينة", required: true, section: "location" },
+  { key: "district", label: "الحي / الموقع", placeholder: "اسم الحي أو موقع الأصل", required: true, section: "location" },
+  { key: "address", label: "العنوان التفصيلي", placeholder: "العنوان الكامل", required: false, section: "location" },
+  { key: "coordinates", label: "الإحداثيات", placeholder: "خط الطول، خط العرض", required: false, section: "location" },
+  // Property-related
+  { key: "deedNumber", label: "رقم الصك / وثيقة الملكية", placeholder: "رقم صك الملكية أو وثيقة الأصل", required: false, section: "property" },
+  { key: "area", label: "المساحة (م²)", placeholder: "المساحة بالمتر المربع", required: false, section: "property" },
+  { key: "plotNumber", label: "رقم القطعة", placeholder: "رقم القطعة", required: false, section: "property" },
+  { key: "planNumber", label: "رقم المخطط", placeholder: "رقم المخطط", required: false, section: "property" },
+  { key: "classification", label: "التصنيف / الاستخدام", placeholder: "سكني، تجاري، صناعي، مختلط", required: false, section: "property" },
+  // Machinery-related
+  { key: "machineName", label: "اسم المعدة / الآلة", placeholder: "أدخل اسم المعدة (إن وجد)", required: false, section: "machinery" },
+  { key: "manufacturer", label: "الشركة المصنعة", placeholder: "الشركة المصنعة", required: false, section: "machinery" },
+  { key: "model", label: "الموديل", placeholder: "رقم الموديل", required: false, section: "machinery" },
+  { key: "yearMade", label: "سنة الصنع", placeholder: "سنة التصنيع", required: false, section: "machinery" },
+  { key: "serialNumber", label: "الرقم التسلسلي", placeholder: "الرقم التسلسلي", required: false, section: "machinery" },
+  { key: "assetCondition", label: "حالة الأصل", placeholder: "جديد، جيد، متوسط، يحتاج صيانة", required: false, section: "general" },
 ];
 
 // ── Client fields ──
@@ -86,13 +81,12 @@ const CLIENT_FIELDS = [
   { key: "idNumber", label: "رقم الهوية / السجل التجاري", placeholder: "أدخل رقم التعريف", required: true },
   { key: "phone", label: "رقم الجوال", placeholder: "05XXXXXXXX", required: true },
   { key: "email", label: "البريد الإلكتروني", placeholder: "email@example.com", required: false },
-  { key: "address", label: "العنوان", placeholder: "عنوان العميل", required: false },
+  { key: "clientAddress", label: "العنوان", placeholder: "عنوان العميل", required: false },
   { key: "intendedUser", label: "المستخدم المقصود", placeholder: "الجهة المستفيدة من التقرير", required: true },
 ];
 
 // ── Types ──
 interface FormData {
-  discipline: string;
   clientFields: Record<string, string>;
   uploadedDocs: string[];
   assetFields: Record<string, string>;
@@ -107,11 +101,23 @@ interface ValidationResult {
   warnings: string[];
 }
 
-// ── Activity log entry ──
 interface ActivityEntry {
   step: number;
   action: string;
   timestamp: Date;
+}
+
+// ── AI-detected discipline label ──
+function detectDisciplineFromFields(fields: Record<string, string>): { id: string; label: string } {
+  const hasRE = !!(fields.deedNumber?.trim() || fields.area?.trim() || fields.plotNumber?.trim() || fields.planNumber?.trim());
+  const hasMA = !!(fields.machineName?.trim() || fields.manufacturer?.trim() || fields.model?.trim() || fields.serialNumber?.trim());
+  if (hasRE && hasMA) return { id: "mixed", label: "تقييم مختلط (عقاري + آلات)" };
+  if (hasMA) return { id: "machinery", label: "تقييم آلات ومعدات" };
+  if (hasRE) return { id: "real_estate", label: "تقييم عقاري" };
+  // Default from description
+  const desc = (fields.assetDescription || "").toLowerCase();
+  if (desc.includes("آل") || desc.includes("معد") || desc.includes("machine")) return { id: "machinery", label: "تقييم آلات ومعدات" };
+  return { id: "real_estate", label: "تقييم عقاري" };
 }
 
 export default function NewValuation() {
@@ -121,7 +127,6 @@ export default function NewValuation() {
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
 
   const [formData, setFormData] = useState<FormData>({
-    discipline: "",
     clientFields: {},
     uploadedDocs: [],
     assetFields: {},
@@ -130,12 +135,14 @@ export default function NewValuation() {
     valuationDate: "",
   });
 
-  // Track which steps have been completed at least once
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
   const logActivity = useCallback((step: number, action: string) => {
     setActivityLog(prev => [...prev, { step, action, timestamp: new Date() }]);
   }, []);
+
+  // ── AI-detected discipline ──
+  const detectedDiscipline = useMemo(() => detectDisciplineFromFields(formData.assetFields), [formData.assetFields]);
 
   // ── Per-step validation ──
   const validateStep = useCallback((step: number): ValidationResult => {
@@ -143,11 +150,7 @@ export default function NewValuation() {
     const warnings: string[] = [];
 
     switch (step) {
-      case 1:
-        if (!formData.discipline) errors.push("يجب اختيار نوع التقييم");
-        break;
-
-      case 2: {
+      case 1: {
         const requiredClient = CLIENT_FIELDS.filter(f => f.required);
         requiredClient.forEach(f => {
           if (!formData.clientFields[f.key]?.trim()) errors.push(`حقل "${f.label}" مطلوب`);
@@ -160,31 +163,27 @@ export default function NewValuation() {
         break;
       }
 
-      case 3: {
-        const fields = (formData.discipline === "machinery") ? MA_FIELDS : RE_FIELDS;
-        const requiredAsset = fields.filter(f => f.required);
+      case 2: {
+        const requiredAsset = ASSET_FIELDS.filter(f => f.required);
         requiredAsset.forEach(f => {
           if (!formData.assetFields[f.key]?.trim()) errors.push(`حقل "${f.label}" مطلوب`);
         });
-        const optionalAsset = fields.filter(f => !f.required);
-        optionalAsset.forEach(f => {
-          if (!formData.assetFields[f.key]?.trim()) warnings.push(`حقل "${f.label}" غير مكتمل`);
-        });
+        // Warn if neither RE nor MA fields are filled
+        const hasAnyDetail = ASSET_FIELDS.filter(f => f.section === "property" || f.section === "machinery")
+          .some(f => formData.assetFields[f.key]?.trim());
+        if (!hasAnyDetail) warnings.push("يُنصح بإدخال تفاصيل إضافية (عقارية أو آلات) لتحسين دقة التصنيف");
         break;
       }
 
-      case 4:
+      case 3:
         if (!formData.purpose) errors.push("يجب تحديد غرض التقييم");
         if (!formData.valuationDate) errors.push("يجب تحديد تاريخ التقييم");
-        // Step 4 requires steps 1-3 completed
-        if (!completedSteps.has(1)) errors.push("يجب إكمال خطوة نوع التقييم أولاً");
-        if (!completedSteps.has(2)) errors.push("يجب إكمال بيانات العميل والمستندات أولاً");
-        if (!completedSteps.has(3)) errors.push("يجب إكمال تفاصيل الأصل أولاً");
+        if (!completedSteps.has(1)) errors.push("يجب إكمال بيانات العميل والمستندات أولاً");
+        if (!completedSteps.has(2)) errors.push("يجب إكمال تفاصيل الأصل أولاً");
         break;
 
-      case 5:
-        // Validate all previous steps
-        for (let s = 1; s <= 4; s++) {
+      case 4:
+        for (let s = 1; s <= 3; s++) {
           const sv = validateStep(s);
           if (sv.errors.length > 0) errors.push(`الخطوة ${s} تحتوي على بيانات ناقصة`);
         }
@@ -194,32 +193,27 @@ export default function NewValuation() {
     return { valid: errors.length === 0, errors, warnings };
   }, [formData, completedSteps]);
 
-  // ── Overall progress percentage ──
+  // ── Progress % ──
   const progressPercent = useMemo(() => {
     let total = 0;
-    // Step 1: discipline selected = 20%
-    if (formData.discipline) total += 20;
-    // Step 2: client fields + docs = 20%
+    // Step 1: client = 25%
     const clientReq = CLIENT_FIELDS.filter(f => f.required);
     const clientFilled = clientReq.filter(f => formData.clientFields[f.key]?.trim()).length;
-    total += Math.round((clientFilled / Math.max(clientReq.length, 1)) * 15);
+    total += Math.round((clientFilled / Math.max(clientReq.length, 1)) * 20);
     if (formData.uploadedDocs.length > 0) total += 5;
-    // Step 3: asset fields = 20%
-    const assetFields = (formData.discipline === "machinery") ? MA_FIELDS : RE_FIELDS;
-    const assetReq = assetFields.filter(f => f.required);
+    // Step 2: asset = 25%
+    const assetReq = ASSET_FIELDS.filter(f => f.required);
     const assetFilled = assetReq.filter(f => formData.assetFields[f.key]?.trim()).length;
-    total += Math.round((assetFilled / Math.max(assetReq.length, 1)) * 20);
-    // Step 4: purpose + date = 20%
-    if (formData.purpose) total += 10;
-    if (formData.valuationDate) total += 10;
-    // Step 5 = 20% (only on submit)
+    total += Math.round((assetFilled / Math.max(assetReq.length, 1)) * 25);
+    // Step 3: purpose + date = 25%
+    if (formData.purpose) total += 12;
+    if (formData.valuationDate) total += 13;
     return Math.min(total, 100);
   }, [formData]);
 
-  // ── Can navigate to step? ──
+  // ── Step access control ──
   const canGoToStep = useCallback((targetStep: number): boolean => {
     if (targetStep === 1) return true;
-    // Must complete all previous steps (no errors)
     for (let s = 1; s < targetStep; s++) {
       const v = validateStep(s);
       if (v.errors.length > 0) return false;
@@ -227,7 +221,6 @@ export default function NewValuation() {
     return true;
   }, [validateStep]);
 
-  // ── Navigate to next step ──
   const goNext = useCallback(() => {
     const validation = validateStep(currentStep);
     if (!validation.valid) {
@@ -239,19 +232,16 @@ export default function NewValuation() {
     }
     setCompletedSteps(prev => new Set(prev).add(currentStep));
     logActivity(currentStep, `إكمال الخطوة ${currentStep}`);
-    if (currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1);
-    }
+    if (currentStep < STEPS.length) setCurrentStep(currentStep + 1);
   }, [currentStep, validateStep, logActivity]);
 
-  // ── Navigate to previous step ──
   const goPrev = useCallback(() => {
     if (currentStep > 1) setCurrentStep(currentStep - 1);
   }, [currentStep]);
 
-  // ── Handle submit ──
+  // ── Submit ──
   const handleSubmit = useCallback(async () => {
-    const validation = validateStep(5);
+    const validation = validateStep(4);
     if (!validation.valid) {
       validation.errors.forEach(e => toast.error(e));
       return;
@@ -266,12 +256,11 @@ export default function NewValuation() {
         return;
       }
 
-      // Create valuation request
-      const { data: request, error: reqErr } = await supabase
+      const { error: reqErr } = await supabase
         .from("valuation_requests")
         .insert({
           client_user_id: user.id,
-          discipline: formData.discipline as any,
+          discipline: detectedDiscipline.id as any,
           purpose_ar: formData.purpose,
           value_basis_ar: formData.valueBasis,
           valuation_date: formData.valuationDate || new Date().toISOString().split("T")[0],
@@ -288,7 +277,7 @@ export default function NewValuation() {
 
       if (reqErr) throw reqErr;
 
-      logActivity(5, "تم إرسال الطلب");
+      logActivity(4, "تم إرسال الطلب");
       toast.success("تم إرسال طلب التقييم بنجاح");
       navigate("/client");
     } catch (err: any) {
@@ -296,17 +285,15 @@ export default function NewValuation() {
     } finally {
       setSubmitting(false);
     }
-  }, [formData, validateStep, logActivity, navigate]);
+  }, [formData, detectedDiscipline, validateStep, logActivity, navigate]);
 
   // ── Helpers ──
   const updateClientField = (key: string, value: string) => {
     setFormData(prev => ({ ...prev, clientFields: { ...prev.clientFields, [key]: value } }));
   };
-
   const updateAssetField = (key: string, value: string) => {
     setFormData(prev => ({ ...prev, assetFields: { ...prev.assetFields, [key]: value } }));
   };
-
   const toggleDoc = (doc: string) => {
     setFormData(prev => ({
       ...prev,
@@ -316,14 +303,26 @@ export default function NewValuation() {
     }));
   };
 
-  const currentValidation = validateStep(currentStep);
-  const docs = formData.discipline === "machinery" ? DOCS_MACHINERY : DOCS_REAL_ESTATE;
-  const assetFieldsDef = formData.discipline === "machinery" ? MA_FIELDS : RE_FIELDS;
-
-  // Collect all issues for review step
   const allStepValidations = useMemo(() => {
     return STEPS.map(s => ({ step: s, validation: validateStep(s.id) }));
   }, [validateStep]);
+
+  // Group asset fields by section
+  const sectionLabels: Record<string, { label: string; icon: typeof MapPin }> = {
+    general: { label: "معلومات عامة", icon: Sparkles },
+    location: { label: "الموقع", icon: MapPin },
+    property: { label: "بيانات عقارية", icon: Building2 },
+    machinery: { label: "بيانات الآلات والمعدات", icon: Cog },
+  };
+
+  const fieldsBySection = useMemo(() => {
+    const sections: Record<string, typeof ASSET_FIELDS> = {};
+    ASSET_FIELDS.forEach(f => {
+      if (!sections[f.section]) sections[f.section] = [];
+      sections[f.section].push(f);
+    });
+    return sections;
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -377,55 +376,29 @@ export default function NewValuation() {
           </div>
         </div>
 
-        {/* Current Stage Label */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>المرحلة الحالية:</span>
-          <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
-            مسودة — الخطوة {currentStep} من {STEPS.length}
-          </span>
+        {/* Current stage + AI discipline detection */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>المرحلة الحالية:</span>
+            <span className="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
+              مسودة — الخطوة {currentStep} من {STEPS.length}
+            </span>
+          </div>
+          {/* Show AI-detected discipline badge */}
+          {(formData.assetFields.assetDescription?.trim() || 
+            ASSET_FIELDS.filter(f => f.section === "property" || f.section === "machinery").some(f => formData.assetFields[f.key]?.trim())) && (
+            <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent border border-accent text-accent-foreground">
+              <Sparkles className="w-3 h-3" />
+              <span>نوع التقييم: <strong>{detectedDiscipline.label}</strong></span>
+            </div>
+          )}
         </div>
 
         {/* Step Content */}
         <div className="bg-card rounded-lg border border-border shadow-card p-6 animate-fade-in">
 
-          {/* ─── Step 1: Discipline ─── */}
+          {/* ─── Step 1: Client + Documents ─── */}
           {currentStep === 1 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">اختر نوع التقييم</h3>
-              <p className="text-sm text-muted-foreground mb-5">حدد تخصص التقييم المطلوب</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {DISCIPLINES.map((d) => {
-                  const Icon = d.icon;
-                  return (
-                    <button
-                      key={d.id}
-                      onClick={() => {
-                        setFormData(prev => ({ ...prev, discipline: d.id }));
-                        logActivity(1, `اختيار نوع التقييم: ${d.label}`);
-                      }}
-                      className={`flex items-start gap-3 p-5 rounded-lg border-2 transition-all text-right
-                        ${formData.discipline === d.id
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/30 hover:bg-muted/30"
-                        }`}
-                    >
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0
-                        ${formData.discipline === d.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                        <Icon className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-sm text-foreground">{d.label}</div>
-                        <div className="text-xs text-muted-foreground mt-1">{d.desc}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* ─── Step 2: Client + Documents ─── */}
-          {currentStep === 2 && (
             <div className="space-y-8">
               <div>
                 <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
@@ -452,31 +425,21 @@ export default function NewValuation() {
               </div>
               <div className="border-t border-border pt-6">
                 <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
-                <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المطلوبة لإتمام عملية التقييم</p>
+                <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المتوفرة — سيحدد الذكاء الاصطناعي المستندات المطلوبة تلقائياً</p>
                 <div className="space-y-3">
-                  {docs.map((doc) => {
+                  {ALL_DOCS.map((doc) => {
                     const uploaded = formData.uploadedDocs.includes(doc);
                     return (
                       <div key={doc} className={`flex items-center justify-between p-4 rounded-lg border transition-colors
                         ${uploaded ? "border-success/40 bg-success/5" : "border-dashed border-border hover:border-primary/40"}`}>
                         <div className="flex items-center gap-3">
-                          {uploaded ? (
-                            <CheckCircle2 className="w-5 h-5 text-success" />
-                          ) : (
-                            <FileText className="w-5 h-5 text-muted-foreground" />
-                          )}
+                          {uploaded ? <CheckCircle2 className="w-5 h-5 text-success" /> : <FileText className="w-5 h-5 text-muted-foreground" />}
                           <span className="text-sm text-foreground">{doc}</span>
                         </div>
                         <button
-                          onClick={() => {
-                            toggleDoc(doc);
-                            logActivity(2, uploaded ? `إلغاء رفع: ${doc}` : `رفع مستند: ${doc}`);
-                          }}
+                          onClick={() => { toggleDoc(doc); logActivity(1, uploaded ? `إلغاء رفع: ${doc}` : `رفع مستند: ${doc}`); }}
                           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-colors
-                            ${uploaded
-                              ? "bg-success/10 text-success hover:bg-destructive/10 hover:text-destructive"
-                              : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                            }`}
+                            ${uploaded ? "bg-success/10 text-success hover:bg-destructive/10 hover:text-destructive" : "bg-muted text-muted-foreground hover:bg-primary/10 hover:text-primary"}`}
                         >
                           <Upload className="w-3.5 h-3.5" />
                           {uploaded ? "تم الرفع" : "رفع"}
@@ -489,43 +452,64 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* ─── Step 3: Asset Details ─── */}
-          {currentStep === 3 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
-              <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للأصل المراد تقييمه</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {assetFieldsDef.map((field) => (
-                  <div key={field.key}>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">
-                      {field.label}
-                      {field.required && <span className="text-destructive mr-1">*</span>}
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.assetFields[field.key] || ""}
-                      onChange={(e) => updateAssetField(field.key, e.target.value)}
-                      placeholder={field.placeholder}
-                      className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
-                        ${field.required && !formData.assetFields[field.key]?.trim() ? "border-destructive/50" : "border-input"}`}
-                    />
-                  </div>
-                ))}
-              </div>
-              {formData.discipline === "mixed" && (
-                <div className="mt-6 p-4 rounded-lg bg-accent/50 border border-accent text-sm text-accent-foreground">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AlertTriangle className="w-4 h-4" />
-                    <span className="font-medium">تقييم مختلط</span>
-                  </div>
-                  <p>يرجى إدخال بيانات الأصل العقاري أعلاه. سيتم طلب بيانات الآلات والمعدات بعد تعيين المقيّم.</p>
+          {/* ─── Step 2: Asset Details (unified — AI classifies) ─── */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
+                <p className="text-sm text-muted-foreground mb-2">أدخل البيانات المتوفرة — سيحدد الذكاء الاصطناعي نوع التقييم والتصنيف تلقائياً</p>
+                <div className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded bg-accent/50 border border-accent text-accent-foreground w-fit mb-5">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>نوع التقييم المكتشف: <strong>{detectedDiscipline.label}</strong></span>
                 </div>
-              )}
+              </div>
+
+              {Object.entries(fieldsBySection).map(([section, fields]) => {
+                const meta = sectionLabels[section];
+                const Icon = meta.icon;
+                return (
+                  <div key={section} className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground border-b border-border pb-2">
+                      <Icon className="w-4 h-4 text-primary" />
+                      {meta.label}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {fields.map((field) => (
+                        <div key={field.key} className={field.key === "assetDescription" ? "sm:col-span-2" : ""}>
+                          <label className="block text-sm font-medium text-foreground mb-1.5">
+                            {field.label}
+                            {field.required && <span className="text-destructive mr-1">*</span>}
+                          </label>
+                          {field.key === "assetDescription" ? (
+                            <textarea
+                              value={formData.assetFields[field.key] || ""}
+                              onChange={(e) => updateAssetField(field.key, e.target.value)}
+                              placeholder={field.placeholder}
+                              rows={3}
+                              className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none
+                                ${field.required && !formData.assetFields[field.key]?.trim() ? "border-destructive/50" : "border-input"}`}
+                            />
+                          ) : (
+                            <input
+                              type="text"
+                              value={formData.assetFields[field.key] || ""}
+                              onChange={(e) => updateAssetField(field.key, e.target.value)}
+                              placeholder={field.placeholder}
+                              className={`w-full px-4 py-2.5 rounded-lg border bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring
+                                ${field.required && !formData.assetFields[field.key]?.trim() ? "border-destructive/50" : "border-input"}`}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
-          {/* ─── Step 4: Valuation Presentation (عرض التقييم) ─── */}
-          {currentStep === 4 && (
+          {/* ─── Step 3: Valuation Presentation (عرض التقييم) ─── */}
+          {currentStep === 3 && (
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -540,17 +524,24 @@ export default function NewValuation() {
                 <div className="p-4 rounded-lg bg-muted/50 border border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-3">نطاق العمل</h4>
                   <div className="space-y-2 text-sm">
-                    <div className="flex justify-between"><span className="text-muted-foreground">نوع التقييم</span><span className="font-medium text-foreground">{DISCIPLINES.find(d => d.id === formData.discipline)?.label || "-"}</span></div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">نوع التقييم (مكتشف بالذكاء)</span>
+                      <span className="font-medium text-foreground flex items-center gap-1">
+                        <Sparkles className="w-3 h-3 text-primary" />
+                        {detectedDiscipline.label}
+                      </span>
+                    </div>
                     <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{formData.clientFields.clientName || "-"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">المستندات المرفوعة</span><span className="font-medium text-foreground">{formData.uploadedDocs.length} من {docs.length}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">المستندات المرفوعة</span><span className="font-medium text-foreground">{formData.uploadedDocs.length} من {ALL_DOCS.length}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{formData.assetFields.assetDescription || "-"}</span></div>
                   </div>
                 </div>
 
-                {/* Asset preview */}
+                {/* Asset data preview */}
                 <div className="p-4 rounded-lg bg-muted/50 border border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-3">ملخص بيانات الأصل</h4>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    {assetFieldsDef.filter(f => formData.assetFields[f.key]?.trim()).map(f => (
+                    {ASSET_FIELDS.filter(f => formData.assetFields[f.key]?.trim()).map(f => (
                       <div key={f.key} className="flex justify-between">
                         <span className="text-muted-foreground">{f.label}</span>
                         <span className="font-medium text-foreground">{formData.assetFields[f.key]}</span>
@@ -564,19 +555,14 @@ export default function NewValuation() {
                   <h4 className="text-sm font-semibold text-foreground mb-3">غرض التقييم وأساس القيمة</h4>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-2">
-                        غرض التقييم <span className="text-destructive">*</span>
-                      </label>
+                      <label className="block text-sm font-medium text-foreground mb-2">غرض التقييم <span className="text-destructive">*</span></label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {PURPOSES.map((p) => (
                           <button
                             key={p}
                             onClick={() => setFormData(prev => ({ ...prev, purpose: p }))}
                             className={`px-3 py-2.5 rounded-lg border text-sm transition-all
-                              ${formData.purpose === p
-                                ? "border-primary bg-primary/5 text-primary font-medium"
-                                : "border-border text-muted-foreground hover:border-primary/30"
-                              }`}
+                              ${formData.purpose === p ? "border-primary bg-primary/5 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/30"}`}
                           >
                             {p}
                           </button>
@@ -594,15 +580,9 @@ export default function NewValuation() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">
-                        تاريخ التقييم <span className="text-destructive">*</span>
-                      </label>
-                      <input
-                        type="date"
-                        value={formData.valuationDate}
-                        onChange={(e) => setFormData(prev => ({ ...prev, valuationDate: e.target.value }))}
-                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                      />
+                      <label className="block text-sm font-medium text-foreground mb-1.5">تاريخ التقييم <span className="text-destructive">*</span></label>
+                      <input type="date" value={formData.valuationDate} onChange={(e) => setFormData(prev => ({ ...prev, valuationDate: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                     </div>
                   </div>
                 </div>
@@ -618,36 +598,32 @@ export default function NewValuation() {
                   </ul>
                 </div>
 
-                {/* Expected output */}
                 <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="text-sm font-semibold text-primary mb-2">المخرج المتوقع</h4>
-                  <p className="text-sm text-primary/80">
-                    تقرير تقييم شامل وفق المعايير الدولية (IVS) ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم)
-                  </p>
+                  <p className="text-sm text-primary/80">تقرير تقييم شامل وفق المعايير الدولية (IVS) ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم)</p>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ─── Step 5: Final Review ─── */}
-          {currentStep === 5 && (
+          {/* ─── Step 4: Final Review ─── */}
+          {currentStep === 4 && (
             <div className="space-y-6">
               <div>
                 <h3 className="font-semibold text-foreground mb-1">المراجعة النهائية</h3>
                 <p className="text-sm text-muted-foreground mb-5">راجع جميع البيانات قبل إرسال طلب التقييم</p>
               </div>
 
-              {/* Summary cards */}
               <div className="space-y-3">
                 {[
-                  { label: "نوع التقييم", value: DISCIPLINES.find(d => d.id === formData.discipline)?.label || "-" },
+                  { label: "نوع التقييم (ذكاء اصطناعي)", value: detectedDiscipline.label },
                   { label: "العميل", value: formData.clientFields.clientName || "-" },
                   { label: "رقم الهوية", value: formData.clientFields.idNumber || "-" },
                   { label: "المستندات المرفوعة", value: `${formData.uploadedDocs.length} مستند` },
+                  { label: "وصف الأصل", value: formData.assetFields.assetDescription || "-" },
                   { label: "غرض التقييم", value: formData.purpose || "-" },
                   { label: "أساس القيمة", value: formData.valueBasis },
                   { label: "تاريخ التقييم", value: formData.valuationDate || "-" },
-                  { label: "تصنيف الأصل", value: "سيتم تحديده تلقائياً بالذكاء الاصطناعي" },
                 ].map((item) => (
                   <div key={item.label} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                     <span className="text-sm text-muted-foreground">{item.label}</span>
@@ -656,7 +632,6 @@ export default function NewValuation() {
                 ))}
               </div>
 
-              {/* Warnings / Errors */}
               {allStepValidations.some(sv => sv.validation.warnings.length > 0) && (
                 <div className="p-4 rounded-lg bg-warning/10 border border-warning/30 space-y-2">
                   <div className="flex items-center gap-2 text-warning font-medium text-sm">
@@ -671,13 +646,13 @@ export default function NewValuation() {
                 </div>
               )}
 
-              {allStepValidations.some(sv => sv.validation.errors.length > 0 && sv.step.id < 5) && (
+              {allStepValidations.some(sv => sv.validation.errors.length > 0 && sv.step.id < 4) && (
                 <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 space-y-2">
                   <div className="flex items-center gap-2 text-destructive font-medium text-sm">
                     <AlertCircle className="w-4 h-4" />
                     <span>بيانات ناقصة (يجب إكمالها)</span>
                   </div>
-                  {allStepValidations.filter(sv => sv.step.id < 5).flatMap(sv =>
+                  {allStepValidations.filter(sv => sv.step.id < 4).flatMap(sv =>
                     sv.validation.errors.map((e, i) => (
                       <p key={`${sv.step.id}-e-${i}`} className="text-xs text-destructive/80 mr-6">• {e}</p>
                     ))
@@ -685,12 +660,10 @@ export default function NewValuation() {
                 </div>
               )}
 
-              {/* Post-submission info */}
               <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 text-sm text-primary">
                 سيتم إنشاء رقم مرجعي فريد للملف وإشعار فريق التقييم لبدء العمل على الطلب. بعد الإرسال لن تتمكن من تعديل البيانات.
               </div>
 
-              {/* Activity log */}
               {activityLog.length > 0 && (
                 <div className="p-4 rounded-lg bg-muted/30 border border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-3">سجل النشاط</h4>
@@ -710,38 +683,20 @@ export default function NewValuation() {
 
         {/* Navigation */}
         <div className="flex items-center justify-between">
-          <button
-            onClick={goPrev}
-            disabled={currentStep === 1}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-          >
+          <button onClick={goPrev} disabled={currentStep === 1}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-border text-sm text-foreground hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
             <ChevronRight className="w-4 h-4" />
             السابق
           </button>
 
           {currentStep === STEPS.length ? (
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || !validateStep(5).valid}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  جارٍ الإرسال...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  إرسال الطلب
-                </>
-              )}
+            <button onClick={handleSubmit} disabled={submitting || !validateStep(4).valid}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+              {submitting ? (<><Loader2 className="w-4 h-4 animate-spin" />جارٍ الإرسال...</>) : (<><Send className="w-4 h-4" />إرسال الطلب</>)}
             </button>
           ) : (
-            <button
-              onClick={goNext}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all"
-            >
+            <button onClick={goNext}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all">
               التالي
               <ChevronLeft className="w-4 h-4" />
             </button>
