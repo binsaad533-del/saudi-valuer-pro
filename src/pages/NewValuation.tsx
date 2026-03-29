@@ -9,10 +9,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  User,
   FileText,
   CheckCircle2,
+  Cog,
+  Layers,
 } from "lucide-react";
+
+const valuationDisciplines = [
+  { id: "real_estate", label: "تقييم عقاري", icon: Building2, desc: "تقييم الأراضي والمباني والعقارات بجميع أنواعها" },
+  { id: "machinery", label: "تقييم آلات ومعدات", icon: Cog, desc: "تقييم المعدات الصناعية والآلات والأصول المنقولة" },
+  { id: "mixed", label: "تقييم مختلط", icon: Layers, desc: "تقييم عقاري وآلات ومعدات معاً في ملف واحد" },
+];
 
 const propertyTypes = [
   { id: "residential", label: "سكني", icon: Home, desc: "فلل، شقق، مجمعات سكنية" },
@@ -20,6 +27,14 @@ const propertyTypes = [
   { id: "land", label: "أراضي", icon: MapPin, desc: "أراضي خام، تطويرية، زراعية" },
   { id: "income", label: "مدر للدخل", icon: DollarSign, desc: "عقارات مؤجرة، فنادق" },
   { id: "development", label: "تطويري", icon: Landmark, desc: "مشاريع تحت التطوير" },
+];
+
+const machineryTypes = [
+  { id: "industrial", label: "معدات صناعية", icon: Cog, desc: "خطوط إنتاج، مصانع، معدات ثقيلة" },
+  { id: "vehicles", label: "مركبات ونقل", icon: Cog, desc: "شاحنات، رافعات، معدات نقل" },
+  { id: "medical", label: "أجهزة طبية", icon: Cog, desc: "معدات مستشفيات ومختبرات" },
+  { id: "it_equipment", label: "أجهزة تقنية", icon: Cog, desc: "خوادم، أنظمة شبكات، معدات اتصالات" },
+  { id: "other_machinery", label: "أخرى", icon: Cog, desc: "معدات متنوعة غير مصنفة" },
 ];
 
 const valuationPurposes = [
@@ -38,16 +53,18 @@ const valuationPurposes = [
 ];
 
 const steps = [
-  { id: 1, label: "نوع العقار" },
-  { id: 2, label: "بيانات العميل" },
-  { id: 3, label: "تفاصيل العقار" },
-  { id: 4, label: "غرض التقييم" },
-  { id: 5, label: "المستندات" },
-  { id: 6, label: "المراجعة" },
+  { id: 1, label: "نوع التقييم" },
+  { id: 2, label: "تصنيف الأصول" },
+  { id: 3, label: "بيانات العميل" },
+  { id: 4, label: "تفاصيل الأصل" },
+  { id: 5, label: "غرض التقييم" },
+  { id: 6, label: "المستندات" },
+  { id: 7, label: "المراجعة" },
 ];
 
 export default function NewValuation() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [selectedDiscipline, setSelectedDiscipline] = useState("");
   const [selectedType, setSelectedType] = useState("");
   const [selectedPurpose, setSelectedPurpose] = useState("");
 
@@ -57,7 +74,7 @@ export default function NewValuation() {
       <div className="p-6 max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div>
-          <h2 className="text-lg font-bold text-foreground">طلب تقييم عقاري جديد</h2>
+          <h2 className="text-lg font-bold text-foreground">طلب تقييم جديد</h2>
           <p className="text-sm text-muted-foreground">أكمل الخطوات التالية لإنشاء ملف تقييم جديد</p>
         </div>
 
@@ -92,30 +109,31 @@ export default function NewValuation() {
 
         {/* Step Content */}
         <div className="bg-card rounded-lg border border-border shadow-card p-6 animate-fade-in">
+          {/* Step 1: Discipline */}
           {currentStep === 1 && (
             <div>
-              <h3 className="font-semibold text-foreground mb-1">اختر نوع العقار</h3>
-              <p className="text-sm text-muted-foreground mb-5">حدد الفئة الرئيسية للعقار المراد تقييمه</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {propertyTypes.map((pt) => {
-                  const Icon = pt.icon;
+              <h3 className="font-semibold text-foreground mb-1">اختر نوع التقييم</h3>
+              <p className="text-sm text-muted-foreground mb-5">حدد تخصص التقييم المطلوب</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {valuationDisciplines.map((d) => {
+                  const Icon = d.icon;
                   return (
                     <button
-                      key={pt.id}
-                      onClick={() => setSelectedType(pt.id)}
-                      className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-all text-right
-                        ${selectedType === pt.id
+                      key={d.id}
+                      onClick={() => { setSelectedDiscipline(d.id); setSelectedType(""); }}
+                      className={`flex items-start gap-3 p-5 rounded-lg border-2 transition-all text-right
+                        ${selectedDiscipline === d.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/30 hover:bg-muted/30"
                         }`}
                     >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0
-                        ${selectedType === pt.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
-                        <Icon className="w-5 h-5" />
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0
+                        ${selectedDiscipline === d.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                        <Icon className="w-6 h-6" />
                       </div>
                       <div>
-                        <div className="font-medium text-sm text-foreground">{pt.label}</div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{pt.desc}</div>
+                        <div className="font-semibold text-sm text-foreground">{d.label}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{d.desc}</div>
                       </div>
                     </button>
                   );
@@ -124,7 +142,86 @@ export default function NewValuation() {
             </div>
           )}
 
+          {/* Step 2: Asset Classification */}
           {currentStep === 2 && (
+            <div>
+              <h3 className="font-semibold text-foreground mb-1">تصنيف الأصول</h3>
+              <p className="text-sm text-muted-foreground mb-5">
+                {selectedDiscipline === "real_estate" && "حدد الفئة الرئيسية للعقار المراد تقييمه"}
+                {selectedDiscipline === "machinery" && "حدد نوع الآلات والمعدات المراد تقييمها"}
+                {selectedDiscipline === "mixed" && "حدد أنواع الأصول العقارية والآلات المراد تقييمها"}
+              </p>
+
+              {(selectedDiscipline === "real_estate" || selectedDiscipline === "mixed") && (
+                <div className="mb-5">
+                  {selectedDiscipline === "mixed" && (
+                    <h4 className="text-sm font-medium text-foreground mb-3">الأصول العقارية</h4>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {propertyTypes.map((pt) => {
+                      const Icon = pt.icon;
+                      return (
+                        <button
+                          key={pt.id}
+                          onClick={() => setSelectedType(pt.id)}
+                          className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-all text-right
+                            ${selectedType === pt.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/30 hover:bg-muted/30"
+                            }`}
+                        >
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0
+                            ${selectedType === pt.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm text-foreground">{pt.label}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{pt.desc}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {(selectedDiscipline === "machinery" || selectedDiscipline === "mixed") && (
+                <div>
+                  {selectedDiscipline === "mixed" && (
+                    <h4 className="text-sm font-medium text-foreground mb-3">الآلات والمعدات</h4>
+                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {machineryTypes.map((mt) => {
+                      const Icon = mt.icon;
+                      return (
+                        <button
+                          key={mt.id}
+                          onClick={() => selectedDiscipline === "machinery" ? setSelectedType(mt.id) : null}
+                          className={`flex items-start gap-3 p-4 rounded-lg border-2 transition-all text-right
+                            ${selectedType === mt.id
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/30 hover:bg-muted/30"
+                            }`}
+                        >
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0
+                            ${selectedType === mt.id ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"}`}>
+                            <Icon className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <div className="font-medium text-sm text-foreground">{mt.label}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{mt.desc}</div>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Step 3: Client Data */}
+          {currentStep === 3 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
               <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
@@ -150,21 +247,34 @@ export default function NewValuation() {
             </div>
           )}
 
-          {currentStep === 3 && (
+          {/* Step 4: Asset Details */}
+          {currentStep === 4 && (
             <div>
-              <h3 className="font-semibold text-foreground mb-1">تفاصيل العقار</h3>
-              <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للعقار</p>
+              <h3 className="font-semibold text-foreground mb-1">تفاصيل الأصل</h3>
+              <p className="text-sm text-muted-foreground mb-5">أدخل البيانات الأساسية للأصل المراد تقييمه</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: "المدينة", placeholder: "اختر المدينة" },
-                  { label: "الحي", placeholder: "اسم الحي" },
-                  { label: "رقم الصك", placeholder: "رقم صك الملكية" },
-                  { label: "المساحة (م²)", placeholder: "المساحة بالمتر المربع" },
-                  { label: "رقم القطعة", placeholder: "رقم القطعة" },
-                  { label: "رقم المخطط", placeholder: "رقم المخطط" },
-                  { label: "الإحداثيات", placeholder: "خط الطول، خط العرض" },
-                  { label: "التصنيف حسب النظام", placeholder: "سكني، تجاري، مختلط" },
-                ].map((field) => (
+                {(selectedDiscipline === "real_estate" || selectedDiscipline === "mixed"
+                  ? [
+                      { label: "المدينة", placeholder: "اختر المدينة" },
+                      { label: "الحي", placeholder: "اسم الحي" },
+                      { label: "رقم الصك", placeholder: "رقم صك الملكية" },
+                      { label: "المساحة (م²)", placeholder: "المساحة بالمتر المربع" },
+                      { label: "رقم القطعة", placeholder: "رقم القطعة" },
+                      { label: "رقم المخطط", placeholder: "رقم المخطط" },
+                      { label: "الإحداثيات", placeholder: "خط الطول، خط العرض" },
+                      { label: "التصنيف حسب النظام", placeholder: "سكني، تجاري، مختلط" },
+                    ]
+                  : [
+                      { label: "اسم المعدة / الآلة", placeholder: "أدخل اسم المعدة" },
+                      { label: "الشركة المصنعة", placeholder: "الشركة المصنعة" },
+                      { label: "الموديل", placeholder: "رقم الموديل" },
+                      { label: "سنة الصنع", placeholder: "سنة التصنيع" },
+                      { label: "الرقم التسلسلي", placeholder: "الرقم التسلسلي" },
+                      { label: "الحالة", placeholder: "جديد، مستعمل، متوقف" },
+                      { label: "الموقع", placeholder: "موقع المعدة" },
+                      { label: "ساعات التشغيل", placeholder: "عدد ساعات التشغيل" },
+                    ]
+                ).map((field) => (
                   <div key={field.label}>
                     <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}</label>
                     <input
@@ -178,7 +288,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {currentStep === 4 && (
+          {/* Step 5: Purpose */}
+          {currentStep === 5 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">غرض التقييم وأساس القيمة</h3>
               <p className="text-sm text-muted-foreground mb-5">حدد الغرض من التقييم وفقاً لمعايير التقييم الدولية</p>
@@ -222,12 +333,16 @@ export default function NewValuation() {
             </div>
           )}
 
-          {currentStep === 5 && (
+          {/* Step 6: Documents */}
+          {currentStep === 6 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
               <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المطلوبة لإتمام عملية التقييم</p>
               <div className="space-y-3">
-                {["صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار", "عقود الإيجار (إن وجدت)", "مستندات إضافية"].map((doc) => (
+                {(selectedDiscipline === "machinery"
+                  ? ["فاتورة الشراء", "شهادة الصيانة", "صور المعدات", "كتالوج المصنع", "تقرير فني سابق", "مستندات إضافية"]
+                  : ["صك الملكية", "رخصة البناء", "مخطط الموقع", "صور العقار", "عقود الإيجار (إن وجدت)", "مستندات إضافية"]
+                ).map((doc) => (
                   <div key={doc} className="flex items-center justify-between p-4 rounded-lg border border-dashed border-border hover:border-primary/40 transition-colors">
                     <div className="flex items-center gap-3">
                       <FileText className="w-5 h-5 text-muted-foreground" />
@@ -243,13 +358,15 @@ export default function NewValuation() {
             </div>
           )}
 
-          {currentStep === 6 && (
+          {/* Step 7: Review */}
+          {currentStep === 7 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">مراجعة الطلب</h3>
               <p className="text-sm text-muted-foreground mb-5">راجع جميع البيانات قبل إرسال طلب التقييم</p>
               <div className="space-y-4">
                 {[
-                  { label: "نوع العقار", value: selectedType ? propertyTypes.find(p => p.id === selectedType)?.label || "-" : "-" },
+                  { label: "نوع التقييم", value: valuationDisciplines.find(d => d.id === selectedDiscipline)?.label || "-" },
+                  { label: "تصنيف الأصل", value: selectedType ? ([...propertyTypes, ...machineryTypes].find(p => p.id === selectedType)?.label || "-") : "-" },
                   { label: "غرض التقييم", value: selectedPurpose || "-" },
                   { label: "الحالة", value: "سيتم إنشاء الملف وبدء سير العمل" },
                 ].map((item) => (
