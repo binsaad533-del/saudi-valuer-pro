@@ -1844,6 +1844,159 @@ export type Database = {
           },
         ]
       }
+      raqeem_audit_log: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string
+          entity_type: string
+          id: string
+          performed_by: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          performed_by: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          performed_by?: string
+        }
+        Relationships: []
+      }
+      raqeem_corrections: {
+        Row: {
+          category: string | null
+          corrected_answer: string
+          corrected_by: string
+          correction_reason: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          original_answer: string
+          original_question: string
+        }
+        Insert: {
+          category?: string | null
+          corrected_answer: string
+          corrected_by: string
+          correction_reason?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          original_answer: string
+          original_question: string
+        }
+        Update: {
+          category?: string | null
+          corrected_answer?: string
+          corrected_by?: string
+          correction_reason?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          original_answer?: string
+          original_question?: string
+        }
+        Relationships: []
+      }
+      raqeem_knowledge: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          file_name: string | null
+          file_path: string | null
+          id: string
+          is_active: boolean
+          priority: number
+          source_type: string
+          title_ar: string
+          title_en: string | null
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number
+          source_type?: string
+          title_ar: string
+          title_en?: string | null
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          file_name?: string | null
+          file_path?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number
+          source_type?: string
+          title_ar?: string
+          title_en?: string | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: []
+      }
+      raqeem_rules: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string
+          id: string
+          is_active: boolean
+          priority: number
+          rule_content: string
+          rule_title_ar: string
+          rule_title_en: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          rule_content: string
+          rule_title_ar: string
+          rule_title_en?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          is_active?: boolean
+          priority?: number
+          rule_content?: string
+          rule_title_ar?: string
+          rule_title_en?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reconciliation_results: {
         Row: {
           assignment_id: string
