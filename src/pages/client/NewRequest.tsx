@@ -424,7 +424,7 @@ export default function NewRequest() {
     { key: "client_info", label: "معلوماتك", icon: UserIcon },
   ];
 
-  const currentStepIndex = steps.findIndex(s => s.key === step);
+    const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
 
   // === SUBMITTED ===
   if (step === "submitted") {
