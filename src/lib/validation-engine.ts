@@ -1,8 +1,10 @@
 /**
  * Valuation Validation Engine
  * Runs comprehensive checks before report approval/issuance.
- * 8 Parts: Input, Comparables, Adjustments, Results, Methods, Compliance, Output, Approval Control
+ * 9 Parts: Input, Comparables, Adjustments, Results, Methods, Compliance, Inspection, Output, Approval Control
  */
+
+import { validateInspection, calculateInspectionQuality, detectDiscrepancies, type InspectionQualityScore } from "./inspection-validation";
 
 export type ValidationStatus = "APPROVED" | "NEEDS_REVIEW" | "REJECTED";
 export type FlagSeverity = "error" | "warning" | "info";
