@@ -418,7 +418,7 @@ export default function NewRequest() {
     { key: "upload", label: "رفع الوثائق", icon: Upload },
     { key: "processing", label: "تحليل ذكي", icon: Brain },
     { key: "extracted", label: "مراجعة البيانات", icon: FileCheck },
-    { key: "client_info", label: "معلوماتك", icon: UserIcon },
+    { key: "client_info", label: "عميل التقرير", icon: UserIcon },
   ];
 
     const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
