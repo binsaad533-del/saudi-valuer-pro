@@ -432,28 +432,28 @@ export default function RaqeemPage() {
         </TabsContent>
 
         {/* Other Tabs */}
-        <TabsContent value="knowledge" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="knowledge" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <KnowledgeBaseModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="corrections" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
-            <CorrectionsModule />
+        <TabsContent value="corrections" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
+            <KnowledgeBaseModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="rules" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="rules" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <RulesEngineModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="tests" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="tests" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <TestHistoryModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="performance" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="performance" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <PerformanceDashboard />
           </ScrollArea>
         </TabsContent>
