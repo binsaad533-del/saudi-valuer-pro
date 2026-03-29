@@ -31,13 +31,21 @@ const actions: QuickAction[] = [
 ];
 
 export default function QuickActions() {
+  const { role } = useAuth();
+
+  const visibleActions = actions.filter((a) => {
+    if (!a.roles) return true;
+    if (!role) return false;
+    return a.roles.includes(role);
+  });
+
   return (
     <div className="bg-card rounded-lg border border-border shadow-card animate-fade-in">
       <div className="px-5 py-4 border-b border-border">
         <h3 className="font-semibold text-foreground">إجراءات سريعة</h3>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
-        {actions.map((action) => {
+        {visibleActions.map((action) => {
           const Icon = action.icon;
           return (
             <Link
