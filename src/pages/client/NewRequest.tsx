@@ -473,7 +473,7 @@ export default function NewRequest() {
           {steps.map((s, i) => {
             const Icon = s.icon;
             const isActive = i === currentStepIndex;
-            const isDone = i < currentStepIndex || step === "submitted";
+            const isDone = i < currentStepIndex;
             return (
               <div key={s.key} className="flex items-center flex-1 last:flex-none">
                 <div className="flex flex-col items-center gap-1.5">
