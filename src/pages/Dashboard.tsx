@@ -104,6 +104,7 @@ export default function Dashboard() {
             value="385,000"
             subtitle="ريال سعودي"
             icon={<DollarSign className="w-5 h-5" />}
+            href="/settings"
             trend={{ value: "+15% عن الشهر السابق", positive: true }}
             details={[
               { label: "محصّلة", value: "310,000" },
