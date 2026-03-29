@@ -347,7 +347,7 @@ export default function NewRequest() {
           property_district_ar: extractedData.propertyDistrict || null,
           land_area: extractedData.landArea ? parseFloat(extractedData.landArea) : null,
           building_area: extractedData.buildingArea ? parseFloat(extractedData.buildingArea) : null,
-          purpose: (extractedData.purpose || null) as any,
+          purpose: (clientInfo.purpose || extractedData.purpose || null) as any,
           intended_use_ar: extractedData.intendedUse || null,
           intended_users_ar: extractedData.intendedUsers || null,
           status: "submitted" as any,
