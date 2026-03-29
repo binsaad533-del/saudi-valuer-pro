@@ -14,11 +14,10 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-type Tab = "all" | "new" | "review" | "completed";
+type Tab = "all" | "review" | "completed";
 
 const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
   { key: "all", label: "جميع التقييمات", icon: FileText },
-  { key: "new", label: "طلب تقييم جديد", icon: FolderPlus },
   { key: "review", label: "قيد المراجعة", icon: ClipboardCheck },
   { key: "completed", label: "المكتملة", icon: CheckCircle },
 ];
