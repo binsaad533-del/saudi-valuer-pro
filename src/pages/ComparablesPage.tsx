@@ -11,6 +11,9 @@ const comparables = [
 ];
 
 export default function ComparablesPage() {
+  const { role } = useAuth();
+  const canAdd = ["super_admin", "firm_admin", "valuer"].includes(role || "");
+
   return (
     <div className="min-h-screen">
       <TopBar />
@@ -20,10 +23,12 @@ export default function ComparablesPage() {
             <h2 className="text-lg font-bold text-foreground">قاعدة المقارنات السوقية</h2>
             <p className="text-sm text-muted-foreground">بيانات المقارنات والأدلة السوقية</p>
           </div>
-          <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg gradient-primary text-primary-foreground text-sm font-medium hover:opacity-90">
-            <Plus className="w-4 h-4" />
-            إضافة مقارن
-          </button>
+          {canAdd && (
+            <button className="flex items-center gap-2 px-4 py-2.5 rounded-lg gradient-primary text-primary-foreground text-sm font-medium hover:opacity-90">
+              <Plus className="w-4 h-4" />
+              إضافة مقارن
+            </button>
+          )}
         </div>
 
         <div className="relative max-w-md">
