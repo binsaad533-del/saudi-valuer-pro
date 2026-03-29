@@ -106,6 +106,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={6}
             title="الإيرادات الشهرية"
             value="385,000"
             subtitle="ريال سعودي"
