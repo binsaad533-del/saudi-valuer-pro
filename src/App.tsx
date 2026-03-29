@@ -13,6 +13,11 @@ import VerifyReport from "@/pages/VerifyReport";
 import ReportGenerator from "@/pages/ReportGenerator";
 import ClientRequests from "@/pages/admin/ClientRequests";
 import ValuationProduction from "@/pages/admin/ValuationProduction";
+import ReviewPage from "@/pages/ReviewPage";
+import SearchPage from "@/pages/SearchPage";
+import CompliancePage from "@/pages/CompliancePage";
+import SettingsPage from "@/pages/SettingsPage";
+import ValuationProductionList from "@/pages/ValuationProductionList";
 import NotFound from "./pages/NotFound.tsx";
 
 // Client Portal
@@ -39,15 +44,22 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/valuations" element={<ValuationsList />} />
             <Route path="/valuations/new" element={<NewValuation />} />
+            <Route path="/valuations/review" element={<ValuationsList />} />
+            <Route path="/valuations/completed" element={<ValuationsList />} />
             <Route path="/comparables" element={<ComparablesPage />} />
+            <Route path="/review" element={<ReviewPage />} />
             <Route path="/archive" element={<ArchivePage />} />
+            <Route path="/search" element={<SearchPage />} />
             <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/verify" element={<VerifyReport />} />
             <Route path="/client-requests" element={<ClientRequests />} />
+            <Route path="/valuation-production" element={<ValuationProductionList />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
             <Route path="/inspector" element={<InspectorDashboard />} />
             <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
+            <Route path="/compliance" element={<CompliancePage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
 
           {/* Client Portal Routes */}
