@@ -16,6 +16,15 @@ import {
 
 type Tab = "all" | "review" | "completed";
 
+type Discipline = "all" | "real_estate" | "machinery" | "mixed";
+
+const disciplineLabels: Record<Discipline, string> = {
+  all: "الكل",
+  real_estate: "عقار",
+  machinery: "آلات ومعدات",
+  mixed: "مختلط",
+};
+
 type Status = "all" | "new" | "in_progress" | "review" | "completed" | "archived";
 
 const statusLabels: Record<Status, string> = {
@@ -36,18 +45,19 @@ const statusStyles: Record<string, string> = {
 };
 
 const mockValuations = [
-  { id: "1", ref: "VAL-2026-0042", type: "فيلا سكنية", city: "الرياض", district: "حي النرجس", status: "in_progress", client: "شركة الراجحي للتطوير", date: "2026-03-25", purpose: "بيع", value: "2,500,000" },
-  { id: "2", ref: "VAL-2026-0041", type: "مبنى تجاري", city: "جدة", district: "حي الروضة", status: "review", client: "مؤسسة البناء المتقدم", date: "2026-03-22", purpose: "تمويل", value: "8,750,000" },
-  { id: "3", ref: "VAL-2026-0040", type: "أرض خام", city: "الدمام", district: "حي الشاطئ", status: "completed", client: "صندوق الاستثمارات العامة", date: "2026-03-20", purpose: "استثمار", value: "15,200,000" },
-  { id: "4", ref: "VAL-2026-0039", type: "مجمع سكني", city: "الرياض", district: "حي العليا", status: "new", client: "شركة دار الأركان", date: "2026-03-18", purpose: "بيع", value: "-" },
-  { id: "5", ref: "VAL-2026-0038", type: "عقار مدر للدخل", city: "مكة المكرمة", district: "حي العزيزية", status: "completed", client: "وزارة المالية", date: "2026-03-15", purpose: "نزع ملكية", value: "22,000,000" },
-  { id: "6", ref: "VAL-2026-0037", type: "أرض تطويرية", city: "الرياض", district: "حي الملقا", status: "archived", client: "شركة سمو العقارية", date: "2026-03-10", purpose: "تمويل", value: "45,000,000" },
+  { id: "1", ref: "VAL-2026-0042", type: "فيلا سكنية", discipline: "real_estate" as Discipline, city: "الرياض", district: "حي النرجس", status: "in_progress", client: "شركة الراجحي للتطوير", date: "2026-03-25", purpose: "بيع", value: "2,500,000" },
+  { id: "2", ref: "VAL-2026-0041", type: "مبنى تجاري", discipline: "mixed" as Discipline, city: "جدة", district: "حي الروضة", status: "review", client: "مؤسسة البناء المتقدم", date: "2026-03-22", purpose: "تمويل", value: "8,750,000" },
+  { id: "3", ref: "VAL-2026-0040", type: "أرض خام", discipline: "real_estate" as Discipline, city: "الدمام", district: "حي الشاطئ", status: "completed", client: "صندوق الاستثمارات العامة", date: "2026-03-20", purpose: "استثمار", value: "15,200,000" },
+  { id: "4", ref: "VAL-2026-0039", type: "خط إنتاج", discipline: "machinery" as Discipline, city: "الرياض", district: "حي العليا", status: "new", client: "شركة دار الأركان", date: "2026-03-18", purpose: "بيع", value: "-" },
+  { id: "5", ref: "VAL-2026-0038", type: "عقار مدر للدخل", discipline: "real_estate" as Discipline, city: "مكة المكرمة", district: "حي العزيزية", status: "completed", client: "وزارة المالية", date: "2026-03-15", purpose: "نزع ملكية", value: "22,000,000" },
+  { id: "6", ref: "VAL-2026-0037", type: "معدات ثقيلة", discipline: "machinery" as Discipline, city: "الرياض", district: "حي الملقا", status: "archived", client: "شركة سمو العقارية", date: "2026-03-10", purpose: "تمويل", value: "45,000,000" },
 ];
 
 export default function ValuationsList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "all";
   const [activeStatus, setActiveStatus] = useState<Status>("all");
+  const [activeDiscipline, setActiveDiscipline] = useState<Discipline>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const setActiveTab = (tab: Tab) => {
@@ -59,6 +69,7 @@ export default function ValuationsList() {
 
   const filtered = mockValuations.filter((v) => {
     if (activeStatus !== "all" && v.status !== activeStatus) return false;
+    if (activeDiscipline !== "all" && v.discipline !== activeDiscipline) return false;
     if (searchQuery && !v.ref.includes(searchQuery) && !v.client.includes(searchQuery) && !v.city.includes(searchQuery))
       return false;
     return true;
@@ -108,6 +119,20 @@ export default function ValuationsList() {
               </button>
             ))}
           </div>
+        </div>
+        {/* Discipline Filter */}
+        <div className="flex gap-1.5 flex-wrap">
+          <span className="text-xs text-muted-foreground self-center ml-2">نوع التقييم:</span>
+          {(Object.keys(disciplineLabels) as Discipline[]).map((d) => (
+            <button
+              key={d}
+              onClick={() => setActiveDiscipline(d)}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-colors
+                ${activeDiscipline === d ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
+            >
+              {disciplineLabels[d]}
+            </button>
+          ))}
         </div>
 
         {/* Table */}
