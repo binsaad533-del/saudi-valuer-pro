@@ -3783,6 +3783,7 @@ export type Database = {
         | "reviewer"
         | "client"
         | "auditor"
+        | "inspector"
       assignment_status:
         | "draft"
         | "intake"
@@ -4091,6 +4092,7 @@ export const Constants = {
         "reviewer",
         "client",
         "auditor",
+        "inspector",
       ],
       assignment_status: [
         "draft",
