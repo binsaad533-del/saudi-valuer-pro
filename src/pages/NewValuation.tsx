@@ -9,10 +9,17 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  User,
   FileText,
   CheckCircle2,
+  Cog,
+  Layers,
 } from "lucide-react";
+
+const valuationDisciplines = [
+  { id: "real_estate", label: "تقييم عقاري", icon: Building2, desc: "تقييم الأراضي والمباني والعقارات بجميع أنواعها" },
+  { id: "machinery", label: "تقييم آلات ومعدات", icon: Cog, desc: "تقييم المعدات الصناعية والآلات والأصول المنقولة" },
+  { id: "mixed", label: "تقييم مختلط", icon: Layers, desc: "تقييم عقاري وآلات ومعدات معاً في ملف واحد" },
+];
 
 const propertyTypes = [
   { id: "residential", label: "سكني", icon: Home, desc: "فلل، شقق، مجمعات سكنية" },
@@ -20,6 +27,14 @@ const propertyTypes = [
   { id: "land", label: "أراضي", icon: MapPin, desc: "أراضي خام، تطويرية، زراعية" },
   { id: "income", label: "مدر للدخل", icon: DollarSign, desc: "عقارات مؤجرة، فنادق" },
   { id: "development", label: "تطويري", icon: Landmark, desc: "مشاريع تحت التطوير" },
+];
+
+const machineryTypes = [
+  { id: "industrial", label: "معدات صناعية", icon: Cog, desc: "خطوط إنتاج، مصانع، معدات ثقيلة" },
+  { id: "vehicles", label: "مركبات ونقل", icon: Cog, desc: "شاحنات، رافعات، معدات نقل" },
+  { id: "medical", label: "أجهزة طبية", icon: Cog, desc: "معدات مستشفيات ومختبرات" },
+  { id: "it_equipment", label: "أجهزة تقنية", icon: Cog, desc: "خوادم، أنظمة شبكات، معدات اتصالات" },
+  { id: "other_machinery", label: "أخرى", icon: Cog, desc: "معدات متنوعة غير مصنفة" },
 ];
 
 const valuationPurposes = [
@@ -38,12 +53,13 @@ const valuationPurposes = [
 ];
 
 const steps = [
-  { id: 1, label: "نوع العقار" },
-  { id: 2, label: "بيانات العميل" },
-  { id: 3, label: "تفاصيل العقار" },
-  { id: 4, label: "غرض التقييم" },
-  { id: 5, label: "المستندات" },
-  { id: 6, label: "المراجعة" },
+  { id: 1, label: "نوع التقييم" },
+  { id: 2, label: "تصنيف الأصول" },
+  { id: 3, label: "بيانات العميل" },
+  { id: 4, label: "تفاصيل الأصل" },
+  { id: 5, label: "غرض التقييم" },
+  { id: 6, label: "المستندات" },
+  { id: 7, label: "المراجعة" },
 ];
 
 export default function NewValuation() {
