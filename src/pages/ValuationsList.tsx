@@ -68,23 +68,6 @@ export default function ValuationsList() {
     <div className="min-h-screen">
       <TopBar />
       <div className="p-6 space-y-5">
-        {/* Sub-tabs */}
-        <div className="flex gap-1 border-b border-border pb-0">
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            return (
-              <button
-                key={t.key}
-                onClick={() => setActiveTab(t.key)}
-                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px
-                  ${activeTab === t.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}
-              >
-                <Icon className="w-4 h-4" />
-                {t.label}
-              </button>
-            );
-          })}
-        </div>
 
         {/* Header */}
         <div className="flex items-center justify-between">
