@@ -65,6 +65,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={3}
             title="تنبيهات الامتثال"
             value={3}
             subtitle="تحتاج مراجعة"
