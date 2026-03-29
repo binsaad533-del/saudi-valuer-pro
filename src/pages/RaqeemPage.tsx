@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send, Bot, User, Paperclip, Trash2, Sparkles, FileText, X, Edit3,
-  BookOpen, MessageSquare, Scale, FlaskConical, BarChart3, PanelLeftClose, PanelLeftOpen,
+  BookOpen, MessageSquare, Scale, FlaskConical, BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,7 +32,8 @@ const SUGGESTED_PROMPTS = [
   "كيف أحسب معدل الرسملة للعقارات الاستثمارية؟",
 ];
 
-const SMART_PANEL_TABS = [
+const ALL_TABS = [
+  { value: "chat", label: "المحادثة", icon: Sparkles },
   { value: "knowledge", label: "المعرفة", icon: BookOpen },
   { value: "corrections", label: "التصحيحات", icon: MessageSquare },
   { value: "rules", label: "القواعد", icon: Scale },
@@ -45,7 +46,7 @@ export default function RaqeemPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("chat");
   const [correctionDialog, setCorrectionDialog] = useState<{
     open: boolean;
     msgIndex: number;
@@ -145,6 +146,8 @@ export default function RaqeemPage() {
   const send = async (text?: string) => {
     const messageText = text || input.trim();
     if (!messageText && attachedFiles.length === 0) return;
+    // Switch to chat tab when sending
+    setActiveTab("chat");
     let fullContent = messageText;
     if (attachedFiles.length > 0) {
       const fileNames = attachedFiles.map((f) => f.name).join("، ");
@@ -228,237 +231,243 @@ export default function RaqeemPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden">
-      {/* ═══ CENTER: Main Chat Area ═══ */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-base font-bold text-foreground">رقيم — مركز التقييم الذكي</h1>
-              <p className="text-[11px] text-muted-foreground hidden sm:block">
-                مساعد التقييم الذكي الموحد لإدارة المعرفة، التدريب، التحليل، والتقييم
-              </p>
-            </div>
+    <div className="flex flex-col h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border bg-card shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
-          <div className="flex items-center gap-1.5">
-            {messages.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs">
-                <Trash2 className="w-3.5 h-3.5 ml-1" /> جديدة
-              </Button>
-            )}
-            <Button
-              variant={panelOpen ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPanelOpen(!panelOpen)}
-              className="text-xs gap-1.5"
-            >
-              {panelOpen ? <PanelLeftClose className="w-3.5 h-3.5" /> : <PanelLeftOpen className="w-3.5 h-3.5" />}
-              <span className="hidden sm:inline">لوحة التحكم</span>
-            </Button>
+          <div>
+            <h1 className="text-base font-bold text-foreground">رقيم — مركز التقييم الذكي</h1>
+            <p className="text-[11px] text-muted-foreground hidden sm:block">
+              مساعد التقييم الذكي الموحد لإدارة المعرفة، التدريب، التحليل، والتقييم
+            </p>
           </div>
         </div>
-
-        {/* Messages */}
-        <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef as any}>
-          {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
-              <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
-                <Sparkles className="w-8 h-8 text-primary-foreground" />
-              </div>
-              <div className="text-center space-y-1.5">
-                <h2 className="text-xl font-bold text-foreground">مرحباً، أنا رقيم</h2>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به.
-                  استخدم لوحة التحكم لإدارة المعرفة والقواعد والتصحيحات.
-                </p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full">
-                {SUGGESTED_PROMPTS.map((prompt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => send(prompt)}
-                    className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
-              <div className="flex flex-wrap gap-2 justify-center">
-                <Badge variant="outline" className="text-xs gap-1">
-                  <FileText className="w-3 h-3" /> تعلّم متحكم به
-                </Badge>
-                <Badge variant="outline" className="text-xs gap-1">IVS 2025 + تقييم</Badge>
-              </div>
-            </div>
-          ) : (
-            <div className="max-w-3xl mx-auto space-y-5">
-              {messages.map((msg, i) => (
-                <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "gradient-primary text-primary-foreground"
-                    }`}
-                  >
-                    {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
-                  </div>
-                  <div
-                    className={`flex-1 rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-card border border-border text-foreground"
-                    }`}
-                  >
-                    {msg.attachments && msg.attachments.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {msg.attachments.map((att, j) => (
-                          <Badge key={j} variant="secondary" className="text-xs gap-1">
-                            <FileText className="w-3 h-3" /> {att.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                    {msg.role === "assistant" ? (
-                      <div className="prose prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
-                      </div>
-                    ) : (
-                      <span className="whitespace-pre-wrap">{msg.content}</span>
-                    )}
-                    {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
-                      <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse mr-1 rounded-sm" />
-                    )}
-                    {msg.role === "assistant" && !isLoading && (
-                      <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-xs h-6 text-muted-foreground hover:text-primary gap-1"
-                          onClick={() => openCorrectionDialog(i)}
-                        >
-                          <Edit3 className="w-3 h-3" /> تصحيح
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {isLoading && messages[messages.length - 1]?.role === "user" && (
-                <div className="flex gap-3">
-                  <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shrink-0 text-primary-foreground">
-                    <Bot className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="bg-card border border-border rounded-xl px-4 py-3">
-                    <div className="flex gap-1">
-                      <span className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "0ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "150ms" }} />
-                      <span className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "300ms" }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </ScrollArea>
-
-        {/* Attached files */}
-        {attachedFiles.length > 0 && (
-          <div className="px-4 sm:px-6 pt-2 flex gap-2 flex-wrap shrink-0">
-            {attachedFiles.map((file, i) => (
-              <Badge key={i} variant="secondary" className="gap-1.5 py-1 px-2.5">
-                <FileText className="w-3 h-3" />
-                <span className="text-xs max-w-[120px] truncate">{file.name}</span>
-                <button onClick={() => removeFile(i)}><X className="w-3 h-3 hover:text-destructive" /></button>
-              </Badge>
-            ))}
-          </div>
+        {activeTab === "chat" && messages.length > 0 && (
+          <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs">
+            <Trash2 className="w-3.5 h-3.5 ml-1" /> محادثة جديدة
+          </Button>
         )}
-
-        {/* Input */}
-        <div className="px-4 sm:px-6 py-3 border-t border-border bg-card shrink-0">
-          <div className="max-w-3xl mx-auto flex items-end gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              className="hidden"
-              multiple
-              accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.csv"
-            />
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 text-muted-foreground hover:text-primary"
-              disabled={isLoading}
-            >
-              <Paperclip className="w-5 h-5" />
-            </Button>
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="اكتب سؤالك هنا..."
-              className="resize-none min-h-[44px] max-h-[120px] text-sm"
-              rows={1}
-              disabled={isLoading}
-            />
-            <Button
-              onClick={() => send()}
-              size="icon"
-              disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
-              className="shrink-0"
-            >
-              <Send className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
       </div>
 
-      {/* ═══ LEFT: Smart Panel (collapsible) ═══ */}
-      {panelOpen && (
-        <div className="w-[420px] border-r border-border bg-card shrink-0 hidden lg:flex flex-col overflow-hidden">
-          <Tabs defaultValue="knowledge" className="flex-1 flex flex-col" dir="rtl">
-            <TabsList className="mx-3 mt-3 mb-0 flex flex-wrap gap-1 h-auto bg-muted/50 p-1 rounded-lg">
-              {SMART_PANEL_TABS.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="text-[11px] gap-1 px-2 py-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm flex-1"
-                  >
-                    <Icon className="w-3 h-3" />
-                    {tab.label}
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-            <ScrollArea className="flex-1 px-3 py-3">
-              <TabsContent value="knowledge" className="mt-0">
-                <KnowledgeBaseModule />
-              </TabsContent>
-              <TabsContent value="corrections" className="mt-0">
-                <CorrectionsModule />
-              </TabsContent>
-              <TabsContent value="rules" className="mt-0">
-                <RulesEngineModule />
-              </TabsContent>
-              <TabsContent value="tests" className="mt-0">
-                <TestHistoryModule />
-              </TabsContent>
-              <TabsContent value="performance" className="mt-0">
-                <PerformanceDashboard />
-              </TabsContent>
-            </ScrollArea>
-          </Tabs>
+      {/* Unified Tabs Navigation */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden" dir="rtl">
+        <div className="border-b border-border bg-card/50 shrink-0 px-4 sm:px-6">
+          <TabsList className="h-auto bg-transparent p-0 gap-0 w-full justify-start">
+            {ALL_TABS.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="text-xs gap-1.5 px-3 py-2.5 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:text-primary text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  {tab.label}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
         </div>
-      )}
+
+        {/* Chat Tab */}
+        <TabsContent value="chat" className="flex-1 flex flex-col mt-0 overflow-hidden">
+          <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef as any}>
+            {messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
+                <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-8 h-8 text-primary-foreground" />
+                </div>
+                <div className="text-center space-y-1.5">
+                  <h2 className="text-xl font-bold text-foreground">مرحباً، أنا رقيم</h2>
+                  <p className="text-sm text-muted-foreground max-w-md">
+                    مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به.
+                    استخدم التبويبات أعلاه لإدارة المعرفة والقواعد والتصحيحات.
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full">
+                  {SUGGESTED_PROMPTS.map((prompt, i) => (
+                    <button
+                      key={i}
+                      onClick={() => send(prompt)}
+                      className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <Badge variant="outline" className="text-xs gap-1">
+                    <FileText className="w-3 h-3" /> تعلّم متحكم به
+                  </Badge>
+                  <Badge variant="outline" className="text-xs gap-1">IVS 2025 + تقييم</Badge>
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-3xl mx-auto space-y-5">
+                {messages.map((msg, i) => (
+                  <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                    <div
+                      className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "gradient-primary text-primary-foreground"
+                      }`}
+                    >
+                      {msg.role === "user" ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                    </div>
+                    <div
+                      className={`flex-1 rounded-xl px-4 py-3 text-sm leading-relaxed ${
+                        msg.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-card border border-border text-foreground"
+                      }`}
+                    >
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          {msg.attachments.map((att, j) => (
+                            <Badge key={j} variant="secondary" className="text-xs gap-1">
+                              <FileText className="w-3 h-3" /> {att.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                      {msg.role === "assistant" ? (
+                        <div className="prose prose-sm max-w-none dark:prose-invert">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <span className="whitespace-pre-wrap">{msg.content}</span>
+                      )}
+                      {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
+                        <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse mr-1 rounded-sm" />
+                      )}
+                      {msg.role === "assistant" && !isLoading && (
+                        <div className="mt-2 pt-2 border-t border-border/50 flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-6 text-muted-foreground hover:text-primary gap-1"
+                            onClick={() => openCorrectionDialog(i)}
+                          >
+                            <Edit3 className="w-3 h-3" /> تصحيح
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {isLoading && messages[messages.length - 1]?.role === "user" && (
+                  <div className="flex gap-3">
+                    <div className="w-7 h-7 rounded-lg gradient-primary flex items-center justify-center shrink-0 text-primary-foreground">
+                      <Bot className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="bg-card border border-border rounded-xl px-4 py-3">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "0ms" }} />
+                        <span className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "150ms" }} />
+                        <span className="w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: "300ms" }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </ScrollArea>
+
+          {/* Attached files */}
+          {attachedFiles.length > 0 && (
+            <div className="px-4 sm:px-6 pt-2 flex gap-2 flex-wrap shrink-0">
+              {attachedFiles.map((file, i) => (
+                <Badge key={i} variant="secondary" className="gap-1.5 py-1 px-2.5">
+                  <FileText className="w-3 h-3" />
+                  <span className="text-xs max-w-[120px] truncate">{file.name}</span>
+                  <button onClick={() => removeFile(i)}><X className="w-3 h-3 hover:text-destructive" /></button>
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* Input */}
+          <div className="px-4 sm:px-6 py-3 border-t border-border bg-card shrink-0">
+            <div className="max-w-3xl mx-auto flex items-end gap-2">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                className="hidden"
+                multiple
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt,.csv"
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => fileInputRef.current?.click()}
+                className="shrink-0 text-muted-foreground hover:text-primary"
+                disabled={isLoading}
+              >
+                <Paperclip className="w-5 h-5" />
+              </Button>
+              <Textarea
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="اكتب سؤالك هنا..."
+                className="resize-none min-h-[44px] max-h-[120px] text-sm"
+                rows={1}
+                disabled={isLoading}
+              />
+              <Button
+                onClick={() => send()}
+                size="icon"
+                disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
+                className="shrink-0"
+              >
+                <Send className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* Other Tabs */}
+        <TabsContent value="knowledge" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+            <div className="max-w-4xl mx-auto">
+              <KnowledgeBaseModule />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="corrections" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+            <div className="max-w-4xl mx-auto">
+              <CorrectionsModule />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="rules" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+            <div className="max-w-4xl mx-auto">
+              <RulesEngineModule />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="tests" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+            <div className="max-w-4xl mx-auto">
+              <TestHistoryModule />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+        <TabsContent value="performance" className="flex-1 mt-0 overflow-hidden">
+          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+            <div className="max-w-4xl mx-auto">
+              <PerformanceDashboard />
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
 
       {/* Correction Dialog */}
       <Dialog
