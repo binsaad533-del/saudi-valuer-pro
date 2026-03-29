@@ -84,12 +84,6 @@ const navSections: NavSection[] = [
     ],
   },
   {
-    title: "الذكاء الاصطناعي",
-    items: [
-      { label: "رقيم", icon: Sparkles, path: "/raqeem" },
-    ],
-  },
-  {
     title: "النظام",
     items: [
       { label: "الامتثال", icon: Shield, path: "/compliance" },
