@@ -53,6 +53,7 @@ const PART_LABELS: Record<string, string> = {
   results: "التحقق من النتائج",
   methods: "التحقق من المنهجية",
   compliance: "الامتثال (IVS + تقييم)",
+  inspection: "المعاينة الميدانية",
 };
 
 export default function ValidationPanel({ assignmentId }: ValidationPanelProps) {
@@ -67,7 +68,7 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
     setLoading(true);
     try {
       // Fetch all required data
-      const [aRes, compRes, adjRes, methRes, reconRes, repRes, insRes, subRes] = await Promise.all([
+      const [aRes, compRes, adjRes, methRes, reconRes, repRes, insRes, subRes, , , insAnalysisRes] = await Promise.all([
         supabase.from("valuation_assignments").select("*").eq("id", assignmentId).single(),
         supabase.from("comparables").select("*").limit(20),
         supabase.from("comparable_adjustments").select("*").limit(100),
@@ -76,7 +77,23 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
         supabase.from("reports").select("*").eq("assignment_id", assignmentId).order("version", { ascending: false }).limit(1),
         supabase.from("inspections").select("*").eq("assignment_id", assignmentId).order("created_at", { ascending: false }).limit(1),
         supabase.from("subjects" as any).select("*").eq("assignment_id", assignmentId).limit(1),
+        supabase.from("inspection_photos").select("*").eq("inspection_id", assignmentId).limit(50),
+        supabase.from("inspection_checklist_items").select("*").limit(50),
+        supabase.from("inspection_analysis").select("*").eq("assignment_id", assignmentId).maybeSingle(),
       ]);
+
+      // Get inspection photos by inspection ID if we have an inspection
+      const inspectionRecord = (insRes.data as any)?.[0] || null;
+      let inspectionPhotos: any[] = [];
+      let inspectionChecklist: any[] = [];
+      if (inspectionRecord?.id) {
+        const [photosRes, checklistRes] = await Promise.all([
+          supabase.from("inspection_photos").select("*").eq("inspection_id", inspectionRecord.id),
+          supabase.from("inspection_checklist_items").select("*").eq("inspection_id", inspectionRecord.id),
+        ]);
+        inspectionPhotos = (photosRes.data as any[]) || [];
+        inspectionChecklist = (checklistRes.data as any[]) || [];
+      }
 
       const validationResult = runFullValidation({
         assignment: aRes.data,
@@ -86,7 +103,10 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
         methods: (methRes.data as any[]) || [],
         reconciliation: reconRes.data,
         report: (repRes.data as any)?.[0] || null,
-        inspection: (insRes.data as any)?.[0] || null,
+        inspection: inspectionRecord,
+        inspectionAnalysis: insAnalysisRes.data || null,
+        inspectionPhotos,
+        inspectionChecklist,
       });
 
       setResult(validationResult);
