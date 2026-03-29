@@ -94,6 +94,7 @@ export default function Dashboard() {
             ]}
           />
           <StatCard
+            index={5}
             title="المعاينات اليوم"
             value={5}
             subtitle="معاينة مجدولة"
