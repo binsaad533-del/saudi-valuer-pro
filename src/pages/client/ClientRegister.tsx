@@ -5,20 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, Lock, Loader2, CheckCircle } from "lucide-react";
+import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function ClientRegister() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [registered, setRegistered] = useState(false);
+  const [step, setStep] = useState<"form" | "verify-phone" | "done">("form");
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
+
+  const formatPhone = (p: string) => p.startsWith("+") ? p : `+966${p.replace(/^0/, "")}`;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +30,6 @@ export default function ClientRegister() {
       toast({ title: "كلمات المرور غير متطابقة", variant: "destructive" });
       return;
     }
-
     if (password.length < 6) {
       toast({ title: "كلمة المرور يجب أن تكون 6 أحرف على الأقل", variant: "destructive" });
       return;
@@ -42,31 +44,37 @@ export default function ClientRegister() {
           emailRedirectTo: window.location.origin + "/client",
           data: {
             full_name: fullName,
-            phone: phone,
+            phone: formatPhone(phone),
             role: "client",
           },
         },
       });
       if (error) throw error;
 
-      // Create profile
+      // Create profile & assign role
       if (data.user) {
         await supabase.from("profiles").insert({
           user_id: data.user.id,
           full_name_ar: fullName,
           email: email,
-          phone: phone,
+          phone: formatPhone(phone),
           preferred_language: "ar",
         });
-
-        // Assign client role
         await supabase.from("user_roles").insert({
           user_id: data.user.id,
           role: "client" as any,
         });
       }
 
-      setRegistered(true);
+      // Send phone OTP for verification
+      try {
+        await supabase.auth.signInWithOtp({ phone: formatPhone(phone) });
+        setStep("verify-phone");
+        toast({ title: "تم إرسال رمز التحقق إلى جوالك" });
+      } catch {
+        // If phone OTP fails, still show success
+        setStep("done");
+      }
     } catch (err: any) {
       toast({ title: "خطأ في التسجيل", description: err.message, variant: "destructive" });
     } finally {
@@ -74,7 +82,39 @@ export default function ClientRegister() {
     }
   };
 
-  if (registered) {
+  const handleVerifyPhone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        phone: formatPhone(phone),
+        token: phoneOtp,
+        type: "sms",
+      });
+      if (error) throw error;
+      toast({ title: "تم التحقق من رقم الجوال بنجاح" });
+      setStep("done");
+    } catch (err: any) {
+      toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({ phone: formatPhone(phone) });
+      if (error) throw error;
+      toast({ title: "تم إعادة إرسال رمز التحقق" });
+    } catch (err: any) {
+      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (step === "done") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
@@ -93,10 +133,44 @@ export default function ClientRegister() {
     );
   }
 
+  if (step === "verify-phone") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          <div className="text-center mb-8">
+            <img src={logo} alt="جساس" className="w-16 h-16 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-foreground">التحقق من رقم الجوال</h1>
+            <p className="text-muted-foreground text-sm mt-1">أدخل الرمز المرسل إلى <span className="font-medium text-foreground" dir="ltr">{phone}</span></p>
+          </div>
+          <div className="bg-card rounded-xl border border-border shadow-card p-6">
+            <form onSubmit={handleVerifyPhone} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone-otp">رمز التحقق</Label>
+                <div className="relative">
+                  <KeyRound className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input id="phone-otp" type="text" placeholder="123456" value={phoneOtp} onChange={(e) => setPhoneOtp(e.target.value)} className="pr-10 text-center tracking-widest" required dir="ltr" />
+                </div>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
+                تحقق
+              </Button>
+              <Button type="button" variant="ghost" className="w-full text-sm" onClick={handleResendOtp} disabled={loading}>
+                إعادة إرسال الرمز
+              </Button>
+              <Button type="button" variant="link" className="w-full text-xs text-muted-foreground" onClick={() => setStep("done")}>
+                تخطي التحقق
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-8">
           <img src={logo} alt="جساس" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground">إنشاء حساب عميل</h1>
@@ -109,14 +183,7 @@ export default function ClientRegister() {
               <Label htmlFor="fullName">الاسم الكامل</Label>
               <div className="relative">
                 <User className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  placeholder="محمد أحمد"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="pr-10"
-                  required
-                />
+                <Input id="fullName" placeholder="محمد أحمد" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pr-10" required />
               </div>
             </div>
 
@@ -124,33 +191,16 @@ export default function ClientRegister() {
               <Label htmlFor="phone">رقم الجوال</Label>
               <div className="relative">
                 <Phone className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="05XXXXXXXX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="pr-10"
-                  required
-                  dir="ltr"
-                />
+                <Input id="phone" type="tel" placeholder="05XXXXXXXX" value={phone} onChange={(e) => setPhone(e.target.value)} className="pr-10" required dir="ltr" />
               </div>
+              <p className="text-xs text-muted-foreground">سيتم إرسال رمز تحقق بعد التسجيل</p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="reg-email">البريد الإلكتروني</Label>
               <div className="relative">
                 <Mail className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="reg-email"
-                  type="email"
-                  placeholder="example@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pr-10"
-                  required
-                  dir="ltr"
-                />
+                <Input id="reg-email" type="email" placeholder="example@email.com" value={email} onChange={(e) => setEmail(e.target.value)} className="pr-10" required dir="ltr" />
               </div>
             </div>
 
@@ -158,17 +208,7 @@ export default function ClientRegister() {
               <Label htmlFor="reg-password">كلمة المرور</Label>
               <div className="relative">
                 <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="reg-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pr-10"
-                  required
-                  dir="ltr"
-                  minLength={6}
-                />
+                <Input id="reg-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10" required dir="ltr" minLength={6} />
               </div>
             </div>
 
@@ -176,17 +216,7 @@ export default function ClientRegister() {
               <Label htmlFor="confirm-password">تأكيد كلمة المرور</Label>
               <div className="relative">
                 <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="pr-10"
-                  required
-                  dir="ltr"
-                  minLength={6}
-                />
+                <Input id="confirm-password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="pr-10" required dir="ltr" minLength={6} />
               </div>
             </div>
 
