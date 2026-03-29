@@ -70,10 +70,10 @@ const navSections: NavSection[] = [
   {
     title: "النظام",
     items: [
-      { label: "الامتثال", icon: Shield, path: "/compliance", roles: adminRoles },
-      { label: "الإعدادات", icon: Settings, path: "/settings", roles: adminRoles },
+      { label: "الامتثال", icon: Shield, path: "/compliance", roles: ["super_admin"] },
+      { label: "الإعدادات", icon: Settings, path: "/settings", roles: ["super_admin"] },
+      { label: "إعدادات الحساب", icon: Settings, path: "/settings", roles: ["firm_admin"] },
     ],
-    roles: adminRoles,
   },
 ];
 
