@@ -269,7 +269,8 @@ export default function NewValuation() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("يجب تسجيل الدخول أولاً"); setSubmitting(false); return; }
 
-      const { error: reqErr } = await supabase
+      // 1. Create valuation request
+      const { data: reqData, error: reqErr } = await supabase
         .from("valuation_requests")
         .insert({
           client_user_id: user.id,
@@ -291,14 +292,34 @@ export default function NewValuation() {
       if (reqErr) throw reqErr;
 
       logActivity(4, "تم إرسال الطلب");
-      toast.success("تم إنشاء ملف التقييم بنجاح");
+
+      // 2. Upload files to storage
+      if (reqData?.id) {
+        for (const uf of uploadedFiles) {
+          const filePath = `${reqData.id}/${Date.now()}_${uf.name}`;
+          await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+        }
+        logActivity(4, `تم رفع ${uploadedFiles.length} ملف`);
+      }
+
+      // 3. Trigger automation pipeline
+      logActivity(4, "بدء سير العمل التلقائي بالذكاء الاصطناعي...");
+      toast.success("تم إنشاء ملف التقييم — سير العمل التلقائي بدأ");
+
+      // Fire automation in background (don't block UI)
+      if (reqData?.id) {
+        supabase.functions.invoke("workflow-orchestrator", {
+          body: { request_id: reqData.id },
+        }).catch(err => console.error("Orchestrator error:", err));
+      }
+
       navigate("/");
     } catch (err: any) {
       toast.error(err?.message || "حدث خطأ أثناء الإرسال");
     } finally {
       setSubmitting(false);
     }
-  }, [extracted, clientFields, assetFields, purpose, valueBasis, valuationDate, validateStep, logActivity, navigate]);
+  }, [extracted, clientFields, assetFields, purpose, valueBasis, valuationDate, uploadedFiles, validateStep, logActivity, navigate]);
 
   const allStepValidations = useMemo(() => STEPS.map(s => ({ step: s, validation: validateStep(s.id) })), [validateStep]);
 
