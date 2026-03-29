@@ -829,7 +829,7 @@ export default function NewRequest() {
                 رجوع
               </Button>
               <Button onClick={handleSubmitRequest} className="flex-1 gap-2" size="lg"
-                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose}
+                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 إرسال طلب التقييم
