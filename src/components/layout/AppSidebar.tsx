@@ -43,6 +43,7 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     items: [
+      { label: "رقيم", icon: Sparkles, path: "/raqeem" },
       { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
     ],
   },
@@ -80,12 +81,6 @@ const navSections: NavSection[] = [
       { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review" },
       { label: "الأرشيف", icon: Archive, path: "/archive" },
       { label: "البحث", icon: Search, path: "/search" },
-    ],
-  },
-  {
-    title: "الذكاء الاصطناعي",
-    items: [
-      { label: "رقيم", icon: Sparkles, path: "/raqeem" },
     ],
   },
   {
