@@ -110,12 +110,12 @@ export default function AppSidebar() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
     } catch {
       // ignore signOut errors
     }
     toast.success("تم تسجيل الخروج");
-    navigate("/client/login");
+    window.location.href = "/client/login";
   };
 
   const toggleExpand = (label: string) => {
@@ -128,8 +128,7 @@ export default function AppSidebar() {
 
   const canSee = (roles?: string[]) => {
     if (!roles) return true;
-    if (!role && !user) return true; // no auth — show all for demo
-    if (!role) return false; // loading — hide restricted
+    if (!role) return false;
     return roles.includes(role);
   };
 
