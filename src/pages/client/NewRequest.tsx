@@ -10,6 +10,13 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Upload,
   FileText,
   Image,
@@ -26,6 +33,7 @@ import {
   Mail,
   FileCheck,
   Brain,
+  Target,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -84,6 +92,7 @@ export default function NewRequest() {
     contactPhone: "",
     contactEmail: "",
     additionalNotes: "",
+    purpose: "",
   });
 
   useEffect(() => {
@@ -338,7 +347,7 @@ export default function NewRequest() {
           property_district_ar: extractedData.propertyDistrict || null,
           land_area: extractedData.landArea ? parseFloat(extractedData.landArea) : null,
           building_area: extractedData.buildingArea ? parseFloat(extractedData.buildingArea) : null,
-          purpose: (extractedData.purpose || null) as any,
+          purpose: (clientInfo.purpose || extractedData.purpose || null) as any,
           intended_use_ar: extractedData.intendedUse || null,
           intended_users_ar: extractedData.intendedUsers || null,
           status: "submitted" as any,
@@ -748,6 +757,33 @@ export default function NewRequest() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
+                  <div className="relative">
+                    <Target className="absolute right-3 top-3 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
+                    <Select
+                      value={clientInfo.purpose}
+                      onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}
+                    >
+                      <SelectTrigger className="pr-10">
+                        <SelectValue placeholder="اختر الغرض من التقييم" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sale_purchase">بيع / شراء</SelectItem>
+                        <SelectItem value="mortgage">رهن عقاري</SelectItem>
+                        <SelectItem value="financial_reporting">تقارير مالية</SelectItem>
+                        <SelectItem value="insurance">تأمين</SelectItem>
+                        <SelectItem value="taxation">ضريبي</SelectItem>
+                        <SelectItem value="litigation">قضائي</SelectItem>
+                        <SelectItem value="investment">استثمار</SelectItem>
+                        <SelectItem value="zakat">زكاة</SelectItem>
+                        <SelectItem value="expropriation">نزع ملكية</SelectItem>
+                        <SelectItem value="other">أخرى</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
                   <Label className="text-sm">الاسم الكامل</Label>
                   <div className="relative">
                     <UserIcon className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -809,7 +845,7 @@ export default function NewRequest() {
                 onClick={handleSubmitRequest}
                 className="flex-1 gap-2"
                 size="lg"
-                disabled={loading || !clientInfo.contactName.trim()}
+                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 إرسال طلب التقييم
