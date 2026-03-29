@@ -63,8 +63,7 @@ const App = () => (
             <Route path="/client-requests" element={<ClientRequests />} />
             <Route path="/valuation-production" element={<ValuationProductionList />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
-            <Route path="/inspector" element={<InspectorDashboard />} />
-            <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
+            
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
             <Route path="/compliance" element={<CompliancePage />} />
             <Route path="/raqeem" element={<RaqeemPage />} />
