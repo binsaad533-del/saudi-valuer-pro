@@ -484,22 +484,28 @@ export default function ClientsManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-0.5">
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="تغيير الدور"
-                          onClick={() => { setSelectedUser(user); setNewRole(user.role || "client"); setRoleDialog(true); }}>
-                          <UserCog className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title="تغيير التصنيف"
-                          onClick={() => { setCategoryUser(user); setNewCategory(user.client_category); setCategoryDialog(true); }}>
-                          <Crown className="w-3.5 h-3.5" />
-                        </Button>
+                        {isSuperAdmin && (
+                          <>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="تغيير الدور"
+                              onClick={() => { setSelectedUser(user); setNewRole(user.role || "client"); setRoleDialog(true); }}>
+                              <UserCog className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="تغيير التصنيف"
+                              onClick={() => { setCategoryUser(user); setNewCategory(user.client_category); setCategoryDialog(true); }}>
+                              <Crown className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
                         <Button variant="ghost" size="icon" className="h-7 w-7" title="عرض الملف"
                           onClick={() => { setProfileUser(user); setProfileDialog(true); }}>
                           <Eye className="w-3.5 h-3.5" />
                         </Button>
-                        <Button variant="ghost" size="icon" className="h-7 w-7" title={user.account_status === "active" ? "إيقاف" : "تفعيل"}
-                          onClick={() => handleToggleStatus(user)}>
-                          {user.account_status === "active" ? <Ban className="w-3.5 h-3.5 text-destructive" /> : <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />}
-                        </Button>
+                        {isSuperAdmin && (
+                          <Button variant="ghost" size="icon" className="h-7 w-7" title={user.account_status === "active" ? "إيقاف" : "تفعيل"}
+                            onClick={() => handleToggleStatus(user)}>
+                            {user.account_status === "active" ? <Ban className="w-3.5 h-3.5 text-destructive" /> : <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
