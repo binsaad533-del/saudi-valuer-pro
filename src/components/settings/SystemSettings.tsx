@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "super_admin" | "firm_admin" | "valuer" | "reviewer" | "client" | "auditor";
+type AppRole = "super_admin" | "firm_admin" | "valuer" | "reviewer" | "client" | "auditor" | "inspector";
 
 interface RoleUser {
   user_id: string;
