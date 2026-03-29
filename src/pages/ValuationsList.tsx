@@ -1,15 +1,27 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import {
   Search,
-  Filter,
   Building2,
   MapPin,
   Clock,
   ChevronLeft,
   Plus,
+  FileText,
+  FolderPlus,
+  ClipboardCheck,
+  CheckCircle,
 } from "lucide-react";
+
+type Tab = "all" | "new" | "review" | "completed";
+
+const tabs: { key: Tab; label: string; icon: React.ElementType }[] = [
+  { key: "all", label: "جميع التقييمات", icon: FileText },
+  { key: "new", label: "طلب تقييم جديد", icon: FolderPlus },
+  { key: "review", label: "قيد المراجعة", icon: ClipboardCheck },
+  { key: "completed", label: "المكتملة", icon: CheckCircle },
+];
 
 type Status = "all" | "new" | "in_progress" | "review" | "completed" | "archived";
 
@@ -40,8 +52,56 @@ const mockValuations = [
 ];
 
 export default function ValuationsList() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = (searchParams.get("tab") as Tab) || "all";
   const [activeStatus, setActiveStatus] = useState<Status>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  const setActiveTab = (tab: Tab) => {
+    setSearchParams(tab === "all" ? {} : { tab });
+    if (tab === "review") setActiveStatus("review");
+    else if (tab === "completed") setActiveStatus("completed");
+    else setActiveStatus("all");
+  };
+
+  // If on "new" tab, render the new request redirect
+  if (activeTab === "new") {
+    return (
+      <div className="min-h-screen">
+        <TopBar />
+        <div className="p-6 space-y-5">
+          <div className="flex gap-1 border-b border-border pb-0">
+            {tabs.map((t) => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setActiveTab(t.key)}
+                  className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px
+                    ${activeTab === t.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}
+                >
+                  <Icon className="w-4 h-4" />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-col items-center justify-center py-16 space-y-4">
+            <FolderPlus className="w-16 h-16 text-primary/30" />
+            <h3 className="text-lg font-bold text-foreground">طلب تقييم جديد</h3>
+            <p className="text-sm text-muted-foreground">ابدأ بإنشاء طلب تقييم عقاري جديد</p>
+            <Link
+              to="/valuations/new"
+              className="flex items-center gap-2 px-6 py-3 rounded-lg gradient-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+            >
+              <Plus className="w-4 h-4" />
+              إنشاء طلب جديد
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const filtered = mockValuations.filter((v) => {
     if (activeStatus !== "all" && v.status !== activeStatus) return false;
@@ -54,6 +114,24 @@ export default function ValuationsList() {
     <div className="min-h-screen">
       <TopBar />
       <div className="p-6 space-y-5">
+        {/* Sub-tabs */}
+        <div className="flex gap-1 border-b border-border pb-0">
+          {tabs.map((t) => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.key}
+                onClick={() => setActiveTab(t.key)}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px
+                  ${activeTab === t.key ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}
+              >
+                <Icon className="w-4 h-4" />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
