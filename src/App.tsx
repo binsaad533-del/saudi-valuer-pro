@@ -34,6 +34,8 @@ import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 import RaqeemPage from "@/pages/RaqeemPage";
 import AuditorDashboard from "@/pages/auditor/AuditorDashboard";
 import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
+import InspectorsListPage from "@/pages/admin/InspectorsListPage";
+import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
 
 
 const queryClient = new QueryClient();
