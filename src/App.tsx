@@ -30,7 +30,7 @@ import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 import RaqeemPage from "@/pages/RaqeemPage";
-import RaqeemTrainingPage from "@/pages/RaqeemTrainingPage";
+
 
 const queryClient = new QueryClient();
 

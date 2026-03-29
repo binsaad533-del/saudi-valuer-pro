@@ -20,7 +20,6 @@ import {
   MapPin,
   Globe,
   Sparkles,
-  GraduationCap,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
