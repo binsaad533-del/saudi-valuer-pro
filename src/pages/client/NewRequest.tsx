@@ -95,6 +95,7 @@ export default function NewRequest() {
     clientType: "",
     additionalNotes: "",
     purpose: "",
+    intendedUsers: "",
   });
 
   useEffect(() => {
