@@ -34,7 +34,9 @@ export interface ValidationResult {
     results: PartResult;
     methods: PartResult;
     compliance: PartResult;
+    inspection: PartResult;
   };
+  inspection_quality?: InspectionQualityScore;
   can_issue: boolean;
   override_allowed: boolean;
   validated_at: string;
