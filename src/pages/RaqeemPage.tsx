@@ -253,7 +253,7 @@ export default function RaqeemPage() {
       </div>
 
       {/* Unified Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden" dir="rtl">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden" dir="rtl">
         <div className="border-b border-border bg-card/50 shrink-0 px-4 sm:px-6">
           <TabsList className="h-auto bg-transparent p-0 gap-0 w-full justify-start">
             {ALL_TABS.map((tab) => {
@@ -273,7 +273,7 @@ export default function RaqeemPage() {
         </div>
 
         {/* Chat Tab */}
-        <TabsContent value="chat" className="flex-1 flex flex-col mt-0 overflow-hidden">
+        <TabsContent value="chat" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex data-[state=active]:flex-col">
           <ScrollArea className="flex-1 px-4 py-6" ref={scrollRef as any}>
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
@@ -432,28 +432,28 @@ export default function RaqeemPage() {
         </TabsContent>
 
         {/* Other Tabs */}
-        <TabsContent value="knowledge" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="knowledge" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <KnowledgeBaseModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="corrections" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="corrections" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <CorrectionsModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="rules" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="rules" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <RulesEngineModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="tests" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="tests" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <TestHistoryModule />
           </ScrollArea>
         </TabsContent>
-        <TabsContent value="performance" className="flex-1 mt-0 overflow-hidden min-h-0">
-          <ScrollArea className="h-full px-4 sm:px-6 py-4">
+        <TabsContent value="performance" className="flex-1 mt-0 min-h-0 overflow-hidden data-[state=active]:flex">
+          <ScrollArea className="flex-1 min-h-0 px-4 sm:px-6 py-4">
             <PerformanceDashboard />
           </ScrollArea>
         </TabsContent>
