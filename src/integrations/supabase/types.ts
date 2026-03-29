@@ -1171,74 +1171,161 @@ export type Database = {
           },
         ]
       }
+      inspector_evaluations: {
+        Row: {
+          assignment_id: string | null
+          completion_score: number | null
+          created_at: string
+          evaluation_type: string
+          evaluator_id: string | null
+          id: string
+          inspector_user_id: string
+          notes: string | null
+          quality_score: number | null
+          rating: number
+          satisfaction_score: number | null
+          speed_score: number | null
+        }
+        Insert: {
+          assignment_id?: string | null
+          completion_score?: number | null
+          created_at?: string
+          evaluation_type?: string
+          evaluator_id?: string | null
+          id?: string
+          inspector_user_id: string
+          notes?: string | null
+          quality_score?: number | null
+          rating?: number
+          satisfaction_score?: number | null
+          speed_score?: number | null
+        }
+        Update: {
+          assignment_id?: string | null
+          completion_score?: number | null
+          created_at?: string
+          evaluation_type?: string
+          evaluator_id?: string | null
+          id?: string
+          inspector_user_id?: string
+          notes?: string | null
+          quality_score?: number | null
+          rating?: number
+          satisfaction_score?: number | null
+          speed_score?: number | null
+        }
+        Relationships: []
+      }
       inspector_profiles: {
         Row: {
+          approved_count: number | null
           availability_status: string
           avg_completion_hours: number | null
+          avg_rating: number | null
           avg_response_hours: number | null
+          branch: string | null
+          certifications: string[] | null
           cities_ar: string[] | null
           cities_en: string[] | null
+          complaints_count: number | null
+          corrections_count: number | null
           created_at: string
           current_workload: number | null
+          customer_satisfaction: number | null
+          department: string | null
+          employment_type: string | null
           home_latitude: number | null
           home_longitude: number | null
           id: string
+          inspector_category: string | null
           is_active: boolean
+          management_notes: string | null
           max_concurrent_tasks: number | null
+          nationality: string | null
           notes: string | null
           organization_id: string | null
+          overall_score: number | null
           phone: string | null
           quality_score: number | null
           regions_ar: string[] | null
           regions_en: string[] | null
+          rejected_count: number | null
           specializations: string[] | null
           total_completed: number | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          approved_count?: number | null
           availability_status?: string
           avg_completion_hours?: number | null
+          avg_rating?: number | null
           avg_response_hours?: number | null
+          branch?: string | null
+          certifications?: string[] | null
           cities_ar?: string[] | null
           cities_en?: string[] | null
+          complaints_count?: number | null
+          corrections_count?: number | null
           created_at?: string
           current_workload?: number | null
+          customer_satisfaction?: number | null
+          department?: string | null
+          employment_type?: string | null
           home_latitude?: number | null
           home_longitude?: number | null
           id?: string
+          inspector_category?: string | null
           is_active?: boolean
+          management_notes?: string | null
           max_concurrent_tasks?: number | null
+          nationality?: string | null
           notes?: string | null
           organization_id?: string | null
+          overall_score?: number | null
           phone?: string | null
           quality_score?: number | null
           regions_ar?: string[] | null
           regions_en?: string[] | null
+          rejected_count?: number | null
           specializations?: string[] | null
           total_completed?: number | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          approved_count?: number | null
           availability_status?: string
           avg_completion_hours?: number | null
+          avg_rating?: number | null
           avg_response_hours?: number | null
+          branch?: string | null
+          certifications?: string[] | null
           cities_ar?: string[] | null
           cities_en?: string[] | null
+          complaints_count?: number | null
+          corrections_count?: number | null
           created_at?: string
           current_workload?: number | null
+          customer_satisfaction?: number | null
+          department?: string | null
+          employment_type?: string | null
           home_latitude?: number | null
           home_longitude?: number | null
           id?: string
+          inspector_category?: string | null
           is_active?: boolean
+          management_notes?: string | null
           max_concurrent_tasks?: number | null
+          nationality?: string | null
           notes?: string | null
           organization_id?: string | null
+          overall_score?: number | null
           phone?: string | null
           quality_score?: number | null
           regions_ar?: string[] | null
           regions_en?: string[] | null
+          rejected_count?: number | null
           specializations?: string[] | null
           total_completed?: number | null
           updated_at?: string
