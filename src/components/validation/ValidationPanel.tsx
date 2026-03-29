@@ -68,7 +68,7 @@ export default function ValidationPanel({ assignmentId }: ValidationPanelProps) 
     setLoading(true);
     try {
       // Fetch all required data
-      const [aRes, compRes, adjRes, methRes, reconRes, repRes, insRes, subRes, insPhotosRes, insCheckRes, insAnalysisRes] = await Promise.all([
+      const [aRes, compRes, adjRes, methRes, reconRes, repRes, insRes, subRes, , , insAnalysisRes] = await Promise.all([
         supabase.from("valuation_assignments").select("*").eq("id", assignmentId).single(),
         supabase.from("comparables").select("*").limit(20),
         supabase.from("comparable_adjustments").select("*").limit(100),
