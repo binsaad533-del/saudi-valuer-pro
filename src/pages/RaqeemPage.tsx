@@ -253,7 +253,7 @@ export default function RaqeemPage() {
       </div>
 
       {/* Unified Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden" dir="rtl">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden" dir="rtl">
         <div className="border-b border-border bg-card/50 shrink-0 px-4 sm:px-6">
           <TabsList className="h-auto bg-transparent p-0 gap-0 w-full justify-start">
             {ALL_TABS.map((tab) => {
