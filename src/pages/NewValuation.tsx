@@ -219,32 +219,7 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 4: Client Data */}
-          {currentStep === 4 && (
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">بيانات العميل</h3>
-              <p className="text-sm text-muted-foreground mb-5">أدخل معلومات العميل طالب التقييم</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { label: "اسم العميل / الجهة", placeholder: "أدخل اسم العميل" },
-                  { label: "رقم الهوية / السجل التجاري", placeholder: "أدخل رقم التعريف" },
-                  { label: "رقم الجوال", placeholder: "05XXXXXXXX" },
-                  { label: "البريد الإلكتروني", placeholder: "email@example.com" },
-                  { label: "العنوان", placeholder: "عنوان العميل" },
-                  { label: "المستخدم المقصود", placeholder: "الجهة المستفيدة من التقرير" },
-                ].map((field) => (
-                  <div key={field.label}>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">{field.label}</label>
-                    <input
-                      type="text"
-                      placeholder={field.placeholder}
-                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
           {/* Step 5: Asset Details */}
           {currentStep === 5 && (
