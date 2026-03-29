@@ -574,7 +574,7 @@ export default function NewRequest() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label className="text-sm">رقم الجوال</Label>
+                    <Label className="text-sm">رقم الجوال <span className="text-destructive">*</span></Label>
                     <Input
                       value={clientInfo.contactPhone}
                       onChange={(e) => setClientInfo(p => ({ ...p, contactPhone: e.target.value }))}
@@ -594,7 +594,7 @@ export default function NewRequest() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-sm">مستخدمو التقرير</Label>
+                  <Label className="text-sm">مستخدمو التقرير <span className="text-destructive">*</span></Label>
                   <Input
                     value={clientInfo.intendedUsers}
                     onChange={(e) => setClientInfo(p => ({ ...p, intendedUsers: e.target.value }))}
@@ -677,7 +677,7 @@ export default function NewRequest() {
               onClick={processWithAI}
               className="w-full gap-2"
               size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType}
+              disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
             >
               <Sparkles className="w-4 h-4" />
               تحليل الوثائق والمتابعة
@@ -829,7 +829,7 @@ export default function NewRequest() {
                 رجوع
               </Button>
               <Button onClick={handleSubmitRequest} className="flex-1 gap-2" size="lg"
-                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose}
+                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
               >
                 {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                 إرسال طلب التقييم
