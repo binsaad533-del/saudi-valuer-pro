@@ -43,6 +43,7 @@ interface NavSection {
 const navSections: NavSection[] = [
   {
     items: [
+      { label: "رقيم", icon: Sparkles, path: "/raqeem" },
       { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
     ],
   },
