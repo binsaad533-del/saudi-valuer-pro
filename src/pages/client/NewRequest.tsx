@@ -511,7 +511,7 @@ export default function NewRequest() {
             <CardContent className="space-y-4">
               {/* Drop zone */}
               <div
-                className={`border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all ${
+                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
                   dragOver
                     ? "border-primary bg-primary/5 scale-[1.01]"
                     : "border-border hover:border-primary/40 hover:bg-muted/30"
