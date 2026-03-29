@@ -57,6 +57,7 @@ export default function ValuationsList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "all";
   const [activeStatus, setActiveStatus] = useState<Status>("all");
+  const [activeDiscipline, setActiveDiscipline] = useState<Discipline>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   const setActiveTab = (tab: Tab) => {
