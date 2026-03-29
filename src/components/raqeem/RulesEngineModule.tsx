@@ -68,7 +68,7 @@ export default function RulesEngineModule() {
       toast.error("العنوان والمحتوى مطلوبان"); return;
     }
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    if (!user) { toast.error("يجب تسجيل الدخول أولاً"); return; }
     const { error } = await supabase.from("raqeem_rules").insert({
       ...form, created_by: user.id,
     } as any);
