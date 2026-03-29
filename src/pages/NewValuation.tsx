@@ -333,8 +333,8 @@ export default function NewValuation() {
             </div>
           )}
 
-          {/* Step 6: Documents */}
-          {currentStep === 6 && (
+          {/* Step 2: Documents */}
+          {currentStep === 2 && (
             <div>
               <h3 className="font-semibold text-foreground mb-1">رفع المستندات</h3>
               <p className="text-sm text-muted-foreground mb-5">قم برفع المستندات المطلوبة لإتمام عملية التقييم</p>
