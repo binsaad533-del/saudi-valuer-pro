@@ -56,7 +56,7 @@ const navSections: NavSection[] = [
     title: "التقييم",
     items: [
       { label: "التقييمات", icon: FileText, path: "/valuations", roles: allRoles },
-      { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["super_admin", "firm_admin", "valuer"] },
+      { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["super_admin", "valuer"] },
     ],
   },
   {
