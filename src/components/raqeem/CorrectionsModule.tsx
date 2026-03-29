@@ -231,5 +231,3 @@ export default function CorrectionsModule() {
   );
 }
 
-// Need this for the toggle button import
-import { CheckCircle, XCircle } from "lucide-react";

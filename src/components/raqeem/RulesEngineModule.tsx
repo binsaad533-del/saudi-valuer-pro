@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  Scale, Plus, Trash2, CheckCircle, XCircle, Shield, ArrowRight,
+  Scale, Plus, Trash2, CheckCircle, XCircle, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

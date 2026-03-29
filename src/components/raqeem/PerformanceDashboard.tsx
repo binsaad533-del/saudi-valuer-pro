@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  BarChart3, TrendingUp, CheckCircle, AlertTriangle,
+  TrendingUp, CheckCircle, AlertTriangle,
   BookOpen, Scale, MessageSquare, Activity,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
