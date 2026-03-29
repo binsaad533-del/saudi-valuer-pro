@@ -86,11 +86,13 @@ export default function NewRequest() {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
-  // Client basic info
+  // Report client info (not the logged-in user)
   const [clientInfo, setClientInfo] = useState({
     contactName: "",
     contactPhone: "",
     contactEmail: "",
+    idNumber: "",
+    clientType: "",
     additionalNotes: "",
     purpose: "",
   });
