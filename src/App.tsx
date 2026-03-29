@@ -74,6 +74,11 @@ const App = () => (
           </Route>
 
           {/* Auditor Routes */}
+          {/* Inspector Portal Routes */}
+          <Route path="/inspector" element={<InspectorDashboard />} />
+          <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
+
+          {/* Auditor Routes */}
           <Route path="/auditor" element={<AuditorDashboard />} />
 
           {/* Client Portal Routes */}
