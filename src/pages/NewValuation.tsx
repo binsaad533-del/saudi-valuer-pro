@@ -269,7 +269,7 @@ export default function NewValuation() {
               <div className="space-y-4">
                 {[
                   { label: "نوع التقييم", value: valuationDisciplines.find(d => d.id === selectedDiscipline)?.label || "-" },
-                  { label: "تصنيف الأصل", value: selectedType ? ([...propertyTypes, ...machineryTypes].find(p => p.id === selectedType)?.label || "-") : "-" },
+                  { label: "تصنيف الأصل", value: "سيتم تحديده تلقائياً بالذكاء الاصطناعي" },
                   { label: "غرض التقييم", value: selectedPurpose || "-" },
                   { label: "الحالة", value: "سيتم إنشاء الملف وبدء سير العمل" },
                 ].map((item) => (
