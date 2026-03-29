@@ -22,7 +22,7 @@ import {
 import { format, differenceInDays } from "date-fns";
 import TopBar from "@/components/layout/TopBar";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
