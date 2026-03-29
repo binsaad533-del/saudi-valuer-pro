@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type AppRole = "super_admin" | "firm_admin" | "valuer" | "reviewer" | "client" | "auditor";
+type AppRole = "super_admin" | "firm_admin" | "valuer" | "reviewer" | "client" | "auditor" | "inspector";
 
 interface RoleUser {
   user_id: string;
@@ -24,6 +24,7 @@ const roleConfig: { role: AppRole; name: string; nameEn: string; color: "destruc
   { role: "firm_admin", name: "مدير الشركة", nameEn: "Firm Admin", color: "default" },
   { role: "valuer", name: "مقيّم معتمد", nameEn: "Valuer", color: "default" },
   { role: "reviewer", name: "مراجع", nameEn: "Reviewer", color: "secondary" },
+  { role: "inspector", name: "معاين", nameEn: "Inspector", color: "secondary" },
   { role: "client", name: "عميل", nameEn: "Client", color: "outline" },
   { role: "auditor", name: "مدقق", nameEn: "Auditor", color: "outline" },
 ];

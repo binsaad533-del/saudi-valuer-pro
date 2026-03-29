@@ -29,8 +29,11 @@ export default function ClientLogin() {
       .eq("user_id", userId)
       .single();
     const role = data?.role;
-    if (role === "super_admin" || role === "firm_admin") {
+    if (role === "super_admin" || role === "firm_admin" || role === "valuer" || role === "reviewer") {
       return "/";
+    }
+    if (role === "inspector" as string) {
+      return "/inspector";
     }
     return "/client";
   };
