@@ -87,6 +87,7 @@ export default function Dashboard() {
             value={36}
             subtitle="عميل مسجّل"
             icon={<Users className="w-5 h-5" />}
+            variant="primary"
             href="/clients-management"
             details={[
               { label: "أفراد", value: 22 },
@@ -99,6 +100,7 @@ export default function Dashboard() {
             value={5}
             subtitle="معاينة مجدولة"
             icon={<MapPin className="w-5 h-5" />}
+            variant="warning"
             href="/inspectors"
             details={[
               { label: "مكتملة", value: 2 },
