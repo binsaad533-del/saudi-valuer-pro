@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import {
-  BookOpen, Plus, Trash2, Edit, CheckCircle, XCircle,
-  FileText, Scale, MessageSquare, Shield, ChevronDown, ChevronUp,
-  AlertTriangle, History,
+  BookOpen, Plus, Trash2, CheckCircle, XCircle,
+  FileText, Scale, MessageSquare, Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
