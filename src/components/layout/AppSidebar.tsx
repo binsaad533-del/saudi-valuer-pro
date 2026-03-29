@@ -22,6 +22,7 @@ import {
   MapPin,
   Globe,
   Sparkles,
+  LogOut,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
