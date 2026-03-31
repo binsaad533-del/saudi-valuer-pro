@@ -133,10 +133,9 @@ export default function ClientReportReview({ reportId, requestId }: Props) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="p-3 bg-muted/30 rounded-lg border-2 border-dashed border-warning/30 text-center">
-          <div className="text-warning font-bold text-sm mb-1 opacity-50">DRAFT / مسودة</div>
-          <p className="text-[10px] text-muted-foreground">راجع المسودة وأضف ملاحظاتك أدناه</p>
-        </div>
+        {/* Progress Tracker */}
+        <ProgressTracker currentStep={getCurrentStep(report, comments)} />
+
 
         <div className="space-y-2">
           <Select value={selectedSection} onValueChange={setSelectedSection}>
