@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound, Eye, EyeOff } from "lucide-react";
+import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound, Eye, EyeOff, Building2, CreditCard, UserCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
+
+type ClientType = "individual" | "company";
 
 export default function ClientRegister() {
   const navigate = useNavigate();
@@ -14,14 +16,26 @@ export default function ClientRegister() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<"form" | "verify-phone" | "done">("form");
   const [showPassword, setShowPassword] = useState(false);
+  const [clientType, setClientType] = useState<ClientType>("individual");
 
-  const [fullName, setFullName] = useState("");
+  // Common
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
 
+  // Individual
+  const [fullName, setFullName] = useState("");
+  const [idNumber, setIdNumber] = useState("");
+
+  // Company
+  const [companyName, setCompanyName] = useState("");
+  const [crNumber, setCrNumber] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+
   const formatPhone = (p: string) => p.startsWith("+") ? p : `+966${p.replace(/^0/, "")}`;
+
+  const getDisplayName = () => clientType === "individual" ? fullName : contactPerson;
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +51,12 @@ export default function ClientRegister() {
         password,
         options: {
           emailRedirectTo: window.location.origin + "/client",
-          data: { full_name: fullName, phone: formatPhone(phone), role: "client" },
+          data: {
+            full_name: getDisplayName(),
+            phone: formatPhone(phone),
+            role: "client",
+            client_type: clientType,
+          },
         },
       });
       if (error) throw error;
@@ -45,7 +64,7 @@ export default function ClientRegister() {
       if (data.user) {
         await supabase.from("profiles").insert({
           user_id: data.user.id,
-          full_name_ar: fullName,
+          full_name_ar: getDisplayName(),
           email,
           phone: formatPhone(phone),
           preferred_language: "ar",
@@ -163,17 +182,81 @@ export default function ClientRegister() {
         <div className="text-center mb-8">
           <img src={logo} alt="جساس" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-extralight text-foreground">جساس للتقييم .. نصنع للأصل قيمة</h1>
-          
         </div>
         <div className="bg-card rounded-xl border border-border shadow-card p-6">
+          {/* Client Type Toggle */}
+          <div className="flex rounded-lg border border-border overflow-hidden mb-6">
+            <button
+              type="button"
+              onClick={() => setClientType("individual")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                clientType === "individual"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <User className="h-4 w-4" />
+              فرد
+            </button>
+            <button
+              type="button"
+              onClick={() => setClientType("company")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-sm font-medium transition-colors ${
+                clientType === "company"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <Building2 className="h-4 w-4" />
+              شركة
+            </button>
+          </div>
+
           <form onSubmit={handleRegister} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="fullName">الاسم الكامل</Label>
-              <div className="relative">
-                <User className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="fullName" placeholder="محمد أحمد" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pr-10" required />
-              </div>
-            </div>
+            {clientType === "individual" ? (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="fullName">الاسم الكامل</Label>
+                  <div className="relative">
+                    <User className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="fullName" placeholder="محمد أحمد" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pr-10" required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="idNumber">رقم الهوية</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="idNumber" placeholder="1XXXXXXXXX" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="pr-10" required dir="ltr" maxLength={10} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">اسم الشركة</Label>
+                  <div className="relative">
+                    <Building2 className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="companyName" placeholder="شركة المثال للتطوير" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="pr-10" required />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="crNumber">السجل التجاري</Label>
+                  <div className="relative">
+                    <CreditCard className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="crNumber" placeholder="10XXXXXXXX" value={crNumber} onChange={(e) => setCrNumber(e.target.value)} className="pr-10" required dir="ltr" maxLength={10} />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactPerson">اسم المفوض</Label>
+                  <div className="relative">
+                    <UserCheck className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="contactPerson" placeholder="محمد أحمد" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)} className="pr-10" required />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Common fields */}
             <div className="space-y-2">
               <Label htmlFor="phone">رقم الجوال</Label>
               <div className="relative">
