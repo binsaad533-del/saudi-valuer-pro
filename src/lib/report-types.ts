@@ -100,6 +100,7 @@ export interface ReportData {
   signer_title_ar: string;
   signer_title_en: string;
   signer_license: string;
+  signature_image_url?: string | null;
 }
 
 export const REPORT_SECTIONS = [

@@ -87,7 +87,7 @@ export default function ReportGeneratorPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationStep, setGenerationStep] = useState<GenerationStep>("received");
-  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+  
   const [consistencyResult, setConsistencyResult] = useState<null | { consistent: boolean; issues: any[] }>(null);
   const { toast } = useToast();
 
@@ -138,11 +138,11 @@ export default function ReportGeneratorPage() {
       await new Promise((r) => setTimeout(r, 500));
       setGenerationStep("processing");
 
-      const { url, json } = await exportReportPdf({
+      const { url } = await exportReportPdf({
         reportData,
         language: exportLang,
         isDraft,
-        signatureUrl,
+        signatureUrl: reportData.signature_image_url,
       });
 
       setGenerationStep("review");
@@ -162,7 +162,7 @@ export default function ReportGeneratorPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [reportData, signatureUrl, toast]);
+  }, [reportData, toast]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -273,8 +273,8 @@ export default function ReportGeneratorPage() {
           {/* QR Code & Signature Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SignatureUpload
-              currentUrl={signatureUrl}
-              onSignatureChange={setSignatureUrl}
+              currentUrl={reportData.signature_image_url ?? null}
+              onSignatureChange={(url) => setReportData((prev) => ({ ...prev, signature_image_url: url }))}
             />
 
             <Card>
