@@ -111,6 +111,16 @@ const App = () => (
               <ClientDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/client/dashboard" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <ClientDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/requests" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <ClientRequestsPage />
+            </ProtectedRoute>
+          } />
           <Route path="/client/new-request" element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
               <NewRequest />
