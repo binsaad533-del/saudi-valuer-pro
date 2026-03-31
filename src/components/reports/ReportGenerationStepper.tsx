@@ -17,6 +17,7 @@ const STEPS: StepDef[] = [
 
 interface Props {
   currentStep: GenerationStep;
+  isStatic?: boolean;
 }
 
 export default function ReportGenerationStepper({ currentStep }: Props) {

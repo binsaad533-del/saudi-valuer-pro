@@ -234,11 +234,17 @@ export default function ReportGeneratorPage() {
         </div>
       </div>
 
-      {/* Generation Stepper */}
-      {isExporting && (
+      {/* Generation Stepper - show during export or as status indicator */}
+      {isExporting ? (
         <Card>
           <CardContent className="pt-6 pb-4">
             <ReportGenerationStepper currentStep={generationStep} />
+          </CardContent>
+        </Card>
+      ) : report && (
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <ReportGenerationStepper currentStep={reportStep} isStatic />
           </CardContent>
         </Card>
       )}
