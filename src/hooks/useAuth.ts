@@ -82,7 +82,7 @@ export function useAuth() {
       case "inspector":
         return "/inspector";
       default:
-        return "/client";
+        return "/client/dashboard";
     }
   };
 
