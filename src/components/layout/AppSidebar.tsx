@@ -21,7 +21,7 @@ import {
   Sparkles,
   LogOut,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/jsaas-logo.png";
 
 interface NavChild {
   label: string;
