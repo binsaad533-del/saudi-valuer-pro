@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { FileText, Globe, Languages, Lock, Download, Eye, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,8 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import ReportPreview from "@/components/reports/ReportPreview";
 import ReportSectionEditor from "@/components/reports/ReportSectionEditor";
 import ConsistencyChecker from "@/components/reports/ConsistencyChecker";
+import SignatureUpload from "@/components/reports/SignatureUpload";
+import ReportGenerationStepper, { type GenerationStep } from "@/components/reports/ReportGenerationStepper";
 import { type ReportLanguage, type ReportData } from "@/lib/report-types";
 import { translateReportSections } from "@/lib/report-api";
+import { exportReportPdf, downloadBlob } from "@/lib/pdf-export";
+import { QRCodeSVG } from "qrcode.react";
 
 const SAMPLE_REPORT: ReportData = {
   cover_title_ar: "تقرير تقييم عقاري",
@@ -81,8 +85,13 @@ export default function ReportGeneratorPage() {
   const [reportData, setReportData] = useState<ReportData>(SAMPLE_REPORT);
   const [activeTab, setActiveTab] = useState("preview");
   const [isTranslating, setIsTranslating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [generationStep, setGenerationStep] = useState<GenerationStep>("received");
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
   const [consistencyResult, setConsistencyResult] = useState<null | { consistent: boolean; issues: any[] }>(null);
   const { toast } = useToast();
+
+  const verificationUrl = `${window.location.origin}/verify/${reportData.reference_number}`;
 
   const handleTranslate = async (sourceLang: "ar" | "en") => {
     setIsTranslating(true);
@@ -120,6 +129,41 @@ export default function ReportGeneratorPage() {
     }
   };
 
+  const handleExportPdf = useCallback(async (exportLang: ReportLanguage, isDraft: boolean) => {
+    setIsExporting(true);
+    setGenerationStep("received");
+
+    try {
+      // Simulate the workflow steps
+      await new Promise((r) => setTimeout(r, 500));
+      setGenerationStep("processing");
+
+      const { url, json } = await exportReportPdf({
+        reportData,
+        language: exportLang,
+        isDraft,
+        signatureUrl,
+      });
+
+      setGenerationStep("review");
+      await new Promise((r) => setTimeout(r, 400));
+
+      const filename = `${reportData.reference_number}_${exportLang}${isDraft ? "_draft" : ""}.json`;
+      downloadBlob(url, filename);
+
+      setGenerationStep("ready");
+      toast({
+        title: isDraft ? "تم تصدير المسودة" : "تم تصدير التقرير النهائي",
+        description: filename,
+      });
+    } catch (e: any) {
+      toast({ title: "فشل التصدير", description: e.message, variant: "destructive" });
+      setGenerationStep("received");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [reportData, signatureUrl, toast]);
+
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
@@ -127,7 +171,7 @@ export default function ReportGeneratorPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">إنشاء التقرير</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {SAMPLE_REPORT.reference_number} — {SAMPLE_REPORT.client_name_ar}
+            {reportData.reference_number} — {reportData.client_name_ar}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -142,6 +186,15 @@ export default function ReportGeneratorPage() {
           )}
         </div>
       </div>
+
+      {/* Generation Stepper */}
+      {isExporting && (
+        <Card>
+          <CardContent className="pt-6 pb-4">
+            <ReportGenerationStepper currentStep={generationStep} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Language Selector + Actions */}
       <Card>
@@ -165,41 +218,36 @@ export default function ReportGeneratorPage() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleTranslate("ar")}
-                disabled={isTranslating}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleTranslate("ar")} disabled={isTranslating}>
                 {isTranslating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Globe className="w-4 h-4 ml-1" />}
                 ترجمة عربي ← إنجليزي
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleTranslate("en")}
-                disabled={isTranslating}
-              >
+              <Button size="sm" variant="outline" onClick={() => handleTranslate("en")} disabled={isTranslating}>
                 {isTranslating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Globe className="w-4 h-4 ml-1" />}
                 Translate EN → AR
               </Button>
             </div>
 
             <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" className="gap-1">
-                <Download className="w-4 h-4" />
-                {language === "ar" ? "تصدير PDF عربي" : language === "en" ? "Export EN PDF" : "تصدير PDF ثنائي"}
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1"
+                disabled={isExporting}
+                onClick={() => handleExportPdf(language, true)}
+              >
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                تصدير مسودة
               </Button>
-              {language === "bilingual" && (
-                <>
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <Download className="w-4 h-4" /> PDF عربي
-                  </Button>
-                  <Button size="sm" variant="outline" className="gap-1">
-                    <Download className="w-4 h-4" /> EN PDF
-                  </Button>
-                </>
-              )}
+              <Button
+                size="sm"
+                className="gap-1"
+                disabled={isExporting}
+                onClick={() => handleExportPdf(language, false)}
+              >
+                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                تصدير نهائي
+              </Button>
             </div>
           </div>
         </CardContent>
@@ -219,8 +267,40 @@ export default function ReportGeneratorPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="preview" className="mt-4">
+        <TabsContent value="preview" className="mt-4 space-y-4">
           <ReportPreview data={reportData} language={language} />
+
+          {/* QR Code & Signature Row */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SignatureUpload
+              currentUrl={signatureUrl}
+              onSignatureChange={setSignatureUrl}
+            />
+
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-primary" />
+                  رمز التحقق (QR)
+                </h3>
+                <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-muted/30">
+                  <QRCodeSVG
+                    value={verificationUrl}
+                    size={120}
+                    bgColor="transparent"
+                    fgColor="currentColor"
+                    className="text-foreground"
+                  />
+                  <p className="text-xs text-muted-foreground text-center max-w-[200px] break-all">
+                    {verificationUrl}
+                  </p>
+                  <Badge variant="outline" className="text-xs gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> جاهز للتحقق
+                  </Badge>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="edit" className="mt-4">
