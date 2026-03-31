@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
-  Loader2, Building2, Upload, Download, Eye, FolderOpen,
+  Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
 } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/StatusComponents";
 import { toast } from "sonner";
