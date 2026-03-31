@@ -243,16 +243,13 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
   if (report.verificationToken) {
     const qrUrl = `${window.location.origin}/verify/${report.verificationToken}`;
     try {
-      const { QRCodeCanvas } = await import("qrcode.react");
-      const qrDataUrl = await generateQRDataUrl(qrUrl);
-      if (qrDataUrl) {
-        doc.addImage(qrDataUrl, "PNG", PAGE_WIDTH / 2 - 15, y, 30, 30);
-        y += 33;
-        doc.setFontSize(7);
-        doc.text("رمز التحقق من التقرير", PAGE_WIDTH / 2, y, { align: "center" });
-        y += 4;
-        doc.text(qrUrl, PAGE_WIDTH / 2, y, { align: "center" });
-      }
+      const qrDataUrl = await QRCode.toDataURL(qrUrl, { width: 200, margin: 1 });
+      doc.addImage(qrDataUrl, "PNG", PAGE_WIDTH / 2 - 15, y, 30, 30);
+      y += 33;
+      doc.setFontSize(7);
+      doc.text("رمز التحقق من التقرير", PAGE_WIDTH / 2, y, { align: "center" });
+      y += 4;
+      doc.text(qrUrl, PAGE_WIDTH / 2, y, { align: "center" });
     } catch {
       doc.setFontSize(7);
       doc.text(`رابط التحقق: ${qrUrl}`, PAGE_WIDTH / 2, y, { align: "center" });
