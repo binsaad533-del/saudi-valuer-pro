@@ -89,7 +89,7 @@ type SortField = "name" | "revenue" | "projects" | "avgValue" | "date";
 export default function ClientsManagement() {
   const { toast } = useToast();
   const { role: currentUserRole } = useAuth();
-  const isSuperAdmin = currentUserRole === "super_admin";
+  const isSuperAdmin = currentUserRole === "owner";
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
