@@ -1,9 +1,10 @@
-import { useState, useRef } from "react";
-import { Upload, Pen, Trash2, Check } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { Upload, Pen, Trash2, Check, Image } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface SignatureUploadProps {
   currentUrl: string | null;
@@ -14,18 +15,15 @@ interface SignatureUploadProps {
 export default function SignatureUpload({ currentUrl, onSignatureChange, disabled }: SignatureUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(currentUrl);
+  const [isDragging, setIsDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const processFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast({ title: "يرجى اختيار صورة", variant: "destructive" });
       return;
     }
-
     if (file.size > 2 * 1024 * 1024) {
       toast({ title: "حجم الملف كبير جداً (الحد الأقصى 2 ميجابايت)", variant: "destructive" });
       return;
@@ -53,7 +51,34 @@ export default function SignatureUpload({ currentUrl, onSignatureChange, disable
     } finally {
       setUploading(false);
     }
+  }, [onSignatureChange, toast]);
+
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
   };
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled && !uploading) setIsDragging(true);
+  }, [disabled, uploading]);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    if (disabled || uploading) return;
+
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  }, [disabled, uploading, processFile]);
 
   const handleRemove = () => {
     setPreview(null);
@@ -78,21 +103,38 @@ export default function SignatureUpload({ currentUrl, onSignatureChange, disable
         {preview ? (
           <div className="border rounded-lg p-4 bg-muted/30 flex flex-col items-center gap-3">
             <img src={preview} alt="التوقيع" className="max-h-24 object-contain" />
-            <div className="flex items-center gap-1 text-xs text-green-600">
+            <div className="flex items-center gap-1 text-xs text-primary">
               <Check className="w-3.5 h-3.5" /> تم تحميل التوقيع
             </div>
           </div>
         ) : (
           <button
             onClick={() => fileRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
             disabled={disabled || uploading}
-            className="w-full border-2 border-dashed border-border rounded-lg p-8 flex flex-col items-center gap-3 hover:border-primary/50 hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={cn(
+              "w-full border-2 border-dashed rounded-lg p-8 flex flex-col items-center gap-3 transition-all disabled:opacity-50 disabled:cursor-not-allowed",
+              isDragging
+                ? "border-primary bg-primary/10 scale-[1.02]"
+                : "border-border hover:border-primary/50 hover:bg-primary/5"
+            )}
           >
-            <Upload className="w-8 h-8 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">
-              {uploading ? "جاري الرفع..." : "اضغط لرفع صورة التوقيع"}
-            </span>
-            <span className="text-xs text-muted-foreground">PNG أو JPG — حد أقصى 2 ميجابايت</span>
+            {isDragging ? (
+              <>
+                <Image className="w-10 h-10 text-primary animate-bounce" />
+                <span className="text-sm font-medium text-primary">أفلت الصورة هنا</span>
+              </>
+            ) : (
+              <>
+                <Upload className="w-8 h-8 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {uploading ? "جاري الرفع..." : "اسحب وأفلت صورة التوقيع أو اضغط للاختيار"}
+                </span>
+                <span className="text-xs text-muted-foreground">PNG أو JPG — حد أقصى 2 ميجابايت</span>
+              </>
+            )}
           </button>
         )}
 
