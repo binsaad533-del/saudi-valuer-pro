@@ -23,9 +23,12 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
 
       {/* Header */}
       <div className="border-b-4 border-primary p-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-primary">تقرير تقييم</h1>
-          <p className="text-sm text-muted-foreground mt-1">Valuation Report</p>
+        <div className="flex items-center gap-4">
+          <img src={jsaasLogo} alt="جساس للتقييم" className="w-16 h-16 object-contain bg-white rounded-md p-1" />
+          <div>
+            <h1 className="text-2xl font-bold text-primary">تقرير تقييم</h1>
+            <p className="text-sm text-muted-foreground mt-1">Valuation Report</p>
+          </div>
         </div>
         <div className="text-left space-y-1">
           <p className="text-sm font-semibold">{report.reportNumber}</p>
