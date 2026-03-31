@@ -5,6 +5,7 @@ import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import { QRCodeSVG } from "qrcode.react";
 import { Separator } from "@/components/ui/separator";
 import jsaasLogo from "@/assets/jsaas-logo.png";
+import OfficialStamp from "./OfficialStamp";
 
 interface ReportPreviewProfessionalProps {
   report: Report;
@@ -124,17 +125,22 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
 
       {/* Signature Block */}
       <div className="mx-6 mb-8 flex items-end justify-between">
-        <div className="space-y-2">
-          <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
-          <p className="font-bold text-lg">{report.evaluatorName}</p>
-          <div className="text-xs text-muted-foreground space-y-0.5">
-            <p>{report.evaluatorCredentials.saudiAuthority}</p>
-            <p>{report.evaluatorCredentials.rics}</p>
-            <p>{report.evaluatorCredentials.asa}</p>
+        <div className="flex items-start gap-6">
+          <div className="space-y-2">
+            <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
+            <p className="font-bold text-lg">{report.evaluatorName}</p>
+            <div className="text-xs text-muted-foreground space-y-0.5">
+              <p>{report.evaluatorCredentials.saudiAuthority}</p>
+              <p>{report.evaluatorCredentials.rics}</p>
+              <p>{report.evaluatorCredentials.asa}</p>
+            </div>
+            <p className="text-xs mt-2">
+              التاريخ: {new Date(report.issuedAt || report.createdAt).toLocaleDateString("ar-SA")}
+            </p>
           </div>
-          <p className="text-xs mt-2">
-            التاريخ: {new Date(report.issuedAt || report.createdAt).toLocaleDateString("ar-SA")}
-          </p>
+          <div className="opacity-80">
+            <OfficialStamp />
+          </div>
         </div>
 
         {report.verificationToken && (
