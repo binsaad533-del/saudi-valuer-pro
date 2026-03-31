@@ -73,13 +73,9 @@ const App = () => (
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
           </Route>
 
-          {/* Auditor Routes */}
           {/* Inspector Portal Routes */}
           <Route path="/inspector" element={<InspectorDashboard />} />
           <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
-
-          {/* Auditor Routes */}
-          <Route path="/auditor" element={<AuditorDashboard />} />
 
           {/* Client Portal Routes */}
           <Route path="/client/login" element={<ClientLogin />} />
