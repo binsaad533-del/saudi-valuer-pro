@@ -136,7 +136,8 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
           <div className="flex flex-col items-center gap-1">
             <QRCodeSVG
               value={`${window.location.origin}/verify/${report.verificationToken}`}
-              size={80}
+              size={100}
+              level="H"
             />
             <span className="text-[10px] text-muted-foreground">رمز التحقق</span>
           </div>
