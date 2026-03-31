@@ -60,8 +60,7 @@ export default function AdminLogin() {
         return;
       }
 
-      // Full page reload to ensure AuthProvider picks up session cleanly
-      window.location.href = "/";
+      navigate("/", { replace: true });
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
