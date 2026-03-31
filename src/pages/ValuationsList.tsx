@@ -184,9 +184,9 @@ export default function ValuationsList() {
                       {v.date}
                     </td>
                     <td className="px-5 py-3.5">
-                      <Link to={`/valuations/${v.id}`} className="text-primary hover:text-primary/80">
+                      <button onClick={(e) => { e.stopPropagation(); navigate(`/valuations/${v.id}`); }} className="text-primary hover:text-primary/80">
                         <ChevronLeft className="w-4 h-4" />
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))}
