@@ -39,6 +39,7 @@ import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
+import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 
 // Inspector Portal
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
