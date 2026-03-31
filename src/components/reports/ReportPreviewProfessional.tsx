@@ -5,6 +5,7 @@ import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import { QRCodeSVG } from "qrcode.react";
 import { Separator } from "@/components/ui/separator";
 import jsaasLogo from "@/assets/jsaas-logo.png";
+import OfficialStamp from "./OfficialStamp";
 
 interface ReportPreviewProfessionalProps {
   report: Report;
