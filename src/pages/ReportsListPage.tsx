@@ -141,8 +141,18 @@ export default function ReportsListPage() {
                         <Eye className="w-4 h-4" />
                       </Button>
                       {(r.status === "issued" || r.status === "delivered") && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Download className="w-4 h-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={exportingId === r.id}
+                          onClick={() => handleDownloadPdf(r)}
+                        >
+                          {exportingId === r.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
                         </Button>
                       )}
                     </div>

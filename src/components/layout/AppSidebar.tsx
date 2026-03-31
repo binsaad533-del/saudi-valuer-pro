@@ -53,6 +53,7 @@ const navSections: NavSection[] = [
     title: "التقييم",
     items: [
       { label: "التقييمات", icon: FileText, path: "/valuations", roles: ["owner"] },
+      { label: "التقارير", icon: FileText, path: "/reports", roles: ["owner"] },
       { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["owner"] },
     ],
     roles: ["owner"],
