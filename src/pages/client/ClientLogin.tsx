@@ -31,8 +31,7 @@ export default function ClientLogin() {
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
 
-  const getRedirectPath = async (userId: string) => {
-    // Check account status
+  const checkAccountAndGetPath = async (userId: string): Promise<string | null> => {
     const { data: profile } = await supabase
       .from("profiles")
       .select("account_status")
@@ -50,13 +49,9 @@ export default function ClientLogin() {
       .select("role")
       .eq("user_id", userId)
       .single();
-    const role = data?.role;
-    if (role === "owner" || role === "admin_coordinator" || role === "financial_manager") {
-      return "/";
-    }
-    if (role === "inspector") {
-      return "/inspector";
-    }
+    const r = data?.role;
+    if (r === "owner" || r === "admin_coordinator" || r === "financial_manager") return "/";
+    if (r === "inspector") return "/inspector";
     return "/client/dashboard";
   };
 
