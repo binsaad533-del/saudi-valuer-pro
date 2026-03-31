@@ -24,6 +24,13 @@ export default function ClientDashboard() {
   const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // New request dialog
+  const [showNewRequest, setShowNewRequest] = useState(false);
+  const [newReqNotes, setNewReqNotes] = useState("");
+  const [newReqFiles, setNewReqFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const newReqFileRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
