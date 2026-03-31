@@ -140,12 +140,18 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
 
         {/* Signature + Stamp + QR row */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
-            <div style={{ opacity: 0.85 }}>
-              <OfficialStamp />
+          {isDraft ? (
+            <div className="w-[300px] h-[80px] border-2 border-dashed border-muted-foreground/30 rounded-lg flex items-center justify-center">
+              <span className="text-sm text-muted-foreground">في انتظار التوقيع والاعتماد</span>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-6">
+              <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
+              <div style={{ opacity: 0.85 }}>
+                <OfficialStamp />
+              </div>
+            </div>
+          )}
 
           {report.verificationToken && (
             <div className="flex flex-col items-center gap-1">
