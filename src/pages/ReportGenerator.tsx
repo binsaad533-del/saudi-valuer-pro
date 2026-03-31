@@ -148,29 +148,29 @@ export default function ReportGeneratorPage() {
     setIsExporting(true);
     setGenerationStep("received");
 
+    toast({ title: "جاري تصدير التقرير...", description: report.reportNumber });
+
     try {
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 800));
       setGenerationStep("processing");
+      await new Promise((r) => setTimeout(r, 800));
+      setGenerationStep("review");
+      await new Promise((r) => setTimeout(r, 400));
 
       const blob = await exportReportToPDF(report);
-
-      setGenerationStep("review");
-      await new Promise((r) => setTimeout(r, 300));
-
       const filename = `${report.reportNumber}.pdf`;
       downloadPdfBlob(blob, filename);
 
       setGenerationStep("ready");
       toast({ title: "تم تصدير التقرير بنجاح", description: filename });
 
-      // Mark as archived after final export
       if (report.status === "issued" || report.status === "delivered") {
         setReport((prev) =>
           prev ? { ...prev, isArchived: true, archivedAt: new Date().toISOString() } : prev
         );
       }
-    } catch (e: any) {
-      toast({ title: "فشل التصدير", description: e.message, variant: "destructive" });
+    } catch {
+      toast({ title: "فشل التصدير", variant: "destructive" });
       setGenerationStep("received");
     } finally {
       setIsExporting(false);
