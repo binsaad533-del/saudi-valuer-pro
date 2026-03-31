@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +12,15 @@ import logo from "@/assets/logo.png";
 
 export default function ClientLogin() {
   const navigate = useNavigate();
+  const { user, role, loading: authLoading, getRedirectPath } = useAuth();
   const { toast } = useToast();
+
+  // If already logged in, redirect
+  useEffect(() => {
+    if (!authLoading && user && role) {
+      navigate(getRedirectPath(role), { replace: true });
+    }
+  }, [authLoading, user, role, navigate, getRedirectPath]);
   const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState("");
@@ -22,8 +31,7 @@ export default function ClientLogin() {
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
 
-  const getRedirectPath = async (userId: string) => {
-    // Check account status
+  const checkAccountAndGetPath = async (userId: string): Promise<string | null> => {
     const { data: profile } = await supabase
       .from("profiles")
       .select("account_status")
@@ -41,13 +49,9 @@ export default function ClientLogin() {
       .select("role")
       .eq("user_id", userId)
       .single();
-    const role = data?.role;
-    if (role === "owner" || role === "admin_coordinator" || role === "financial_manager") {
-      return "/";
-    }
-    if (role === "inspector") {
-      return "/inspector";
-    }
+    const r = data?.role;
+    if (r === "owner" || r === "admin_coordinator" || r === "financial_manager") return "/";
+    if (r === "inspector") return "/inspector";
     return "/client/dashboard";
   };
 
@@ -57,8 +61,11 @@ export default function ClientLogin() {
     try {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      const path = await getRedirectPath(authData.user.id);
-      if (path) navigate(path);
+      const path = await checkAccountAndGetPath(authData.user.id);
+      if (path) {
+        await supabase.auth.getSession();
+        navigate(path, { replace: true });
+      }
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
