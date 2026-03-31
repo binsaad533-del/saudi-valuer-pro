@@ -278,21 +278,6 @@ async function loadImage(url: string): Promise<string> {
   });
 }
 
-async function generateQRDataUrl(value: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = 200;
-    canvas.height = 200;
-
-    import("qrcode.react").then(({ QRCodeCanvas }) => {
-      // Use a temporary approach with the SVG
-      const { renderToStaticMarkup } = require("react-dom/server");
-      // Fallback: generate QR via canvas API
-      resolve(null);
-    }).catch(() => resolve(null));
-  });
-}
-
 export function downloadPdfBlob(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
