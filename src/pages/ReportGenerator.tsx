@@ -13,7 +13,7 @@ import ReportGenerationStepper, { type GenerationStep } from "@/components/repor
 import { type ReportLanguage, type ReportData } from "@/lib/report-types";
 import { translateReportSections } from "@/lib/report-api";
 import { exportReportPdf, downloadBlob } from "@/lib/pdf-export";
-import { QRCodeSVG } from "qrcode.react";
+import QRCodeGeneratorComponent from "@/components/reports/QRCodeGenerator";
 
 const SAMPLE_REPORT: ReportData = {
   cover_title_ar: "تقرير تقييم عقاري",
