@@ -399,10 +399,8 @@ export default function ClientsManagement() {
             <SelectItem value="all">جميع الأدوار</SelectItem>
             <SelectItem value="client">عميل</SelectItem>
             <SelectItem value="inspector">معاين</SelectItem>
-            <SelectItem value="auditor">مراقب</SelectItem>
-            <SelectItem value="firm_admin">مدير</SelectItem>
-            <SelectItem value="valuer">مقيّم</SelectItem>
-            <SelectItem value="reviewer">مراجع</SelectItem>
+            <SelectItem value="financial_manager">مدير مالي</SelectItem>
+            <SelectItem value="admin_coordinator">منسق إداري</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortField} onValueChange={(v) => { setSortField(v as SortField); setSortAsc(false); }}>
