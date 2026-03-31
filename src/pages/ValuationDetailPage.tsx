@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import {
-  ArrowRight, MapPin, User, Building2, Calendar, DollarSign,
-  Clock, FileText, CheckCircle2, AlertTriangle, Camera, StickyNote,
+  ArrowRight, MapPin, User, Building2, DollarSign,
+  Clock, AlertTriangle, Camera, StickyNote,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
