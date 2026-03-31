@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     accountStatus: null,
   });
   const mountedRef = useRef(true);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -46,14 +47,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Single source of truth: onAuthStateChange handles INITIAL_SESSION + all future events
+    // 1. Hydrate from persisted session — this is the reliable initial check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mountedRef.current) return;
+      initializedRef.current = true;
+      if (session?.user) {
+        fetchRoleAndProfile(session.user);
+      } else {
+        setState({ user: null, role: null, loading: false, accountStatus: null });
+      }
+    });
+
+    // 2. Listen for FUTURE auth changes (sign-in, sign-out, token refresh)
+    //    Ignore events until getSession has resolved (initializedRef)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mountedRef.current) return;
+      // Skip the initial event — getSession handles that
+      if (!initializedRef.current) return;
+
       if (session?.user) {
-        // Use setTimeout to avoid Supabase deadlock when calling Supabase inside the callback
-        setTimeout(() => {
-          if (mountedRef.current) fetchRoleAndProfile(session.user);
-        }, 0);
+        fetchRoleAndProfile(session.user);
       } else {
         setState({ user: null, role: null, loading: false, accountStatus: null });
       }
