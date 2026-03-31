@@ -67,9 +67,10 @@ export default function QRCodeGenerator({
             id="report-qr-code"
             value={verificationUrl}
             size={size}
+            level="H"
             bgColor="transparent"
             fgColor="currentColor"
-            className="text-foreground"
+            className="text-foreground print:text-black"
             includeMargin
           />
 
