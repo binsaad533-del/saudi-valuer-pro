@@ -14,6 +14,7 @@ import {
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
 } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/StatusComponents";
+import { RequestTracker } from "@/components/client/RequestTracker";
 import { toast } from "sonner";
 
 export default function ClientDashboard() {
