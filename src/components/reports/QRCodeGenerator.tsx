@@ -17,7 +17,7 @@ export default function QRCodeGenerator({
   referenceNumber,
   verificationToken,
   reportDate,
-  size = 140,
+  size = 160,
 }: QRCodeGeneratorProps) {
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
