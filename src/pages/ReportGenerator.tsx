@@ -230,6 +230,21 @@ export default function ReportGeneratorPage() {
         </Card>
       )}
 
+      {/* Lock Banner */}
+      {locked && report && (
+        <div className="flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4" dir="rtl">
+          <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+            <Lock className="w-5 h-5 text-destructive" />
+          </div>
+          <div>
+            <p className="font-bold text-destructive">هذا التقرير نهائي وغير قابل للتعديل</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              حالة التقرير: {getStatusLabel(report.status)} — لا يمكن إجراء أي تعديلات على التقارير الصادرة أو المُسلَّمة
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Workflow View: Professional Preview + Workflow Panel + Actions */}
       {showWorkflowView && report && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -270,14 +285,12 @@ export default function ReportGeneratorPage() {
               </CardContent>
             </Card>
 
-            {/* Workflow Panel - hide for issued/archived */}
-            {!locked && (
-              <ReportWorkflowPanel
-                report={report}
-                isOwner={true}
-                onReportUpdate={handleReportUpdate}
-              />
-            )}
+            {/* Workflow Panel - always show, read-only when locked */}
+            <ReportWorkflowPanel
+              report={report}
+              isOwner={!locked}
+              onReportUpdate={handleReportUpdate}
+            />
 
             {/* Signature - hide for issued/archived */}
             {!locked && (
