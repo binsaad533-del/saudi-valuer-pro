@@ -60,8 +60,8 @@ export default function AdminLogin() {
         return;
       }
 
-      // Mark login as successful — useEffect will handle navigation when AuthProvider updates
-      setLoginSuccess(true);
+      // Force full page reload to ensure clean auth state
+      window.location.replace("/");
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
