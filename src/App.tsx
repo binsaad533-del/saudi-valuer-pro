@@ -20,6 +20,7 @@ import CompliancePage from "@/pages/CompliancePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ValuationProductionList from "@/pages/ValuationProductionList";
 import ReportsListPage from "@/pages/ReportsListPage";
+import ValuationDetailPage from "@/pages/ValuationDetailPage";
 import NotFound from "./pages/NotFound.tsx";
 
 // Admin
