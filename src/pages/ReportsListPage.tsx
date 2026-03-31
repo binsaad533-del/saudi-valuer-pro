@@ -1,8 +1,9 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FileText, Search, Filter, Eye, Download } from "lucide-react";
+import { FileText, Search, Filter, Eye, Download, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -10,6 +11,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { exportReportToPDF, downloadPdfBlob } from "@/services/pdfExportService";
 import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
@@ -24,8 +26,23 @@ const STATUSES: ReportStatus[] = ["draft", "review", "approved", "issued", "deli
 
 export default function ReportsListPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [exportingId, setExportingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = useCallback(async (report: typeof mockReports[0]) => {
+    setExportingId(report.id);
+    try {
+      const blob = await exportReportToPDF(report);
+      downloadPdfBlob(blob, `${report.reportNumber}.pdf`);
+      toast({ title: "تم تحميل التقرير بنجاح" });
+    } catch (e: any) {
+      toast({ title: "فشل التحميل", description: e.message, variant: "destructive" });
+    } finally {
+      setExportingId(null);
+    }
+  }, [toast]);
 
   const filtered = useMemo(() => {
     return mockReports.filter((r) => {
@@ -124,8 +141,18 @@ export default function ReportsListPage() {
                         <Eye className="w-4 h-4" />
                       </Button>
                       {(r.status === "issued" || r.status === "delivered") && (
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Download className="w-4 h-4" />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          disabled={exportingId === r.id}
+                          onClick={() => handleDownloadPdf(r)}
+                        >
+                          {exportingId === r.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
                         </Button>
                       )}
                     </div>
