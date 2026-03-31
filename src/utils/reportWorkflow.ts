@@ -109,7 +109,7 @@ export function getStatusColor(status: ReportStatus): string {
     review: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
     approved: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
     issued: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-    delivered: "bg-primary/10 text-primary",
+    delivered: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400",
     cancelled: "bg-destructive/10 text-destructive",
   };
   return map[status];
