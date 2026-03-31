@@ -87,7 +87,7 @@ export default function ReportGeneratorPage() {
   const [isTranslating, setIsTranslating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationStep, setGenerationStep] = useState<GenerationStep>("received");
-  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+  
   const [consistencyResult, setConsistencyResult] = useState<null | { consistent: boolean; issues: any[] }>(null);
   const { toast } = useToast();
 
