@@ -42,38 +42,45 @@ interface NavSection {
   roles?: string[]; // which roles can see this section
 }
 
-const dashboardRoles = ["owner", "admin_coordinator", "financial_manager"];
-const operationRoles = ["owner", "admin_coordinator"];
-
 const navSections: NavSection[] = [
   {
     items: [
       { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: ["owner"] },
-      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: dashboardRoles },
+      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: ["owner", "admin_coordinator"] },
     ],
   },
   {
     title: "التقييم",
     items: [
-      { label: "التقييمات", icon: FileText, path: "/valuations", roles: ["owner", "admin_coordinator"] },
+      { label: "التقييمات", icon: FileText, path: "/valuations", roles: ["owner"] },
       { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["owner"] },
     ],
+    roles: ["owner"],
   },
   {
     title: "العمليات",
     items: [
-      { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: operationRoles },
-      { label: "العملاء", icon: Users, path: "/clients-management", roles: operationRoles },
+      { label: "طلبات العملاء", icon: ClipboardCheck, path: "/client-requests", roles: ["owner", "admin_coordinator"] },
+      { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: ["owner", "admin_coordinator"] },
+      { label: "العملاء", icon: Users, path: "/clients-management", roles: ["owner", "admin_coordinator"] },
     ],
-    roles: operationRoles,
+    roles: ["owner", "admin_coordinator"],
+  },
+  {
+    title: "المالية",
+    items: [
+      { label: "لوحة المالية", icon: LayoutDashboard, path: "/", roles: ["financial_manager"] },
+      { label: "الفواتير والمدفوعات", icon: FileText, path: "/valuations", roles: ["financial_manager"] },
+    ],
+    roles: ["financial_manager"],
   },
   {
     title: "النظام",
     items: [
       { label: "الامتثال", icon: Shield, path: "/compliance", roles: ["owner"] },
       { label: "الإعدادات", icon: Settings, path: "/settings", roles: ["owner"] },
-      { label: "إعدادات الحساب", icon: Settings, path: "/settings", roles: ["admin_coordinator"] },
     ],
+    roles: ["owner"],
   },
 ];
 
