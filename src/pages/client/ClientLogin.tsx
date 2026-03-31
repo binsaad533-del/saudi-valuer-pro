@@ -48,7 +48,7 @@ export default function ClientLogin() {
     if (role === "inspector") {
       return "/inspector";
     }
-    return "/client";
+    return "/client/dashboard";
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
