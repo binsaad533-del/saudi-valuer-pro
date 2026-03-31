@@ -59,7 +59,7 @@ export default function QRCodeGenerator({
       <CardContent className="pt-6">
         <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
           <ShieldCheck className="w-4 h-4 text-primary" />
-          رمز التحقق (QR)
+          رمز التحقق
         </h3>
 
         <div className="flex flex-col items-center gap-4 p-4 border rounded-lg bg-muted/30">
