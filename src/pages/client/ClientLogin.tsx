@@ -62,7 +62,7 @@ export default function ClientLogin() {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const path = await checkAccountAndGetPath(authData.user.id);
-      if (path) window.location.href = path;
+      if (path) navigate(path, { replace: true });
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
