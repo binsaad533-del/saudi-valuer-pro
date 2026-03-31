@@ -21,7 +21,7 @@ import {
   Sparkles,
   LogOut,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/jsaas-logo.png";
 
 interface NavChild {
   label: string;
@@ -153,7 +153,7 @@ export default function AppSidebar() {
     <div className="flex flex-col h-full gradient-sidebar border-l border-sidebar-border">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
-        <img src={logo} alt="جساس" className="w-10 h-10 object-contain" />
+        <img src={logo} alt="جساس" className="w-10 h-10 object-contain rounded-md bg-white p-0.5" />
         {!collapsed && (
           <div className="flex flex-col">
             <span className="text-primary font-bold text-lg leading-tight">
