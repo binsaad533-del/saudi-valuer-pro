@@ -33,10 +33,13 @@ export default function ReportGenerationStepper({ currentStep, isStatic = false 
           <div key={step.key} className="flex items-center flex-1 last:flex-none">
             <div className="flex flex-col items-center gap-1.5">
               <div
-                className={cn(
-                  "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
-                  isDone && "bg-primary border-primary text-primary-foreground",
-                  isCurrent && "border-primary text-primary bg-primary/10 animate-pulse",
+                 className={cn(
+                   "w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all",
+                   isDone && "bg-primary border-primary text-primary-foreground",
+                   isCurrent && !isStatic && "border-primary text-primary bg-primary/10 animate-pulse",
+                   isCurrent && isStatic && "bg-primary border-primary text-primary-foreground",
+                   !isDone && !isCurrent && "border-muted-foreground/30 text-muted-foreground/50 bg-muted/30"
+                 )}
                   !isDone && !isCurrent && "border-muted-foreground/30 text-muted-foreground/50 bg-muted/30"
                 )}
               >
