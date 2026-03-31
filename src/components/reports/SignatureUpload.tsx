@@ -91,7 +91,7 @@ export default function SignatureUpload({ currentUrl, onSignatureChange, disable
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
             <Pen className="w-4 h-4 text-primary" />
-            التوقيع الرقمي
+            رفع صورة التوقيع
           </h3>
           {preview && !disabled && (
             <Button size="sm" variant="ghost" onClick={handleRemove} className="text-destructive gap-1">
