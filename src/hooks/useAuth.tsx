@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -22,72 +22,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     accountStatus: null,
   });
-  const mountedRef = useRef(true);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
-    mountedRef.current = true;
-    initializedRef.current = false;
+    let mounted = true;
 
-    const loadUserData = (user: User) => {
-      Promise.all([
-        supabase.from("user_roles").select("role").eq("user_id", user.id).single(),
-        supabase.from("profiles").select("account_status").eq("user_id", user.id).single(),
-      ]).then(([{ data: roleData }, { data: profile }]) => {
-        if (!mountedRef.current) return;
+    const fetchRoleAndProfile = async (user: User) => {
+      try {
+        const [{ data: roleData }, { data: profile }] = await Promise.all([
+          supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(),
+          supabase.from("profiles").select("account_status").eq("user_id", user.id).maybeSingle(),
+        ]);
+        if (!mounted) return;
         setState({
           user,
           role: roleData?.role || "client",
           loading: false,
           accountStatus: profile?.account_status || "active",
         });
-      }).catch(() => {
-        if (!mountedRef.current) return;
+      } catch {
+        if (!mounted) return;
         setState({ user, role: "client", loading: false, accountStatus: "active" });
-      });
+      }
     };
 
-    // 1. Register listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (!mountedRef.current) return;
-
-        if (event === "INITIAL_SESSION") {
-          // Mark as initialized so getSession doesn't double-fire
-          initializedRef.current = true;
-        }
-
-        if (event === "SIGNED_OUT") {
-          setState({ user: null, role: null, loading: false, accountStatus: null });
-          return;
-        }
-
-        if (session?.user) {
-          loadUserData(session.user);
-        } else {
-          setState({ user: null, role: null, loading: false, accountStatus: null });
-        }
+    // 1. Hydrate from persisted session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        fetchRoleAndProfile(session.user);
+      } else {
+        setState({ user: null, role: null, loading: false, accountStatus: null });
       }
-    );
+    });
 
-    // 2. Fallback: if INITIAL_SESSION didn't fire within 1s, use getSession
-    const fallbackTimer = setTimeout(() => {
-      if (!initializedRef.current && mountedRef.current) {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-          if (!mountedRef.current || initializedRef.current) return;
-          initializedRef.current = true;
-          if (session?.user) {
-            loadUserData(session.user);
-          } else {
-            setState({ user: null, role: null, loading: false, accountStatus: null });
-          }
-        });
+    // 2. Listen for future auth changes (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+      if (session?.user) {
+        fetchRoleAndProfile(session.user);
+      } else {
+        setState({ user: null, role: null, loading: false, accountStatus: null });
       }
-    }, 1000);
+    });
 
     return () => {
-      mountedRef.current = false;
-      clearTimeout(fallbackTimer);
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
