@@ -51,9 +51,9 @@ export default function AdminLogin() {
         return;
       }
 
-      // Force full reload to ensure AuthProvider picks up the new session cleanly
-      window.location.href = "/";
-      return;
+      // Small delay to let AuthProvider process the onAuthStateChange event
+      await new Promise((r) => setTimeout(r, 300));
+      navigate("/", { replace: true });
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
