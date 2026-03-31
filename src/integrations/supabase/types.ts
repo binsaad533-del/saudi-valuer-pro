@@ -3295,7 +3295,7 @@ export type Database = {
           granted_by?: string | null
           id?: string
           organization_id?: string | null
-          role: Database["public"]["Enums"]["app_role"]
+          role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
@@ -3909,13 +3909,11 @@ export type Database = {
         | "services"
         | "other"
       app_role:
-        | "super_admin"
-        | "firm_admin"
-        | "valuer"
-        | "reviewer"
-        | "client"
-        | "auditor"
+        | "owner"
+        | "financial_manager"
+        | "admin_coordinator"
         | "inspector"
+        | "client"
       assignment_status:
         | "draft"
         | "intake"
@@ -4218,13 +4216,11 @@ export const Constants = {
         "other",
       ],
       app_role: [
-        "super_admin",
-        "firm_admin",
-        "valuer",
-        "reviewer",
-        "client",
-        "auditor",
+        "owner",
+        "financial_manager",
+        "admin_coordinator",
         "inspector",
+        "client",
       ],
       assignment_status: [
         "draft",
