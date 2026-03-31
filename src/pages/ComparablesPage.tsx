@@ -12,7 +12,7 @@ const comparables = [
 
 export default function ComparablesPage() {
   const { role } = useAuth();
-  const canAdd = ["super_admin", "firm_admin", "valuer"].includes(role || "");
+  const canAdd = ["owner"].includes(role || "");
 
   return (
     <div className="min-h-screen">

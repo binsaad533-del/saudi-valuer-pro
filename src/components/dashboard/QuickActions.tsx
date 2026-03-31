@@ -23,7 +23,7 @@ const actions: QuickAction[] = [
   { label: "طلب تقييم جديد", icon: FolderPlus, path: "/valuations/new", variant: "primary" },
   { label: "جميع التقييمات", icon: FileText, path: "/valuations", variant: "default" },
   { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review", variant: "default" },
-  { label: "المقارنات السوقية", icon: Building2, path: "/comparables", variant: "default", roles: ["super_admin", "valuer"] },
+  { label: "المقارنات السوقية", icon: Building2, path: "/comparables", variant: "default", roles: ["owner"] },
   { label: "بحث متقدم", icon: Search, path: "/search", variant: "default" },
   { label: "تصدير التقارير", icon: FileDown, path: "/reports", variant: "default" },
   { label: "إدارة العملاء", icon: Users, path: "/clients", variant: "default" },

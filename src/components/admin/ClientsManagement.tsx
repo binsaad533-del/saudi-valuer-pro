@@ -43,20 +43,18 @@ interface UserRow {
 
 // ── Constants ──
 const ROLE_LABELS: Record<string, string> = {
-  client: "عميل", inspector: "معاين ميداني", auditor: "مراقب",
-  super_admin: "مدير النظام", firm_admin: "مدير المنشأة",
-  valuer: "مقيّم", reviewer: "مراجع",
+  client: "عميل", inspector: "معاين ميداني",
+  owner: "مالك المنصة", financial_manager: "مدير مالي",
+  admin_coordinator: "منسق إداري",
 };
 const ROLE_COLORS: Record<string, string> = {
   client: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
   inspector: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  auditor: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  super_admin: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  firm_admin: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
-  valuer: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  reviewer: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300",
+  owner: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+  financial_manager: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+  admin_coordinator: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
 };
-const ASSIGNABLE_ROLES = ["client", "inspector", "auditor", "firm_admin"] as const;
+const ASSIGNABLE_ROLES = ["client", "inspector", "financial_manager", "admin_coordinator"] as const;
 
 const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   vip: { label: "VIP", color: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700", icon: Crown },
@@ -91,7 +89,7 @@ type SortField = "name" | "revenue" | "projects" | "avgValue" | "date";
 export default function ClientsManagement() {
   const { toast } = useToast();
   const { role: currentUserRole } = useAuth();
-  const isSuperAdmin = currentUserRole === "super_admin";
+  const isSuperAdmin = currentUserRole === "owner";
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -401,10 +399,8 @@ export default function ClientsManagement() {
             <SelectItem value="all">جميع الأدوار</SelectItem>
             <SelectItem value="client">عميل</SelectItem>
             <SelectItem value="inspector">معاين</SelectItem>
-            <SelectItem value="auditor">مراقب</SelectItem>
-            <SelectItem value="firm_admin">مدير</SelectItem>
-            <SelectItem value="valuer">مقيّم</SelectItem>
-            <SelectItem value="reviewer">مراجع</SelectItem>
+            <SelectItem value="financial_manager">مدير مالي</SelectItem>
+            <SelectItem value="admin_coordinator">منسق إداري</SelectItem>
           </SelectContent>
         </Select>
         <Select value={sortField} onValueChange={(v) => { setSortField(v as SortField); setSortAsc(false); }}>

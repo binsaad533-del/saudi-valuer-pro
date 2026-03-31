@@ -42,48 +42,46 @@ interface NavSection {
   roles?: string[]; // which roles can see this section
 }
 
-const allRoles = ["super_admin", "firm_admin", "valuer", "reviewer"];
-const adminRoles = ["super_admin", "firm_admin"];
+const dashboardRoles = ["owner", "admin_coordinator", "financial_manager"];
+const operationRoles = ["owner", "admin_coordinator"];
 
 const navSections: NavSection[] = [
   {
     items: [
-      { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: ["super_admin"] },
-      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: allRoles },
+      { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: ["owner"] },
+      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: dashboardRoles },
     ],
   },
   {
     title: "التقييم",
     items: [
-      { label: "التقييمات", icon: FileText, path: "/valuations", roles: allRoles },
-      { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["super_admin", "valuer"] },
+      { label: "التقييمات", icon: FileText, path: "/valuations", roles: ["owner", "admin_coordinator"] },
+      { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["owner"] },
     ],
   },
   {
     title: "العمليات",
     items: [
-      { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: adminRoles },
-      { label: "العملاء", icon: Users, path: "/clients-management", roles: adminRoles },
+      { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: operationRoles },
+      { label: "العملاء", icon: Users, path: "/clients-management", roles: operationRoles },
     ],
-    roles: adminRoles,
+    roles: operationRoles,
   },
   {
     title: "النظام",
     items: [
-      { label: "الامتثال", icon: Shield, path: "/compliance", roles: ["super_admin"] },
-      { label: "الإعدادات", icon: Settings, path: "/settings", roles: ["super_admin"] },
-      { label: "إعدادات الحساب", icon: Settings, path: "/settings", roles: ["firm_admin"] },
+      { label: "الامتثال", icon: Shield, path: "/compliance", roles: ["owner"] },
+      { label: "الإعدادات", icon: Settings, path: "/settings", roles: ["owner"] },
+      { label: "إعدادات الحساب", icon: Settings, path: "/settings", roles: ["admin_coordinator"] },
     ],
   },
 ];
 
 const roleLabels: Record<string, string> = {
-  super_admin: "مالك المنصة",
-  firm_admin: "مدير الشركة",
-  valuer: "مقيّم معتمد",
-  reviewer: "مراجع",
+  owner: "مالك المنصة",
+  financial_manager: "مدير مالي",
+  admin_coordinator: "منسق إداري",
   inspector: "معاين",
-  auditor: "مدقق",
   client: "عميل",
 };
 
