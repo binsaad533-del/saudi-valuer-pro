@@ -11,6 +11,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { exportReportToPDF, downloadPdfBlob } from "@/services/pdfExportService";
 import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
