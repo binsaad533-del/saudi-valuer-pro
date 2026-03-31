@@ -35,13 +35,19 @@ export default function ProtectedRoute({ children, allowedRoles, redirectTo }: P
     if (timedOut && fallbackUser) return;
 
     if (!user) {
-      navigate(redirectTo || "/login", { replace: true });
+      // Double-check session before redirecting — localStorage may not have been read yet
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (!session) {
+          navigate(redirectTo || "/login", { replace: true });
+        }
+        // If session exists, AuthProvider will eventually update — don't redirect
+      });
       return;
     }
     if (role && !allowedRoles.includes(role)) {
       if (role === "client") navigate("/client", { replace: true });
       else if (role === "inspector") navigate("/inspector", { replace: true });
-      else navigate("/login", { replace: true });
+      else navigate(redirectTo || "/login", { replace: true });
     }
   }, [user, role, loading, timedOut, fallbackUser, allowedRoles, navigate, redirectTo]);
 
