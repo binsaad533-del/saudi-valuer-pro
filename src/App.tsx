@@ -20,6 +20,7 @@ import CompliancePage from "@/pages/CompliancePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ValuationProductionList from "@/pages/ValuationProductionList";
 import ReportsListPage from "@/pages/ReportsListPage";
+import ValuationDetailPage from "@/pages/ValuationDetailPage";
 import NotFound from "./pages/NotFound.tsx";
 
 // Admin
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/" element={<Dashboard />} />
             <Route path="/valuations" element={<ValuationsList />} />
             <Route path="/valuations/new" element={<NewValuation />} />
+            <Route path="/valuations/:id" element={<ValuationDetailPage />} />
             <Route path="/valuations/review" element={<ValuationsList />} />
             <Route path="/valuations/completed" element={<ValuationsList />} />
             <Route path="/comparables" element={<ComparablesPage />} />
