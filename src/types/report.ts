@@ -1,5 +1,7 @@
 export type ReportStatus = 'draft' | 'review' | 'approved' | 'issued' | 'delivered' | 'cancelled';
 
+export type WorkflowAction = 'create_draft' | 'submit_review' | 'approve' | 'reject' | 'issue' | 'deliver' | 'cancel';
+
 export type AssetType = 'real_estate' | 'equipment' | 'vehicle';
 
 export type ValuationMethodology = 'market_comparison' | 'income' | 'cost' | 'combined';
