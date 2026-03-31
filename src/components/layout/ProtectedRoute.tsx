@@ -9,49 +9,46 @@ interface ProtectedRouteProps {
   redirectTo?: string;
 }
 
-const AUTH_TIMEOUT_MS = 5000;
-
 export default function ProtectedRoute({ children, allowedRoles, redirectTo }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const navigate = useNavigate();
-  const [timedOut, setTimedOut] = useState(false);
-  const [fallbackUser, setFallbackUser] = useState<boolean | null>(null);
+  const [verified, setVerified] = useState<"pending" | "authenticated" | "unauthenticated">("pending");
 
-  // Timeout: if loading takes too long, check session directly
+  // Once AuthProvider finishes loading, double-check with getSession to avoid race conditions
   useEffect(() => {
-    if (!loading) return;
-    const timer = setTimeout(async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setFallbackUser(!!session?.user);
-      setTimedOut(true);
-    }, AUTH_TIMEOUT_MS);
-    return () => clearTimeout(timer);
-  }, [loading]);
+    if (loading) return;
 
-  useEffect(() => {
-    if (loading && !timedOut) return;
-
-    // If timed out but user has active session, allow through
-    if (timedOut && fallbackUser) return;
-
-    if (!user) {
-      // Double-check session before redirecting — localStorage may not have been read yet
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (!session) {
-          navigate(redirectTo || "/login", { replace: true });
-        }
-        // If session exists, AuthProvider will eventually update — don't redirect
-      });
+    if (user) {
+      setVerified("authenticated");
       return;
     }
-    if (role && !allowedRoles.includes(role)) {
+
+    // AuthProvider says no user — confirm with a direct session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        // Session exists but AuthProvider hasn't caught up yet — wait for it
+        setVerified("authenticated");
+      } else {
+        setVerified("unauthenticated");
+      }
+    });
+  }, [user, loading]);
+
+  // Handle redirects only when verification is complete
+  useEffect(() => {
+    if (verified === "unauthenticated") {
+      navigate(redirectTo || "/login", { replace: true });
+      return;
+    }
+
+    if (verified === "authenticated" && role && !allowedRoles.includes(role)) {
       if (role === "client") navigate("/client", { replace: true });
       else if (role === "inspector") navigate("/inspector", { replace: true });
       else navigate(redirectTo || "/login", { replace: true });
     }
-  }, [user, role, loading, timedOut, fallbackUser, allowedRoles, navigate, redirectTo]);
+  }, [verified, role, allowedRoles, navigate, redirectTo]);
 
-  if (loading && !timedOut) {
+  if (verified !== "authenticated") {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
@@ -59,12 +56,7 @@ export default function ProtectedRoute({ children, allowedRoles, redirectTo }: P
     );
   }
 
-  // Timed out but session exists → allow access
-  if (timedOut && fallbackUser) {
-    return <>{children}</>;
-  }
-
-  if (!user || !role || !allowedRoles.includes(role)) return null;
+  if (role && !allowedRoles.includes(role)) return null;
 
   return <>{children}</>;
 }
