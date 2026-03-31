@@ -13,11 +13,19 @@ const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { user, role, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // If already authenticated as admin, redirect immediately
+  useEffect(() => {
+    if (!authLoading && user && role && ADMIN_ROLES.includes(role)) {
+      navigate("/", { replace: true });
+    }
+  }, [user, role, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
