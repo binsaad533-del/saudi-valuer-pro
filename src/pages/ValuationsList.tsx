@@ -54,6 +54,7 @@ const mockValuations = [
 ];
 
 export default function ValuationsList() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "all";
   const [activeStatus, setActiveStatus] = useState<Status>("all");
