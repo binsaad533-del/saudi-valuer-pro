@@ -91,7 +91,7 @@ export default function ReportGeneratorPage() {
   const [consistencyResult, setConsistencyResult] = useState<null | { consistent: boolean; issues: any[] }>(null);
   const { toast } = useToast();
 
-  const verificationUrl = `${window.location.origin}/verify/${reportData.reference_number}`;
+  
 
   const handleTranslate = async (sourceLang: "ar" | "en") => {
     setIsTranslating(true);
