@@ -13,7 +13,7 @@ import ReportGenerationStepper, { type GenerationStep } from "@/components/repor
 import { type ReportLanguage, type ReportData } from "@/lib/report-types";
 import { translateReportSections } from "@/lib/report-api";
 import { exportReportPdf, downloadBlob } from "@/lib/pdf-export";
-import { QRCodeSVG } from "qrcode.react";
+import QRCodeGeneratorComponent from "@/components/reports/QRCodeGenerator";
 
 const SAMPLE_REPORT: ReportData = {
   cover_title_ar: "تقرير تقييم عقاري",
@@ -91,7 +91,7 @@ export default function ReportGeneratorPage() {
   const [consistencyResult, setConsistencyResult] = useState<null | { consistent: boolean; issues: any[] }>(null);
   const { toast } = useToast();
 
-  const verificationUrl = `${window.location.origin}/verify/${reportData.reference_number}`;
+  
 
   const handleTranslate = async (sourceLang: "ar" | "en") => {
     setIsTranslating(true);
@@ -277,29 +277,10 @@ export default function ReportGeneratorPage() {
               onSignatureChange={(url) => setReportData((prev) => ({ ...prev, signature_image_url: url }))}
             />
 
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="text-sm font-bold text-foreground mb-4 flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-primary" />
-                  رمز التحقق (QR)
-                </h3>
-                <div className="flex flex-col items-center gap-3 p-4 border rounded-lg bg-muted/30">
-                  <QRCodeSVG
-                    value={verificationUrl}
-                    size={120}
-                    bgColor="transparent"
-                    fgColor="currentColor"
-                    className="text-foreground"
-                  />
-                  <p className="text-xs text-muted-foreground text-center max-w-[200px] break-all">
-                    {verificationUrl}
-                  </p>
-                  <Badge variant="outline" className="text-xs gap-1">
-                    <CheckCircle2 className="w-3 h-3" /> جاهز للتحقق
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <QRCodeGeneratorComponent
+              referenceNumber={reportData.reference_number}
+              reportDate={reportData.report_date}
+            />
           </div>
         </TabsContent>
 
