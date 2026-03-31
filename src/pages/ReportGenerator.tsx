@@ -108,6 +108,19 @@ export default function ReportGeneratorPage() {
 
   const locked = report ? isReportLocked(report.status) : false;
 
+  const getStatusStep = (status: string): GenerationStep => {
+    switch (status) {
+      case "draft": return "received";
+      case "review": return "processing";
+      case "approved": return "review";
+      case "issued":
+      case "delivered": return "ready";
+      default: return "received";
+    }
+  };
+
+  const reportStep = report ? getStatusStep(report.status) : "received";
+
   const handleTranslate = async (sourceLang: "ar" | "en") => {
     setIsTranslating(true);
     try {
