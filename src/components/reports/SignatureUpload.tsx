@@ -20,8 +20,8 @@ export default function SignatureUpload({ currentUrl, onSignatureChange, disable
   const { toast } = useToast();
 
   const processFile = useCallback(async (file: File) => {
-    if (!file.type.startsWith("image/")) {
-      toast({ title: "يرجى اختيار صورة", variant: "destructive" });
+    if (!["image/png", "image/jpeg"].includes(file.type)) {
+      toast({ title: "يُقبل فقط صيغ PNG و JPG", variant: "destructive" });
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
