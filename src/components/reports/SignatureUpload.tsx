@@ -141,7 +141,7 @@ export default function SignatureUpload({ currentUrl, onSignatureChange, disable
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept="image/png,image/jpeg"
           className="hidden"
           onChange={handleUpload}
         />
