@@ -133,6 +133,10 @@ const App = () => (
             </ProtectedRoute>
           } />
 
+          {/* Public Verification */}
+          <Route path="/verify" element={<VerifyReport />} />
+          <Route path="/verify/:token" element={<VerifyReport />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
