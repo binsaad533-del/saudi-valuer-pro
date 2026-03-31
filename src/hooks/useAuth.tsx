@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from "@supabase/supabase-js";
 
@@ -9,7 +9,13 @@ interface AuthState {
   accountStatus: string | null;
 }
 
-export function useAuth() {
+interface AuthContextType extends AuthState {
+  getRedirectPath: (role: string | null) => string;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     user: null,
     role: null,
@@ -17,7 +23,7 @@ export function useAuth() {
     accountStatus: null,
   });
 
-  const fetchUserData = useCallback(async (user: User) => {
+  const loadUserData = useCallback(async (user: User) => {
     try {
       const [{ data: roleData }, { data: profile }] = await Promise.all([
         supabase
@@ -51,25 +57,29 @@ export function useAuth() {
   useEffect(() => {
     let mounted = true;
 
-    // 1. Check existing session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      if (session?.user) {
-        fetchUserData(session.user);
-      } else {
-        setState({ user: null, role: null, loading: false, accountStatus: null });
-      }
-    });
-
-    // 2. Listen for auth changes (sign in, sign out, token refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+    const init = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         if (!mounted) return;
         if (session?.user) {
-          // Use setTimeout to avoid calling Supabase inside the callback synchronously
-          setTimeout(() => {
-            if (mounted) fetchUserData(session.user);
-          }, 0);
+          await loadUserData(session.user);
+        } else {
+          setState({ user: null, role: null, loading: false, accountStatus: null });
+        }
+      } catch {
+        if (mounted) {
+          setState({ user: null, role: null, loading: false, accountStatus: null });
+        }
+      }
+    };
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (!mounted) return;
+        if (session?.user) {
+          await loadUserData(session.user);
         } else {
           setState({ user: null, role: null, loading: false, accountStatus: null });
         }
@@ -80,7 +90,7 @@ export function useAuth() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [fetchUserData]);
+  }, [loadUserData]);
 
   const getRedirectPath = (role: string | null): string => {
     switch (role) {
@@ -95,5 +105,17 @@ export function useAuth() {
     }
   };
 
-  return { ...state, getRedirectPath };
+  return (
+    <AuthContext.Provider value={{ ...state, getRedirectPath }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return context;
 }
