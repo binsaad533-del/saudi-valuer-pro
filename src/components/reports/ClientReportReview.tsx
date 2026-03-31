@@ -8,9 +8,74 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { REPORT_SECTIONS } from "@/lib/report-types";
 import {
-  MessageSquareText, Send, CheckCircle, Clock, Eye,
-  Loader2, AlertTriangle, XCircle, FileText, History,
+  MessageSquareText, Send, CheckCircle, Eye,
+  Loader2, AlertTriangle, XCircle, History,
+  Inbox, Settings, ClipboardCheck, PackageCheck,
 } from "lucide-react";
+
+type ProgressStep = "received" | "processing" | "review" | "ready";
+
+const STEPS: { key: ProgressStep; label: string; icon: any }[] = [
+  { key: "received", label: "استلام", icon: Inbox },
+  { key: "processing", label: "معالجة", icon: Settings },
+  { key: "review", label: "مراجعة", icon: ClipboardCheck },
+  { key: "ready", label: "جاهز", icon: PackageCheck },
+];
+
+function getCurrentStep(report: any, comments: any[]): ProgressStep {
+  if (!report) return "received";
+  const hasOpenComments = comments.some((c) => c.status === "open" || c.status === "under_review");
+  if (report.status === "delivered" || report.status === "issued") return "ready";
+  if (report.status === "approved") return "review";
+  if (hasOpenComments || report.status === "review") return "processing";
+  return "received";
+}
+
+function ProgressTracker({ currentStep }: { currentStep: ProgressStep }) {
+  const currentIdx = STEPS.findIndex((s) => s.key === currentStep);
+
+  return (
+    <div className="flex items-center justify-between gap-1 p-3 rounded-lg bg-muted/30 border border-border">
+      {STEPS.map((step, i) => {
+        const Icon = step.icon;
+        const isCompleted = i < currentIdx;
+        const isCurrent = i === currentIdx;
+
+        return (
+          <div key={step.key} className="flex items-center gap-1 flex-1">
+            <div className="flex flex-col items-center gap-1 flex-1">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                  isCompleted
+                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                    : isCurrent
+                    ? "bg-primary/10 text-primary ring-2 ring-primary/30"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {isCompleted ? <CheckCircle className="w-4 h-4" /> : <Icon className="w-4 h-4" />}
+              </div>
+              <span
+                className={`text-[10px] font-medium ${
+                  isCurrent ? "text-primary" : isCompleted ? "text-green-700 dark:text-green-400" : "text-muted-foreground"
+                }`}
+              >
+                {step.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div
+                className={`h-0.5 flex-1 rounded-full mt-[-14px] ${
+                  isCompleted ? "bg-green-400 dark:bg-green-600" : "bg-border"
+                }`}
+              />
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 interface Props {
   reportId: string;
