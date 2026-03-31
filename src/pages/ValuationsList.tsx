@@ -155,7 +155,7 @@ export default function ValuationsList() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((v) => (
-                  <tr key={v.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={v.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/valuations/${v.id}`)}>
                     <td className="px-5 py-3.5 text-sm font-medium text-primary">{v.ref}</td>
                     <td className="px-5 py-3.5 text-sm">
                       <span className="flex items-center gap-2">
