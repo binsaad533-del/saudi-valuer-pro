@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import { QRCodeSVG } from "qrcode.react";
 import { Separator } from "@/components/ui/separator";
+import jsaasLogo from "@/assets/jsaas-logo.png";
 
 interface ReportPreviewProfessionalProps {
   report: Report;
