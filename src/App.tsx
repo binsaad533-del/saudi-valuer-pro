@@ -55,6 +55,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <AuthProvider>
         <Routes>
           {/* Admin Login */}
           <Route path="/login" element={<AdminLogin />} />
