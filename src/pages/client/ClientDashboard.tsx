@@ -65,6 +65,42 @@ export default function ClientDashboard() {
     toast.success("تم رفع المستند بنجاح (تجريبي)");
   };
 
+  const handleNewReqFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setNewReqFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const handleSubmitNewRequest = async () => {
+    if (newReqFiles.length === 0) {
+      toast.error("يرجى رفع مستند واحد على الأقل");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("غير مسجل");
+
+      // Upload files to client-uploads bucket
+      const uploadedPaths: string[] = [];
+      for (const file of newReqFiles) {
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("client-uploads").upload(path, file);
+        if (error) throw error;
+        uploadedPaths.push(path);
+      }
+
+      toast.success("تم إرسال طلب التقييم بنجاح");
+      setShowNewRequest(false);
+      setNewReqNotes("");
+      setNewReqFiles([]);
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ أثناء الإرسال");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const stats = {
     total: requests.length,
     active: requests.filter(r => !["completed", "archived", "cancelled"].includes(r.status)).length,
