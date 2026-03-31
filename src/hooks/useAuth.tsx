@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     accountStatus: null,
   });
   const mountedRef = useRef(true);
-  const initializedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -47,10 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // 1. Hydrate from persisted session — this is the reliable initial check
+    // 1. Hydrate from persisted session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mountedRef.current) return;
-      initializedRef.current = true;
       if (session?.user) {
         fetchRoleAndProfile(session.user);
       } else {
@@ -58,18 +56,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // 2. Listen for FUTURE auth changes (sign-in, sign-out, token refresh)
-    //    Ignore events until getSession has resolved (initializedRef)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // 2. Listen for auth changes — only clear user on explicit SIGNED_OUT
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mountedRef.current) return;
-      // Skip the initial event — getSession handles that
-      if (!initializedRef.current) return;
 
-      if (session?.user) {
-        fetchRoleAndProfile(session.user);
-      } else {
+      if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+        if (session?.user) {
+          fetchRoleAndProfile(session.user);
+        }
+      } else if (event === "SIGNED_OUT") {
         setState({ user: null, role: null, loading: false, accountStatus: null });
       }
+      // INITIAL_SESSION is handled by getSession above — ignore it here
     });
 
     return () => {
