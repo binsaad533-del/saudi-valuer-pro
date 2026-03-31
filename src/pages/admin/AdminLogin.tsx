@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import logo from "@/assets/jsaas-logo.png";
+const logo = "/favicon.png";
 
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
