@@ -270,21 +270,25 @@ export default function ReportGeneratorPage() {
               </CardContent>
             </Card>
 
-            {/* Workflow Panel */}
-            <ReportWorkflowPanel
-              report={report}
-              isOwner={true}
-              onReportUpdate={handleReportUpdate}
-            />
+            {/* Workflow Panel - hide for issued/archived */}
+            {!locked && (
+              <ReportWorkflowPanel
+                report={report}
+                isOwner={true}
+                onReportUpdate={handleReportUpdate}
+              />
+            )}
 
-            {/* Signature */}
-            <SignatureUpload
-              currentUrl={report.signatureImageUrl}
-              onSignatureChange={(url) =>
-                setReport((prev) => (prev ? { ...prev, signatureImageUrl: url } : prev))
-              }
-              disabled={locked}
-            />
+            {/* Signature - hide for issued/archived */}
+            {!locked && (
+              <SignatureUpload
+                currentUrl={report.signatureImageUrl}
+                onSignatureChange={(url) =>
+                  setReport((prev) => (prev ? { ...prev, signatureImageUrl: url } : prev))
+                }
+                disabled={locked}
+              />
+            )}
 
             {/* QR Code */}
             <QRCodeGeneratorComponent
