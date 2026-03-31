@@ -273,8 +273,8 @@ export default function ReportGeneratorPage() {
           {/* QR Code & Signature Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SignatureUpload
-              currentUrl={signatureUrl}
-              onSignatureChange={setSignatureUrl}
+              currentUrl={reportData.signature_image_url ?? null}
+              onSignatureChange={(url) => setReportData((prev) => ({ ...prev, signature_image_url: url }))}
             />
 
             <Card>

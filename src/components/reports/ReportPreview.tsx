@@ -212,7 +212,11 @@ export default function ReportPreview({ data, language }: Props) {
             )}
             {(language === "en" || language === "bilingual") && (
               <div className="text-center space-y-3 py-6" dir="ltr">
-                <div className="w-32 h-16 mx-auto border-b-2 border-foreground/30" />
+                {data.signature_image_url ? (
+                  <img src={data.signature_image_url} alt="Signature" className="max-h-20 mx-auto object-contain" />
+                ) : (
+                  <div className="w-32 h-16 mx-auto border-b-2 border-foreground/30" />
+                )}
                 <p className="font-bold text-foreground text-lg">{data.signer_name_en}</p>
                 <p className="text-sm text-muted-foreground">{data.signer_title_en}</p>
                 {data.signer_license && (
