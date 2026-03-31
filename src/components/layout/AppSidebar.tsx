@@ -114,13 +114,13 @@ export default function AppSidebar() {
   }, [user]);
 
   const handleLogout = async () => {
-    toast.success("تم تسجيل الخروج");
     try {
       await supabase.auth.signOut({ scope: 'local' });
     } catch {
       // silently ignore
     } finally {
-      window.location.replace("/client/login");
+      toast.success("تم تسجيل الخروج");
+      window.location.replace("/login");
     }
   };
 
