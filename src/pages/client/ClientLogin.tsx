@@ -36,7 +36,7 @@ export default function ClientLogin() {
       .from("profiles")
       .select("account_status")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
     
     if (profile?.account_status === "suspended") {
       await supabase.auth.signOut();
@@ -48,7 +48,7 @@ export default function ClientLogin() {
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
     const r = data?.role;
     if (r === "owner" || r === "admin_coordinator" || r === "financial_manager") return "/";
     if (r === "inspector") return "/inspector";
@@ -62,7 +62,7 @@ export default function ClientLogin() {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const path = await checkAccountAndGetPath(authData.user.id);
-      if (path) window.location.replace(path);
+      if (path) window.location.href = path;
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
