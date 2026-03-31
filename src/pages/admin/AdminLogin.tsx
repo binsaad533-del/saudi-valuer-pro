@@ -16,22 +16,16 @@ export default function AdminLogin() {
   const { user, role, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [loginSuccess, setLoginSuccess] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect when auth state updates (either already logged in or after login)
+  // If already authenticated as admin, redirect
   useEffect(() => {
     if (!authLoading && user && role && ADMIN_ROLES.includes(role)) {
       navigate("/", { replace: true });
     }
-    // If login was successful but role doesn't match after auth loads
-    if (!authLoading && loginSuccess && user && role && !ADMIN_ROLES.includes(role)) {
-      supabase.auth.signOut();
-      setLoginSuccess(false);
-    }
-  }, [user, role, authLoading, navigate, loginSuccess]);
+  }, [user, role, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +60,8 @@ export default function AdminLogin() {
         return;
       }
 
-      // Mark login as successful — useEffect will handle navigation when AuthProvider updates
-      setLoginSuccess(true);
+      // Force full page reload to ensure clean auth state
+      window.location.replace("/");
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
