@@ -19,6 +19,7 @@ import SearchPage from "@/pages/SearchPage";
 import CompliancePage from "@/pages/CompliancePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ValuationProductionList from "@/pages/ValuationProductionList";
+import ReportsListPage from "@/pages/ReportsListPage";
 import NotFound from "./pages/NotFound.tsx";
 
 // Admin
@@ -70,6 +71,7 @@ const App = () => (
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/archive" element={<ArchivePage />} />
             <Route path="/search" element={<SearchPage />} />
+            <Route path="/reports" element={<ReportsListPage />} />
             <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/verify" element={<VerifyReport />} />
             <Route path="/client-requests" element={<ClientRequests />} />
