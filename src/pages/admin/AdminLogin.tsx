@@ -60,8 +60,8 @@ export default function AdminLogin() {
         return;
       }
 
-      // Force full page reload to ensure clean auth state
-      window.location.replace("/");
+      // Navigate after ensuring auth state is ready
+      window.location.href = "/";
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
