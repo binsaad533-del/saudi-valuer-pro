@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import {
   Search,
@@ -54,6 +54,7 @@ const mockValuations = [
 ];
 
 export default function ValuationsList() {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = (searchParams.get("tab") as Tab) || "all";
   const [activeStatus, setActiveStatus] = useState<Status>("all");
@@ -154,7 +155,7 @@ export default function ValuationsList() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((v) => (
-                  <tr key={v.id} className="hover:bg-muted/30 transition-colors">
+                  <tr key={v.id} className="hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate(`/valuations/${v.id}`)}>
                     <td className="px-5 py-3.5 text-sm font-medium text-primary">{v.ref}</td>
                     <td className="px-5 py-3.5 text-sm">
                       <span className="flex items-center gap-2">
