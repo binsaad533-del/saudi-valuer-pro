@@ -60,9 +60,8 @@ export default function AdminLogin() {
         return;
       }
 
-      // Small delay to let AuthProvider process the onAuthStateChange event
-      await new Promise((r) => setTimeout(r, 300));
-      navigate("/", { replace: true });
+      // Navigation is handled by the useEffect watching auth state
+      // AuthProvider will update via onAuthStateChange, triggering the redirect
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
