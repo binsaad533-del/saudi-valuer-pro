@@ -21,12 +21,17 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // If already authenticated as admin, redirect immediately
+  // Redirect when auth state updates (either already logged in or after login)
   useEffect(() => {
     if (!authLoading && user && role && ADMIN_ROLES.includes(role)) {
       navigate("/", { replace: true });
     }
-  }, [user, role, authLoading, navigate]);
+    // If login was successful but role doesn't match after auth loads
+    if (!authLoading && loginSuccess && user && role && !ADMIN_ROLES.includes(role)) {
+      supabase.auth.signOut();
+      setLoginSuccess(false);
+    }
+  }, [user, role, authLoading, navigate, loginSuccess]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
