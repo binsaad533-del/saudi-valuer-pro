@@ -23,21 +23,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     accountStatus: null,
   });
   const mountedRef = useRef(true);
+  const initializedRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
+    initializedRef.current = false;
 
-    const handleSession = (session: Session | null) => {
-      if (!mountedRef.current) return;
-
-      if (!session?.user) {
-        setState({ user: null, role: null, loading: false, accountStatus: null });
-        return;
-      }
-
-      const user = session.user;
-
-      // Set user immediately, then load role data without blocking
+    const loadUserData = (user: User) => {
       Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", user.id).single(),
         supabase.from("profiles").select("account_status").eq("user_id", user.id).single(),
@@ -55,20 +47,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     };
 
-    // 1. Register listener FIRST (important: don't await inside callback)
+    // 1. Register listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        handleSession(session);
+      (event, session) => {
+        if (!mountedRef.current) return;
+
+        if (event === "INITIAL_SESSION") {
+          // Mark as initialized so getSession doesn't double-fire
+          initializedRef.current = true;
+        }
+
+        if (event === "SIGNED_OUT") {
+          setState({ user: null, role: null, loading: false, accountStatus: null });
+          return;
+        }
+
+        if (session?.user) {
+          loadUserData(session.user);
+        } else {
+          setState({ user: null, role: null, loading: false, accountStatus: null });
+        }
       }
     );
 
-    // 2. Then check existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSession(session);
-    });
+    // 2. Fallback: if INITIAL_SESSION didn't fire within 1s, use getSession
+    const fallbackTimer = setTimeout(() => {
+      if (!initializedRef.current && mountedRef.current) {
+        supabase.auth.getSession().then(({ data: { session } }) => {
+          if (!mountedRef.current || initializedRef.current) return;
+          initializedRef.current = true;
+          if (session?.user) {
+            loadUserData(session.user);
+          } else {
+            setState({ user: null, role: null, loading: false, accountStatus: null });
+          }
+        });
+      }
+    }, 1000);
 
     return () => {
       mountedRef.current = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, []);
