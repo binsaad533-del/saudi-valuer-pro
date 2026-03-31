@@ -35,7 +35,7 @@ export default function SettingsPage() {
   const isOwner = role === "owner";
   const tabs = isOwner ? ownerTabs : adminTabs;
   const defaultTab = isOwner ? "company" : "valuer";
-  const pageTitle = isOwner ? "الإعدادات" : "إعدادات الحساب";
+  const pageTitle = isOwner ? "الإعدادات" : "بياناتي";
   const pageDesc = isOwner ? "إدارة إعدادات المنصة والشركة والتقارير" : "تعديل بياناتك الشخصية";
 
   return (
