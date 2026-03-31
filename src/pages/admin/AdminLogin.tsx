@@ -34,12 +34,12 @@ export default function AdminLogin() {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
 
-      // Check account status
+      // Check account status (ignore query errors — RLS may block)
       const { data: profile } = await supabase
         .from("profiles")
         .select("account_status")
         .eq("user_id", authData.user.id)
-        .single();
+        .maybeSingle();
 
       if (profile?.account_status === "suspended") {
         await supabase.auth.signOut();
@@ -47,20 +47,20 @@ export default function AdminLogin() {
         return;
       }
 
-      // Check role
+      // Check role (use maybeSingle to avoid throwing on no rows)
       const { data: roleData } = await supabase
         .from("user_roles")
         .select("role")
         .eq("user_id", authData.user.id)
-        .single();
+        .maybeSingle();
 
-      if (!roleData || !ADMIN_ROLES.includes(roleData.role)) {
+      if (roleData && !ADMIN_ROLES.includes(roleData.role)) {
         await supabase.auth.signOut();
         toast({ title: "غير مصرّح", description: "هذه الصفحة مخصصة للإداريين فقط.", variant: "destructive" });
         return;
       }
 
-      // Navigate after ensuring auth state is ready
+      // Full page reload to ensure AuthProvider picks up session cleanly
       window.location.href = "/";
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
