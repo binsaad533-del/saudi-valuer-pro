@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/jsaas-logo.png";
 
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
@@ -72,7 +72,7 @@ export default function AdminLogin() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <img src={logo} alt="جساس" className="w-28 h-auto mx-auto mb-4 object-contain" />
+          <img src={logo} alt="جساس" className="w-32 h-auto mx-auto mb-4 object-contain bg-white rounded-lg p-2" />
           <h1 className="text-2xl font-extralight text-foreground">لوحة الإدارة</h1>
           <p className="text-muted-foreground text-sm mt-1">تسجيل دخول الفريق الإداري</p>
         </div>
