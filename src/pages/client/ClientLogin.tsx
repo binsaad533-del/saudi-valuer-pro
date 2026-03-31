@@ -12,7 +12,15 @@ import logo from "@/assets/logo.png";
 
 export default function ClientLogin() {
   const navigate = useNavigate();
+  const { user, role, loading: authLoading, getRedirectPath } = useAuth();
   const { toast } = useToast();
+
+  // If already logged in, redirect
+  useEffect(() => {
+    if (!authLoading && user && role) {
+      navigate(getRedirectPath(role), { replace: true });
+    }
+  }, [authLoading, user, role, navigate, getRedirectPath]);
   const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState("");
