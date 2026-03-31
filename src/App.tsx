@@ -51,11 +51,11 @@ const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+    <AuthProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <AuthProvider>
         <Routes>
           {/* Admin Login */}
           <Route path="/login" element={<AdminLogin />} />
@@ -136,9 +136,9 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
