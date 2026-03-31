@@ -1,19 +1,28 @@
 import { useState, useCallback } from "react";
-import { FileText, Globe, Languages, Lock, Download, Eye, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  FileText, Globe, Languages, Lock, Download, Eye,
+  CheckCircle2, AlertTriangle, Loader2, Stamp, Archive
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ReportPreview from "@/components/reports/ReportPreview";
+import ReportPreviewProfessional from "@/components/reports/ReportPreviewProfessional";
 import ReportSectionEditor from "@/components/reports/ReportSectionEditor";
 import ConsistencyChecker from "@/components/reports/ConsistencyChecker";
 import SignatureUpload from "@/components/reports/SignatureUpload";
+import QRCodeGeneratorComponent from "@/components/reports/QRCodeGenerator";
+import ReportWorkflowPanel from "@/components/reports/ReportWorkflowPanel";
 import ReportGenerationStepper, { type GenerationStep } from "@/components/reports/ReportGenerationStepper";
 import { type ReportLanguage, type ReportData } from "@/lib/report-types";
 import { translateReportSections } from "@/lib/report-api";
-import { exportReportPdf, downloadBlob } from "@/lib/pdf-export";
-import QRCodeGeneratorComponent from "@/components/reports/QRCodeGenerator";
+import { exportReportToPDF, downloadPdfBlob } from "@/services/pdfExportService";
+import { isReportLocked, getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
+import { mockReports } from "@/data/mockReports";
+import type { Report } from "@/types/report";
 
 const SAMPLE_REPORT: ReportData = {
   cover_title_ar: "تقرير تقييم عقاري",
@@ -81,17 +90,23 @@ const SAMPLE_REPORT: ReportData = {
 };
 
 export default function ReportGeneratorPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
+  // Load report from mock data if ID provided
+  const initialReport = id ? mockReports.find((r) => r.id === id) : null;
+
+  const [report, setReport] = useState<Report | null>(initialReport || null);
   const [language, setLanguage] = useState<ReportLanguage>("bilingual");
   const [reportData, setReportData] = useState<ReportData>(SAMPLE_REPORT);
-  const [activeTab, setActiveTab] = useState("preview");
+  const [activeTab, setActiveTab] = useState("professional");
   const [isTranslating, setIsTranslating] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [generationStep, setGenerationStep] = useState<GenerationStep>("received");
-  
   const [consistencyResult, setConsistencyResult] = useState<null | { consistent: boolean; issues: any[] }>(null);
   const { toast } = useToast();
 
-  
+  const locked = report ? isReportLocked(report.status) : false;
 
   const handleTranslate = async (sourceLang: "ar" | "en") => {
     setIsTranslating(true);
@@ -120,7 +135,6 @@ export default function ReportGeneratorPage() {
       setReportData((prev) => ({ ...prev, ...updates }));
       toast({
         title: targetLang === "en" ? "تمت الترجمة بنجاح" : "Translation completed",
-        description: targetLang === "en" ? "تم ترجمة المحتوى إلى الإنجليزية" : "Content translated to Arabic",
       });
     } catch (e: any) {
       toast({ title: "خطأ في الترجمة", description: e.message, variant: "destructive" });
@@ -129,52 +143,72 @@ export default function ReportGeneratorPage() {
     }
   };
 
-  const handleExportPdf = useCallback(async (exportLang: ReportLanguage, isDraft: boolean) => {
+  const handleExportPdf = useCallback(async () => {
+    if (!report) return;
     setIsExporting(true);
     setGenerationStep("received");
 
     try {
-      // Simulate the workflow steps
-      await new Promise((r) => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 400));
       setGenerationStep("processing");
 
-      const { url } = await exportReportPdf({
-        reportData,
-        language: exportLang,
-        isDraft,
-        signatureUrl: reportData.signature_image_url,
-      });
+      const blob = await exportReportToPDF(report);
 
       setGenerationStep("review");
-      await new Promise((r) => setTimeout(r, 400));
+      await new Promise((r) => setTimeout(r, 300));
 
-      const filename = `${reportData.reference_number}_${exportLang}${isDraft ? "_draft" : ""}.json`;
-      downloadBlob(url, filename);
+      const filename = `${report.reportNumber}.pdf`;
+      downloadPdfBlob(blob, filename);
 
       setGenerationStep("ready");
-      toast({
-        title: isDraft ? "تم تصدير المسودة" : "تم تصدير التقرير النهائي",
-        description: filename,
-      });
+      toast({ title: "تم تصدير التقرير بنجاح", description: filename });
+
+      // Mark as archived after final export
+      if (report.status === "issued" || report.status === "delivered") {
+        setReport((prev) =>
+          prev ? { ...prev, isArchived: true, archivedAt: new Date().toISOString() } : prev
+        );
+      }
     } catch (e: any) {
       toast({ title: "فشل التصدير", description: e.message, variant: "destructive" });
       setGenerationStep("received");
     } finally {
       setIsExporting(false);
     }
-  }, [reportData, toast]);
+  }, [report, toast]);
+
+  const handleReportUpdate = (updated: Report) => {
+    setReport(updated);
+  };
+
+  // If no report loaded by ID, show the bilingual editor view
+  const showWorkflowView = !!report;
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">إنشاء التقرير</h1>
+          <h1 className="text-2xl font-bold text-foreground">
+            {showWorkflowView ? "تقرير التقييم" : "إنشاء التقرير"}
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {reportData.reference_number} — {reportData.client_name_ar}
+            {report
+              ? `${report.reportNumber} — ${report.clientName}`
+              : `${reportData.reference_number} — ${reportData.client_name_ar}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {report && (
+            <Badge className={getStatusColor(report.status)}>
+              {getStatusLabel(report.status)}
+            </Badge>
+          )}
+          {locked && (
+            <Badge variant="outline" className="gap-1">
+              <Lock className="w-3 h-3" /> غير قابل للتعديل
+            </Badge>
+          )}
           {consistencyResult && (
             <Badge variant={consistencyResult.consistent ? "default" : "destructive"} className="gap-1">
               {consistencyResult.consistent ? (
@@ -196,110 +230,209 @@ export default function ReportGeneratorPage() {
         </Card>
       )}
 
-      {/* Language Selector + Actions */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-wrap items-center gap-4 justify-between">
-            <div className="flex items-center gap-2">
-              <Languages className="w-5 h-5 text-primary" />
-              <span className="text-sm font-medium">لغة التقرير:</span>
-              <div className="flex gap-1">
-                {(["ar", "en", "bilingual"] as ReportLanguage[]).map((lang) => (
-                  <Button
-                    key={lang}
-                    size="sm"
-                    variant={language === lang ? "default" : "outline"}
-                    onClick={() => setLanguage(lang)}
-                  >
-                    {lang === "ar" ? "عربي" : lang === "en" ? "English" : "ثنائي اللغة"}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button size="sm" variant="outline" onClick={() => handleTranslate("ar")} disabled={isTranslating}>
-                {isTranslating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Globe className="w-4 h-4 ml-1" />}
-                ترجمة عربي ← إنجليزي
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handleTranslate("en")} disabled={isTranslating}>
-                {isTranslating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Globe className="w-4 h-4 ml-1" />}
-                Translate EN → AR
-              </Button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="gap-1"
-                disabled={isExporting}
-                onClick={() => handleExportPdf(language, true)}
-              >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-                تصدير مسودة
-              </Button>
-              <Button
-                size="sm"
-                className="gap-1"
-                disabled={isExporting}
-                onClick={() => handleExportPdf(language, false)}
-              >
-                {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                تصدير نهائي
-              </Button>
-            </div>
+      {/* Workflow View: Professional Preview + Workflow Panel + Actions */}
+      {showWorkflowView && report && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main: Professional Preview */}
+          <div className="lg:col-span-2 space-y-4">
+            <Card>
+              <CardContent className="p-0">
+                <ReportPreviewProfessional report={report} />
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
-          <TabsTrigger value="preview" className="gap-1">
-            <Eye className="w-4 h-4" /> معاينة التقرير
-          </TabsTrigger>
-          <TabsTrigger value="edit" className="gap-1">
-            <FileText className="w-4 h-4" /> تحرير الأقسام
-          </TabsTrigger>
-          <TabsTrigger value="consistency" className="gap-1">
-            <Lock className="w-4 h-4" /> فحص التطابق
-          </TabsTrigger>
-        </TabsList>
+          {/* Sidebar: Workflow + Actions */}
+          <div className="space-y-4">
+            {/* Action Buttons */}
+            <Card>
+              <CardContent className="pt-6 space-y-3">
+                <Button
+                  className="w-full gap-2"
+                  onClick={handleExportPdf}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  تصدير PDF
+                </Button>
 
-        <TabsContent value="preview" className="mt-4 space-y-4">
-          <ReportPreview data={reportData} language={language} />
+                {report.isArchived && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
+                    <Archive className="w-4 h-4" />
+                    تم أرشفة التقرير
+                    {report.archivedAt && ` — ${new Date(report.archivedAt).toLocaleDateString("ar-SA")}`}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-          {/* QR Code & Signature Row */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Workflow Panel */}
+            <ReportWorkflowPanel
+              report={report}
+              isOwner={true}
+              onReportUpdate={handleReportUpdate}
+            />
+
+            {/* Signature */}
             <SignatureUpload
-              currentUrl={reportData.signature_image_url ?? null}
-              onSignatureChange={(url) => setReportData((prev) => ({ ...prev, signature_image_url: url }))}
+              currentUrl={report.signatureImageUrl}
+              onSignatureChange={(url) =>
+                setReport((prev) => (prev ? { ...prev, signatureImageUrl: url } : prev))
+              }
+              disabled={locked}
             />
 
+            {/* QR Code */}
             <QRCodeGeneratorComponent
-              referenceNumber={reportData.reference_number}
-              reportDate={reportData.report_date}
+              referenceNumber={report.reportNumber}
+              verificationToken={report.verificationToken}
+              reportDate={
+                report.issuedAt
+                  ? new Date(report.issuedAt).toLocaleDateString("ar-SA")
+                  : undefined
+              }
             />
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="edit" className="mt-4">
-          <ReportSectionEditor
-            data={reportData}
-            language={language}
-            onChange={(updates) => setReportData((prev) => ({ ...prev, ...updates }))}
-          />
-        </TabsContent>
+      {/* Editor View: Bilingual Report Builder */}
+      {!showWorkflowView && (
+        <>
+          {/* Language Selector + Actions */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap items-center gap-4 justify-between">
+                <div className="flex items-center gap-2">
+                  <Languages className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-medium">لغة التقرير:</span>
+                  <div className="flex gap-1">
+                    {(["ar", "en", "bilingual"] as ReportLanguage[]).map((lang) => (
+                      <Button
+                        key={lang}
+                        size="sm"
+                        variant={language === lang ? "default" : "outline"}
+                        onClick={() => setLanguage(lang)}
+                      >
+                        {lang === "ar" ? "عربي" : lang === "en" ? "English" : "ثنائي اللغة"}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
 
-        <TabsContent value="consistency" className="mt-4">
-          <ConsistencyChecker
-            data={reportData}
-            result={consistencyResult}
-            onCheck={setConsistencyResult}
-          />
-        </TabsContent>
-      </Tabs>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="outline" onClick={() => handleTranslate("ar")} disabled={isTranslating}>
+                    {isTranslating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Globe className="w-4 h-4 ml-1" />}
+                    ترجمة عربي ← إنجليزي
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleTranslate("en")} disabled={isTranslating}>
+                    {isTranslating ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Globe className="w-4 h-4 ml-1" />}
+                    Translate EN → AR
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList>
+              <TabsTrigger value="professional" className="gap-1">
+                <Stamp className="w-4 h-4" /> معاينة احترافية
+              </TabsTrigger>
+              <TabsTrigger value="preview" className="gap-1">
+                <Eye className="w-4 h-4" /> معاينة ثنائية
+              </TabsTrigger>
+              <TabsTrigger value="edit" className="gap-1">
+                <FileText className="w-4 h-4" /> تحرير الأقسام
+              </TabsTrigger>
+              <TabsTrigger value="consistency" className="gap-1">
+                <Lock className="w-4 h-4" /> فحص التطابق
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="professional" className="mt-4 space-y-4">
+              {/* Show professional preview with a default report object */}
+              <Card>
+                <CardContent className="p-0">
+                  <ReportPreviewProfessional
+                    report={{
+                      id: "preview",
+                      reportNumber: reportData.reference_number,
+                      valuationRequestId: "",
+                      clientName: reportData.client_name_ar,
+                      clientPhone: "",
+                      clientEmail: "",
+                      assetType: "real_estate",
+                      assetDescription: reportData.property_description_ar,
+                      assetLocation: `${reportData.property_address_ar}، ${reportData.property_city_ar}`,
+                      methodology: "market_comparison",
+                      marketAnalysis: reportData.market_overview_ar,
+                      comparables: [],
+                      estimatedValue: Number(reportData.final_value.replace(/,/g, "")) || 0,
+                      currency: reportData.currency,
+                      notes: "",
+                      status: "draft",
+                      evaluatorName: reportData.signer_name_ar,
+                      evaluatorCredentials: {
+                        saudiAuthority: "الهيئة السعودية للمقيمين المعتمدين - تقييم",
+                        rics: "MRICS",
+                        asa: "ASA",
+                      },
+                      signatureImageUrl: reportData.signature_image_url || null,
+                      qrCodeUrl: null,
+                      verificationToken: reportData.reference_number,
+                      createdAt: reportData.report_date,
+                      updatedAt: reportData.report_date,
+                      approvedAt: null,
+                      issuedAt: null,
+                      deliveredAt: null,
+                      archivedAt: null,
+                      isArchived: false,
+                      auditLog: [],
+                    }}
+                  />
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SignatureUpload
+                  currentUrl={reportData.signature_image_url ?? null}
+                  onSignatureChange={(url) => setReportData((prev) => ({ ...prev, signature_image_url: url }))}
+                />
+                <QRCodeGeneratorComponent
+                  referenceNumber={reportData.reference_number}
+                  reportDate={reportData.report_date}
+                />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="preview" className="mt-4 space-y-4">
+              <ReportPreview data={reportData} language={language} />
+            </TabsContent>
+
+            <TabsContent value="edit" className="mt-4">
+              <ReportSectionEditor
+                data={reportData}
+                language={language}
+                onChange={(updates) => setReportData((prev) => ({ ...prev, ...updates }))}
+              />
+            </TabsContent>
+
+            <TabsContent value="consistency" className="mt-4">
+              <ConsistencyChecker
+                data={reportData}
+                result={consistencyResult}
+                onCheck={setConsistencyResult}
+              />
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </div>
   );
 }
