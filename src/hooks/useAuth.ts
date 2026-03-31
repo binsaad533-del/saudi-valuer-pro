@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthState {
-  user: any | null;
+  user: User | null;
   role: string | null;
   loading: boolean;
   accountStatus: string | null;
@@ -16,62 +17,70 @@ export function useAuth() {
     accountStatus: null,
   });
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        // Fetch role
-        const { data: roleData } = await supabase
+  const fetchUserData = useCallback(async (user: User) => {
+    try {
+      const [{ data: roleData }, { data: profile }] = await Promise.all([
+        supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", session.user.id)
-          .single();
-
-        // Fetch account status
-        const { data: profile } = await supabase
+          .eq("user_id", user.id)
+          .single(),
+        supabase
           .from("profiles")
           .select("account_status")
-          .eq("user_id", session.user.id)
-          .single();
+          .eq("user_id", user.id)
+          .single(),
+      ]);
 
-        setState({
-          user: session.user,
-          role: roleData?.role || "client",
-          loading: false,
-          accountStatus: profile?.account_status || "active",
-        });
-      } else {
-        setState({ user: null, role: null, loading: false, accountStatus: null });
-      }
-    });
-
-    // Initial check
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", session.user.id)
-          .single();
-
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("account_status")
-          .eq("user_id", session.user.id)
-          .single();
-
-        setState({
-          user: session.user,
-          role: roleData?.role || "client",
-          loading: false,
-          accountStatus: profile?.account_status || "active",
-        });
-      } else {
-        setState({ user: null, role: null, loading: false, accountStatus: null });
-      }
-    });
-
-    return () => subscription.unsubscribe();
+      setState({
+        user,
+        role: roleData?.role || "client",
+        loading: false,
+        accountStatus: profile?.account_status || "active",
+      });
+    } catch {
+      setState({
+        user,
+        role: "client",
+        loading: false,
+        accountStatus: "active",
+      });
+    }
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    // 1. Check existing session first
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted) return;
+      if (session?.user) {
+        fetchUserData(session.user);
+      } else {
+        setState({ user: null, role: null, loading: false, accountStatus: null });
+      }
+    });
+
+    // 2. Listen for auth changes (sign in, sign out, token refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!mounted) return;
+        if (session?.user) {
+          // Use setTimeout to avoid calling Supabase inside the callback synchronously
+          setTimeout(() => {
+            if (mounted) fetchUserData(session.user);
+          }, 0);
+        } else {
+          setState({ user: null, role: null, loading: false, accountStatus: null });
+        }
+      }
+    );
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [fetchUserData]);
 
   const getRedirectPath = (role: string | null): string => {
     switch (role) {
