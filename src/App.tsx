@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/layout/AppLayout";
+import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
 import ValuationsList from "@/pages/ValuationsList";
 import NewValuation from "@/pages/NewValuation";
@@ -20,6 +21,14 @@ import SettingsPage from "@/pages/SettingsPage";
 import ValuationProductionList from "@/pages/ValuationProductionList";
 import NotFound from "./pages/NotFound.tsx";
 
+// Admin
+import AdminLogin from "@/pages/admin/AdminLogin";
+import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
+import InspectorsListPage from "@/pages/admin/InspectorsListPage";
+import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
+import InspectorCoverage from "@/pages/admin/InspectorCoverage";
+import RaqeemPage from "@/pages/RaqeemPage";
+
 // Client Portal
 import ClientLogin from "@/pages/client/ClientLogin";
 import ClientRegister from "@/pages/client/ClientRegister";
@@ -28,17 +37,13 @@ import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
+
+// Inspector Portal
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
-import InspectorCoverage from "@/pages/admin/InspectorCoverage";
-import RaqeemPage from "@/pages/RaqeemPage";
-
-import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
-import InspectorsListPage from "@/pages/admin/InspectorsListPage";
-import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
-
 
 const queryClient = new QueryClient();
+const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -47,8 +52,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Admin Routes */}
-          <Route element={<AppLayout />}>
+          {/* Admin Login */}
+          <Route path="/login" element={<AdminLogin />} />
+
+          {/* Admin Routes - Protected */}
+          <Route element={
+            <ProtectedRoute allowedRoles={ADMIN_ROLES}>
+              <AppLayout />
+            </ProtectedRoute>
+          }>
             <Route path="/" element={<Dashboard />} />
             <Route path="/valuations" element={<ValuationsList />} />
             <Route path="/valuations/new" element={<NewValuation />} />
@@ -63,7 +75,6 @@ const App = () => (
             <Route path="/client-requests" element={<ClientRequests />} />
             <Route path="/valuation-production" element={<ValuationProductionList />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
-            
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
             <Route path="/compliance" element={<CompliancePage />} />
             <Route path="/raqeem" element={<RaqeemPage />} />
@@ -73,18 +84,38 @@ const App = () => (
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
           </Route>
 
-          {/* Inspector Portal Routes */}
-          <Route path="/inspector" element={<InspectorDashboard />} />
-          <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
+          {/* Inspector Portal - Protected */}
+          <Route path="/inspector" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/client/login">
+              <InspectorDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/inspector/inspection/:inspectionId" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/client/login">
+              <MobileInspectionFlow />
+            </ProtectedRoute>
+          } />
 
-          {/* Client Portal Routes */}
+          {/* Client Portal */}
           <Route path="/client/login" element={<ClientLogin />} />
           <Route path="/client/register" element={<ClientRegister />} />
           <Route path="/client/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/client" element={<ClientDashboard />} />
-          <Route path="/client/new-request" element={<NewRequest />} />
-          <Route path="/client/request/:id" element={<RequestDetails />} />
+          <Route path="/client" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <ClientDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/new-request" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <NewRequest />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/request/:id" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <RequestDetails />
+            </ProtectedRoute>
+          } />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
