@@ -138,11 +138,11 @@ export default function ReportGeneratorPage() {
       await new Promise((r) => setTimeout(r, 500));
       setGenerationStep("processing");
 
-      const { url, json } = await exportReportPdf({
+      const { url } = await exportReportPdf({
         reportData,
         language: exportLang,
         isDraft,
-        signatureUrl,
+        signatureUrl: reportData.signature_image_url,
       });
 
       setGenerationStep("review");
