@@ -39,6 +39,7 @@ import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
+import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 
 // Inspector Portal
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
@@ -108,6 +109,16 @@ const App = () => (
           <Route path="/client" element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
               <ClientDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/dashboard" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <ClientDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/requests" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+              <ClientRequestsPage />
             </ProtectedRoute>
           } />
           <Route path="/client/new-request" element={
