@@ -227,21 +227,23 @@ export default function ClientDashboard() {
                     <Link
                       key={req.id}
                       to={`/client/request/${req.id}`}
-                      className="flex items-center justify-between gap-3 p-4 hover:bg-muted/50 transition-colors"
+                      className="block p-4 hover:bg-muted/50 transition-colors"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {req.property_description_ar || "طلب تقييم"}
-                        </p>
-                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                          {req.reference_number && (
-                            <span className="font-mono" dir="ltr">{req.reference_number}</span>
-                          )}
-                          {req.property_city_ar && <span>{req.property_city_ar}</span>}
-                          <span>{new Date(req.created_at).toLocaleDateString("ar-SA")}</span>
+                      <div className="flex items-center justify-between gap-3 mb-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {req.property_description_ar || "طلب تقييم"}
+                          </p>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                            {req.reference_number && (
+                              <span className="font-mono" dir="ltr">{req.reference_number}</span>
+                            )}
+                            {req.property_city_ar && <span>{req.property_city_ar}</span>}
+                            <span>{new Date(req.created_at).toLocaleDateString("ar-SA")}</span>
+                          </div>
                         </div>
                       </div>
-                      <StatusBadge status={req.status} role="client" />
+                      <RequestTracker status={req.status} />
                     </Link>
                   ))}
                 </div>
