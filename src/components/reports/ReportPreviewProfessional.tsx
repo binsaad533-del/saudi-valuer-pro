@@ -124,35 +124,40 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
       <Separator className="mx-6 my-6" />
 
       {/* Signature Block */}
-      <div className="mx-6 mb-8 flex items-end justify-between">
-        <div className="flex items-start gap-6">
-          <div className="space-y-2">
-            <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
-            <p className="font-bold text-lg">{report.evaluatorName}</p>
-            <div className="text-xs text-muted-foreground space-y-0.5">
-              <p>{report.evaluatorCredentials.saudiAuthority}</p>
-              <p>{report.evaluatorCredentials.rics}</p>
-              <p>{report.evaluatorCredentials.asa}</p>
-            </div>
-            <p className="text-xs mt-2">
-              التاريخ: {new Date(report.issuedAt || report.createdAt).toLocaleDateString("ar-SA")}
-            </p>
+      <div className="mx-6 mb-8 space-y-4">
+        {/* Evaluator info */}
+        <div className="space-y-1">
+          <p className="font-bold text-lg">{report.evaluatorName}</p>
+          <div className="text-xs text-muted-foreground space-y-0.5">
+            <p>{report.evaluatorCredentials.saudiAuthority}</p>
+            <p>{report.evaluatorCredentials.rics}</p>
+            <p>{report.evaluatorCredentials.asa}</p>
           </div>
-          <div style={{ opacity: 0.85 }}>
-            <OfficialStamp />
-          </div>
+          <p className="text-xs mt-2">
+            التاريخ: {new Date(report.issuedAt || report.createdAt).toLocaleDateString("ar-SA")}
+          </p>
         </div>
 
-        {report.verificationToken && (
-          <div className="flex flex-col items-center gap-1">
-            <QRCodeSVG
-              value={`${window.location.origin}/verify/${report.verificationToken}`}
-              size={100}
-              level="H"
-            />
-            <span className="text-[10px] text-muted-foreground">رمز التحقق</span>
+        {/* Signature + Stamp + QR row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
+            <div style={{ opacity: 0.85 }}>
+              <OfficialStamp />
+            </div>
           </div>
-        )}
+
+          {report.verificationToken && (
+            <div className="flex flex-col items-center gap-1">
+              <QRCodeSVG
+                value={`${window.location.origin}/verify/${report.verificationToken}`}
+                size={100}
+                level="H"
+              />
+              <span className="text-[10px] text-muted-foreground">رمز التحقق</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
