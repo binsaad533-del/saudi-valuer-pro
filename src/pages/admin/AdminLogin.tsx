@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,11 +13,19 @@ const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const { user, role, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+
+  // If already authenticated as admin, redirect immediately
+  useEffect(() => {
+    if (!authLoading && user && role && ADMIN_ROLES.includes(role)) {
+      navigate("/", { replace: true });
+    }
+  }, [user, role, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +60,8 @@ export default function AdminLogin() {
         return;
       }
 
-      // Small delay to let AuthProvider process the onAuthStateChange event
-      await new Promise((r) => setTimeout(r, 300));
-      navigate("/", { replace: true });
+      // Navigation is handled by the useEffect watching auth state
+      // AuthProvider will update via onAuthStateChange, triggering the redirect
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
