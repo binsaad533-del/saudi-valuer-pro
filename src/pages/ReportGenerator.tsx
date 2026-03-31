@@ -162,7 +162,7 @@ export default function ReportGeneratorPage() {
     } finally {
       setIsExporting(false);
     }
-  }, [reportData, signatureUrl, toast]);
+  }, [reportData, toast]);
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
