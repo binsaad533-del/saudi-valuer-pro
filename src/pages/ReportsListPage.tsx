@@ -26,8 +26,23 @@ const STATUSES: ReportStatus[] = ["draft", "review", "approved", "issued", "deli
 
 export default function ReportsListPage() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [exportingId, setExportingId] = useState<string | null>(null);
+
+  const handleDownloadPdf = useCallback(async (report: typeof mockReports[0]) => {
+    setExportingId(report.id);
+    try {
+      const blob = await exportReportToPDF(report);
+      downloadPdfBlob(blob, `${report.reportNumber}.pdf`);
+      toast({ title: "تم تحميل التقرير بنجاح" });
+    } catch (e: any) {
+      toast({ title: "فشل التحميل", description: e.message, variant: "destructive" });
+    } finally {
+      setExportingId(null);
+    }
+  }, [toast]);
 
   const filtered = useMemo(() => {
     return mockReports.filter((r) => {
