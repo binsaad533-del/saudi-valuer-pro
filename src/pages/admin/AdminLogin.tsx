@@ -51,7 +51,9 @@ export default function AdminLogin() {
         return;
       }
 
-      navigate("/");
+      // Force full reload to ensure AuthProvider picks up the new session cleanly
+      window.location.href = "/";
+      return;
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
