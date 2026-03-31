@@ -125,6 +125,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
       {/* Signature Block */}
       <div className="mx-6 mb-8 flex items-end justify-between">
         <div className="space-y-2">
+          <img src="/signature.png" alt="التوقيع" className="w-[140px] h-[70px] object-contain" />
           <p className="font-bold text-lg">{report.evaluatorName}</p>
           <div className="text-xs text-muted-foreground space-y-0.5">
             <p>{report.evaluatorCredentials.saudiAuthority}</p>
