@@ -5,9 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
-  Loader2, Building2, Upload, Download, Eye, FolderOpen,
+  Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
 } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/StatusComponents";
 import { toast } from "sonner";
@@ -19,6 +23,13 @@ export default function ClientDashboard() {
   const [userName, setUserName] = useState("");
   const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // New request dialog
+  const [showNewRequest, setShowNewRequest] = useState(false);
+  const [newReqNotes, setNewReqNotes] = useState("");
+  const [newReqFiles, setNewReqFiles] = useState<File[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const newReqFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const init = async () => {
@@ -52,6 +63,42 @@ export default function ClientDashboard() {
 
   const handleFileUpload = () => {
     toast.success("تم رفع المستند بنجاح (تجريبي)");
+  };
+
+  const handleNewReqFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setNewReqFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+    }
+  };
+
+  const handleSubmitNewRequest = async () => {
+    if (newReqFiles.length === 0) {
+      toast.error("يرجى رفع مستند واحد على الأقل");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("غير مسجل");
+
+      // Upload files to client-uploads bucket
+      const uploadedPaths: string[] = [];
+      for (const file of newReqFiles) {
+        const path = `${user.id}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage.from("client-uploads").upload(path, file);
+        if (error) throw error;
+        uploadedPaths.push(path);
+      }
+
+      toast.success("تم إرسال طلب التقييم بنجاح");
+      setShowNewRequest(false);
+      setNewReqNotes("");
+      setNewReqFiles([]);
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ أثناء الإرسال");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const stats = {
@@ -109,7 +156,7 @@ export default function ClientDashboard() {
             <h1 className="text-xl font-bold text-foreground">مرحباً، {userName}</h1>
             <p className="text-sm text-muted-foreground">تابع طلباتك وتقاريرك من مكان واحد</p>
           </div>
-          <Button onClick={() => navigate("/client/new-request")} className="gap-2">
+          <Button onClick={() => setShowNewRequest(true)} className="gap-2">
             <Plus className="w-4 h-4" /> طلب تقييم جديد
           </Button>
         </div>
@@ -286,6 +333,73 @@ export default function ClientDashboard() {
           </div>
         )}
       </main>
+
+      {/* New Request Dialog */}
+      <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>طلب تقييم جديد</DialogTitle>
+            <DialogDescription>ارفع المستندات المتعلقة بالعقار وسنتولى الباقي</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Upload area */}
+            <div
+              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => newReqFileRef.current?.click()}
+            >
+              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
+              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، مخططات، كروكي — PDF, JPG, PNG</p>
+              <input
+                ref={newReqFileRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                className="hidden"
+                onChange={handleNewReqFileAdd}
+              />
+            </div>
+
+            {/* Selected files */}
+            {newReqFiles.length > 0 && (
+              <div className="space-y-2">
+                {newReqFiles.map((f, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <File className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground truncate">{f.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                    </div>
+                    <button
+                      onClick={() => setNewReqFiles(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="req-notes">ملاحظات (اختياري)</Label>
+              <Textarea
+                id="req-notes"
+                placeholder="أي تفاصيل إضافية عن العقار أو الطلب..."
+                value={newReqNotes}
+                onChange={(e) => setNewReqNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <Button onClick={handleSubmitNewRequest} className="w-full gap-2" disabled={submitting || newReqFiles.length === 0}>
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              إرسال الطلب
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
