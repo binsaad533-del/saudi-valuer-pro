@@ -1,6 +1,6 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import type { User, Session } from "@supabase/supabase-js";
+import type { User } from "@supabase/supabase-js";
 
 interface AuthState {
   user: User | null;
@@ -22,9 +22,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
     accountStatus: null,
   });
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
     const fetchRoleAndProfile = async (user: User) => {
       try {
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           supabase.from("user_roles").select("role").eq("user_id", user.id).maybeSingle(),
           supabase.from("profiles").select("account_status").eq("user_id", user.id).maybeSingle(),
         ]);
-        if (!mounted) return;
+        if (!mountedRef.current) return;
         setState({
           user,
           role: roleData?.role || "client",
@@ -40,33 +41,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           accountStatus: profile?.account_status || "active",
         });
       } catch {
-        if (!mounted) return;
+        if (!mountedRef.current) return;
         setState({ user, role: "client", loading: false, accountStatus: "active" });
       }
     };
 
-    // 1. Hydrate from persisted session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!mounted) return;
-      if (session?.user) {
-        fetchRoleAndProfile(session.user);
-      } else {
-        setState({ user: null, role: null, loading: false, accountStatus: null });
-      }
-    });
-
-    // 2. Listen for future auth changes (sign in, sign out, token refresh)
+    // Single source of truth: onAuthStateChange handles INITIAL_SESSION + all future events
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!mounted) return;
+      if (!mountedRef.current) return;
       if (session?.user) {
-        fetchRoleAndProfile(session.user);
+        // Use setTimeout to avoid Supabase deadlock when calling Supabase inside the callback
+        setTimeout(() => {
+          if (mountedRef.current) fetchRoleAndProfile(session.user);
+        }, 0);
       } else {
         setState({ user: null, role: null, loading: false, accountStatus: null });
       }
     });
 
     return () => {
-      mounted = false;
+      mountedRef.current = false;
       subscription.unsubscribe();
     };
   }, []);
