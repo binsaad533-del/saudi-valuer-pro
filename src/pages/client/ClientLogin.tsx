@@ -61,8 +61,8 @@ export default function ClientLogin() {
     try {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      await checkAccountAndGetPath(authData.user.id);
-      // useEffect watching auth state will handle navigation
+      const path = await checkAccountAndGetPath(authData.user.id);
+      if (path) window.location.replace(path);
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
