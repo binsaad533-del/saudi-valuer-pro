@@ -32,7 +32,7 @@ import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 import RaqeemPage from "@/pages/RaqeemPage";
-import AuditorDashboard from "@/pages/auditor/AuditorDashboard";
+import FinancialDashboard from "@/pages/auditor/AuditorDashboard";
 import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
 import InspectorsListPage from "@/pages/admin/InspectorsListPage";
 import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
@@ -73,13 +73,9 @@ const App = () => (
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
           </Route>
 
-          {/* Auditor Routes */}
           {/* Inspector Portal Routes */}
           <Route path="/inspector" element={<InspectorDashboard />} />
           <Route path="/inspector/inspection/:inspectionId" element={<MobileInspectionFlow />} />
-
-          {/* Auditor Routes */}
-          <Route path="/auditor" element={<AuditorDashboard />} />
 
           {/* Client Portal Routes */}
           <Route path="/client/login" element={<ClientLogin />} />
