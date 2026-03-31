@@ -20,7 +20,7 @@ interface Props {
   isStatic?: boolean;
 }
 
-export default function ReportGenerationStepper({ currentStep }: Props) {
+export default function ReportGenerationStepper({ currentStep, isStatic = false }: Props) {
   const currentIdx = STEPS.findIndex((s) => s.key === currentStep);
 
   return (
