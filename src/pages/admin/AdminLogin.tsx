@@ -16,16 +16,22 @@ export default function AdminLogin() {
   const { user, role, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // If already authenticated as admin, redirect immediately
+  // Redirect when auth state updates (either already logged in or after login)
   useEffect(() => {
     if (!authLoading && user && role && ADMIN_ROLES.includes(role)) {
       navigate("/", { replace: true });
     }
-  }, [user, role, authLoading, navigate]);
+    // If login was successful but role doesn't match after auth loads
+    if (!authLoading && loginSuccess && user && role && !ADMIN_ROLES.includes(role)) {
+      supabase.auth.signOut();
+      setLoginSuccess(false);
+    }
+  }, [user, role, authLoading, navigate, loginSuccess]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,9 +65,9 @@ export default function AdminLogin() {
         toast({ title: "غير مصرّح", description: "هذه الصفحة مخصصة للإداريين فقط.", variant: "destructive" });
         return;
       }
-      // Ensure session is fully established before navigating
-      await supabase.auth.getSession();
-      navigate("/", { replace: true });
+
+      // Mark login as successful — useEffect will handle navigation when AuthProvider updates
+      setLoginSuccess(true);
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
