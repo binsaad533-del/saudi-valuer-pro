@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
 import type { Report } from "@/types/report";
 import { getStatusLabel } from "@/utils/reportWorkflow";
 
