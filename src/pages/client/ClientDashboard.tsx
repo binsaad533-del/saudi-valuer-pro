@@ -333,6 +333,73 @@ export default function ClientDashboard() {
           </div>
         )}
       </main>
+
+      {/* New Request Dialog */}
+      <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
+        <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle>طلب تقييم جديد</DialogTitle>
+            <DialogDescription>ارفع المستندات المتعلقة بالعقار وسنتولى الباقي</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            {/* Upload area */}
+            <div
+              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => newReqFileRef.current?.click()}
+            >
+              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+              <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
+              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، مخططات، كروكي — PDF, JPG, PNG</p>
+              <input
+                ref={newReqFileRef}
+                type="file"
+                accept=".pdf,.jpg,.jpeg,.png"
+                multiple
+                className="hidden"
+                onChange={handleNewReqFileAdd}
+              />
+            </div>
+
+            {/* Selected files */}
+            {newReqFiles.length > 0 && (
+              <div className="space-y-2">
+                {newReqFiles.map((f, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 bg-muted/50 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <File className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <span className="text-sm text-foreground truncate">{f.name}</span>
+                      <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
+                    </div>
+                    <button
+                      onClick={() => setNewReqFiles(prev => prev.filter((_, idx) => idx !== i))}
+                      className="text-muted-foreground hover:text-destructive shrink-0"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="req-notes">ملاحظات (اختياري)</Label>
+              <Textarea
+                id="req-notes"
+                placeholder="أي تفاصيل إضافية عن العقار أو الطلب..."
+                value={newReqNotes}
+                onChange={(e) => setNewReqNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <Button onClick={handleSubmitNewRequest} className="w-full gap-2" disabled={submitting || newReqFiles.length === 0}>
+              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              إرسال الطلب
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
