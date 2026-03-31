@@ -1,5 +1,11 @@
 import { Report, ReportStatus, WorkflowAction } from "@/types/report";
 
+const IMMUTABLE_STATUSES: ReportStatus[] = ["issued", "delivered"];
+
+export function isReportLocked(status: ReportStatus): boolean {
+  return IMMUTABLE_STATUSES.includes(status);
+}
+
 const VALID_TRANSITIONS: Record<ReportStatus, WorkflowAction[]> = {
   draft: ["submit_review", "cancel"],
   review: ["approve", "reject", "cancel"],
