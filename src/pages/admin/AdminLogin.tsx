@@ -59,9 +59,9 @@ export default function AdminLogin() {
         toast({ title: "غير مصرّح", description: "هذه الصفحة مخصصة للإداريين فقط.", variant: "destructive" });
         return;
       }
-
-      // Navigation is handled by the useEffect watching auth state
-      // AuthProvider will update via onAuthStateChange, triggering the redirect
+      // Ensure session is fully established before navigating
+      await supabase.auth.getSession();
+      navigate("/", { replace: true });
     } catch (err: any) {
       toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
     } finally {
