@@ -78,7 +78,6 @@ const App = () => (
             <Route path="/search" element={<SearchPage />} />
             <Route path="/reports" element={<ReportsListPage />} />
             <Route path="/reports/generate" element={<ReportGenerator />} />
-            <Route path="/verify" element={<VerifyReport />} />
             <Route path="/client-requests" element={<ClientRequests />} />
             <Route path="/valuation-production" element={<ValuationProductionList />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
@@ -133,6 +132,10 @@ const App = () => (
               <RequestDetails />
             </ProtectedRoute>
           } />
+
+          {/* Public Verification */}
+          <Route path="/verify" element={<VerifyReport />} />
+          <Route path="/verify/:token" element={<VerifyReport />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
