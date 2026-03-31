@@ -138,7 +138,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
               التاريخ: {new Date(report.issuedAt || report.createdAt).toLocaleDateString("ar-SA")}
             </p>
           </div>
-          <div className="opacity-80">
+          <div style={{ opacity: 0.85 }}>
             <OfficialStamp />
           </div>
         </div>
