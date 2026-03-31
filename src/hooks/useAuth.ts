@@ -75,15 +75,12 @@ export function useAuth() {
 
   const getRedirectPath = (role: string | null): string => {
     switch (role) {
-      case "super_admin":
-      case "firm_admin":
-      case "valuer":
-      case "reviewer":
+      case "owner":
+      case "admin_coordinator":
+      case "financial_manager":
         return "/";
       case "inspector":
         return "/inspector";
-      case "auditor":
-        return "/auditor";
       default:
         return "/client";
     }

@@ -161,9 +161,9 @@ export const AUTOMATED_TRANSITIONS: Record<string, { to: string; trigger: string
 
 // ── Human checkpoints ──
 export const HUMAN_CHECKPOINTS: Record<string, { role: string; action: string }> = {
-  draft_report_ready: { role: "firm_admin", action: "اعتماد المسودة من الإداري" },
-  under_client_review: { role: "firm_admin", action: "موافقة الإداري على المسودة" },
-  awaiting_final_payment: { role: "super_admin", action: "الاعتماد النهائي من المشرف العام" },
+  draft_report_ready: { role: "admin_coordinator", action: "اعتماد المسودة من المنسق" },
+  under_client_review: { role: "admin_coordinator", action: "موافقة المنسق على المسودة" },
+  awaiting_final_payment: { role: "owner", action: "الاعتماد النهائي من المالك" },
 };
 
 // ── Core transition function ──

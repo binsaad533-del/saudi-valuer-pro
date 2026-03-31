@@ -32,7 +32,7 @@ export default function SettingsPage() {
     );
   }
 
-  const isOwner = role === "super_admin";
+  const isOwner = role === "owner";
   const tabs = isOwner ? ownerTabs : adminTabs;
   const defaultTab = isOwner ? "company" : "valuer";
   const pageTitle = isOwner ? "الإعدادات" : "إعدادات الحساب";

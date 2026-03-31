@@ -63,7 +63,7 @@ export default function AuditorDashboard() {
       .select("role")
       .eq("user_id", user.id)
       .single();
-    if (role?.role !== "auditor") {
+    if (role?.role !== "financial_manager") {
       toast.error("ليس لديك صلاحية الوصول");
       navigate("/client/login");
     }

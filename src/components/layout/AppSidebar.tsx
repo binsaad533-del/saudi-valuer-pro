@@ -78,12 +78,10 @@ const navSections: NavSection[] = [
 ];
 
 const roleLabels: Record<string, string> = {
-  super_admin: "مالك المنصة",
-  firm_admin: "مدير الشركة",
-  valuer: "مقيّم معتمد",
-  reviewer: "مراجع",
+  owner: "مالك المنصة",
+  financial_manager: "مدير مالي",
+  admin_coordinator: "منسق إداري",
   inspector: "معاين",
-  auditor: "مدقق",
   client: "عميل",
 };
 
