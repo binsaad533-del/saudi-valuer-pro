@@ -48,7 +48,7 @@ export default function ClientLogin() {
     if (role === "inspector") {
       return "/inspector";
     }
-    return "/client";
+    return "/client/dashboard";
   };
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -101,7 +101,7 @@ export default function ClientLogin() {
           type: "magiclink",
         });
         if (verifyError) throw verifyError;
-        navigate("/client");
+        navigate("/client/dashboard");
       } else if (data?.valid && data?.email) {
         toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
       }
