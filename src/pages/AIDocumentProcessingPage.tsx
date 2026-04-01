@@ -739,55 +739,30 @@ export default function AIDocumentProcessingPage() {
                   </div>
                 </div>
 
-                {/* Extracted Numbers */}
-                {extracted.extractedNumbers && extracted.extractedNumbers.length > 0 && (
-                  <div className="bg-card rounded-lg border border-border">
-                    <button onClick={() => setShowExtractedNums(!showExtractedNums)}
-                      className="w-full p-4 flex items-center justify-between border-b border-border hover:bg-muted/20 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <Hash className="w-4 h-4 text-primary" />
-                        <h3 className="text-sm font-semibold text-foreground">بيانات مستخرجة ({extracted.extractedNumbers.length})</h3>
-                      </div>
-                      {showExtractedNums ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                    </button>
-                    {showExtractedNums && (
-                      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {extracted.extractedNumbers.map((en, i) => (
-                          <div key={i} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10 group">
-                            <div className="min-w-0 flex-1">
-                              <p className="text-[11px] text-muted-foreground">{en.label}</p>
-                              <p className="text-sm font-semibold text-foreground">{en.value}</p>
-                              <p className="text-[9px] text-muted-foreground/50">من: {en.source}</p>
-                            </div>
-                            <button onClick={() => copyToClipboard(en.value)}
-                              className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground">
-                              <Copy className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* البيانات المستخرجة الموحدة */}
-                {extracted && (extracted.client && Object.values(extracted.client).some(v => v)) || (extracted?.asset && Object.values(extracted.asset).some(v => v)) ? (
+                {extracted && (
                   <div className="bg-card rounded-lg border border-border overflow-hidden">
                     <div className="p-4 border-b border-border bg-muted/20">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-primary" />
-                        <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-primary" />
+                          <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
+                        </div>
+                        <Badge variant="outline" className="text-[10px]">
+                          {(extracted.extractedNumbers?.length || 0) + Object.values(extracted.client || {}).filter(Boolean).length + Object.values(extracted.asset || {}).filter(Boolean).length} حقل
+                        </Badge>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">تم تجميع البيانات من جميع المستندات المحللة في عرض موحد</p>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">تم تجميع جميع البيانات من {extracted.totalFilesCount} مستند في نموذج موحد</p>
                     </div>
 
                     <div className="divide-y divide-border">
                       {/* بيانات العميل */}
-                      {extracted?.client && Object.values(extracted.client).some(v => v) && (
+                      {extracted.client && Object.values(extracted.client).some(v => v) && (
                         <div className="p-4">
                           <div className="flex items-center gap-2 mb-3">
                             <User className="w-4 h-4 text-primary" />
                             <h4 className="text-xs font-semibold text-foreground">بيانات العميل</h4>
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والهوية</Badge>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
@@ -813,11 +788,12 @@ export default function AIDocumentProcessingPage() {
                       )}
 
                       {/* بيانات الأصل */}
-                      {extracted?.asset && Object.values(extracted.asset).some(v => v) && (
+                      {extracted.asset && Object.values(extracted.asset).some(v => v) && (
                         <div className="p-4">
                           <div className="flex items-center gap-2 mb-3">
                             <Building2 className="w-4 h-4 text-primary" />
                             <h4 className="text-xs font-semibold text-foreground">بيانات الأصل / العقار</h4>
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والرخصة</Badge>
                           </div>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {[
@@ -847,8 +823,54 @@ export default function AIDocumentProcessingPage() {
                         </div>
                       )}
 
+                      {/* البيانات المستخرجة مجمّعة حسب المصدر */}
+                      {extracted.extractedNumbers && extracted.extractedNumbers.length > 0 && (() => {
+                        const grouped = extracted.extractedNumbers!.reduce((acc, en) => {
+                          const src = en.source || "أخرى";
+                          if (!acc[src]) acc[src] = [];
+                          acc[src].push(en);
+                          return acc;
+                        }, {} as Record<string, ExtractedNumber[]>);
+
+                        return Object.entries(grouped).map(([source, items]) => (
+                          <div key={source} className="p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Hash className="w-4 h-4 text-primary" />
+                              <h4 className="text-xs font-semibold text-foreground">بيانات من: {source}</h4>
+                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">{items.length} حقل</Badge>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                              {items.map((en, i) => {
+                                const isConfidence = en.label.includes("ثقة");
+                                const confidenceVal = isConfidence ? parseInt(en.value) : null;
+                                return (
+                                  <div key={i} className={`flex items-start justify-between gap-2 p-2.5 rounded-lg border group ${
+                                    isConfidence && confidenceVal !== null && confidenceVal < 80
+                                      ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
+                                      : "bg-primary/5 border-primary/10"
+                                  }`}>
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-[10px] text-muted-foreground">{en.label}</p>
+                                      <p className={`text-sm font-semibold ${
+                                        isConfidence && confidenceVal !== null && confidenceVal < 80
+                                          ? "text-yellow-700 dark:text-yellow-400"
+                                          : "text-foreground"
+                                      }`}>{en.value}</p>
+                                    </div>
+                                    <button onClick={() => copyToClipboard(en.value)}
+                                      className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground shrink-0">
+                                      <Copy className="w-2.5 h-2.5" />
+                                    </button>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ));
+                      })()}
+
                       {/* غرض التقييم */}
-                      {extracted?.suggestedPurpose && (
+                      {extracted.suggestedPurpose && (
                         <div className="p-4">
                           <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
                             <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
@@ -861,7 +883,7 @@ export default function AIDocumentProcessingPage() {
                       )}
                     </div>
                   </div>
-                ) : null}
+                )}
               </div>
             )}
           </div>
