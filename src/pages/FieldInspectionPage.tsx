@@ -2123,6 +2123,21 @@ function SectionLayoutAreas({ formData, updateField }: any) {
           </>
         )}
 
+        <Separator />
+
+        <p className="text-xs font-bold text-muted-foreground">🌿 المساحات الإضافية (م²)</p>
+        <div className="grid grid-cols-3 gap-3">
+          <FieldGroup label="🌳 الحديقة / الفناء">
+            <Input type="number" value={formData.garden_area} onChange={(e: any) => updateField("garden_area", e.target.value)} placeholder="م²" />
+          </FieldGroup>
+          <FieldGroup label="🚗 المواقف">
+            <Input type="number" value={formData.parking_area} onChange={(e: any) => updateField("parking_area", e.target.value)} placeholder="م²" />
+          </FieldGroup>
+          <FieldGroup label="🏠 الملاحق">
+            <Input type="number" value={formData.annex_area} onChange={(e: any) => updateField("annex_area", e.target.value)} placeholder="م²" />
+          </FieldGroup>
+        </div>
+
         <FieldGroup label="ملاحظات المخطط">
           <Textarea value={formData.layout_notes} onChange={(e: any) => updateField("layout_notes", e.target.value)} placeholder="ملاحظات عن توزيع المساحات، الملاحق، السطح..." rows={2} />
         </FieldGroup>
