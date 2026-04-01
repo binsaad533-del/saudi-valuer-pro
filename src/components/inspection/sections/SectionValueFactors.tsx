@@ -108,8 +108,8 @@ export default function SectionValueFactors({ formData, updateField }: any) {
                         <button
                           key={level.value}
                           type="button"
-                          onClick={() => updateField("negative_factors", { ...formData.negative_factors, [factor.id]: level.value })}
-                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${formData.negative_factors[factor.id] === level.value ? "bg-destructive text-destructive-foreground border-destructive" : level.style + " bg-background hover:bg-accent/50"}`}
+                          onClick={() => updateField("negative_factors", { ...negativeFactors, [factor.id]: level.value })}
+                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${negativeFactors[factor.id] === level.value ? "bg-destructive text-destructive-foreground border-destructive" : level.style + " bg-background hover:bg-accent/50"}`}
                         >
                           {level.label}
                         </button>
