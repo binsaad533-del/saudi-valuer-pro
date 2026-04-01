@@ -142,7 +142,7 @@ export default function AIDocumentProcessingPage() {
         return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م² — حي النرجس، الرياض — ثقة 96%" };
       // رخص بناء
       if (n.includes("رخص") || n.includes("permit") || n.includes("بناء") || n.includes("building"))
-        return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: 44/2891 — تاريخ: 1443/06/12 — نوع: سكني" };
+        return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: RB-2024-789 — مساحة البناء: 320 م² — طابقين — ثقة 91%" };
       // مخططات معمارية
       if (n.includes("مخطط") || n.includes("plan") || n.includes("كروكي") || n.includes("layout") || n.includes("floor"))
         return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "مخطط دور أرضي — 4 غرف، صالة، مطبخ — مساحة البناء: 312 م²" };
