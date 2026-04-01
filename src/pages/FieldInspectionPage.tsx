@@ -1803,6 +1803,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             rooms_count: formData.interior_rooms_count,
           }}
         />
+        </ExpandableSection>
       </CardContent>
     </Card>
   );
