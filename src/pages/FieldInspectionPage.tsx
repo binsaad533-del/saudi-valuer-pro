@@ -116,6 +116,7 @@ interface FormData {
   access_ease: string;
   surrounding_positives: string;
   surrounding_negatives: string;
+  location_confidential_notes: string;
   matches_documents: string;
   asset_description: string;
   current_use: string;
