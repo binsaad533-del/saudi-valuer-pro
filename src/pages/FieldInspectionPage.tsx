@@ -23,16 +23,23 @@ import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 /* ═══════ Constants ═══════ */
 
 const PHOTO_CATEGORIES = [
-  { key: "exterior_front", label: "الواجهة الأمامية", required: true },
-  { key: "exterior_back", label: "الواجهة الخلفية", required: true },
-  { key: "exterior_left", label: "الواجهة اليسرى", required: true },
-  { key: "exterior_right", label: "الواجهة اليمنى", required: true },
-  { key: "street_view", label: "منظر الشارع", required: true },
-  { key: "interior_living", label: "صالة المعيشة", required: false },
-  { key: "interior_kitchen", label: "المطبخ", required: false },
-  { key: "interior_bathroom", label: "دورة المياه", required: false },
-  { key: "interior_bedroom", label: "غرفة النوم", required: false },
-  { key: "surroundings", label: "المحيط العام", required: true },
+  { key: "exterior_front", label: "الواجهة الأمامية", group: "exterior", required: true },
+  { key: "exterior_back", label: "الواجهة الخلفية", group: "exterior", required: true },
+  { key: "exterior_left", label: "الواجهة اليسرى", group: "exterior", required: true },
+  { key: "exterior_right", label: "الواجهة اليمنى", group: "exterior", required: true },
+  { key: "street_view", label: "منظر الشارع", group: "exterior", required: true },
+  { key: "interior_living", label: "صالة المعيشة", group: "interior", required: false },
+  { key: "interior_kitchen", label: "المطبخ", group: "interior", required: false },
+  { key: "interior_bathroom", label: "دورة المياه", group: "interior", required: false },
+  { key: "interior_bedroom", label: "غرفة النوم", group: "interior", required: false },
+  { key: "surroundings", label: "المحيط العام", group: "exterior", required: true },
+  { key: "site_plan", label: "المخطط / الكروكي", group: "plan", required: false },
+  { key: "floor_plan", label: "مخطط الأدوار", group: "plan", required: false },
+  { key: "deed_photo", label: "صورة الصك", group: "plan", required: false },
+  { key: "problem_cracks", label: "تشققات / عيوب", group: "problems", required: false },
+  { key: "problem_moisture", label: "رطوبة / تسربات", group: "problems", required: false },
+  { key: "problem_other", label: "مشاكل أخرى", group: "problems", required: false },
+  { key: "other", label: "صور إضافية", group: "other", required: false },
 ];
 
 const DEFAULT_CHECKLIST = [
