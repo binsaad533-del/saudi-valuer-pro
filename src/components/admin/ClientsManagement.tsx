@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { formatNumber } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
