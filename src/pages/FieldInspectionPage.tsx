@@ -1316,10 +1316,8 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         </div>
         </ExpandableSection>
 
-        <Separator />
-
         {/* السطح */}
-        <p className="text-xs font-bold text-muted-foreground">🏠 السطح</p>
+        <ExpandableSection icon="🏠" title="السطح والعزل">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع السطح">
             <Select value={formData.exterior_roof_type} onValueChange={(v: string) => updateField("exterior_roof_type", v)}>
@@ -1364,11 +1362,10 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </RadioGroup>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* الأسوار والمداخل */}
-        <p className="text-xs font-bold text-muted-foreground">🚧 الأسوار والمدخل والمواقف</p>
+        {/* الأسوار والمداخل والمواقف */}
+        <ExpandableSection icon="🚧" title="الأسوار والمدخل والمواقف">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع السور">
             <Select value={formData.exterior_fence_type} onValueChange={(v: string) => updateField("exterior_fence_type", v)}>
@@ -1392,7 +1389,6 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* المدخل الرئيسي */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع المدخل الرئيسي">
             <Select value={formData.exterior_main_entrance_type} onValueChange={(v: string) => updateField("exterior_main_entrance_type", v)}>
@@ -1416,7 +1412,6 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* المواقف */}
         <FieldGroup label="المواقف">
           <RadioGroup value={formData.exterior_parking} onValueChange={(v: string) => updateField("exterior_parking", v)} className="flex gap-2">
             {[{ value: "covered", label: "مغطاة" }, { value: "open", label: "مفتوحة" }, { value: "basement", label: "سرداب" }, { value: "none", label: "لا يوجد" }].map(opt => (
@@ -1455,12 +1450,13 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <FieldGroup label="عدد المداخل">
           <Input type="number" value={formData.exterior_entrance_count} onChange={(e: any) => updateField("exterior_entrance_count", e.target.value)} placeholder="مثال: 2" />
         </FieldGroup>
+        </ExpandableSection>
 
-        <Separator />
-
+        <ExpandableSection icon="📝" title="ملاحظات إضافية">
         <FieldGroup label="ملاحظات إضافية">
           <Textarea value={formData.exterior_notes} onChange={(e: any) => updateField("exterior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الخارجية للمبنى..." rows={3} />
         </FieldGroup>
+        </ExpandableSection>
 
         <Separator />
         <p className="text-xs font-bold text-muted-foreground">📸 صور الواجهات</p>
