@@ -680,6 +680,23 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
             className="border-amber-200 dark:border-amber-800 bg-white dark:bg-background"
           />
         </div>
+
+        <AiSuggestionBox
+          sectionKey="location"
+          promptHint="تحليل الموقع والمحيط والخدمات القريبة"
+          context={{
+            district_type: formData.district_type,
+            district_level: formData.district_level,
+            nearby_mosque: formData.nearby_mosque,
+            nearby_school: formData.nearby_school,
+            nearby_hospital: formData.nearby_hospital,
+            nearby_mall: formData.nearby_mall,
+            nearby_highway: formData.nearby_highway,
+            surrounding_positives: formData.surrounding_positives,
+            surrounding_negatives: formData.surrounding_negatives,
+            access_ease: formData.access_ease,
+          }}
+        />
       </CardContent>
     </Card>
   );

@@ -100,6 +100,18 @@ export default function AiSuggestionBox({ context, sectionKey, promptHint }: AiS
 /** Fallback local suggestions when edge function is unavailable */
 function generateLocalSuggestion(section: string, ctx: Record<string, any>): string {
   switch (section) {
+    case "location": {
+      const tips: string[] = [];
+      if (!ctx.district_type) tips.push("💡 حدد نوع الحي (سكني/تجاري/مختلط) لتحسين دقة التقييم");
+      if (ctx.district_level === "upscale" && ctx.nearby_highway === "yes") tips.push("⚠️ القرب من طريق رئيسي في حي راقي قد يؤثر سلباً بسبب الضوضاء");
+      if (ctx.district_level === "popular" && ctx.nearby_mall === "yes") tips.push("📈 وجود مركز تجاري قريب في حي شعبي يرفع القيمة نسبياً");
+      const noServices = ["nearby_mosque", "nearby_school", "nearby_hospital", "nearby_mall"].filter(k => ctx[k] === "no");
+      if (noServices.length >= 3) tips.push("⚠️ نقص الخدمات القريبة (مسجد، مدرسة، مستشفى، مول) يؤثر سلباً على القيمة");
+      if (ctx.surrounding_negatives && String(ctx.surrounding_negatives).length > 10 && (!ctx.surrounding_positives || String(ctx.surrounding_positives).length < 10))
+        tips.push("📝 السلبيات أكثر من الإيجابيات — تأكد من ذكر أي إيجابيات موجودة للتوازن");
+      if (ctx.access_ease === "poor") tips.push("🚧 صعوبة الوصول تؤثر مباشرة على القيمة السوقية — وثّق السبب بالصور");
+      return tips.length > 0 ? tips.join("\n\n") : "✅ بيانات الموقع مكتملة. تأكد من توثيق المحيط بالصور.";
+    }
     case "verification": {
       const match = ctx.matches_documents;
       if (match === "no") return "⚠️ تنبيه: عدم مطابقة الأصل للمستندات يستوجب:\n- توثيق الفروقات بالصور\n- ذكر طبيعة الاختلاف بدقة\n- التأكد من صحة رقم الصك/العقد\n- إبلاغ المقيّم المسؤول فوراً";
