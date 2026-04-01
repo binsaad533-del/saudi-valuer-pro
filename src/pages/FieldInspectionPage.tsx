@@ -895,6 +895,19 @@ function SectionFinalCheck({ formData, updateField, sectionComplete, photos, che
         <FieldGroup label="ملاحظات المعاين">
           <Textarea value={formData.inspector_final_notes} onChange={(e: any) => updateField("inspector_final_notes", e.target.value)} placeholder="أي ملاحظات إضافية..." rows={3} />
         </FieldGroup>
+        <div className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">ملاحظات سرية (للمقيّم فقط — لا تُضاف للتقرير)</span>
+          </div>
+          <Textarea
+            value={formData.confidential_notes}
+            onChange={(e: any) => updateField("confidential_notes", e.target.value)}
+            placeholder="ملاحظات خاصة لا تظهر في التقرير النهائي... (مثال: شكوك حول صحة المستندات، ملاحظات شخصية)"
+            rows={3}
+            className="border-amber-200 dark:border-amber-800 bg-white dark:bg-background"
+          />
+        </div>
       </CardContent>
     </Card>
   );
