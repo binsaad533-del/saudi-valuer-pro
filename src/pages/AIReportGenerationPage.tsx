@@ -1012,7 +1012,7 @@ export default function AIReportGenerationPage() {
                       "—"
                     } />
                     <InfoRow label="عدد المقارنات" value={
-                      String(aggregatedData?.comparables?.length ?? reportDraft.metadata?.comparables_count ?? "—")
+                      String(aggregatedData?.comparables?.length ?? "—")
                     } />
                   </CardContent>
                 </Card>
