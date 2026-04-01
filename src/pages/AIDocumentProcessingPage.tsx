@@ -182,13 +182,15 @@ export default function AIDocumentProcessingPage() {
     const numbers: ExtractedNumber[] = [];
 
     if (cats.has("deed")) {
+      const deedSrc = files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية";
       numbers.push(
-        { label: "رقم الصك", value: "310298765", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "مساحة الأرض", value: "625 م²", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "اسم المالك", value: "أحمد بن عبدالله المالكي", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "موقع العقار", value: "حي النرجس — الرياض", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "تاريخ إصدار الصك", value: "1445/03/15 هـ", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "نوع الاستخدام", value: "سكني", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "رقم الصك", value: "1234567", source: deedSrc },
+        { label: "مساحة الأرض", value: "450 م²", source: deedSrc },
+        { label: "اسم المالك", value: "أحمد بن عبدالله المالكي", source: deedSrc },
+        { label: "الموقع", value: "حي النرجس — الرياض", source: deedSrc },
+        { label: "تاريخ إصدار الصك", value: "1445/03/15 هـ", source: deedSrc },
+        { label: "نوع الاستخدام", value: "سكني", source: deedSrc },
+        { label: "نسبة ثقة الاستخراج", value: "96%", source: deedSrc },
       );
     }
     if (cats.has("building_permit")) {
