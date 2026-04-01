@@ -2691,6 +2691,31 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
                   {copied ? "تم النسخ" : "نسخ الملخص"}
                 </Button>
               </div>
+
+              {/* Submit after reviewing summary */}
+              <Separator className="my-3" />
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3 text-center">
+                <p className="text-sm font-semibold text-primary">✅ راجعت الملخص وأرغب بإرسال المعاينة</p>
+                <p className="text-[11px] text-muted-foreground">
+                  بالضغط على "إرسال المعاينة" تؤكد أن جميع البيانات دقيقة وتعكس الواقع الفعلي
+                </p>
+                <Button
+                  className="w-full h-12 text-base gap-2"
+                  onClick={() => {
+                    const approvalName = formData.approval_inspector_name || formData.inspector_name;
+                    if (!approvalName) {
+                      toast.error("يرجى إدخال اسم المعاين في قسم الاعتماد أولاً");
+                      return;
+                    }
+                    updateField("approval_inspector_name", approvalName);
+                    updateField("approval_date", new Date().toISOString().split("T")[0]);
+                    toast.success("🎉 تم إرسال المعاينة بنجاح — ستُضاف لقائمة المقيّم");
+                  }}
+                >
+                  <Send className="w-5 h-5" />
+                  إرسال المعاينة
+                </Button>
+              </div>
             </div>
           )}
         </div>
