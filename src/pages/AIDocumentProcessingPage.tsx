@@ -86,6 +86,7 @@ const DEMO_FILES: UploadedFile[] = [
 ];
 
 export default function AIDocumentProcessingPage() {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(DEMO_FILES);
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
