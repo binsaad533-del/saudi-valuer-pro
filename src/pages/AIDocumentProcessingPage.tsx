@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import TopBar from "@/components/layout/TopBar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -87,7 +87,8 @@ export default function AIDocumentProcessingPage() {
   const [showClientData, setShowClientData] = useState(true);
   const [showAssetData, setShowAssetData] = useState(true);
   const [showExtractedNums, setShowExtractedNums] = useState(true);
-  const [useMock, setUseMock] = useState(false);
+  const [useMock, setUseMock] = useState(true);
+  const [autoAnalyzePending, setAutoAnalyzePending] = useState(false);
 
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -95,7 +96,8 @@ export default function AIDocumentProcessingPage() {
       file: f, name: f.name, size: f.size, status: "pending" as FileStatus,
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
-  }, []);
+    if (useMock) setAutoAnalyzePending(true);
+  }, [useMock]);
 
   const removeFile = useCallback((index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
@@ -309,6 +311,14 @@ export default function AIDocumentProcessingPage() {
       setExtractionProgress(0);
     }
   }, [uploadedFiles, useMock]);
+
+  // Auto-trigger mock analysis when files are added in mock mode
+  useEffect(() => {
+    if (autoAnalyzePending && uploadedFiles.length > 0 && !extracting) {
+      setAutoAnalyzePending(false);
+      runExtraction();
+    }
+  }, [autoAnalyzePending, uploadedFiles, extracting, runExtraction]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
