@@ -144,6 +144,23 @@ interface FormData {
   building_area: string;
   num_floors: string;
   dimensions_notes: string;
+  // Section 5: المبنى - الخارج
+  exterior_facade_material: string;
+  exterior_facade_condition: string;
+  exterior_paint_condition: string;
+  exterior_windows_type: string;
+  exterior_windows_condition: string;
+  exterior_doors_type: string;
+  exterior_doors_condition: string;
+  exterior_roof_type: string;
+  exterior_roof_condition: string;
+  exterior_fence_type: string;
+  exterior_fence_condition: string;
+  exterior_parking: string;
+  exterior_parking_count: string;
+  exterior_landscaping: string;
+  exterior_entrance_count: string;
+  exterior_notes: string;
   overall_condition: string;
   asset_age: string;
   finishing_level: string;
