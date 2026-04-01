@@ -16,7 +16,7 @@ import {
   MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft, ChevronDown,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
-  FileCheck, UserCheck, Home, Upload, LayoutGrid, Sparkles, Copy,
+  FileCheck, UserCheck, Home, Upload, LayoutGrid, Sparkles, Copy, Lock,
 } from "lucide-react";
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
