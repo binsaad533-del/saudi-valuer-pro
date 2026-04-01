@@ -119,6 +119,7 @@ interface FormData {
   risk_details: string;
   data_complete: string;
   inspector_final_notes: string;
+  confidential_notes: string;
   approval_inspector_name: string;
   approval_date: string;
 }
