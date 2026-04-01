@@ -13,6 +13,8 @@ import { Search, Filter, RefreshCw, MoreHorizontal, Eye, UserCog, Flag } from "l
 import { STATUS_LABELS as WF_STATUS_LABELS, STATUS_COLORS } from "@/lib/workflow-engine";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/utils";
+
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = Object.fromEntries(
   Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])
@@ -206,7 +208,7 @@ export default function CoordinatorRequestsTable({ requests, clients, onRefresh 
                       <TableCell className="text-sm">{req.property_type || "—"}</TableCell>
                       <TableCell>{getStatusBadge(req.status)}</TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {new Date(req.created_at).toLocaleDateString("ar-SA")}
+                        {formatDate(req.created_at)}
                       </TableCell>
                       <TableCell className="text-sm">
                         {req.assigned_valuer_name || "لم يُعيَّن"}
@@ -268,7 +270,7 @@ export default function CoordinatorRequestsTable({ requests, clients, onRefresh 
                 <div><span className="text-muted-foreground">الحالة:</span><br />{getStatusBadge(selectedReq.status)}</div>
                 <div><span className="text-muted-foreground">المبلغ:</span><br />{selectedReq.quotation_amount ? `${Number(selectedReq.quotation_amount).toLocaleString()} ر.س` : "—"}</div>
                 <div><span className="text-muted-foreground">المقيّم:</span><br />{selectedReq.assigned_valuer_name || "لم يُعيَّن"}</div>
-                <div><span className="text-muted-foreground">تاريخ الإدخال:</span><br />{new Date(selectedReq.created_at).toLocaleDateString("ar-SA")}</div>
+                <div><span className="text-muted-foreground">تاريخ الإدخال:</span><br />{formatDate(selectedReq.created_at)}</div>
               </div>
               {selectedReq.property_description_ar && (
                 <div><span className="text-muted-foreground">الوصف:</span><br />{selectedReq.property_description_ar}</div>

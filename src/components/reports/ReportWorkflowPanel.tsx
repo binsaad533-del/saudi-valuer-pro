@@ -28,6 +28,8 @@ import {
 } from "@/utils/reportWorkflow";
 import { toast } from "sonner";
 import type { WorkflowAction } from "@/types/report";
+import { formatDate } from "@/lib/utils";
+
 
 interface ReportWorkflowPanelProps {
   report: Report;
@@ -184,7 +186,7 @@ export default function ReportWorkflowPanel({
                     <div>
                       <span className="font-medium">{entry.details}</span>
                       <span className="text-muted-foreground mr-2">
-                        — {entry.performedBy} · {new Date(entry.timestamp).toLocaleDateString("ar-SA")}
+                        — {entry.performedBy} · {formatDate(entry.timestamp)}
                       </span>
                     </div>
                   </div>

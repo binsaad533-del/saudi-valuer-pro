@@ -18,6 +18,8 @@ import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
+import { formatDate } from "@/lib/utils";
+
 
 const STATUS_TIMELINE = [
   { key: "submitted", label: "تم الإرسال" },
@@ -317,7 +319,7 @@ export default function RequestDetails() {
                 {request.property_description_ar && <div><span className="text-muted-foreground text-xs">الوصف:</span><p className="text-foreground">{request.property_description_ar}</p></div>}
                 {request.property_city_ar && <div className="flex justify-between"><span className="text-muted-foreground text-xs">المدينة:</span><span>{request.property_city_ar}</span></div>}
                 {request.land_area && <div className="flex justify-between"><span className="text-muted-foreground text-xs">مساحة الأرض:</span><span dir="ltr">{request.land_area} م²</span></div>}
-                <div className="flex justify-between"><span className="text-muted-foreground text-xs">تاريخ الطلب:</span><span>{new Date(request.created_at).toLocaleDateString("ar-SA")}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground text-xs">تاريخ الطلب:</span><span>{formatDate(request.created_at)}</span></div>
               </CardContent>
             </Card>
 

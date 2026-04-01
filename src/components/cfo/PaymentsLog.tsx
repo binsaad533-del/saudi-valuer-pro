@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FileText, FileSpreadsheet } from "lucide-react";
 import { exportPaymentsPDF, exportPaymentsExcel } from "@/lib/cfo-export";
+import { formatNumber } from "@/lib/utils";
+
 
 export default function PaymentsLog() {
   const [dateFrom, setDateFrom] = useState("");
@@ -60,7 +62,7 @@ export default function PaymentsLog() {
                 <TableCell className="font-medium">{p.paymentNumber}</TableCell>
                 <TableCell>{p.invoiceNumber}</TableCell>
                 <TableCell>{p.clientName}</TableCell>
-                <TableCell>{p.amount.toLocaleString("ar-SA")} ر.س</TableCell>
+                <TableCell>{formatNumber(p.amount)} ر.س</TableCell>
                 <TableCell>
                   <Badge variant="outline" className="bg-muted/50">{methodLabels[p.method]}</Badge>
                 </TableCell>

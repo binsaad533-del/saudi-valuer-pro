@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import { formatDate } from "@/lib/utils";
 import {
   MessageSquareText, CheckCircle, XCircle, Clock, Eye,
   History, FileText, Loader2, AlertTriangle, RefreshCw,
@@ -270,7 +271,7 @@ export default function ReportRevisionPanel({ reportId, assignmentId, requestId,
                           </div>
                         )}
                         <p className="text-[10px] text-muted-foreground mt-1">
-                          {new Date(comment.created_at).toLocaleDateString("ar-SA")} - {new Date(comment.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                          {formatDate(comment.created_at)} - {new Date(comment.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
                     </div>
@@ -347,7 +348,7 @@ export default function ReportRevisionPanel({ reportId, assignmentId, requestId,
                   <span className="text-sm font-bold">v{report?.version || 1}</span>
                 </div>
                 <span className="text-[10px] text-muted-foreground">
-                  {report?.updated_at ? new Date(report.updated_at).toLocaleDateString("ar-SA") : ""}
+                  {report?.updated_at ? formatDate(report.updated_at) : ""}
                 </span>
               </div>
             </CardContent>
@@ -365,7 +366,7 @@ export default function ReportRevisionPanel({ reportId, assignmentId, requestId,
                       {ver.change_summary && <p className="text-xs text-muted-foreground mt-0.5">{ver.change_summary}</p>}
                     </div>
                     <span className="text-[10px] text-muted-foreground">
-                      {new Date(ver.created_at).toLocaleDateString("ar-SA")}
+                      {formatDate(ver.created_at)}
                     </span>
                   </div>
                 </CardContent>
@@ -397,7 +398,7 @@ export default function ReportRevisionPanel({ reportId, assignmentId, requestId,
                       {log.change_summary_ar && <p className="text-xs text-foreground">{log.change_summary_ar}</p>}
                     </div>
                     <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                      {new Date(log.created_at).toLocaleDateString("ar-SA")}
+                      {formatDate(log.created_at)}
                     </span>
                   </div>
                 </CardContent>

@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Search, FileText, FileSpreadsheet } from "lucide-react";
 import { exportInvoicesPDF, exportInvoicesExcel } from "@/lib/cfo-export";
+import { formatNumber } from "@/lib/utils";
+
 
 const statusColors: Record<Invoice["status"], string> = {
   paid: "bg-success/10 text-success border-success/20",
@@ -86,7 +88,7 @@ export default function InvoicesTable() {
                 <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
                 <TableCell>{inv.clientName}</TableCell>
                 <TableCell>{inv.valuationType}</TableCell>
-                <TableCell>{inv.amount.toLocaleString("ar-SA")} ر.س</TableCell>
+                <TableCell>{formatNumber(inv.amount)} ر.س</TableCell>
                 <TableCell>{inv.issueDate}</TableCell>
                 <TableCell>{inv.dueDate}</TableCell>
                 <TableCell>

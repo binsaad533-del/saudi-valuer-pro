@@ -23,6 +23,8 @@ import { exportReportToPDF, downloadPdfBlob } from "@/services/pdfExportService"
 import { isReportLocked, getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import { mockReports } from "@/data/mockReports";
 import type { Report } from "@/types/report";
+import { formatDate } from "@/lib/utils";
+
 
 const SAMPLE_REPORT: ReportData = {
   cover_title_ar: "تقرير تقييم عقاري",
@@ -298,7 +300,7 @@ export default function ReportGeneratorPage() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
                     <Archive className="w-4 h-4" />
                     تم أرشفة التقرير
-                    {report.archivedAt && ` — ${new Date(report.archivedAt).toLocaleDateString("ar-SA")}`}
+                    {report.archivedAt && ` — ${formatDate(report.archivedAt)}`}
                   </div>
                 )}
               </CardContent>
@@ -328,7 +330,7 @@ export default function ReportGeneratorPage() {
               verificationToken={report.verificationToken}
               reportDate={
                 report.issuedAt
-                  ? new Date(report.issuedAt).toLocaleDateString("ar-SA")
+                  ? formatDate(report.issuedAt)
                   : undefined
               }
             />

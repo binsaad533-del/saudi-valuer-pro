@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatDate } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -113,7 +114,7 @@ export default function SectionNotesRecommendations({ formData, updateField, sub
       }
 
       lines.push("");
-      lines.push(`═══ نهاية الملخص — ${new Date().toLocaleDateString("ar-SA")} ═══`);
+      lines.push(`═══ نهاية الملخص — ${formatDate(new Date())} ═══`);
 
       setTechSummary(lines.join("\n"));
       setSummaryLoading(false);

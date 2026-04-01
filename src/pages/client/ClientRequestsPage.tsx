@@ -9,6 +9,8 @@ import {
   ArrowRight, FileText, Search, Loader2, Building2, Plus, Filter,
 } from "lucide-react";
 import { RequestTracker } from "@/components/client/RequestTracker";
+import { formatDate } from "@/lib/utils";
+
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "مسودة",
@@ -157,7 +159,7 @@ export default function ClientRequestsPage() {
                             <span className="font-mono" dir="ltr">{req.reference_number}</span>
                           )}
                           {req.property_city_ar && <span>{req.property_city_ar}</span>}
-                          <span>{new Date(req.created_at).toLocaleDateString("ar-SA")}</span>
+                          <span>{formatDate(req.created_at)}</span>
                         </div>
                       </div>
                       <Badge variant="outline" className="text-xs shrink-0">

@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { REPORT_SECTIONS } from "@/lib/report-types";
+import { formatDate } from "@/lib/utils";
 import {
   MessageSquareText, Send, CheckCircle, Eye,
   Loader2, AlertTriangle, XCircle, History,
@@ -262,7 +263,7 @@ export default function ClientReportReview({ reportId, requestId }: Props) {
                     </div>
                   )}
                   <p className="text-[10px] text-muted-foreground">
-                    {new Date(comment.created_at).toLocaleDateString("ar-SA")}
+                    {formatDate(comment.created_at)}
                   </p>
                 </div>
               );

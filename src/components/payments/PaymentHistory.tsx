@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
+import { formatDate } from "@/lib/utils";
+
 
 interface PaymentHistoryProps {
   requestId: string;
@@ -74,7 +76,7 @@ export default function PaymentHistory({ requestId, refreshKey }: PaymentHistory
                 <div>
                   <p className="text-xs font-medium text-foreground">{getStageLabel(pay.payment_stage)}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {getMethodLabel(pay.payment_method)} • {new Date(pay.created_at).toLocaleDateString("ar-SA")}
+                    {getMethodLabel(pay.payment_method)} • {formatDate(pay.created_at)}
                   </p>
                 </div>
               </div>

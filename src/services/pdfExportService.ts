@@ -2,6 +2,8 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import type { Report } from "@/types/report";
 import { getStatusLabel } from "@/utils/reportWorkflow";
+import { formatDate, formatNumber } from "@/lib/utils";
+
 
 const PAGE_WIDTH = 210; // A4 mm
 const PAGE_HEIGHT = 297;
@@ -92,7 +94,7 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
 
   doc.setFontSize(10);
   doc.text(report.reportNumber, PAGE_WIDTH / 2, 55, { align: "center" });
-  doc.text(new Date(report.createdAt).toLocaleDateString("ar-SA"), PAGE_WIDTH / 2, 62, { align: "center" });
+  doc.text(formatDate(report.createdAt), PAGE_WIDTH / 2, 62, { align: "center" });
 
   // Status badge
   const statusLabel = getStatusLabel(report.status);
@@ -153,9 +155,9 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
       [
         `${i + 1}`,
         c.description.substring(0, 40),
-        c.value.toLocaleString("ar-SA"),
+        formatNumber(c.value),
         c.source.substring(0, 25),
-        new Date(c.date).toLocaleDateString("ar-SA"),
+        formatDate(c.date),
       ],
       y,
       false,
@@ -183,7 +185,7 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
   doc.setTextColor(...PRIMARY_COLOR);
   doc.setFontSize(20);
   doc.text(
-    `${report.estimatedValue.toLocaleString("ar-SA")} ر.س`,
+    `${formatNumber(report.estimatedValue)} ر.س`,
     PAGE_WIDTH / 2,
     y + 22,
     { align: "center" }
@@ -234,8 +236,8 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
   y += 8;
 
   const dateLabel = report.issuedAt
-    ? new Date(report.issuedAt).toLocaleDateString("ar-SA")
-    : new Date(report.createdAt).toLocaleDateString("ar-SA");
+    ? formatDate(report.issuedAt)
+    : formatDate(report.createdAt);
   doc.text(`التاريخ: ${dateLabel}`, PAGE_WIDTH / 2, y, { align: "center" });
   y += 15;
 

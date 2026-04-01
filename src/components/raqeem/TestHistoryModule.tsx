@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatDate, formatDateTime } from "@/lib/utils";
+
 
 interface TestSession {
   id: string;
@@ -210,7 +212,7 @@ export default function TestHistoryModule() {
                         <span>{s.correct_answers}/{s.total_questions} صحيح</span>
                         <span className="flex items-center gap-0.5">
                           <Clock className="w-3 h-3" />
-                          {new Date(s.created_at).toLocaleDateString("ar-SA")}
+                          {formatDate(s.created_at)}
                         </span>
                       </div>
                     </div>
@@ -246,7 +248,7 @@ export default function TestHistoryModule() {
             <p className="text-sm text-muted-foreground">{viewSession.notes}</p>
           )}
           <div className="text-xs text-muted-foreground">
-            {new Date(viewSession?.created_at || "").toLocaleString("ar-SA")}
+            {formatDateTime(viewSession?.created_at || "")}
           </div>
         </DialogContent>
       </Dialog>

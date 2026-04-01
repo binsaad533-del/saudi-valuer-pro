@@ -18,6 +18,7 @@ import {
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 import { StatusBadge, StatusTransitionButton } from "@/components/workflow/StatusComponents";
+import { formatDate } from "@/lib/utils";
 import {
   STATUS_LABELS as WF_STATUS_LABELS,
   STATUS_COLORS,
@@ -298,7 +299,7 @@ export default function ClientRequests() {
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
                           {req.property_city_ar && <span>📍 {req.property_city_ar}</span>}
                           {req.land_area && <span>📐 {req.land_area} م²</span>}
-                          <span>📅 {new Date(req.created_at).toLocaleDateString("ar-SA")}</span>
+                          <span>📅 {formatDate(req.created_at)}</span>
                           {req.quotation_amount && <span className="text-primary font-medium">💰 {Number(req.quotation_amount).toLocaleString()} ر.س</span>}
                         </div>
                       </div>
@@ -513,7 +514,7 @@ export default function ClientRequests() {
                   </div>
                   <div className="text-xs text-muted-foreground">
                     <p>الملف: {pay.file_name}</p>
-                    <p>التاريخ: {new Date(pay.created_at).toLocaleDateString("ar-SA")}</p>
+                    <p>التاريخ: {formatDate(pay.created_at)}</p>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" className="flex-1" onClick={() => reviewPayment(pay.id, true)}>
