@@ -25,15 +25,15 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(3), updated_at: hoursAgo(4),
     notes: null,
   },
-  // 2. بانتظار الدفع
+  // 2. مكتملة — تقرير جاهز
   {
     id: "r2", reference_number: "VAL-002", client_id: "c2",
     property_type: "commercial_building", purpose: "financing",
     property_city_ar: "جدة", property_district_ar: "الشاطئ",
     land_area: 1800, building_area: 5400,
     property_description_ar: "مجمع تجاري — 3 طوابق — 12 محل تجاري على شارع الأمير سلطان",
-    status: "payment_uploaded", priority: "high",
-    assigned_valuer_name: null,
+    status: "report_issued", priority: "normal",
+    assigned_valuer_name: "م. فهد السبيعي",
     quotation_amount: 12000,
     created_at: daysAgo(2), updated_at: hoursAgo(8),
     notes: "إيصال الدفع مرفوع — بانتظار المراجعة والتأكيد",
