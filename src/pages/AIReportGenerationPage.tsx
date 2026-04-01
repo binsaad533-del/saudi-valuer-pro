@@ -745,6 +745,10 @@ export default function AIReportGenerationPage() {
             </div>
           </div>
 
+          <div className="flex gap-4">
+            {/* ─── Main Content ─── */}
+            <div className="flex-1 min-w-0 space-y-4">
+
           {/* Metadata summary */}
           {reportDraft.metadata && (
             <Card className="bg-muted/30">
@@ -947,6 +951,104 @@ export default function AIReportGenerationPage() {
                 </Card>
               );
             })}
+          </div>
+            </div>
+
+            {/* ─── Sticky Sidebar: Report Summary ─── */}
+            <div className="hidden lg:block w-72 shrink-0">
+              <div className="sticky top-4 space-y-3">
+                {/* Final Value */}
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardHeader className="pb-2 pt-4">
+                    <CardTitle className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                      <Scale className="w-3.5 h-3.5" /> القيمة النهائية المقترحة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4">
+                    {reportDraft.final_value?.amount ? (
+                      <div className="space-y-2">
+                        <p className="text-xl font-extrabold text-primary">
+                          {reportDraft.final_value.amount.toLocaleString()} <span className="text-sm">{reportDraft.final_value.currency || "ر.س"}</span>
+                        </p>
+                        {reportDraft.final_value.text_ar && (
+                          <p className="text-[10px] text-muted-foreground leading-relaxed">{reportDraft.final_value.text_ar}</p>
+                        )}
+                        {reportDraft.final_value.basis_of_value_ar && (
+                          <div className="flex items-center gap-1 text-[10px]">
+                            <span className="text-muted-foreground">أساس القيمة:</span>
+                            <span className="font-medium">{reportDraft.final_value.basis_of_value_ar}</span>
+                          </div>
+                        )}
+                        {reportDraft.final_value.confidence_level && (
+                          <Badge variant={reportDraft.final_value.confidence_level === "high" ? "default" : "secondary"} className="text-[9px]">
+                            ثقة: {reportDraft.final_value.confidence_level === "high" ? "عالية" : reportDraft.final_value.confidence_level === "medium" ? "متوسطة" : "منخفضة"}
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">لم تُحدد بعد</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Report Info */}
+                <Card>
+                  <CardHeader className="pb-2 pt-4">
+                    <CardTitle className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                      <FileText className="w-3.5 h-3.5" /> ملخص التقرير
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4 text-[11px] space-y-2">
+                    <InfoRow label="العميل" value={aggregatedData?.client?.record?.name_ar || aggregatedData?.client?.profile?.full_name_ar} />
+                    <InfoRow label="نوع العقار" value={aggregatedData?.request?.property_type} />
+                    <InfoRow label="الموقع" value={aggregatedData?.request?.property_city_ar} />
+                    <InfoRow label="الرقم المرجعي" value={reportDraft.reference_number || aggregatedData?.assignment?.reference_number} />
+                    <InfoRow label="المقيّم" value={aggregatedData?.valuer?.full_name_ar} />
+                    <InfoRow label="المنشأة" value={aggregatedData?.organization?.name_ar} />
+                  </CardContent>
+                </Card>
+
+                {/* Sections Navigation */}
+                <Card>
+                  <CardHeader className="pb-2 pt-4">
+                    <CardTitle className="text-xs flex items-center gap-1.5 text-muted-foreground">
+                      <Layers className="w-3.5 h-3.5" /> تقدّم الأقسام
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4 space-y-1">
+                    {sectionEntries.map(([key, sec]) => {
+                      const SIcon = SECTION_ICONS[key] || FileText;
+                      const isEdited = editedSections.has(key);
+                      const hasContent = !!(sec.content_ar && sec.content_ar.length > 20);
+                      return (
+                        <div
+                          key={key}
+                          className={`flex items-center gap-1.5 text-[10px] p-1 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? "bg-primary/10" : ""}`}
+                          onClick={() => setExpandedSection(expandedSection === key ? null : key)}
+                        >
+                          <SIcon className={`w-3 h-3 shrink-0 ${hasContent ? "text-primary" : "text-muted-foreground/40"}`} />
+                          <span className={`flex-1 truncate ${hasContent ? "text-foreground" : "text-muted-foreground/60"}`}>
+                            {sec.title_ar || key}
+                          </span>
+                          {isEdited ? (
+                            <Edit3 className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                          ) : hasContent ? (
+                            <CheckCircle2 className="w-2.5 h-2.5 text-primary shrink-0" />
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                    <Separator className="my-1.5" />
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-muted-foreground">مكتمل</span>
+                      <span className="font-bold text-primary">
+                        {sectionEntries.filter(([, s]) => s.content_ar && s.content_ar.length > 20).length}/{sectionCount}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         </div>
       )}
