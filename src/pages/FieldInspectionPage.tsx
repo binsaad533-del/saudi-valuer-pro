@@ -203,11 +203,11 @@ interface FormData {
   finishing_level: string;
   condition_notes: string;
   maintenance_rating: string;
-  has_cracks: boolean;
-  has_moisture: boolean;
-  has_corrosion: boolean;
-  has_fire_damage: boolean;
-  has_structural_damage: boolean;
+  cracks_severity: string;
+  moisture_severity: string;
+  corrosion_severity: string;
+  fire_damage_severity: string;
+  structural_damage_severity: string;
   damage_details: string;
   electricity_status: string;
   electricity_condition: string;
@@ -351,11 +351,11 @@ const defaultFormData: FormData = {
   finishing_level: "",
   condition_notes: "",
   maintenance_rating: "",
-  has_cracks: false,
-  has_moisture: false,
-  has_corrosion: false,
-  has_fire_damage: false,
-  has_structural_damage: false,
+  cracks_severity: "none",
+  moisture_severity: "none",
+  corrosion_severity: "none",
+  fire_damage_severity: "none",
+  structural_damage_severity: "none",
   damage_details: "",
   electricity_status: "",
   electricity_condition: "",
@@ -1740,22 +1740,32 @@ function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, on
         <Separator />
 
         <p className="text-xs font-bold text-muted-foreground">🔍 الأضرار والعيوب المكتشفة</p>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-2">
           {[
-            { key: "has_cracks", label: "تشققات", icon: "🧱" },
-            { key: "has_moisture", label: "رطوبة / تسربات", icon: "💧" },
-            { key: "has_corrosion", label: "تآكل / صدأ", icon: "⚙️" },
-            { key: "has_fire_damage", label: "أضرار حريق", icon: "🔥" },
-            { key: "has_structural_damage", label: "أضرار هيكلية", icon: "🏗️" },
+            { key: "cracks_severity", label: "تشققات", icon: "🧱" },
+            { key: "moisture_severity", label: "رطوبة / تسربات", icon: "💧" },
+            { key: "corrosion_severity", label: "تآكل / صدأ", icon: "⚙️" },
+            { key: "fire_damage_severity", label: "أضرار حريق", icon: "🔥" },
+            { key: "structural_damage_severity", label: "أضرار هيكلية", icon: "🏗️" },
           ].map(item => (
-            <label key={item.key} className={`flex items-center gap-2 border rounded-lg p-3 cursor-pointer transition-colors ${formData[item.key] ? "border-destructive/40 bg-destructive/5" : "border-border"}`}>
-              <Checkbox checked={formData[item.key]} onCheckedChange={(v: any) => updateField(item.key, !!v)} />
-              <span className="text-sm">{item.icon} {item.label}</span>
-            </label>
+            <div key={item.key} className={`flex items-center justify-between border rounded-lg p-3 transition-colors ${formData[item.key] && formData[item.key] !== "none" ? (formData[item.key] === "severe" ? "border-destructive/50 bg-destructive/5" : formData[item.key] === "moderate" ? "border-orange-400/50 bg-orange-50/50 dark:bg-orange-900/10" : "border-yellow-400/50 bg-yellow-50/50 dark:bg-yellow-900/10") : "border-border"}`}>
+              <span className="text-sm font-medium">{item.icon} {item.label}</span>
+              <Select value={formData[item.key] || "none"} onValueChange={(v: string) => updateField(item.key, v)}>
+                <SelectTrigger className="w-[130px] h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">لا يوجد</SelectItem>
+                  <SelectItem value="minor">بسيط</SelectItem>
+                  <SelectItem value="moderate">متوسط</SelectItem>
+                  <SelectItem value="severe">خطير</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           ))}
         </div>
 
-        {(formData.has_cracks || formData.has_moisture || formData.has_corrosion || formData.has_fire_damage || formData.has_structural_damage) && (
+        {[formData.cracks_severity, formData.moisture_severity, formData.corrosion_severity, formData.fire_damage_severity, formData.structural_damage_severity].some((v: string) => v && v !== "none") && (
           <FieldGroup label="تفاصيل الأضرار">
             <Textarea value={formData.damage_details} onChange={(e: any) => updateField("damage_details", e.target.value)} placeholder="صف الأضرار بالتفصيل: موقعها، حجمها، تأثيرها..." rows={3} />
           </FieldGroup>
@@ -1768,7 +1778,7 @@ function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, on
         <AiSuggestionBox
           sectionKey="condition"
           promptHint="تقييم حالة الأصل والصيانة"
-          context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, maintenance_rating: formData.maintenance_rating, has_cracks: formData.has_cracks, has_moisture: formData.has_moisture, has_corrosion: formData.has_corrosion, has_fire_damage: formData.has_fire_damage, has_structural_damage: formData.has_structural_damage, damage_details: formData.damage_details, condition_notes: formData.condition_notes }}
+          context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, maintenance_rating: formData.maintenance_rating, cracks_severity: formData.cracks_severity, moisture_severity: formData.moisture_severity, corrosion_severity: formData.corrosion_severity, fire_damage_severity: formData.fire_damage_severity, structural_damage_severity: formData.structural_damage_severity, damage_details: formData.damage_details, condition_notes: formData.condition_notes }}
         />
       </CardContent>
     </Card>
