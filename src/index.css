@@ -119,6 +119,9 @@
     --sidebar-border: 215 25% 12%;
     --sidebar-ring: 212 60% 55%;
     --sidebar-muted: 215 15% 40%;
+    --ai: 38 85% 55%;
+    --ai-foreground: 0 0% 100%;
+    --ai-light: 38 60% 18%;
   }
 }
 
