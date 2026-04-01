@@ -64,17 +64,17 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(2), updated_at: hoursAgo(3),
     notes: "أولوية عالية — العميلة تحتاج التقرير للبنك خلال أسبوع",
   },
-  // 5. معاينة ميدانية جارية
+  // 5. تحتاج متابعة — بانتظار معلومات العميل
   {
     id: "r5", reference_number: "VAL-005", client_id: "c5",
-    property_type: "residential_land", purpose: "sale_purchase",
-    property_city_ar: "مكة المكرمة", property_district_ar: "العزيزية",
-    land_area: 900, building_area: null,
-    property_description_ar: "أرض سكنية بصك إلكتروني — شارعين — منطقة العزيزية",
-    status: "inspection_in_progress", priority: "normal",
-    assigned_valuer_name: "م. عمر القحطاني",
-    quotation_amount: 4000,
-    created_at: daysAgo(4), updated_at: hoursAgo(2),
-    notes: "المعاين في الموقع حالياً",
+    property_type: "warehouse", purpose: "insurance",
+    property_city_ar: "الرياض", property_district_ar: "المدينة الصناعية الثانية",
+    land_area: 3000, building_area: 2400,
+    property_description_ar: "مستودع صناعي مع مكاتب إدارية — منطقة صناعية",
+    status: "awaiting_client_info", priority: "normal",
+    assigned_valuer_name: null,
+    quotation_amount: 7000,
+    created_at: daysAgo(6), updated_at: daysAgo(5),
+    notes: "بانتظار صك الملكية ورخصة البناء من العميل",
   },
 ];
