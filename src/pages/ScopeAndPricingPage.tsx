@@ -55,6 +55,7 @@ interface ScopeData {
   specialConsiderations?: string[];
   complianceNotes?: string[];
   disciplineAnalysis?: DisciplineAnalysis;
+  purposeAnalysis?: PurposeAnalysis;
 }
 
 interface PricingBreakdown {
