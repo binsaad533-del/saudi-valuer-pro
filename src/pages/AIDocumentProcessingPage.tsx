@@ -444,11 +444,30 @@ export default function AIDocumentProcessingPage() {
             )}
 
             {extracting && (
-              <div className="bg-card rounded-lg border border-border p-12 text-center">
-                <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
-                <h3 className="text-lg font-semibold text-foreground mb-1">جارٍ التحليل...</h3>
-                <p className="text-sm text-muted-foreground">{extractionPhase}</p>
-                <Progress value={extractionPhase.includes("رفع") ? 30 : 70} className="h-1.5 mt-4 max-w-xs mx-auto" />
+              <div className="bg-card rounded-lg border border-border p-8 space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">جارٍ التحليل...</h3>
+                    <p className="text-xs text-muted-foreground">{extractionPhase}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">التقدم</span>
+                    <span className="font-medium text-foreground">{Math.round(extractionProgress)}%</span>
+                  </div>
+                  <Progress value={extractionProgress} className="h-2" />
+                  <div className="flex justify-between text-[10px] text-muted-foreground/60">
+                    {phases.map((p, i) => (
+                      <span key={i} className={extractionProgress >= p.target ? "text-primary font-medium" : ""}>
+                        {i + 1}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
