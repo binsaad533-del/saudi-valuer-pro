@@ -2091,7 +2091,15 @@ function SectionLayoutAreas({ formData, updateField }: any) {
           </FieldGroup>
         </div>
 
-        {formData.floor_count_detail && parseInt(formData.floor_count_detail) > 0 && (
+        {formData.total_building_area && formData.land_area && parseFloat(formData.land_area) > 0 && (
+          <div className="bg-muted/50 rounded-lg p-3 flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">📊 نسبة البناء إلى الأرض</span>
+            <span className={`text-lg font-bold ${parseFloat(formData.total_building_area) / parseFloat(formData.land_area) > 3 ? "text-destructive" : "text-primary"}`}>
+              {((parseFloat(formData.total_building_area) / parseFloat(formData.land_area)) * 100).toFixed(1)}%
+            </span>
+          </div>
+        )}
+
           <>
             <Separator />
             <p className="text-xs font-bold text-muted-foreground">📐 مساحة كل دور (م²)</p>
