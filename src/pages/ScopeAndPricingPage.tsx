@@ -13,6 +13,14 @@ import {
   Wrench, Layers, Home,
 } from "lucide-react";
 
+interface DisciplineAnalysis {
+  discipline: "real_estate" | "machinery" | "mixed";
+  disciplineLabel: string;
+  confidence: number;
+  signals: string[];
+  subTypes?: string[];
+}
+
 interface ScopeData {
   valuationType: string;
   valuationStandard: string;
@@ -30,6 +38,7 @@ interface ScopeData {
   requiredDocuments?: string[];
   specialConsiderations?: string[];
   complianceNotes?: string[];
+  disciplineAnalysis?: DisciplineAnalysis;
 }
 
 interface PricingBreakdown {
