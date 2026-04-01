@@ -68,7 +68,7 @@ export const MOCK_REQUESTS: any[] = [
   {
     id: "r5", reference_number: "VAL-005", client_id: "c5",
     property_type: "warehouse", purpose: "insurance",
-    property_city_ar: "الرياض", property_district_ar: "المدينة الصناعية الثانية",
+    property_city_ar: "الرايض", property_district_ar: null,
     land_area: 3000, building_area: 2400,
     property_description_ar: "مستودع صناعي مع مكاتب إدارية — منطقة صناعية",
     status: "awaiting_client_info", priority: "normal",
