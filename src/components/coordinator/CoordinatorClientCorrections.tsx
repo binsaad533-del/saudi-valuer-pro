@@ -263,6 +263,69 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
         </CardContent>
       </Card>
 
+      {/* Corrections Log */}
+      <Card className="shadow-card mt-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="w-4 h-4 text-primary" />
+            سجل التصحيحات
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">من صحّح، متى، وماذا تم تغييره</p>
+        </CardHeader>
+        <CardContent className="p-0">
+          {logsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          ) : correctionLogs.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">لا توجد تصحيحات مسجلة</div>
+          ) : (
+            <ScrollArea className="h-[320px]">
+              <div className="divide-y divide-border">
+                {correctionLogs.map(log => {
+                  const changes: string[] = [];
+                  if (log.old_data && log.new_data) {
+                    const oldD = typeof log.old_data === "string" ? JSON.parse(log.old_data) : log.old_data;
+                    const newD = typeof log.new_data === "string" ? JSON.parse(log.new_data) : log.new_data;
+                    for (const key of Object.keys(newD)) {
+                      if (JSON.stringify(oldD[key]) !== JSON.stringify(newD[key])) {
+                        changes.push(key);
+                      }
+                    }
+                  }
+                  return (
+                    <div key={log.id} className="px-4 py-3 flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <User className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-[10px]">
+                            {log.action === "update" ? "تعديل" : log.action === "create" ? "إنشاء" : log.action}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground font-mono">{log.table_name}</span>
+                        </div>
+                        {log.description && (
+                          <p className="text-sm text-foreground mt-1">{log.description}</p>
+                        )}
+                        {changes.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            الحقول المعدّلة: <span className="text-foreground">{changes.join("، ")}</span>
+                          </p>
+                        )}
+                        <span className="text-[10px] text-muted-foreground mt-1 block">
+                          {new Date(log.created_at).toLocaleString("ar-SA")}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
+      </Card>
+
       <Dialog open={editDialog} onOpenChange={setEditDialog}>
         <DialogContent className="max-w-lg" dir="rtl">
           <DialogHeader>
