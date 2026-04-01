@@ -1730,24 +1730,104 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
         <CardHeader className="pb-3">
           <SectionHeader num={8} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
         </CardHeader>
-        <CardContent className="space-y-3">
-          {[
-            { key: "electricity" as const, label: "كهرباء", icon: "⚡" },
-            { key: "water" as const, label: "ماء", icon: "💧" },
-            { key: "sewage" as const, label: "صرف صحي", icon: "🔧" },
-            { key: "roads_paved" as const, label: "طرق معبدة", icon: "🛣️" },
-          ].map(item => (
-            <label key={item.key} className={`flex items-center justify-between border rounded-lg p-3 cursor-pointer transition-colors ${formData[item.key] ? "border-green-300 bg-green-50 dark:bg-green-900/20" : "border-border"}`}>
-              <div className="flex items-center gap-2">
-                <span>{item.icon}</span>
-                <span className="text-sm font-medium">{item.label}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{formData[item.key] ? "متوفر" : "غير متوفر"}</span>
-                <Checkbox checked={formData[item.key]} onCheckedChange={(v: any) => updateField(item.key, !!v)} />
-              </div>
-            </label>
-          ))}
+        <CardContent className="space-y-4">
+          {/* الكهرباء */}
+          <p className="text-xs font-bold text-muted-foreground">⚡ الكهرباء</p>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldGroup label="حالة التوفر">
+              <Select value={formData.electricity_status} onValueChange={(v: string) => updateField("electricity_status", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available">متوفر</SelectItem>
+                  <SelectItem value="temporary">مؤقت</SelectItem>
+                  <SelectItem value="unavailable">غير متوفر</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+            <FieldGroup label="حالة الكهرباء">
+              <Select value={formData.electricity_condition} onValueChange={(v: string) => updateField("electricity_condition", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excellent">ممتازة</SelectItem>
+                  <SelectItem value="good">جيدة</SelectItem>
+                  <SelectItem value="acceptable">مقبولة</SelectItem>
+                  <SelectItem value="poor">رديئة</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+          </div>
+
+          <Separator />
+
+          {/* الماء */}
+          <p className="text-xs font-bold text-muted-foreground">💧 المياه</p>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldGroup label="مصدر المياه">
+              <Select value={formData.water_source} onValueChange={(v: string) => updateField("water_source", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="network">شبكة عامة</SelectItem>
+                  <SelectItem value="tank">خزان</SelectItem>
+                  <SelectItem value="well">بئر</SelectItem>
+                  <SelectItem value="unavailable">غير متوفر</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+            <FieldGroup label="حالة المياه">
+              <Select value={formData.water_condition} onValueChange={(v: string) => updateField("water_condition", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excellent">ممتازة</SelectItem>
+                  <SelectItem value="good">جيدة</SelectItem>
+                  <SelectItem value="acceptable">مقبولة</SelectItem>
+                  <SelectItem value="poor">رديئة</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+          </div>
+
+          <Separator />
+
+          {/* الصرف الصحي */}
+          <p className="text-xs font-bold text-muted-foreground">🔧 الصرف الصحي</p>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldGroup label="نوع الصرف">
+              <Select value={formData.sewage_type} onValueChange={(v: string) => updateField("sewage_type", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="network">شبكة عامة</SelectItem>
+                  <SelectItem value="septic">خزان امتصاص (بيارة)</SelectItem>
+                  <SelectItem value="unavailable">غير متوفر</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+            <FieldGroup label="حالة الصرف">
+              <Select value={formData.sewage_condition} onValueChange={(v: string) => updateField("sewage_condition", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="excellent">ممتازة</SelectItem>
+                  <SelectItem value="good">جيدة</SelectItem>
+                  <SelectItem value="acceptable">مقبولة</SelectItem>
+                  <SelectItem value="poor">رديئة</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+          </div>
+
+          <Separator />
+
+          {/* الطرق */}
+          <p className="text-xs font-bold text-muted-foreground">🛣️ الطرق</p>
+          <label className={`flex items-center justify-between border rounded-lg p-3 cursor-pointer transition-colors ${formData.roads_paved ? "border-primary/30 bg-primary/5" : "border-border"}`}>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">طرق معبدة</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">{formData.roads_paved ? "متوفر" : "غير متوفر"}</span>
+              <Checkbox checked={formData.roads_paved} onCheckedChange={(v: any) => updateField("roads_paved", !!v)} />
+            </div>
+          </label>
+
           <FieldGroup label="ملاحظات المرافق">
             <Textarea value={formData.utilities_notes} onChange={(e: any) => updateField("utilities_notes", e.target.value)} placeholder="ملاحظات إضافية..." rows={2} />
           </FieldGroup>
