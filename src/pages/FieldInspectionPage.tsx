@@ -1,28 +1,26 @@
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import {
-  MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft, ChevronDown,
-  Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
-  Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
-  FileCheck, UserCheck, Home, Upload, LayoutGrid, Sparkles, Copy, Lock,
+  MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft,
+  Loader2, CheckCircle, Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
+  FileCheck, UserCheck, Home, LayoutGrid,
 } from "lucide-react";
-import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
-import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
+import type { SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import {
+  SectionGeneral, SectionLocation, SectionVerification, SectionDimensions,
+  SectionExterior, SectionInterior, SectionCondition, SectionUtilities,
+  SectionLayoutAreas, SectionValueFactors, SectionDocumentation,
+  SectionNotesRecommendations, SectionRisks, SectionFinalCheck, SectionApproval,
+} from "@/components/inspection/sections";
+import { defaultFormData, PHOTO_CATEGORIES, DEFAULT_CHECKLIST } from "@/components/inspection/sections/types";
+import type { FormData, PhotoItem, ChecklistItem } from "@/components/inspection/sections/types";
 
 /* ═══════ Constants ═══════ */
 
