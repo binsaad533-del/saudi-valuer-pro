@@ -1087,6 +1087,9 @@ export default function AIReportGenerationPage() {
                   <Button className="w-full gap-1.5 text-xs" size="sm" onClick={handleReviewAll}>
                     <Eye className="w-3.5 h-3.5" /> فحص الجودة والامتثال
                   </Button>
+                  <Button className="w-full gap-1.5 text-xs bg-primary hover:bg-primary/90" size="sm" onClick={() => { toast.success("تم اعتماد المسودة وإرسالها للمراجعة"); }}>
+                    <Send className="w-3.5 h-3.5" /> اعتماد المسودة وإرسال للمراجعة
+                  </Button>
                   <Button variant="outline" className="w-full gap-1.5 text-xs" size="sm" onClick={() => setStep(0)}>
                     <ArrowRight className="w-3.5 h-3.5" /> رجوع للبيانات
                   </Button>
