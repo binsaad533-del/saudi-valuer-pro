@@ -145,6 +145,9 @@ interface FormData {
   num_floors: string;
   dimensions_notes: string;
   // Section 5: المبنى - الخارج
+  exterior_building_age: string;
+  exterior_num_floors: string;
+  exterior_structure_type: string;
   exterior_facade_material: string;
   exterior_facade_condition: string;
   exterior_paint_condition: string;
