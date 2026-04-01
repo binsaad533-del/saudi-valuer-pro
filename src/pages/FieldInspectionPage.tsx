@@ -202,6 +202,7 @@ interface FormData {
   asset_age: string;
   finishing_level: string;
   condition_notes: string;
+  maintenance_rating: string;
   electricity_status: string;
   electricity_condition: string;
   water_source: string;
@@ -343,6 +344,7 @@ const defaultFormData: FormData = {
   asset_age: "",
   finishing_level: "",
   condition_notes: "",
+  maintenance_rating: "",
   electricity_status: "",
   electricity_condition: "",
   water_source: "",
@@ -1707,14 +1709,29 @@ function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, on
             </SelectContent>
           </Select>
         </FieldGroup>
+        <FieldGroup label="التقييم الكلي للصيانة" required>
+          <RadioGroup value={formData.maintenance_rating} onValueChange={(v: string) => updateField("maintenance_rating", v)} className="grid grid-cols-3 gap-2">
+            {[
+              { value: "excellent", label: "ممتازة", color: "border-green-500 bg-green-50 dark:bg-green-900/20" },
+              { value: "good", label: "جيدة", color: "border-blue-500 bg-blue-50 dark:bg-blue-900/20" },
+              { value: "average", label: "متوسطة", color: "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20" },
+              { value: "needs_maintenance", label: "تحتاج صيانة", color: "border-orange-500 bg-orange-50 dark:bg-orange-900/20" },
+              { value: "poor", label: "رديئة", color: "border-red-500 bg-red-50 dark:bg-red-900/20" },
+            ].map(opt => (
+              <label key={opt.value} className={`flex items-center justify-center gap-2 border rounded-lg p-3 cursor-pointer text-sm transition-colors ${formData.maintenance_rating === opt.value ? opt.color + " font-bold" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
         <FieldGroup label="ملاحظات الحالة">
           <Textarea value={formData.condition_notes} onChange={(e: any) => updateField("condition_notes", e.target.value)} placeholder="تفاصيل عن الحالة الإنشائية، التشطيبات، العيوب..." rows={3} />
         </FieldGroup>
         <SectionPhotoUpload section="condition" label="صور حالة الأصل والعيوب" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <AiSuggestionBox
           sectionKey="condition"
-          promptHint="تقييم حالة الأصل"
-          context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, condition_notes: formData.condition_notes }}
+          promptHint="تقييم حالة الأصل والصيانة"
+          context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, maintenance_rating: formData.maintenance_rating, condition_notes: formData.condition_notes }}
         />
       </CardContent>
     </Card>
