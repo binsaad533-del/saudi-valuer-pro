@@ -214,15 +214,15 @@ const MOCK_PRICING: PricingData = {
     complexityReason: "منهجيتان مطلوبتان (مقارنة سوقية + دخل) — تعقيد متوسط",
     urgencyAdjustment: 0,
     urgencyFactor: 1.0,
-    rentalAnalysisSurcharge: 500,
+    rentalAnalysisSurcharge: 0,
     portfolioDiscount: 0,
     additionalServices: [
-      { name: "تصوير فوتوغرافي احترافي", price: 350 },
-      { name: "تقرير ملخص تنفيذي إضافي", price: 200 },
+      { name: "رسوم المعاينة الميدانية", price: 500 },
+      { name: "رسوم تحليل الدخل (إضافية)", price: 1000 },
     ],
-    additionalTotal: 550,
+    additionalTotal: 1500,
   },
-  totalPrice: 5478,
+  totalPrice: 5928,
   justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) مع معامل الموقع الجغرافي للرياض (×1.15) ودرجة التعقيد لمنهجيتين مطلوبتين",
 };
 
