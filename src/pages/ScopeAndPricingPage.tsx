@@ -327,6 +327,38 @@ export default function ScopeAndPricingPage() {
           </Button>
         </div>
 
+        {/* Stepper */}
+        <div className="bg-card rounded-xl border border-border p-4 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-[500px]" dir="ltr">
+            {[
+              { label: "استخراج المستندات", icon: FileSearch, done: true },
+              { label: "نطاق العمل", icon: ListChecks, done: !!scope },
+              { label: "التسعير", icon: CreditCard, done: !!pricing },
+              { label: "الموافقة", icon: ThumbsUp, done: clientApproved || managerDecision === "accepted" },
+            ].map((step, i, arr) => (
+              <div key={i} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${
+                    step.done
+                      ? "bg-primary border-primary text-primary-foreground"
+                      : "bg-card border-border text-muted-foreground"
+                  }`}>
+                    {step.done ? <CheckCircle2 className="w-4.5 h-4.5" /> : <step.icon className="w-4 h-4" />}
+                  </div>
+                  <span className={`text-[10px] font-medium whitespace-nowrap ${step.done ? "text-primary" : "text-muted-foreground"}`}>
+                    {step.label}
+                  </span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 rounded-full mt-[-18px] ${
+                    step.done ? "bg-primary" : "bg-border"
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Property Summary */}
         <div className="bg-card rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-3">
