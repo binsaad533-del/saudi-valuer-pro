@@ -133,18 +133,15 @@ export default function CoordinatorActivityLog() {
                 <div key={log.id} className="px-4 py-3 flex items-start gap-3">
                   <div className="w-2 h-2 rounded-full bg-primary mt-2 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm text-foreground">{formatLogMessage(log)}</p>
+                    <div className="flex items-center gap-2 mt-1">
                       <Badge variant="outline" className="text-[10px]">
                         {ACTION_LABELS[log.action] || log.action}
                       </Badge>
-                      <span className="text-xs text-muted-foreground font-mono">{log.table_name}</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {new Date(log.created_at).toLocaleString("ar-SA")}
+                      </span>
                     </div>
-                    {log.description && (
-                      <p className="text-sm text-foreground mt-1">{log.description}</p>
-                    )}
-                    <span className="text-[10px] text-muted-foreground mt-1 block">
-                      {new Date(log.created_at).toLocaleString("ar-SA")}
-                    </span>
                   </div>
                 </div>
               ))}
