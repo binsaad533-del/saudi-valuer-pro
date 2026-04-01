@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
+import { Label } from "@/components/ui/label";
 import { SectionHeader, FieldGroup, ExpandableSection } from "./helpers";
 import type { FormData, PhotoItem, ChecklistItem } from "./types";
 import { toast } from "sonner";
