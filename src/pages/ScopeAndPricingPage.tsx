@@ -222,7 +222,7 @@ const MOCK_PRICING: PricingData = {
     ],
     additionalTotal: 1500,
   },
-  totalPrice: 5478,
+  totalPrice: 5928,
   justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) مع معامل الموقع الجغرافي للرياض (×1.15) ودرجة التعقيد لمنهجيتين مطلوبتين",
 };
 
