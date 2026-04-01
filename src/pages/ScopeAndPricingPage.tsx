@@ -310,7 +310,33 @@ export default function ScopeAndPricingPage() {
                 </div>
               )}
 
-              {/* Editor */}
+              {/* Inspection Requirements */}
+              {scope.inspectionRequirements && scope.inspectionRequirements.length > 0 && (
+                <div className="p-4">
+                  <h4 className="text-xs font-bold text-foreground mb-2">متطلبات المعاينة</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {scope.inspectionRequirements.map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Compliance Notes */}
+              {scope.complianceNotes && scope.complianceNotes.length > 0 && (
+                <div className="p-4">
+                  <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات الامتثال</h4>
+                  {scope.complianceNotes.map((c, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
+                      <Shield className="w-3 h-3 text-primary shrink-0 mt-0.5" /> {c}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {editingScope && (
                 <div className="p-4 bg-muted/10">
                   <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات تعديل النطاق</h4>
