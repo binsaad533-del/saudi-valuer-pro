@@ -315,6 +315,8 @@ const defaultFormData: FormData = {
   interior_bathrooms_condition: "",
   interior_doors_type: "",
   interior_doors_condition: "",
+  interior_windows_type: "",
+  interior_windows_condition: "",
   interior_stairs_type: "",
   interior_stairs_condition: "",
   interior_ac_type: "",
