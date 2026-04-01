@@ -1431,6 +1431,32 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
+        {/* النوافذ */}
+        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع النوافذ">
+            <Select value={formData.interior_windows_type} onValueChange={(v: string) => updateField("interior_windows_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="upvc">UPVC</SelectItem>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="double_glazed">زجاج مزدوج</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة النوافذ">
+            <Select value={formData.interior_windows_condition} onValueChange={(v: string) => updateField("interior_windows_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
         <Separator />
 
         {/* المطبخ */}
