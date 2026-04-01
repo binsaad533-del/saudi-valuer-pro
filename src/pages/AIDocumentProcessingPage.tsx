@@ -139,7 +139,7 @@ export default function AIDocumentProcessingPage() {
       const n = name.toLowerCase();
       // صكوك ملكية
       if (n.includes("صك") || n.includes("deed") || n.includes("ملكي") || n.includes("title"))
-        return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 310298765 — المالك: أحمد المالكي — المساحة: 625 م²" };
+        return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م² — حي النرجس، الرياض — ثقة 96%" };
       // رخص بناء
       if (n.includes("رخص") || n.includes("permit") || n.includes("بناء") || n.includes("building"))
         return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: 44/2891 — تاريخ: 1443/06/12 — نوع: سكني" };
@@ -182,13 +182,15 @@ export default function AIDocumentProcessingPage() {
     const numbers: ExtractedNumber[] = [];
 
     if (cats.has("deed")) {
+      const deedSrc = files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية";
       numbers.push(
-        { label: "رقم الصك", value: "310298765", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "مساحة الأرض", value: "625 م²", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "اسم المالك", value: "أحمد بن عبدالله المالكي", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "موقع العقار", value: "حي النرجس — الرياض", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "تاريخ إصدار الصك", value: "1445/03/15 هـ", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
-        { label: "نوع الاستخدام", value: "سكني", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "رقم الصك", value: "1234567", source: deedSrc },
+        { label: "مساحة الأرض", value: "450 م²", source: deedSrc },
+        { label: "اسم المالك", value: "أحمد بن عبدالله المالكي", source: deedSrc },
+        { label: "الموقع", value: "حي النرجس — الرياض", source: deedSrc },
+        { label: "تاريخ إصدار الصك", value: "1445/03/15 هـ", source: deedSrc },
+        { label: "نوع الاستخدام", value: "سكني", source: deedSrc },
+        { label: "نسبة ثقة الاستخراج", value: "96%", source: deedSrc },
       );
     }
     if (cats.has("building_permit")) {
@@ -276,8 +278,8 @@ export default function AIDocumentProcessingPage() {
         description: "فيلا سكنية دورين مع ملحق",
         city: "الرياض",
         district: "حي النرجس",
-        area: "625",
-        deedNumber: cats.has("deed") ? "310298765" : undefined,
+        area: "450",
+        deedNumber: cats.has("deed") ? "1234567" : undefined,
         classification: "سكني",
       } : {},
       suggestedPurpose: cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
