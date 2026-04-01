@@ -188,10 +188,61 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
     }
     case "value_factors": {
       const tips: string[] = [];
-      if (!ctx.positive_factors) tips.push("💡 أضف الإيجابيات: قرب من مدارس/مساجد/مراكز تجارية، عرض الشارع، واجهة تجارية");
-      if (!ctx.negative_factors) tips.push("💡 أضف السلبيات إن وُجدت: ضوضاء، ازدحام، محطات كهرباء مجاورة");
-      if (ctx.positive_factors && ctx.negative_factors) tips.push("✅ تم تسجيل العوامل. تأكد من ذكر تأثيرها المتوقع على القيمة.");
-      return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق العوامل المؤثرة على القيمة بدقة مع ذكر مدى تأثير كل عامل.";
+      const impactLabels: Record<string, string> = { weak: "ضعيف", medium: "متوسط", strong: "قوي" };
+      const posLabels: Record<string, string> = { view: "إطلالة مميزة", prime_location: "موقع مميز", luxury_finish: "تشطيب راقي", modern: "حديث البناء" };
+      const negLabels: Record<string, string> = { noise: "قرب ضوضاء", legal_issues: "إشكاليات قانونية", harmful_neighbor: "مجاور ضار" };
+      const impactPct: Record<string, Record<string, string>> = {
+        view: { weak: "+1-3%", medium: "+3-7%", strong: "+7-15%" },
+        prime_location: { weak: "+2-5%", medium: "+5-12%", strong: "+12-25%" },
+        luxury_finish: { weak: "+2-4%", medium: "+4-10%", strong: "+10-20%" },
+        modern: { weak: "+1-3%", medium: "+3-8%", strong: "+8-15%" },
+        noise: { weak: "-1-3%", medium: "-3-8%", strong: "-8-15%" },
+        legal_issues: { weak: "-2-5%", medium: "-5-15%", strong: "-15-30%" },
+        harmful_neighbor: { weak: "-1-4%", medium: "-4-10%", strong: "-10-20%" },
+      };
+
+      // Parse positive factors
+      const posStr = ctx.positive_factors ? String(ctx.positive_factors) : "";
+      const posEntries = posStr.split(",").map(s => s.trim()).filter(Boolean).map(s => { const [k, v] = s.split(":"); return [k, v] as [string, string]; });
+      if (posEntries.length > 0) {
+        tips.push("📈 **تأثير العوامل الإيجابية المقدّر:**");
+        posEntries.forEach(([k, v]) => {
+          const name = posLabels[k] || k;
+          const impact = impactLabels[v] || v;
+          const pct = impactPct[k]?.[v] || "+?%";
+          tips.push(`  ✅ ${name} (${impact}): تأثير تقديري ${pct} على القيمة`);
+        });
+      }
+
+      // Parse negative factors
+      const negStr = ctx.negative_factors ? String(ctx.negative_factors) : "";
+      const negEntries = negStr.split(",").map(s => s.trim()).filter(Boolean).map(s => { const [k, v] = s.split(":"); return [k, v] as [string, string]; });
+      if (negEntries.length > 0) {
+        tips.push("📉 **تأثير العوامل السلبية المقدّر:**");
+        negEntries.forEach(([k, v]) => {
+          const name = negLabels[k] || k;
+          const impact = impactLabels[v] || v;
+          const pct = impactPct[k]?.[v] || "-?%";
+          tips.push(`  ⚠️ ${name} (${impact}): تأثير تقديري ${pct} على القيمة`);
+        });
+      }
+
+      if (posEntries.length > 0 || negEntries.length > 0) {
+        // Net summary
+        const posCount = posEntries.filter(([_, v]) => v === "strong").length;
+        const negCount = negEntries.filter(([_, v]) => v === "strong").length;
+        if (posCount > negCount) tips.push("\n🟢 **الصافي:** العوامل الإيجابية القوية تفوق السلبية — متوقع تأثير إيجابي صافي على القيمة");
+        else if (negCount > posCount) tips.push("\n🔴 **الصافي:** العوامل السلبية القوية تفوق الإيجابية — متوقع تأثير سلبي صافي على القيمة");
+        else tips.push("\n🟡 **الصافي:** العوامل متوازنة تقريباً — التأثير الصافي محدود");
+      }
+
+      if (ctx.positive_factors_other) tips.push(`📝 عوامل إيجابية إضافية: ${ctx.positive_factors_other}`);
+      if (ctx.negative_factors_other) tips.push(`📝 عوامل سلبية إضافية: ${ctx.negative_factors_other}`);
+
+      if (tips.length === 0) {
+        tips.push("💡 حدد العوامل الإيجابية والسلبية مع درجة تأثير كل عامل للحصول على تحليل مفصل");
+      }
+      return tips.join("\n");
     }
     case "exterior": {
       const tips: string[] = [];
