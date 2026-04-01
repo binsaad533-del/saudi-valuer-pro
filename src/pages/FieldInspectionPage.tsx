@@ -384,14 +384,14 @@ export default function FieldInspectionPage() {
       {/* Step content */}
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
         {step === 0 && <SectionGeneral formData={formData} updateField={updateField} />}
-        {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} />}
-        {step === 2 && <SectionVerification formData={formData} updateField={updateField} />}
-        {step === 3 && <SectionDimensions formData={formData} updateField={updateField} />}
-        {step === 4 && <SectionCondition formData={formData} updateField={updateField} />}
-        {step === 5 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} />}
+        {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 2 && <SectionVerification formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 3 && <SectionDimensions formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 4 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 5 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 6 && <SectionValueFactors formData={formData} updateField={updateField} />}
         {step === 7 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
-        {step === 8 && <SectionRisks formData={formData} updateField={updateField} />}
+        {step === 8 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 9 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
         {step === 10 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
