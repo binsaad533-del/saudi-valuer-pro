@@ -701,6 +701,23 @@ export default function FieldInspectionPage() {
 
       {/* Step content */}
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
+        {/* Section navigation hint */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {step > 0 && (
+            <>
+              <span>{STEPS[step - 1].label}</span>
+              <ChevronLeft className="w-3 h-3" />
+            </>
+          )}
+          <span className="font-bold text-primary">{STEPS[step].label}</span>
+          {step < STEPS.length - 1 && (
+            <>
+              <ChevronLeft className="w-3 h-3" />
+              <span>{STEPS[step + 1].label}</span>
+            </>
+          )}
+        </div>
+
         {step === 0 && <SectionGeneral formData={formData} updateField={updateField} />}
         {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 2 && <SectionVerification formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
@@ -2674,21 +2691,20 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
         <Separator />
 
         {/* Technical Summary Generator */}
-        <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+        <div className="rounded-lg border-2 border-ai/30 bg-ai-light p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-primary">
-              <FileCheck className="w-5 h-5" />
-              <span className="text-sm font-bold">📄 ملخص فني جاهز للتقرير</span>
+            <div className="flex items-center gap-2 text-ai">
+              <Sparkles className="w-5 h-5" />
+              <span className="text-sm font-bold">✨ ملخص فني جاهز للتقرير</span>
             </div>
             <Button
-              variant="default"
               size="sm"
               onClick={generateTechSummary}
               disabled={summaryLoading}
-              className="h-8 text-xs gap-1.5"
+              className="h-8 text-xs gap-1.5 bg-ai text-ai-foreground hover:bg-ai/90"
             >
               {summaryLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              {summaryLoading ? "جاري التوليد..." : "توليد الملخص"}
+              {summaryLoading ? "جاري التوليد..." : "✨ توليد الملخص"}
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">

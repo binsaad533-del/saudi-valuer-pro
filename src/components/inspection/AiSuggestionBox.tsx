@@ -64,21 +64,21 @@ export default function AiSuggestionBox({ context, sectionKey, promptHint }: AiS
   };
 
   return (
-    <div className="mt-3 rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+    <div className="mt-3 rounded-lg border border-ai/30 bg-ai-light p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-primary">
+        <div className="flex items-center gap-2 text-ai">
           <Sparkles className="w-4 h-4" />
-          <span className="text-xs font-bold">اقتراحات الذكاء الاصطناعي</span>
+          <span className="text-xs font-bold">✨ اقتراحات الذكاء الاصطناعي</span>
         </div>
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={fetchSuggestion}
           disabled={loading}
-          className="h-7 text-xs gap-1"
+          className="h-7 text-xs gap-1 border-ai/40 bg-ai text-ai-foreground hover:bg-ai/90 hover:text-ai-foreground"
         >
           {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-          {loading ? "جاري التحليل..." : "اقتراح"}
+          {loading ? "جاري التحليل..." : "✨ اقتراح"}
         </Button>
       </div>
 
@@ -89,7 +89,7 @@ export default function AiSuggestionBox({ context, sectionKey, promptHint }: AiS
             onClick={handleCopy}
             className="absolute top-2 left-2 p-1 rounded bg-muted opacity-0 group-hover:opacity-100 transition-opacity"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-ai" /> : <Copy className="w-3.5 h-3.5 text-muted-foreground" />}
           </button>
         </div>
       )}
