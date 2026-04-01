@@ -301,7 +301,7 @@ export default function ScopeAndPricingPage() {
           </div>
         )}
 
-        {/* Scope of Work */}
+        {/* Scope of Work — Auto-generated per IVS & TAQEEM */}
         {scope && !loading && (
           <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
             <div className="p-4 border-b border-border bg-gradient-to-l from-primary/5 to-transparent">
@@ -310,11 +310,10 @@ export default function ScopeAndPricingPage() {
                   <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
                     <ClipboardList className="w-4 h-4 text-primary" />
                   </div>
-                  <h3 className="text-sm font-bold text-foreground">نطاق العمل</h3>
-                  <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0">
-                    <Sparkles className="w-2.5 h-2.5 ml-1" />
-                    مُولّد بالذكاء الاصطناعي
-                  </Badge>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">نطاق العمل المقترح</h3>
+                    <p className="text-[10px] text-muted-foreground">مُولّد تلقائياً وفق معايير IVS 2025 والهيئة السعودية للمقيّمين المعتمدين</p>
+                  </div>
                 </div>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-7" onClick={() => setEditingScope(!editingScope)}>
                   <Edit3 className="w-3 h-3" />
@@ -324,7 +323,27 @@ export default function ScopeAndPricingPage() {
             </div>
 
             <div className="divide-y divide-border">
-              {/* Core Info */}
+              {/* Standards Reference Bar */}
+              <div className="px-4 py-2.5 bg-muted/20 flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="text-[9px] gap-1 border-primary/30 text-primary">
+                  <Shield className="w-2.5 h-2.5" />
+                  IVS 2025
+                </Badge>
+                <Badge variant="outline" className="text-[9px] gap-1 border-primary/30 text-primary">
+                  <Shield className="w-2.5 h-2.5" />
+                  معايير تقييم السعودية
+                </Badge>
+                <Badge variant="outline" className="text-[9px] gap-1 border-primary/30 text-primary">
+                  <Shield className="w-2.5 h-2.5" />
+                  الهيئة السعودية للمقيّمين المعتمدين
+                </Badge>
+                <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 gap-1 mr-auto">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  قرار النظام — للمراجعة
+                </Badge>
+              </div>
+
+              {/* Core Info Grid */}
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   { label: "نوع التقييم", value: scope.valuationType, icon: FileText },
@@ -349,11 +368,11 @@ export default function ScopeAndPricingPage() {
 
               {/* Approach Justification */}
               {scope.approachJustification && (
-                <div className="px-4 pb-2">
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
-                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                <div className="p-4">
+                  <div className="flex items-start gap-2.5 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <Sparkles className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[10px] text-muted-foreground mb-0.5">تبرير اختيار المنهجيات</p>
+                      <p className="text-[10px] font-medium text-muted-foreground mb-0.5">تبرير اختيار المنهجيات (وفق IVS 105)</p>
                       <p className="text-xs text-foreground leading-relaxed">{scope.approachJustification}</p>
                     </div>
                   </div>
@@ -386,6 +405,36 @@ export default function ScopeAndPricingPage() {
                 </div>
               </div>
 
+              {/* Required Documents */}
+              {scope.requiredDocuments && scope.requiredDocuments.length > 0 && (
+                <div className="p-4">
+                  <h4 className="text-xs font-bold text-foreground mb-2">المستندات المطلوبة</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {scope.requiredDocuments.map((doc, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                        <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {doc}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Inspection Requirements */}
+              {scope.inspectionRequirements && scope.inspectionRequirements.length > 0 && (
+                <div className="p-4">
+                  <h4 className="text-xs font-bold text-foreground mb-2">متطلبات المعاينة الميدانية</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {scope.inspectionRequirements.map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Assumptions & Limitations */}
               <div className="p-4">
                 <button
@@ -399,7 +448,7 @@ export default function ScopeAndPricingPage() {
                   <div className="mt-3 space-y-3">
                     {scope.assumptions.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-medium text-muted-foreground mb-1.5">الافتراضات</p>
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1.5">الافتراضات (وفق IVS 104)</p>
                         {scope.assumptions.map((a, i) => (
                           <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
                             <span className="text-primary mt-0.5">•</span> {a}
@@ -409,7 +458,7 @@ export default function ScopeAndPricingPage() {
                     )}
                     {scope.limitations.length > 0 && (
                       <div>
-                        <p className="text-[10px] font-medium text-muted-foreground mb-1.5">القيود</p>
+                        <p className="text-[10px] font-medium text-muted-foreground mb-1.5">القيود والتحفظات</p>
                         {scope.limitations.map((l, i) => (
                           <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
                             <AlertTriangle className="w-3 h-3 text-yellow-500 shrink-0 mt-0.5" /> {l}
@@ -433,25 +482,10 @@ export default function ScopeAndPricingPage() {
                 </div>
               )}
 
-              {/* Inspection Requirements */}
-              {scope.inspectionRequirements && scope.inspectionRequirements.length > 0 && (
-                <div className="p-4">
-                  <h4 className="text-xs font-bold text-foreground mb-2">متطلبات المعاينة</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                    {scope.inspectionRequirements.map((r, i) => (
-                      <div key={i} className="flex items-center gap-2 text-xs text-foreground">
-                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
-                        {r}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* Compliance Notes */}
               {scope.complianceNotes && scope.complianceNotes.length > 0 && (
                 <div className="p-4">
-                  <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات الامتثال</h4>
+                  <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات الامتثال التنظيمي</h4>
                   {scope.complianceNotes.map((c, i) => (
                     <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
                       <Shield className="w-3 h-3 text-primary shrink-0 mt-0.5" /> {c}
@@ -460,6 +494,7 @@ export default function ScopeAndPricingPage() {
                 </div>
               )}
 
+              {/* Editor */}
               {editingScope && (
                 <div className="p-4 bg-muted/10">
                   <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات تعديل النطاق</h4>
