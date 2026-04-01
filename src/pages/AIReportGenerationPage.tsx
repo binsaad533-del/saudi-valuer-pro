@@ -192,6 +192,7 @@ export default function AIReportGenerationPage() {
     }
     setIsLoadingData(true);
     setDataError(null);
+    setStepErrors(prev => ({ ...prev, 0: null }));
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-report", {
