@@ -1600,6 +1600,23 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
 
         <Separator />
 
+        {/* حالة التشطيب الداخلي الكلية */}
+        <p className="text-xs font-bold text-muted-foreground">⭐ التقييم الكلي للتشطيب الداخلي</p>
+        <FieldGroup label="حالة التشطيب الداخلي الكلية" required>
+          <Select value={formData.interior_overall_finishing} onValueChange={(v: string) => updateField("interior_overall_finishing", v)}>
+            <SelectTrigger><SelectValue placeholder="اختر التقييم الكلي" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="luxury">فاخر (لوكس)</SelectItem>
+              <SelectItem value="super">سوبر ديلوكس</SelectItem>
+              <SelectItem value="excellent">ممتاز</SelectItem>
+              <SelectItem value="good">جيد</SelectItem>
+              <SelectItem value="acceptable">مقبول</SelectItem>
+              <SelectItem value="poor">ضعيف</SelectItem>
+              <SelectItem value="unfinished">بدون تشطيب</SelectItem>
+            </SelectContent>
+          </Select>
+        </FieldGroup>
+
         <FieldGroup label="ملاحظات إضافية">
           <Textarea value={formData.interior_notes} onChange={(e: any) => updateField("interior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الداخلية، عيوب، رطوبة، روائح..." rows={3} />
         </FieldGroup>
