@@ -13,7 +13,7 @@ import ReactMarkdown from "react-markdown";
 import {
   Sparkles, FileText, Wand2, CheckCircle2, Loader2, Copy, RefreshCw,
   Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
-  FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2,
+  FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2, Send,
   Building2, User, MapPin, ClipboardCheck, BarChart3, Scale, XCircle,
   BookOpen, Target, Landmark, Map, TrendingUp, Home, Gavel, Calculator,
   DollarSign, ShieldCheck, Award, Paperclip, type LucideIcon,
