@@ -145,7 +145,7 @@ export default function AIDocumentProcessingPage() {
         return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: RB-2024-789 — مساحة البناء: 320 م² — طابقين — ثقة 91%" };
       // مخططات معمارية
       if (n.includes("مخطط") || n.includes("plan") || n.includes("كروكي") || n.includes("layout") || n.includes("floor"))
-        return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "مخطط دور أرضي — 4 غرف، صالة، مطبخ — مساحة البناء: 312 م²" };
+        return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "3 غرف نوم + صالة + مطبخ — ثقة 73% ⚠️ يحتاج تأكيد" };
       // تقارير تقييم سابقة
       if (n.includes("تقرير") || n.includes("تقييم") || n.includes("report") || n.includes("valuation") || n.includes("appraisal"))
         return { category: "technical_report", label: "تقرير تقييم سابق", relevance: "high", extractedInfo: "تقرير تقييم بتاريخ 1444/09/20 — القيمة السوقية: 2,350,000 ر.س" };
