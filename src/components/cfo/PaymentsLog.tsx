@@ -3,6 +3,9 @@ import { payments, methodLabels } from "@/data/cfoMockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { FileText, FileSpreadsheet } from "lucide-react";
+import { exportPaymentsPDF, exportPaymentsExcel } from "@/lib/cfo-export";
 
 export default function PaymentsLog() {
   const [dateFrom, setDateFrom] = useState("");
