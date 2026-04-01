@@ -1496,8 +1496,8 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <SectionHeader num={6} title="المبنى - الداخل" icon={Building2} subtitle="وصف مكونات المبنى الداخلية وحالتها" />
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* عدد الغرف والصالات */}
-        <p className="text-xs font-bold text-muted-foreground">🏠 التوزيع الداخلي</p>
+        {/* التوزيع الداخلي */}
+        <ExpandableSection icon="🏠" title="التوزيع الداخلي" defaultOpen>
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="عدد الغرف">
             <Input type="number" value={formData.interior_rooms_count} onChange={(e: any) => updateField("interior_rooms_count", e.target.value)} placeholder="مثال: 5" />
@@ -1512,8 +1512,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             <Input type="number" value={formData.interior_kitchens_count} onChange={(e: any) => updateField("interior_kitchens_count", e.target.value)} placeholder="مثال: 1" />
           </FieldGroup>
         </div>
-
-        <Separator />
+        </ExpandableSection>
 
         {/* الأرضيات */}
         <p className="text-xs font-bold text-muted-foreground">🧱 الأرضيات</p>
