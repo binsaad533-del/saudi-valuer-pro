@@ -106,6 +106,33 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   appendices: Paperclip,
 };
 
+/* Section color themes: [bg class, text class, ring class] */
+const SECTION_COLORS: Record<string, { bg: string; text: string; accent: string }> = {
+  executive_summary:       { bg: "bg-primary/10",        text: "text-primary",        accent: "border-primary/30" },
+  scope_of_work:           { bg: "bg-info/10",           text: "text-info",           accent: "border-info/30" },
+  property_description:    { bg: "bg-amber-500/10",      text: "text-amber-600",      accent: "border-amber-500/30" },
+  location_analysis:       { bg: "bg-emerald-500/10",    text: "text-emerald-600",    accent: "border-emerald-500/30" },
+  market_overview:         { bg: "bg-cyan-500/10",       text: "text-cyan-600",       accent: "border-cyan-500/30" },
+  sales_comparison_approach: { bg: "bg-violet-500/10",   text: "text-violet-600",     accent: "border-violet-500/30" },
+  cost_approach:           { bg: "bg-orange-500/10",     text: "text-orange-600",     accent: "border-orange-500/30" },
+  reconciliation:          { bg: "bg-rose-500/10",       text: "text-rose-600",       accent: "border-rose-500/30" },
+  assumptions_and_limiting_conditions: { bg: "bg-yellow-500/10", text: "text-yellow-600", accent: "border-yellow-500/30" },
+  compliance_statement:    { bg: "bg-teal-500/10",       text: "text-teal-600",       accent: "border-teal-500/30" },
+  valuer_certification:    { bg: "bg-indigo-500/10",     text: "text-indigo-600",     accent: "border-indigo-500/30" },
+  cover_page:              { bg: "bg-slate-500/10",      text: "text-slate-600",      accent: "border-slate-500/30" },
+  table_of_contents:       { bg: "bg-gray-500/10",       text: "text-gray-600",       accent: "border-gray-500/30" },
+  engagement_letter:       { bg: "bg-sky-500/10",        text: "text-sky-600",        accent: "border-sky-500/30" },
+  purpose_and_intended_use:{ bg: "bg-fuchsia-500/10",    text: "text-fuchsia-600",    accent: "border-fuchsia-500/30" },
+  property_identification: { bg: "bg-lime-500/10",       text: "text-lime-600",       accent: "border-lime-500/30" },
+  legal_description:       { bg: "bg-stone-500/10",      text: "text-stone-600",      accent: "border-stone-500/30" },
+  highest_and_best_use:    { bg: "bg-pink-500/10",       text: "text-pink-600",       accent: "border-pink-500/30" },
+  valuation_approaches:    { bg: "bg-blue-500/10",       text: "text-blue-600",       accent: "border-blue-500/30" },
+  income_approach:         { bg: "bg-green-500/10",      text: "text-green-600",      accent: "border-green-500/30" },
+  appendices:              { bg: "bg-neutral-500/10",     text: "text-neutral-600",    accent: "border-neutral-500/30" },
+};
+
+const DEFAULT_SECTION_COLOR = { bg: "bg-primary/10", text: "text-primary", accent: "border-primary/30" };
+
 
 const DATA_CATEGORIES = [
   { key: "request", label: "بيانات الطلب", icon: FileText },
@@ -1178,16 +1205,17 @@ export default function AIReportGenerationPage() {
               const isEditing = editingSection === key;
 
               const SectionIcon = SECTION_ICONS[key] || FileText;
+              const sColor = SECTION_COLORS[key] || DEFAULT_SECTION_COLOR;
 
               return (
-                <Card key={key} className="transition-all">
+                <Card key={key} className={`transition-all ${isExpanded ? `border-l-2 ${sColor.accent}` : ""}`}>
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                     onClick={() => setExpandedSection(isExpanded ? null : key)}
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <SectionIcon className="w-3.5 h-3.5 text-primary" />
+                      <div className={`w-7 h-7 rounded-lg ${sColor.bg} flex items-center justify-center shrink-0`}>
+                        <SectionIcon className={`w-3.5 h-3.5 ${sColor.text}`} />
                       </div>
                       <span className="font-medium text-sm">{sec.title_ar || key}</span>
                     </div>
@@ -1411,16 +1439,17 @@ export default function AIReportGenerationPage() {
 
                     {sectionEntries.map(([key, sec]) => {
                       const SIcon = SECTION_ICONS[key] || FileText;
+                      const sColor = SECTION_COLORS[key] || DEFAULT_SECTION_COLOR;
                       const isEdited = editedSections.has(key);
                       const hasContent = !!(sec.content_ar && sec.content_ar.length > 20);
                       const conf = sectionConfidence[key];
                       return (
                         <div
                           key={key}
-                          className={`flex items-center gap-1.5 text-[10px] p-1.5 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? "bg-primary/10" : ""}`}
+                          className={`flex items-center gap-1.5 text-[10px] p-1.5 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? sColor.bg : ""}`}
                           onClick={() => setExpandedSection(expandedSection === key ? null : key)}
                         >
-                          <SIcon className={`w-3 h-3 shrink-0 ${hasContent ? "text-primary" : "text-muted-foreground/40"}`} />
+                          <SIcon className={`w-3 h-3 shrink-0 ${hasContent ? sColor.text : "text-muted-foreground/40"}`} />
                           <span className={`flex-1 truncate ${hasContent ? "text-foreground" : "text-muted-foreground/60"}`}>
                             {sec.title_ar || key}
                           </span>
