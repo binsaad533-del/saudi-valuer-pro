@@ -321,6 +321,8 @@ const defaultFormData: FormData = {
   interior_plumbing_condition: "",
   interior_rooms_count: "",
   interior_halls_count: "",
+  interior_bathrooms_count_num: "",
+  interior_kitchens_count: "",
   interior_notes: "",
   overall_condition: "",
   asset_age: "",
