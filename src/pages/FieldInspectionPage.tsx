@@ -184,6 +184,8 @@ interface FormData {
   interior_bathrooms_condition: string;
   interior_doors_type: string;
   interior_doors_condition: string;
+  interior_windows_type: string;
+  interior_windows_condition: string;
   interior_stairs_type: string;
   interior_stairs_condition: string;
   interior_ac_type: string;
@@ -313,6 +315,8 @@ const defaultFormData: FormData = {
   interior_bathrooms_condition: "",
   interior_doors_type: "",
   interior_doors_condition: "",
+  interior_windows_type: "",
+  interior_windows_condition: "",
   interior_stairs_type: "",
   interior_stairs_condition: "",
   interior_ac_type: "",
@@ -1419,6 +1423,32 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
           <FieldGroup label="حالة الأسقف">
             <Select value={formData.interior_ceilings_condition} onValueChange={(v: string) => updateField("interior_ceilings_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        {/* النوافذ */}
+        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع النوافذ">
+            <Select value={formData.interior_windows_type} onValueChange={(v: string) => updateField("interior_windows_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="upvc">UPVC</SelectItem>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="double_glazed">زجاج مزدوج</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة النوافذ">
+            <Select value={formData.interior_windows_condition} onValueChange={(v: string) => updateField("interior_windows_condition", v)}>
               <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
               <SelectContent>
                 {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
