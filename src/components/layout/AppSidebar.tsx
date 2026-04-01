@@ -73,6 +73,7 @@ const navSections: NavSection[] = [
     title: "الذكاء",
     items: [
       { label: "استخراج المستندات", icon: Brain, path: "/ai-document-processing", roles: ["owner", "admin_coordinator"] },
+      { label: "نطاق العمل والتسعير", icon: Calculator, path: "/ai-scope-pricing", roles: ["owner", "admin_coordinator"] },
     ],
     roles: ["owner", "admin_coordinator"],
   },
