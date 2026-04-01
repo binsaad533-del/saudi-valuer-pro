@@ -350,31 +350,60 @@ export default function AIReportGenerationPage() {
         <CardContent className="pt-5 pb-4">
           <div className="flex items-center justify-between">
             {PIPELINE_STEPS.map((ps, idx) => {
-              const done = idx < step;
+              const status = getStepStatus(idx);
+              const done = status === "done";
               const active = idx === step;
+              const hasError = status === "error";
+              const isLoading = status === "loading";
               const Icon = ps.icon;
               return (
                 <div key={ps.key} className="flex items-center flex-1 last:flex-none">
                   <div
-                    className="flex flex-col items-center gap-1 cursor-pointer"
-                    onClick={() => { if (done) setStep(idx as PipelineStep); }}
+                    className="flex flex-col items-center gap-1 cursor-pointer group relative"
+                    onClick={() => { if (done || hasError) setStep(idx as PipelineStep); }}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                      done ? "bg-primary border-primary text-primary-foreground"
+                      hasError ? "bg-destructive/10 border-destructive text-destructive shadow-md shadow-destructive/20"
+                        : done ? "bg-primary border-primary text-primary-foreground"
                         : active ? "border-primary text-primary bg-primary/10 shadow-md shadow-primary/20"
                         : "border-muted-foreground/20 text-muted-foreground/40 bg-muted/20"
                     }`}>
-                      {done ? <CheckCircle2 className="w-4.5 h-4.5" />
-                        : (active && (isGenerating || isLoadingData)) ? <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                      {hasError ? <XCircle className="w-4.5 h-4.5" />
+                        : done ? <CheckCircle2 className="w-4.5 h-4.5" />
+                        : isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" />
                         : <Icon className="w-4.5 h-4.5" />}
                     </div>
-                    <span className={`text-[10px] font-medium whitespace-nowrap ${done ? "text-primary" : active ? "text-primary font-bold" : "text-muted-foreground/40"}`}>
+                    <span className={`text-[10px] font-medium whitespace-nowrap ${
+                      hasError ? "text-destructive font-bold"
+                        : done ? "text-primary"
+                        : active ? "text-primary font-bold"
+                        : "text-muted-foreground/40"
+                    }`}>
                       {ps.label}
                     </span>
+                    {/* Status label */}
+                    <span className={`text-[8px] font-medium ${
+                      hasError ? "text-destructive"
+                        : isLoading ? "text-primary animate-pulse"
+                        : done ? "text-primary/60"
+                        : "text-transparent"
+                    }`}>
+                      {hasError ? "خطأ" : isLoading ? "جارٍ..." : done ? "مكتمل" : "—"}
+                    </span>
+                    {/* Error tooltip */}
+                    {hasError && stepErrors[idx] && (
+                      <div className="absolute top-full mt-1 z-10 hidden group-hover:block bg-destructive text-destructive-foreground text-[9px] px-2 py-1 rounded-md shadow-lg max-w-[180px] text-center whitespace-normal">
+                        {stepErrors[idx]}
+                      </div>
+                    )}
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
                     <div className="flex-1 mx-1.5">
-                      <div className={`h-0.5 rounded-full transition-all ${idx < step ? "bg-primary" : "bg-muted-foreground/15"}`} />
+                      <div className={`h-0.5 rounded-full transition-all ${
+                        hasError ? "bg-destructive/40"
+                          : idx < step ? "bg-primary"
+                          : "bg-muted-foreground/15"
+                      }`} />
                     </div>
                   )}
                 </div>
