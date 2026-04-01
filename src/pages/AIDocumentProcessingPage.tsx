@@ -77,10 +77,10 @@ interface ExtractedData {
 }
 
 const DEMO_FILES: UploadedFile[] = [
-  { file: new File([""], "صك_ملكية_310298765.pdf", { type: "application/pdf" }), name: "صك_ملكية_310298765.pdf", size: 2_450_000, status: "uploaded" },
-  { file: new File([""], "رخصة_بناء_44-2891.pdf", { type: "application/pdf" }), name: "رخصة_بناء_44-2891.pdf", size: 1_120_000, status: "uploaded" },
-  { file: new File([""], "مخطط_الدور_الأرضي.png", { type: "image/png" }), name: "مخطط_الدور_الأرضي.png", size: 3_780_000, status: "uploaded" },
-  { file: new File([""], "صورة_واجهة_رئيسية.jpg", { type: "image/jpeg" }), name: "صورة_واجهة_رئيسية.jpg", size: 4_200_000, status: "uploaded" },
+  { file: {} as any, name: "صك_ملكية_310298765.pdf", size: 2_450_000, status: "uploaded" },
+  { file: {} as any, name: "رخصة_بناء_44-2891.pdf", size: 1_120_000, status: "uploaded" },
+  { file: {} as any, name: "مخطط_الدور_الأرضي.png", size: 3_780_000, status: "uploaded" },
+  { file: {} as any, name: "صورة_واجهة_رئيسية.jpg", size: 4_200_000, status: "uploaded" },
 ];
 
 export default function AIDocumentProcessingPage() {
