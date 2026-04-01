@@ -1275,7 +1275,7 @@ function SectionValueFactors({ formData, updateField }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={7} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
+        <SectionHeader num={8} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="إيجابيات الموقع">
