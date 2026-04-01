@@ -1094,10 +1094,10 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
 
         <Separator />
 
-        {/* السقف */}
-        <p className="text-xs font-bold text-muted-foreground">🏠 السقف</p>
+        {/* السطح */}
+        <p className="text-xs font-bold text-muted-foreground">🏠 السطح</p>
         <div className="grid grid-cols-2 gap-3">
-          <FieldGroup label="نوع السقف">
+          <FieldGroup label="نوع السطح">
             <Select value={formData.exterior_roof_type} onValueChange={(v: string) => updateField("exterior_roof_type", v)}>
               <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
               <SelectContent>
@@ -1108,13 +1108,36 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
               </SelectContent>
             </Select>
           </FieldGroup>
-          <FieldGroup label="حالة السقف">
+          <FieldGroup label="حالة السطح">
             <Select value={formData.exterior_roof_condition} onValueChange={(v: string) => updateField("exterior_roof_condition", v)}>
               <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
               <SelectContent>
                 {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
               </SelectContent>
             </Select>
+          </FieldGroup>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="العزل">
+            <Select value={formData.exterior_roof_insulation} onValueChange={(v: string) => updateField("exterior_roof_insulation", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="thermal_water">حراري ومائي</SelectItem>
+                <SelectItem value="thermal">حراري فقط</SelectItem>
+                <SelectItem value="water">مائي فقط</SelectItem>
+                <SelectItem value="none">بدون عزل</SelectItem>
+                <SelectItem value="unknown">غير معروف</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="تسربات مائية">
+            <RadioGroup value={formData.exterior_roof_leaks} onValueChange={(v: string) => updateField("exterior_roof_leaks", v)} className="flex gap-2">
+              {[{ value: "no", label: "لا يوجد" }, { value: "minor", label: "بسيطة" }, { value: "major", label: "كبيرة" }].map(opt => (
+                <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_roof_leaks === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                  <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+                </label>
+              ))}
+            </RadioGroup>
           </FieldGroup>
         </div>
 
