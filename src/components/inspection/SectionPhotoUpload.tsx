@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Camera, Trash2, Image } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
