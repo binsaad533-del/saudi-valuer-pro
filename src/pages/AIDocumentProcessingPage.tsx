@@ -135,12 +135,16 @@ export default function AIDocumentProcessingPage() {
       const tempId = `ai_${Date.now()}`;
       const storagePaths: { path: string; name: string; mimeType: string }[] = [];
 
-      for (const uf of uploadedFiles) {
+      for (let idx = 0; idx < uploadedFiles.length; idx++) {
+        const uf = uploadedFiles[idx];
+        setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploading" as FileStatus } : f));
         const filePath = `${tempId}/${Date.now()}_${uf.name}`;
         const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
         if (!uploadErr) {
           storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.file.type });
-          uf.storagePath = filePath;
+          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploaded" as FileStatus, storagePath: filePath } : f));
+        } else {
+          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "error" as FileStatus, errorMsg: uploadErr.message } : f));
         }
       }
 
