@@ -15,7 +15,7 @@ import {
   MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
-  FileCheck, UserCheck, Home, Upload,
+  FileCheck, UserCheck, Home, Upload, LayoutGrid,
 } from "lucide-react";
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
@@ -61,11 +61,12 @@ const STEPS = [
   { key: "interior", label: "المبنى - الداخل", icon: Building2, num: 6 },
   { key: "condition", label: "حالة الأصل", icon: Wrench, num: 7 },
   { key: "utilities", label: "المرافق", icon: Zap, num: 8 },
-  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 9 },
-  { key: "documentation", label: "التوثيق", icon: Camera, num: 10 },
-  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 11 },
-  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 12 },
-  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 13 },
+  { key: "layout_areas", label: "المخطط والمساحات", icon: LayoutGrid, num: 9 },
+  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 10 },
+  { key: "documentation", label: "التوثيق", icon: Camera, num: 11 },
+  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 12 },
+  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 13 },
+  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 14 },
 ];
 
 /* ═══════ Types ═══════ */
@@ -223,6 +224,10 @@ interface FormData {
   elevator_count: string;
   utilities_notes: string;
   utilities_confidential_notes: string;
+  total_building_area: string;
+  floor_areas: string;
+  floor_count_detail: string;
+  layout_notes: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
@@ -371,6 +376,10 @@ const defaultFormData: FormData = {
   elevator_count: "",
   utilities_notes: "",
   utilities_confidential_notes: "",
+  total_building_area: "",
+  floor_areas: "",
+  floor_count_detail: "",
+  layout_notes: "",
   positive_factors: "",
   negative_factors: "",
   environmental_factors: "",
@@ -504,6 +513,7 @@ export default function FieldInspectionPage() {
     !!(formData.interior_floors_type),
     !!(formData.overall_condition),
     true,
+    !!(formData.total_building_area),
     true,
     requiredPhotoDone === requiredPhotoTotal,
     !!(formData.has_risks),
@@ -612,11 +622,12 @@ export default function FieldInspectionPage() {
         {step === 5 && <SectionInterior formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 6 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 7 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 8 && <SectionValueFactors formData={formData} updateField={updateField} />}
-        {step === 9 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
-        {step === 10 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 11 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
-        {step === 12 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
+        {step === 8 && <SectionLayoutAreas formData={formData} updateField={updateField} />}
+        {step === 9 && <SectionValueFactors formData={formData} updateField={updateField} />}
+        {step === 10 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
+        {step === 11 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 12 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
+        {step === 13 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
 
       {/* Bottom nav */}
@@ -2040,11 +2051,86 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
   );
 }
 
+function SectionLayoutAreas({ formData, updateField }: any) {
+  const floorAreas = formData.floor_areas ? formData.floor_areas.split(",") : [];
+
+  const updateFloorArea = (index: number, value: string) => {
+    const areas = formData.floor_areas ? formData.floor_areas.split(",") : [];
+    while (areas.length <= index) areas.push("");
+    areas[index] = value;
+    updateField("floor_areas", areas.join(","));
+  };
+
+  const floorLabels = (i: number) => {
+    if (i === 0) return "البدروم / القبو";
+    if (i === 1) return "الدور الأرضي";
+    if (i === 2) return "الدور الأول";
+    if (i === 3) return "الدور الثاني";
+    if (i === 4) return "الدور الثالث";
+    return `الدور ${i - 1}`;
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={9} title="المخطط والمساحات" icon={LayoutGrid} subtitle="تفصيل المساحات لكل دور" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="مساحة البناء الكلية (م²)" required>
+            <Input type="number" value={formData.total_building_area} onChange={(e: any) => updateField("total_building_area", e.target.value)} placeholder="مثال: 450" />
+          </FieldGroup>
+          <FieldGroup label="عدد الأدوار (للتفصيل)">
+            <Input type="number" min={1} max={10} value={formData.floor_count_detail} onChange={(e: any) => updateField("floor_count_detail", e.target.value)} placeholder="مثال: 3" />
+          </FieldGroup>
+        </div>
+
+        {formData.floor_count_detail && parseInt(formData.floor_count_detail) > 0 && (
+          <>
+            <Separator />
+            <p className="text-xs font-bold text-muted-foreground">📐 مساحة كل دور (م²)</p>
+            <div className="space-y-2">
+              {Array.from({ length: Math.min(parseInt(formData.floor_count_detail), 10) }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground w-28 shrink-0">{floorLabels(i)}</span>
+                  <Input
+                    type="number"
+                    value={floorAreas[i] || ""}
+                    onChange={(e: any) => updateFloorArea(i, e.target.value)}
+                    placeholder="م²"
+                    className="flex-1"
+                  />
+                </div>
+              ))}
+            </div>
+            {floorAreas.filter((a: string) => a && parseFloat(a) > 0).length > 0 && (
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground">إجمالي مساحات الأدوار</p>
+                <p className="text-lg font-bold text-primary">
+                  {floorAreas.reduce((sum: number, a: string) => sum + (parseFloat(a) || 0), 0).toLocaleString("ar-SA")} م²
+                </p>
+                {formData.total_building_area && Math.abs(floorAreas.reduce((sum: number, a: string) => sum + (parseFloat(a) || 0), 0) - parseFloat(formData.total_building_area)) > 1 && (
+                  <p className="text-xs text-destructive mt-1">⚠️ يختلف عن المساحة الكلية المدخلة ({parseFloat(formData.total_building_area).toLocaleString("ar-SA")} م²)</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        <FieldGroup label="ملاحظات المخطط">
+          <Textarea value={formData.layout_notes} onChange={(e: any) => updateField("layout_notes", e.target.value)} placeholder="ملاحظات عن توزيع المساحات، الملاحق، السطح..." rows={2} />
+        </FieldGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function SectionValueFactors({ formData, updateField }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={9} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
+        <SectionHeader num={10} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="إيجابيات الموقع">
@@ -2075,7 +2161,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, 
 
   return (
     <div className="space-y-4">
-      <SectionHeader num={10} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
+      <SectionHeader num={11} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
       {requiredPhotoDone < requiredPhotoTotal && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -2139,7 +2225,7 @@ function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemo
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={11} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
+        <SectionHeader num={12} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="هل توجد مخاطر تؤثر على التقييم؟" required>
@@ -2185,7 +2271,7 @@ function SectionFinalCheck({ formData, updateField, sectionComplete, photos, che
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={12} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
+        <SectionHeader num={13} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
       </CardHeader>
       <CardContent className="space-y-3">
         {reviewItems.map((item, i) => (
@@ -2233,7 +2319,7 @@ function SectionApproval({ formData, updateField, canSubmit, submitting, onSubmi
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={13} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
+        <SectionHeader num={14} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center space-y-2">
