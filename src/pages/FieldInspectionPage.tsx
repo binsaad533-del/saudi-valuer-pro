@@ -2294,7 +2294,7 @@ function SectionValueFactors({ formData, updateField }: any) {
         <AiSuggestionBox
           sectionKey="value_factors"
           promptHint="تحليل العوامل المؤثرة على القيمة"
-          context={{ positive_factors: formData.positive_factors.join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: formData.negative_factors.join(', '), negative_factors_other: formData.negative_factors_other }}
+          context={{ positive_factors: Object.entries(formData.positive_factors).map(([k,v]) => `${k}:${v}`).join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: Object.entries(formData.negative_factors).map(([k,v]) => `${k}:${v}`).join(', '), negative_factors_other: formData.negative_factors_other }}
         />
       </CardContent>
     </Card>
