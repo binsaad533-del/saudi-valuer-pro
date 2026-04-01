@@ -354,7 +354,7 @@ ${extractedData.extractedNumbers?.map((n: any) => `- ${n.label}: ${n.value} (Ø«Ù
                     required: ["complexityFactor", "complexityReason", "justification"],
                   },
                 },
-                required: ["disciplineAnalysis", "purposeAnalysis", "scope", "pricingAdjustments"],
+                required: ["disciplineAnalysis", "purposeAnalysis", "basisOfValueAnalysis", "scope", "pricingAdjustments"],
                 additionalProperties: false,
               },
             },
