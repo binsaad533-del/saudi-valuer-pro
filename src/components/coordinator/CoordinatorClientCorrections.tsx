@@ -45,7 +45,9 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
   const [search, setSearch] = useState("");
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
   const [editDialog, setEditDialog] = useState(false);
+  const [messageDialog, setMessageDialog] = useState(false);
   const [selectedReq, setSelectedReq] = useState<any>(null);
+  const [clientMessage, setClientMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     cityAr: "",
