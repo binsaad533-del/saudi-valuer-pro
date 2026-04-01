@@ -113,6 +113,9 @@ interface PricingData {
   adjustedBase: number;
   sizeCategory: string;
   breakdown: PricingBreakdown;
+  subtotal: number;
+  vatRate: number;
+  vatAmount: number;
   totalPrice: number;
   justification: string;
 }
