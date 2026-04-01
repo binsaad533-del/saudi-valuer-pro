@@ -290,6 +290,7 @@ export default function AIReportGenerationPage() {
         },
       });
     }
+    setEditedSections(prev => new Set(prev).add(sectionKey));
     setEditingSection(null);
     setEditBuffer("");
     toast.success("تم حفظ التعديل");
