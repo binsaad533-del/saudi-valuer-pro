@@ -1754,11 +1754,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* حالة التشطيب الداخلي الكلية */}
-        <p className="text-xs font-bold text-muted-foreground">⭐ التقييم الكلي للتشطيب الداخلي</p>
+        {/* التقييم الكلي */}
+        <ExpandableSection icon="⭐" title="التقييم الكلي للتشطيب الداخلي" defaultOpen>
         <FieldGroup label="حالة التشطيب الداخلي الكلية" required>
           <Select value={formData.interior_overall_finishing} onValueChange={(v: string) => updateField("interior_overall_finishing", v)}>
             <SelectTrigger><SelectValue placeholder="اختر التقييم الكلي" /></SelectTrigger>
