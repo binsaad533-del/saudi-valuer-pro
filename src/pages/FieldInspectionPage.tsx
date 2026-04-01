@@ -82,6 +82,7 @@ interface PhotoItem {
   category: string;
   file_name: string;
   preview: string;
+  description: string;
 }
 
 interface ChecklistItem {
@@ -509,13 +510,54 @@ export default function FieldInspectionPage() {
   const handlePhotoCapture = (category: string, files: FileList | null) => {
     if (!files) return;
     for (const file of Array.from(files)) {
-      setPhotos(prev => [...prev, { category, file_name: file.name, preview: URL.createObjectURL(file) }]);
+      setPhotos(prev => [...prev, { category, file_name: file.name, preview: URL.createObjectURL(file), description: "" }]);
     }
     toast.success("تم إضافة الصور بنجاح");
   };
 
   const removePhoto = (photo: PhotoItem) => {
     setPhotos(prev => prev.filter(p => p !== photo));
+  };
+
+  const updatePhotoDescription = (photo: PhotoItem, description: string) => {
+    setPhotos(prev => prev.map(p => p === photo ? { ...p, description } : p));
+  };
+
+  const suggestCategoryFromDescription = (desc: string): string | null => {
+    const d = desc.toLowerCase();
+    const keywords: Record<string, string[]> = {
+      exterior_front: ["واجهة أمام", "المدخل", "الباب الرئيسي", "front"],
+      exterior_back: ["واجهة خلف", "خلفي", "back"],
+      exterior_left: ["يسرى", "يسار", "left"],
+      exterior_right: ["يمنى", "يمين", "right"],
+      street_view: ["شارع", "طريق", "street"],
+      surroundings: ["محيط", "جيران", "حي", "surrounding"],
+      interior_living: ["صالة", "معيشة", "مجلس", "living"],
+      interior_kitchen: ["مطبخ", "kitchen"],
+      interior_bathroom: ["حمام", "دورة مياه", "bathroom"],
+      interior_bedroom: ["غرفة نوم", "bedroom"],
+      site_plan: ["مخطط", "كروكي", "plan", "رسم"],
+      floor_plan: ["دور", "طابق", "floor"],
+      deed_photo: ["صك", "deed", "وثيقة", "عقد"],
+      problem_cracks: ["تشقق", "شرخ", "crack", "كسر"],
+      problem_moisture: ["رطوبة", "تسرب", "moisture", "water leak"],
+      problem_other: ["مشكلة", "عيب", "تلف", "damage"],
+    };
+    for (const [cat, words] of Object.entries(keywords)) {
+      if (words.some(w => d.includes(w))) return cat;
+    }
+    return null;
+  };
+
+  const handlePhotoDescriptionChange = (photo: PhotoItem, description: string) => {
+    updatePhotoDescription(photo, description);
+    const suggested = suggestCategoryFromDescription(description);
+    if (suggested && suggested !== photo.category) {
+      // Auto-move to suggested category
+      setPhotos(prev => prev.map(p => p === photo ? { ...p, description, category: suggested } : p));
+      const catLabel = PHOTO_CATEGORIES.find(c => c.key === suggested)?.label || suggested;
+      toast.info(`📂 تم نقل الصورة تلقائياً إلى: ${catLabel}`);
+    }
   };
 
   const requiredPhotoDone = PHOTO_CATEGORIES.filter(c => c.required).filter(c => photos.some(p => p.category === c.key)).length;
@@ -643,7 +685,7 @@ export default function FieldInspectionPage() {
         {step === 7 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 8 && <SectionLayoutAreas formData={formData} updateField={updateField} />}
         {step === 9 && <SectionValueFactors formData={formData} updateField={updateField} />}
-        {step === 10 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
+        {step === 10 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} onDescriptionChange={handlePhotoDescriptionChange} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
         {step === 11 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 12 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
         {step === 13 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
@@ -2308,7 +2350,7 @@ function SectionValueFactors({ formData, updateField }: any) {
   );
 }
 
-function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, requiredPhotoTotal }: any) {
+function SectionDocumentation({ photos, onCapture, onRemove, onDescriptionChange, requiredPhotoDone, requiredPhotoTotal }: any) {
   const groups = [
     { key: "exterior", title: "📸 صور خارجية", icon: "🏢" },
     { key: "interior", title: "🏠 صور داخلية", icon: "🛋️" },
@@ -2342,7 +2384,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, 
             <CardHeader className="pb-2"><CardTitle className="text-sm">{g.title}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {cats.map((cat) => (
-                <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} />
+                <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} onDescriptionChange={onDescriptionChange} />
               ))}
             </CardContent>
           </Card>
@@ -2352,7 +2394,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, 
   );
 }
 
-function PhotoCategoryRow({ cat, photos, onCapture, onRemove }: any) {
+function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChange }: any) {
   const catPhotos = photos.filter((p: PhotoItem) => p.category === cat.key);
   return (
     <div className={`border rounded-lg p-3 ${catPhotos.length > 0 ? "border-green-200 dark:border-green-800" : cat.required ? "border-yellow-200 dark:border-yellow-800" : "border-border"}`}>
@@ -2364,13 +2406,21 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove }: any) {
         <Badge variant={catPhotos.length > 0 ? "default" : "outline"} className="text-[10px]">{catPhotos.length} صور</Badge>
       </div>
       {catPhotos.length > 0 && (
-        <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
+        <div className="space-y-2 mb-2">
           {catPhotos.map((p: PhotoItem, i: number) => (
-            <div key={i} className="relative shrink-0 w-16 h-16 bg-muted rounded overflow-hidden group">
-              <img src={p.preview} alt="" className="w-full h-full object-cover" />
-              <button onClick={() => onRemove(p)} className="absolute top-0 left-0 bg-destructive/80 text-white p-0.5 rounded-br opacity-0 group-hover:opacity-100 transition-opacity">
-                <Trash2 className="w-3 h-3" />
-              </button>
+            <div key={i} className="flex gap-2 items-start">
+              <div className="relative shrink-0 w-16 h-16 bg-muted rounded overflow-hidden group">
+                <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                <button onClick={() => onRemove(p)} className="absolute top-0 left-0 bg-destructive/80 text-white p-0.5 rounded-br opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+              <Input
+                value={p.description || ""}
+                onChange={(e: any) => onDescriptionChange(p, e.target.value)}
+                placeholder="وصف الصورة..."
+                className="text-xs h-8 flex-1"
+              />
             </div>
           ))}
         </div>
