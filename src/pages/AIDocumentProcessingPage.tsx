@@ -142,7 +142,7 @@ export default function AIDocumentProcessingPage() {
         return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م² — حي النرجس، الرياض — ثقة 96%" };
       // رخص بناء
       if (n.includes("رخص") || n.includes("permit") || n.includes("بناء") || n.includes("building"))
-        return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: 44/2891 — تاريخ: 1443/06/12 — نوع: سكني" };
+        return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: RB-2024-789 — مساحة البناء: 320 م² — طابقين — ثقة 91%" };
       // مخططات معمارية
       if (n.includes("مخطط") || n.includes("plan") || n.includes("كروكي") || n.includes("layout") || n.includes("floor"))
         return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "مخطط دور أرضي — 4 غرف، صالة، مطبخ — مساحة البناء: 312 م²" };
@@ -194,12 +194,13 @@ export default function AIDocumentProcessingPage() {
       );
     }
     if (cats.has("building_permit")) {
-      const src = files[categorized.findIndex(c => c.category === "building_permit")]?.name || "رخصة بناء";
+      const permitSrc = files[categorized.findIndex(c => c.category === "building_permit")]?.name || "رخصة بناء";
       numbers.push(
-        { label: "رقم الرخصة", value: "44/2891", source: src },
-        { label: "تاريخ الرخصة", value: "1443/06/12 هـ", source: src },
-        { label: "عدد الأدوار المرخصة", value: "دورين + ملحق علوي", source: src },
-        { label: "نسبة البناء المسموحة", value: "60%", source: src },
+        { label: "رقم الرخصة", value: "RB-2024-789", source: permitSrc },
+        { label: "مساحة البناء المرخصة", value: "320 م²", source: permitSrc },
+        { label: "عدد الطوابق", value: "طابقين", source: permitSrc },
+        { label: "تاريخ الرخصة", value: "1445/02/10 هـ", source: permitSrc },
+        { label: "نسبة ثقة الاستخراج", value: "91%", source: permitSrc },
       );
     }
     if (cats.has("floor_plan")) {
