@@ -14,7 +14,7 @@ import {
   Sparkles, FileText, Wand2, CheckCircle2, Loader2, Copy, RefreshCw,
   Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
   FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2,
-  Building2, User, MapPin, ClipboardCheck, BarChart3, Scale,
+  Building2, User, MapPin, ClipboardCheck, BarChart3, Scale, XCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -152,6 +152,7 @@ export default function AIReportGenerationPage() {
 
   const [step, setStep] = useState<PipelineStep>(0);
   const [requestId, setRequestId] = useState(initialRequestId);
+  const [stepErrors, setStepErrors] = useState<Record<number, string | null>>({});
 
   // Data collection state
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -170,6 +171,19 @@ export default function AIReportGenerationPage() {
   const reviewRef = useRef("");
   const [isReviewing, setIsReviewing] = useState(false);
 
+  // Helper to determine step status
+  const getStepStatus = (idx: number): "idle" | "loading" | "done" | "error" => {
+    if (stepErrors[idx]) return "error";
+    if (idx < step) return "done";
+    if (idx === step) {
+      if (idx === 0 && isLoadingData) return "loading";
+      if (idx === 1 && isGenerating) return "loading";
+      if (idx === 3 && isReviewing) return "loading";
+      return "idle";
+    }
+    return "idle";
+  };
+
   /* ─── Step 0: Collect Data ─── */
   const handleCollectData = useCallback(async () => {
     if (!requestId.trim()) {
@@ -178,6 +192,7 @@ export default function AIReportGenerationPage() {
     }
     setIsLoadingData(true);
     setDataError(null);
+    setStepErrors(prev => ({ ...prev, 0: null }));
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-report", {
@@ -190,8 +205,10 @@ export default function AIReportGenerationPage() {
       setAggregatedData(data);
       toast.success("تم جمع جميع البيانات المرتبطة بالطلب");
     } catch (err: any) {
-      setDataError(err.message || "خطأ في جمع البيانات");
-      toast.error(err.message || "خطأ في جمع البيانات");
+      const msg = err.message || "خطأ في جمع البيانات";
+      setDataError(msg);
+      setStepErrors(prev => ({ ...prev, 0: msg }));
+      toast.error(msg);
     } finally {
       setIsLoadingData(false);
     }
@@ -201,6 +218,7 @@ export default function AIReportGenerationPage() {
   const handleGenerateDraft = useCallback(async () => {
     setIsGenerating(true);
     setStep(1);
+    setStepErrors(prev => ({ ...prev, 1: null }));
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-report", {
@@ -221,8 +239,10 @@ export default function AIReportGenerationPage() {
         throw new Error("لم يتم توليد التقرير");
       }
     } catch (err: any) {
+      const msg = err.message || "خطأ في توليد التقرير";
+      setStepErrors(prev => ({ ...prev, 1: msg }));
       setStep(0);
-      toast.error(err.message || "خطأ في توليد التقرير");
+      toast.error(msg);
     } finally {
       setIsGenerating(false);
     }
@@ -253,6 +273,7 @@ export default function AIReportGenerationPage() {
     setReviewOutput("");
     reviewRef.current = "";
     setStep(3);
+    setStepErrors(prev => ({ ...prev, 3: null }));
 
     const allText = Object.entries(reportDraft.sections)
       .map(([key, sec]) => `## ${sec.title_ar || key}\n${sec.content_ar || ""}`)
@@ -268,7 +289,7 @@ export default function AIReportGenerationPage() {
       { mode: "review", existingText: allText, context },
       (delta) => { reviewRef.current += delta; setReviewOutput(reviewRef.current); },
       () => { setIsReviewing(false); toast.success("تم فحص الجودة"); },
-      (err) => { setIsReviewing(false); toast.error(err); }
+      (err) => { setIsReviewing(false); setStepErrors(prev => ({ ...prev, 3: err })); toast.error(err); }
     );
   }, [reportDraft, aggregatedData]);
 
@@ -329,31 +350,60 @@ export default function AIReportGenerationPage() {
         <CardContent className="pt-5 pb-4">
           <div className="flex items-center justify-between">
             {PIPELINE_STEPS.map((ps, idx) => {
-              const done = idx < step;
+              const status = getStepStatus(idx);
+              const done = status === "done";
               const active = idx === step;
+              const hasError = status === "error";
+              const isLoading = status === "loading";
               const Icon = ps.icon;
               return (
                 <div key={ps.key} className="flex items-center flex-1 last:flex-none">
                   <div
-                    className="flex flex-col items-center gap-1 cursor-pointer"
-                    onClick={() => { if (done) setStep(idx as PipelineStep); }}
+                    className="flex flex-col items-center gap-1 cursor-pointer group relative"
+                    onClick={() => { if (done || hasError) setStep(idx as PipelineStep); }}
                   >
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                      done ? "bg-primary border-primary text-primary-foreground"
+                      hasError ? "bg-destructive/10 border-destructive text-destructive shadow-md shadow-destructive/20"
+                        : done ? "bg-primary border-primary text-primary-foreground"
                         : active ? "border-primary text-primary bg-primary/10 shadow-md shadow-primary/20"
                         : "border-muted-foreground/20 text-muted-foreground/40 bg-muted/20"
                     }`}>
-                      {done ? <CheckCircle2 className="w-4.5 h-4.5" />
-                        : (active && (isGenerating || isLoadingData)) ? <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                      {hasError ? <XCircle className="w-4.5 h-4.5" />
+                        : done ? <CheckCircle2 className="w-4.5 h-4.5" />
+                        : isLoading ? <Loader2 className="w-4.5 h-4.5 animate-spin" />
                         : <Icon className="w-4.5 h-4.5" />}
                     </div>
-                    <span className={`text-[10px] font-medium whitespace-nowrap ${done ? "text-primary" : active ? "text-primary font-bold" : "text-muted-foreground/40"}`}>
+                    <span className={`text-[10px] font-medium whitespace-nowrap ${
+                      hasError ? "text-destructive font-bold"
+                        : done ? "text-primary"
+                        : active ? "text-primary font-bold"
+                        : "text-muted-foreground/40"
+                    }`}>
                       {ps.label}
                     </span>
+                    {/* Status label */}
+                    <span className={`text-[8px] font-medium ${
+                      hasError ? "text-destructive"
+                        : isLoading ? "text-primary animate-pulse"
+                        : done ? "text-primary/60"
+                        : "text-transparent"
+                    }`}>
+                      {hasError ? "خطأ" : isLoading ? "جارٍ..." : done ? "مكتمل" : "—"}
+                    </span>
+                    {/* Error tooltip */}
+                    {hasError && stepErrors[idx] && (
+                      <div className="absolute top-full mt-1 z-10 hidden group-hover:block bg-destructive text-destructive-foreground text-[9px] px-2 py-1 rounded-md shadow-lg max-w-[180px] text-center whitespace-normal">
+                        {stepErrors[idx]}
+                      </div>
+                    )}
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
                     <div className="flex-1 mx-1.5">
-                      <div className={`h-0.5 rounded-full transition-all ${idx < step ? "bg-primary" : "bg-muted-foreground/15"}`} />
+                      <div className={`h-0.5 rounded-full transition-all ${
+                        hasError ? "bg-destructive/40"
+                          : idx < step ? "bg-primary"
+                          : "bg-muted-foreground/15"
+                      }`} />
                     </div>
                   )}
                 </div>
