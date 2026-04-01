@@ -46,6 +46,9 @@ import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 
+// Field Inspection (standalone)
+import FieldInspectionPage from "@/pages/FieldInspectionPage";
+
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
