@@ -202,6 +202,7 @@ interface FormData {
   asset_age: string;
   finishing_level: string;
   condition_notes: string;
+  maintenance_rating: string;
   electricity_status: string;
   electricity_condition: string;
   water_source: string;
