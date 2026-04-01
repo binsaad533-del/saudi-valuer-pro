@@ -806,6 +806,9 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
         {facades.map(f => {
           const lengthKey = `front_${f.key}_length` as keyof typeof formData;
           const descKey = `front_${f.key}_desc` as keyof typeof formData;
+          const boundaryKey = `front_${f.key}_boundary` as keyof typeof formData;
+          const plateKey = `front_${f.key}_plate` as keyof typeof formData;
+          const isStreet = formData[boundaryKey] === "street";
           return (
             <div key={f.key} className="border rounded-lg p-3 space-y-2">
               <p className="text-sm font-medium flex items-center gap-1.5">{f.icon} {f.label}</p>
@@ -815,13 +818,52 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
                   <Input type="number" value={String(formData[lengthKey] || "")} onChange={(e: any) => updateField(lengthKey, e.target.value)} placeholder="0" className="mt-1" />
                 </div>
                 <div>
-                  <Label className="text-xs text-muted-foreground">يطل على</Label>
-                  <Input value={String(formData[descKey] || "")} onChange={(e: any) => updateField(descKey, e.target.value)} placeholder="شارع 15م / جار / ممر" className="mt-1" />
+                  <Label className="text-xs text-muted-foreground">نوع الحد</Label>
+                  <Select value={String(formData[boundaryKey] || "")} onValueChange={(v: string) => updateField(boundaryKey, v)}>
+                    <SelectTrigger className="mt-1"><SelectValue placeholder="اختر" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="street">شارع</SelectItem>
+                      <SelectItem value="neighbor">جار</SelectItem>
+                      <SelectItem value="wall">سور</SelectItem>
+                      <SelectItem value="passage">ممر</SelectItem>
+                      <SelectItem value="other">أخرى</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">يطل على</Label>
+                <Input value={String(formData[descKey] || "")} onChange={(e: any) => updateField(descKey, e.target.value)} placeholder="وصف: شارع 15م / جار عبدالله / ..." className="mt-1" />
+              </div>
+              {isStreet && (
+                <div>
+                  <Label className="text-xs text-muted-foreground">رقم لوحة الشارع (إن وجدت)</Label>
+                  <Input value={String(formData[plateKey] || "")} onChange={(e: any) => updateField(plateKey, e.target.value)} placeholder="مثال: شارع 25" className="mt-1" />
+                </div>
+              )}
             </div>
           );
         })}
+
+        <Separator />
+
+        <FieldGroup label="تطابق المساحة مع الصك" required>
+          <RadioGroup value={formData.area_matches_deed} onValueChange={(v: string) => updateField("area_matches_deed", v)} className="flex gap-2">
+            {[{ value: "yes", label: "✅ نعم" }, { value: "no", label: "❌ لا" }, { value: "slight_diff", label: "↔️ فرق بسيط" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2.5 cursor-pointer text-sm transition-colors ${formData.area_matches_deed === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                {opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+        {formData.area_matches_deed === "no" && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+            <p className="text-sm text-destructive font-medium flex items-center gap-1">
+              <AlertTriangle className="w-4 h-4" /> تنبيه: عدم تطابق المساحة يستوجب توثيق الفارق بالتفصيل
+            </p>
+          </div>
+        )}
 
         <Separator />
 
