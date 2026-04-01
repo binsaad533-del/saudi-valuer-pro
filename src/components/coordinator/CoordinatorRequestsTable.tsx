@@ -13,7 +13,7 @@ import { Search, Filter, RefreshCw, MoreHorizontal, Eye, UserCog, Flag } from "l
 import { STATUS_LABELS as WF_STATUS_LABELS, STATUS_COLORS } from "@/lib/workflow-engine";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = Object.fromEntries(

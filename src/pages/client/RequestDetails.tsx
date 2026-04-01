@@ -18,7 +18,7 @@ import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 
 
 const STATUS_TIMELINE = [

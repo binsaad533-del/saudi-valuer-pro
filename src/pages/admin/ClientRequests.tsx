@@ -18,7 +18,7 @@ import {
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 import { StatusBadge, StatusTransitionButton } from "@/components/workflow/StatusComponents";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 import {
   STATUS_LABELS as WF_STATUS_LABELS,
   STATUS_COLORS,

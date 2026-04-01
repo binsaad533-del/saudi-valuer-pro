@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { formatNumber } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
+import { formatNumber } from "@/lib/utils";
 import TopBar from "@/components/layout/TopBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
