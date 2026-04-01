@@ -98,6 +98,19 @@ interface FormData {
   valuer_name: string;
   inspection_time: string;
   detailed_address: string;
+  // Section 2: الموقع والمحيط
+  district_type: string;
+  district_level: string;
+  nearby_mosque: string;
+  nearby_mosque_distance: string;
+  nearby_school: string;
+  nearby_school_distance: string;
+  nearby_hospital: string;
+  nearby_hospital_distance: string;
+  nearby_mall: string;
+  nearby_mall_distance: string;
+  nearby_highway: string;
+  nearby_highway_distance: string;
   gps_lat: number | null;
   gps_lng: number | null;
   access_ease: string;
@@ -146,6 +159,18 @@ const defaultFormData: FormData = {
   valuer_name: "",
   inspection_time: new Date().toTimeString().slice(0, 5),
   detailed_address: "",
+  district_type: "",
+  district_level: "",
+  nearby_mosque: "",
+  nearby_mosque_distance: "",
+  nearby_school: "",
+  nearby_school_distance: "",
+  nearby_hospital: "",
+  nearby_hospital_distance: "",
+  nearby_mall: "",
+  nearby_mall_distance: "",
+  nearby_highway: "",
+  nearby_highway_distance: "",
   gps_lat: null,
   gps_lng: null,
   access_ease: "",
@@ -517,23 +542,82 @@ function SectionGeneral({ formData, updateField }: { formData: FormData; updateF
 }
 
 function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptureGPS, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
+  const nearbyServices = [
+    { key: "mosque", label: "مسجد", icon: "🕌" },
+    { key: "school", label: "مدرسة", icon: "🏫" },
+    { key: "hospital", label: "مستشفى", icon: "🏥" },
+    { key: "mall", label: "مول / مركز تجاري", icon: "🛒" },
+    { key: "highway", label: "طريق رئيسي", icon: "🛣️" },
+  ];
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={2} title="بيانات الموقع" icon={MapPin} subtitle="تحديد موقع الأصل بدقة" />
+        <SectionHeader num={2} title="الموقع والمحيط" icon={MapPin} subtitle="وصف الحي والخدمات المحيطة" />
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <FieldGroup label="المدينة" required>
-            <Input value={formData.city} onChange={(e: any) => updateField("city", e.target.value)} placeholder="مثال: الرياض" />
-          </FieldGroup>
-          <FieldGroup label="الحي" required>
-            <Input value={formData.district} onChange={(e: any) => updateField("district", e.target.value)} placeholder="مثال: النرجس" />
-          </FieldGroup>
-        </div>
-        <FieldGroup label="العنوان التفصيلي">
-          <Textarea value={formData.detailed_address} onChange={(e: any) => updateField("detailed_address", e.target.value)} placeholder="العنوان التفصيلي للأصل..." rows={2} />
+        {/* نوع الحي */}
+        <FieldGroup label="نوع الحي" required>
+          <RadioGroup value={formData.district_type} onValueChange={(v: string) => updateField("district_type", v)} className="flex gap-2">
+            {[{ value: "residential", label: "سكني" }, { value: "commercial", label: "تجاري" }, { value: "mixed", label: "مختلط" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2.5 cursor-pointer text-sm transition-colors ${formData.district_type === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                {opt.label}
+              </label>
+            ))}
+          </RadioGroup>
         </FieldGroup>
+
+        {/* مستوى الحي */}
+        <FieldGroup label="مستوى الحي" required>
+          <RadioGroup value={formData.district_level} onValueChange={(v: string) => updateField("district_level", v)} className="flex gap-2">
+            {[{ value: "upscale", label: "راقي" }, { value: "average", label: "متوسط" }, { value: "popular", label: "شعبي" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2.5 cursor-pointer text-sm transition-colors ${formData.district_level === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                {opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <Separator />
+
+        {/* قرب الخدمات */}
+        <p className="text-xs font-bold text-muted-foreground">قرب الخدمات</p>
+        <div className="space-y-3">
+          {nearbyServices.map(svc => {
+            const fieldYes = `nearby_${svc.key}` as keyof typeof formData;
+            const fieldDist = `nearby_${svc.key}_distance` as keyof typeof formData;
+            const isYes = formData[fieldYes] === "yes";
+            return (
+              <div key={svc.key} className="border rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm flex items-center gap-1.5">{svc.icon} {svc.label}</span>
+                  <RadioGroup value={String(formData[fieldYes] || "")} onValueChange={(v: string) => updateField(fieldYes, v)} className="flex gap-1.5">
+                    <label className={`px-3 py-1 border rounded-md text-xs cursor-pointer transition-colors ${isYes ? "border-primary bg-primary/10 font-medium" : "border-border"}`}>
+                      <RadioGroupItem value="yes" className="sr-only" />نعم
+                    </label>
+                    <label className={`px-3 py-1 border rounded-md text-xs cursor-pointer transition-colors ${formData[fieldYes] === "no" ? "border-muted-foreground bg-muted font-medium" : "border-border"}`}>
+                      <RadioGroupItem value="no" className="sr-only" />لا
+                    </label>
+                  </RadioGroup>
+                </div>
+                {isYes && (
+                  <Input
+                    value={String(formData[fieldDist] || "")}
+                    onChange={(e: any) => updateField(fieldDist, e.target.value)}
+                    placeholder="المسافة التقريبية (مثال: 500 متر)"
+                    className="h-8 text-xs"
+                  />
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <Separator />
+
+        {/* GPS */}
         <FieldGroup label="الإحداثيات (GPS)" required>
           {formData.gps_lat && formData.gps_lng ? (
             <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center space-y-1 border border-green-200 dark:border-green-800">
@@ -554,6 +638,7 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
             {formData.gps_lat ? "إعادة تحديد الموقع" : "تحديد الموقع"}
           </Button>
         </FieldGroup>
+
         <FieldGroup label="سهولة الوصول">
           <RadioGroup value={formData.access_ease} onValueChange={(v: string) => updateField("access_ease", v)} className="flex gap-2">
             {[{ value: "excellent", label: "ممتاز" }, { value: "good", label: "جيد" }, { value: "poor", label: "ضعيف" }].map(opt => (
@@ -564,6 +649,7 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
             ))}
           </RadioGroup>
         </FieldGroup>
+
         <SectionPhotoUpload section="location" label="صور الموقع والمحيط" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
       </CardContent>
     </Card>
