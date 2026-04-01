@@ -193,6 +193,8 @@ export default function AIReportGenerationPage() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState("");
   const [editedSections, setEditedSections] = useState<Set<string>>(new Set());
+  const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
+  const [sectionConfidence, setSectionConfidence] = useState<Record<string, number>>({});
 
   // Review state
   const [reviewOutput, setReviewOutput] = useState("");
