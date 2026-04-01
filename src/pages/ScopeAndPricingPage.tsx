@@ -74,6 +74,7 @@ interface ScopeData {
   complianceNotes?: string[];
   disciplineAnalysis?: DisciplineAnalysis;
   purposeAnalysis?: PurposeAnalysis;
+  basisOfValueAnalysis?: BasisOfValueAnalysis;
 }
 
 interface PricingBreakdown {
