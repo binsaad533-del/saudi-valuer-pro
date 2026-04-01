@@ -50,6 +50,7 @@ import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
 import CFODashboardPage from "@/pages/CFODashboardPage";
 import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
+import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
