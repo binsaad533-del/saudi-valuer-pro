@@ -725,6 +725,44 @@ export default function FieldInspectionPage() {
     }
   };
 
+  // Success screen after submission
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6" dir="rtl">
+        <div className="text-center space-y-6 max-w-sm mx-auto">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <CheckCircle className="w-10 h-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-foreground">تم إرسال المعاينة بنجاح 🎉</h1>
+            <p className="text-sm text-muted-foreground">
+              تم حفظ جميع البيانات والصور في النظام وستُضاف تلقائياً لقائمة المقيّم المسؤول.
+            </p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-right space-y-1">
+            <p className="text-xs text-muted-foreground">المعاين: <span className="font-medium text-foreground">{formData.inspector_name}</span></p>
+            <p className="text-xs text-muted-foreground">التاريخ: <span className="font-medium text-foreground">{formData.approval_date}</span></p>
+            <p className="text-xs text-muted-foreground">نوع العقار: <span className="font-medium text-foreground">{formData.asset_type}</span></p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => navigate("/inspector")}>
+              لوحة التحكم
+            </Button>
+            <Button className="flex-1" onClick={() => {
+              setSubmitted(false);
+              setFormData(defaultFormData);
+              setPhotos([]);
+              setSectionPhotos([]);
+              setStep(0);
+            }}>
+              معاينة جديدة
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background pb-24" dir="rtl">
       {/* Top bar */}
