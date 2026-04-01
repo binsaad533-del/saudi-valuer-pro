@@ -38,27 +38,27 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(2), updated_at: hoursAgo(8),
     notes: "إيصال الدفع مرفوع — بانتظار المراجعة والتأكيد",
   },
-  // 3. تحتاج تصحيح — بيانات ناقصة — أُدخل اليوم
+  // 3. معلقة — بانتظار التعيين — بيانات ناقصة
   {
     id: "r3", reference_number: "VAL-003", client_id: "c3",
     property_type: "residential_land", purpose: "sale_purchase",
     property_city_ar: "الدمام", property_district_ar: null,
     land_area: null, building_area: null,
     property_description_ar: "أرض سكنية بصك إلكتروني — شارع 20م",
-    status: "client_comments", priority: "normal",
+    status: "submitted", priority: "normal",
     assigned_valuer_name: null,
     quotation_amount: 3500,
     created_at: hoursAgo(5), updated_at: hoursAgo(3),
     notes: null,
   },
-  // 4. تحتاج تصحيح — مستندات مفقودة — أُدخل اليوم
+  // 4. قيد التنفيذ — أولوية عالية — مستندات مفقودة
   {
     id: "r4", reference_number: "VAL-004", client_id: "c4",
     property_type: "villa", purpose: "mortgage",
     property_city_ar: "الرياض", property_district_ar: "الياسمين",
     land_area: 500, building_area: 380,
     property_description_ar: "فيلا دوبلكس — 6 غرف — مسبح خاص — حي الياسمين",
-    status: "awaiting_client_info", priority: "high",
+    status: "in_production", priority: "high",
     assigned_valuer_name: "م. خالد العتيبي",
     quotation_amount: 6000,
     created_at: hoursAgo(4), updated_at: hoursAgo(3),
