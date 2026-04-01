@@ -1663,7 +1663,7 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
-          <SectionHeader num={7} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
+          <SectionHeader num={8} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
         </CardHeader>
         <CardContent className="space-y-3">
           {[
