@@ -107,6 +107,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
 };
 
 
+const DATA_CATEGORIES = [
   { key: "request", label: "بيانات الطلب", icon: FileText },
   { key: "client", label: "بيانات العميل", icon: User },
   { key: "subject", label: "وصف العقار", icon: Building2 },
