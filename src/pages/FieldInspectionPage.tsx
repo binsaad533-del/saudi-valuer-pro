@@ -741,6 +741,11 @@ function SectionValueFactors({ formData, updateField }: any) {
         <FieldGroup label="عوامل تنظيمية أو نظامية">
           <Textarea value={formData.regulatory_factors} onChange={(e: any) => updateField("regulatory_factors", e.target.value)} placeholder="قيود بناء، نزع ملكية، تغيير استخدام..." rows={2} />
         </FieldGroup>
+        <AiSuggestionBox
+          sectionKey="value_factors"
+          promptHint="تحليل العوامل المؤثرة على القيمة"
+          context={{ positive_factors: formData.positive_factors, negative_factors: formData.negative_factors }}
+        />
       </CardContent>
     </Card>
   );
