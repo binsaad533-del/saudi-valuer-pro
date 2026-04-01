@@ -221,11 +221,12 @@ export default function AIDocumentProcessingPage() {
       );
     }
     if (cats.has("contract")) {
-      const src = files[categorized.findIndex(c => c.category === "contract")]?.name || "عقد إيجار";
+      const contractSrc = files[categorized.findIndex(c => c.category === "contract")]?.name || "عقد إيجار";
       numbers.push(
-        { label: "قيمة الإيجار السنوي", value: "85,000 ر.س", source: src },
-        { label: "مدة العقد", value: "سنة واحدة — قابل للتجديد", source: src },
-        { label: "اسم المستأجر", value: "شركة النور للتجارة", source: src },
+        { label: "قيمة الإيجار السنوي", value: "85,000 ر.س", source: contractSrc },
+        { label: "اسم المستأجر", value: "شركة الأفق", source: contractSrc },
+        { label: "مدة العقد", value: "سنة واحدة — قابل للتجديد", source: contractSrc },
+        { label: "نسبة ثقة الاستخراج", value: "88%", source: contractSrc },
       );
     }
     if (cats.has("identity_doc")) {
