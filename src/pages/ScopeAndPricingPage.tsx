@@ -1171,8 +1171,20 @@ export default function ScopeAndPricingPage() {
                       </div>
                     )}
 
+                    {/* Subtotal */}
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50 mt-1">
+                      <span className="text-xs font-semibold text-foreground">المجموع قبل الضريبة</span>
+                      <span className="text-sm font-bold text-foreground">{formatCurrency(pricing.subtotal)}</span>
+                    </div>
+
+                    {/* VAT */}
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50">
+                      <span className="text-xs text-muted-foreground">ضريبة القيمة المضافة ({pricing.vatRate}%)</span>
+                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(pricing.vatAmount)}</span>
+                    </div>
+
                     {/* Total */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 mt-1">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
                       <span className="text-sm font-bold text-foreground">الإجمالي (شامل الضريبة)</span>
                       <span className="text-lg font-bold text-primary">{formatCurrency(pricing.totalPrice)}</span>
                     </div>
