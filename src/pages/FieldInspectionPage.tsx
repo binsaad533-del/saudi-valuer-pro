@@ -1867,9 +1867,12 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
         sectionKey="utilities"
         promptHint="تحليل حالة المرافق والخدمات المتوفرة"
         context={{
-          electricity: formData.electricity,
-          water: formData.water,
-          sewage: formData.sewage,
+          electricity_status: formData.electricity_status,
+          electricity_condition: formData.electricity_condition,
+          water_source: formData.water_source,
+          water_condition: formData.water_condition,
+          sewage_type: formData.sewage_type,
+          sewage_condition: formData.sewage_condition,
           roads_paved: formData.roads_paved,
           utilities_notes: formData.utilities_notes,
           checklist_done: checklist.filter((c: any) => c.is_checked).length,

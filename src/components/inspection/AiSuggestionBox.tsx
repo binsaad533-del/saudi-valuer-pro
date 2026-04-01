@@ -174,13 +174,17 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
     }
     case "utilities": {
       const tips: string[] = [];
-      const missing: string[] = [];
-      if (!ctx.electricity) missing.push("كهرباء");
-      if (!ctx.water) missing.push("ماء");
-      if (!ctx.sewage) missing.push("صرف صحي");
-      if (!ctx.roads_paved) missing.push("طرق معبدة");
-      if (missing.length > 0) tips.push(`⚠️ خدمات غير متوفرة: ${missing.join("، ")} — يؤثر سلباً على القيمة`);
-      if (missing.length === 0) tips.push("✅ جميع الخدمات الأساسية متوفرة");
+      if (ctx.electricity_status === "unavailable") tips.push("⚠️ الكهرباء غير متوفرة — يؤثر سلباً على القيمة بشكل كبير");
+      if (ctx.electricity_status === "temporary") tips.push("⚡ كهرباء مؤقتة — وثّق مصدر التغذية المؤقت");
+      if (ctx.electricity_condition === "poor") tips.push("🔌 حالة الكهرباء رديئة — تحقق من سلامة التوصيلات");
+      if (ctx.water_source === "unavailable") tips.push("⚠️ المياه غير متوفرة — عامل سلبي مؤثر على القيمة");
+      if (ctx.water_source === "well") tips.push("💧 مصدر المياه بئر — تحقق من جودة المياه والتصريح");
+      if (ctx.water_condition === "poor") tips.push("💧 حالة المياه رديئة — وثّق المشاكل");
+      if (ctx.sewage_type === "unavailable") tips.push("⚠️ الصرف الصحي غير متوفر — يؤثر على القيمة");
+      if (ctx.sewage_type === "septic") tips.push("🔧 صرف بخزان امتصاص — تحقق من حالته وسعته");
+      if (ctx.sewage_condition === "poor") tips.push("🔧 حالة الصرف رديئة — وثّق المشاكل");
+      if (!ctx.roads_paved) tips.push("🛣️ طرق غير معبدة — يؤثر على سهولة الوصول والقيمة");
+      if (tips.length === 0 && ctx.electricity_status) tips.push("✅ الخدمات الأساسية متوفرة بشكل جيد");
       if (ctx.checklist_total > 0) {
         const pct = Math.round((ctx.checklist_done / ctx.checklist_total) * 100);
         if (pct < 50) tips.push(`📋 اكتمال قائمة الفحص ${pct}% فقط — أكمل الفحص التفصيلي`);
