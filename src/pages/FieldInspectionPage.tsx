@@ -162,6 +162,7 @@ const defaultFormData: FormData = {
   risk_details: "",
   data_complete: "",
   inspector_final_notes: "",
+  confidential_notes: "",
   approval_inspector_name: "",
   approval_date: new Date().toISOString().split("T")[0],
 };
