@@ -1019,6 +1019,22 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </RadioGroup>
         </FieldGroup>
 
+        <FieldGroup label="نوع تشطيب الواجهة">
+          <Select value={formData.exterior_facade_finishing} onValueChange={(v: string) => updateField("exterior_facade_finishing", v)}>
+            <SelectTrigger><SelectValue placeholder="اختر نوع التشطيب" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="paint">دهان</SelectItem>
+              <SelectItem value="stone_cladding">تكسية حجرية</SelectItem>
+              <SelectItem value="marble">رخام</SelectItem>
+              <SelectItem value="ceramic">سيراميك</SelectItem>
+              <SelectItem value="grc">GRC</SelectItem>
+              <SelectItem value="curtain_wall">حائط ستائري (زجاج)</SelectItem>
+              <SelectItem value="composite">مركّب / مختلط</SelectItem>
+              <SelectItem value="none">بدون تشطيب</SelectItem>
+            </SelectContent>
+          </Select>
+        </FieldGroup>
+
         <FieldGroup label="حالة الدهان الخارجي">
           <RadioGroup value={formData.exterior_paint_condition} onValueChange={(v: string) => updateField("exterior_paint_condition", v)} className="flex gap-2">
             {conditionOptions.map(opt => (
