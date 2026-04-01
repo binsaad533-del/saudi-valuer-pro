@@ -172,6 +172,23 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
       if (poorCount === 0 && ctx.floors_type) tips.push("✅ التشطيبات الداخلية بحالة جيدة عموماً");
       return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق حالة جميع عناصر الداخل بالصور مع التركيز على العيوب.";
     }
+    case "utilities": {
+      const tips: string[] = [];
+      const missing: string[] = [];
+      if (!ctx.electricity) missing.push("كهرباء");
+      if (!ctx.water) missing.push("ماء");
+      if (!ctx.sewage) missing.push("صرف صحي");
+      if (!ctx.roads_paved) missing.push("طرق معبدة");
+      if (missing.length > 0) tips.push(`⚠️ خدمات غير متوفرة: ${missing.join("، ")} — يؤثر سلباً على القيمة`);
+      if (missing.length === 0) tips.push("✅ جميع الخدمات الأساسية متوفرة");
+      if (ctx.checklist_total > 0) {
+        const pct = Math.round((ctx.checklist_done / ctx.checklist_total) * 100);
+        if (pct < 50) tips.push(`📋 اكتمال قائمة الفحص ${pct}% فقط — أكمل الفحص التفصيلي`);
+        else if (pct < 100) tips.push(`📋 اكتمال قائمة الفحص ${pct}% — أكمل العناصر المتبقية`);
+        else tips.push("📋 قائمة الفحص مكتملة 100%");
+      }
+      return tips.join("\n\n");
+    }
     case "risks": {
       if (ctx.has_risks === "yes" && (!ctx.risk_details || String(ctx.risk_details).length < 20))
         return "⚠️ وجود مخاطر يتطلب توثيقاً مفصلاً:\n- نوع الخطر (إنشائي، بيئي، نظامي)\n- مستوى الخطورة\n- التأثير المتوقع على القيمة\n- صور داعمة إن أمكن";
