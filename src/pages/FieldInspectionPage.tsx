@@ -918,11 +918,225 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
           <Textarea value={formData.dimensions_notes} onChange={(e: any) => updateField("dimensions_notes", e.target.value)} placeholder="عدد الوحدات، المواقف، الملاحق، السرداب..." rows={3} />
         </FieldGroup>
 
+        {/* رفع صورة مخطط الموقع */}
+        <div className="border border-dashed border-primary/30 rounded-lg p-4 space-y-3 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <Upload className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold text-primary">رفع صورة مخطط الموقع</span>
+          </div>
+          <p className="text-xs text-muted-foreground">أرفق مخطط الموقع المعتمد أو الكروكي (صورة أو مسح ضوئي)</p>
+          <SectionPhotoUpload section="site_plan" label="مخطط الموقع" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        </div>
+
         <SectionPhotoUpload section="dimensions" label="صور القياسات والمخططات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <AiSuggestionBox
           sectionKey="dimensions"
           promptHint="تحليل الحدود والمساحات"
           context={{ total_area: formData.total_area, land_area: formData.land_area, building_area: formData.building_area, num_floors: formData.num_floors, front_north_length: formData.front_north_length, front_south_length: formData.front_south_length, front_east_length: formData.front_east_length, front_west_length: formData.front_west_length }}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
+function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
+  const conditionOptions = [
+    { value: "excellent", label: "ممتاز" },
+    { value: "good", label: "جيد" },
+    { value: "average", label: "متوسط" },
+    { value: "poor", label: "سيء" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={5} title="المبنى - الخارج" icon={Home} subtitle="وصف مكونات المبنى الخارجية وحالتها" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* الواجهة */}
+        <p className="text-xs font-bold text-muted-foreground">🏗️ الواجهة الخارجية</p>
+        <FieldGroup label="مادة الواجهة" required>
+          <Select value={formData.exterior_facade_material} onValueChange={(v: string) => updateField("exterior_facade_material", v)}>
+            <SelectTrigger><SelectValue placeholder="اختر مادة الواجهة" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="stone">حجر</SelectItem>
+              <SelectItem value="brick">طوب</SelectItem>
+              <SelectItem value="plaster">لياسة / بياض</SelectItem>
+              <SelectItem value="glass">زجاج</SelectItem>
+              <SelectItem value="cladding">كلادينج</SelectItem>
+              <SelectItem value="mixed">مختلط</SelectItem>
+              <SelectItem value="other">أخرى</SelectItem>
+            </SelectContent>
+          </Select>
+        </FieldGroup>
+        <FieldGroup label="حالة الواجهة">
+          <RadioGroup value={formData.exterior_facade_condition} onValueChange={(v: string) => updateField("exterior_facade_condition", v)} className="flex gap-2">
+            {conditionOptions.map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_facade_condition === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <FieldGroup label="حالة الدهان الخارجي">
+          <RadioGroup value={formData.exterior_paint_condition} onValueChange={(v: string) => updateField("exterior_paint_condition", v)} className="flex gap-2">
+            {conditionOptions.map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_paint_condition === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <Separator />
+
+        {/* النوافذ والأبواب */}
+        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ والأبواب</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع النوافذ">
+            <Select value={formData.exterior_windows_type} onValueChange={(v: string) => updateField("exterior_windows_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="upvc">UPVC</SelectItem>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة النوافذ">
+            <Select value={formData.exterior_windows_condition} onValueChange={(v: string) => updateField("exterior_windows_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع الأبواب الخارجية">
+            <Select value={formData.exterior_doors_type} onValueChange={(v: string) => updateField("exterior_doors_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="glass">زجاج</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة الأبواب">
+            <Select value={formData.exterior_doors_condition} onValueChange={(v: string) => updateField("exterior_doors_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* السقف */}
+        <p className="text-xs font-bold text-muted-foreground">🏠 السقف</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع السقف">
+            <Select value={formData.exterior_roof_type} onValueChange={(v: string) => updateField("exterior_roof_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="concrete">خرساني</SelectItem>
+                <SelectItem value="steel">حديد / معدني</SelectItem>
+                <SelectItem value="tiles">قرميد</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة السقف">
+            <Select value={formData.exterior_roof_condition} onValueChange={(v: string) => updateField("exterior_roof_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* الأسوار والمداخل */}
+        <p className="text-xs font-bold text-muted-foreground">🚧 الأسوار والمواقف والتشجير</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع السور">
+            <Select value={formData.exterior_fence_type} onValueChange={(v: string) => updateField("exterior_fence_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="concrete_block">بلك خرساني</SelectItem>
+                <SelectItem value="stone">حجر</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+                <SelectItem value="none">لا يوجد</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة السور">
+            <Select value={formData.exterior_fence_condition} onValueChange={(v: string) => updateField("exterior_fence_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <FieldGroup label="المواقف">
+          <RadioGroup value={formData.exterior_parking} onValueChange={(v: string) => updateField("exterior_parking", v)} className="flex gap-2">
+            {[{ value: "covered", label: "مغطاة" }, { value: "open", label: "مفتوحة" }, { value: "none", label: "لا يوجد" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_parking === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+        {formData.exterior_parking && formData.exterior_parking !== "none" && (
+          <FieldGroup label="عدد المواقف">
+            <Input type="number" value={formData.exterior_parking_count} onChange={(e: any) => updateField("exterior_parking_count", e.target.value)} placeholder="0" />
+          </FieldGroup>
+        )}
+
+        <FieldGroup label="التشجير والمسطحات الخضراء">
+          <RadioGroup value={formData.exterior_landscaping} onValueChange={(v: string) => updateField("exterior_landscaping", v)} className="flex gap-2">
+            {[{ value: "excellent", label: "ممتاز" }, { value: "average", label: "متوسط" }, { value: "none", label: "لا يوجد" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_landscaping === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <FieldGroup label="عدد المداخل">
+          <Input type="number" value={formData.exterior_entrance_count} onChange={(e: any) => updateField("exterior_entrance_count", e.target.value)} placeholder="مثال: 2" />
+        </FieldGroup>
+
+        <Separator />
+
+        <FieldGroup label="ملاحظات إضافية">
+          <Textarea value={formData.exterior_notes} onChange={(e: any) => updateField("exterior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الخارجية للمبنى..." rows={3} />
+        </FieldGroup>
+
+        <SectionPhotoUpload section="exterior" label="صور المبنى من الخارج" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="exterior"
+          promptHint="تحليل حالة المبنى الخارجية"
+          context={{
+            facade_material: formData.exterior_facade_material,
+            facade_condition: formData.exterior_facade_condition,
+            paint_condition: formData.exterior_paint_condition,
+            roof_type: formData.exterior_roof_type,
+            roof_condition: formData.exterior_roof_condition,
+            fence_type: formData.exterior_fence_type,
+            parking: formData.exterior_parking,
+          }}
         />
       </CardContent>
     </Card>
