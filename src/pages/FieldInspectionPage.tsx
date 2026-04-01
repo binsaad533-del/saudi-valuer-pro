@@ -1144,7 +1144,7 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <Separator />
 
         {/* الأسوار والمداخل */}
-        <p className="text-xs font-bold text-muted-foreground">🚧 الأسوار والمواقف والتشجير</p>
+        <p className="text-xs font-bold text-muted-foreground">🚧 الأسوار والمدخل والمواقف</p>
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع السور">
             <Select value={formData.exterior_fence_type} onValueChange={(v: string) => updateField("exterior_fence_type", v)}>
@@ -1168,9 +1168,34 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
+        {/* المدخل الرئيسي */}
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع المدخل الرئيسي">
+            <Select value={formData.exterior_main_entrance_type} onValueChange={(v: string) => updateField("exterior_main_entrance_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="iron_gate">بوابة حديد</SelectItem>
+                <SelectItem value="automatic">بوابة أوتوماتيك</SelectItem>
+                <SelectItem value="glass_door">باب زجاجي</SelectItem>
+                <SelectItem value="wood_door">باب خشبي</SelectItem>
+                <SelectItem value="open">مفتوح (بدون بوابة)</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة المدخل">
+            <Select value={formData.exterior_main_entrance_condition} onValueChange={(v: string) => updateField("exterior_main_entrance_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        {/* المواقف */}
         <FieldGroup label="المواقف">
           <RadioGroup value={formData.exterior_parking} onValueChange={(v: string) => updateField("exterior_parking", v)} className="flex gap-2">
-            {[{ value: "covered", label: "مغطاة" }, { value: "open", label: "مفتوحة" }, { value: "none", label: "لا يوجد" }].map(opt => (
+            {[{ value: "covered", label: "مغطاة" }, { value: "open", label: "مفتوحة" }, { value: "basement", label: "سرداب" }, { value: "none", label: "لا يوجد" }].map(opt => (
               <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_parking === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
                 <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
               </label>
@@ -1178,9 +1203,19 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </RadioGroup>
         </FieldGroup>
         {formData.exterior_parking && formData.exterior_parking !== "none" && (
-          <FieldGroup label="عدد المواقف">
-            <Input type="number" value={formData.exterior_parking_count} onChange={(e: any) => updateField("exterior_parking_count", e.target.value)} placeholder="0" />
-          </FieldGroup>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldGroup label="عدد المواقف">
+              <Input type="number" value={formData.exterior_parking_count} onChange={(e: any) => updateField("exterior_parking_count", e.target.value)} placeholder="0" />
+            </FieldGroup>
+            <FieldGroup label="حالة المواقف">
+              <Select value={formData.exterior_parking_condition} onValueChange={(v: string) => updateField("exterior_parking_condition", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+          </div>
         )}
 
         <FieldGroup label="التشجير والمسطحات الخضراء">
