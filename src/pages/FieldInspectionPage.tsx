@@ -1147,7 +1147,7 @@ function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, on
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={5} title="حالة الأصل" icon={Wrench} subtitle="تقييم الحالة الفعلية" />
+        <SectionHeader num={6} title="حالة الأصل" icon={Wrench} subtitle="تقييم الحالة الفعلية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="الحالة العامة" required>
