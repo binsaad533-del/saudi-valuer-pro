@@ -295,6 +295,15 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
       if (ctx.has_risks === "no") return "✅ لا توجد مخاطر مسجلة. تأكد من فحص:\n- السلامة الإنشائية\n- المخاطر البيئية\n- المخالفات النظامية\n- حقوق الغير أو الرهون";
       return "💡 راجع جميع جوانب المخاطر المحتملة قبل الإجابة.";
     }
+    case "notes_recommendations": {
+      const tips: string[] = [];
+      if (!ctx.inspector_observations) tips.push("📝 أضف ملاحظاتك حول العقار: حالته العامة، محيطه، وأي ملفتات");
+      if (!ctx.inspector_recommendations) tips.push("💡 أضف توصياتك المهنية: فحوصات إضافية مطلوبة، تحذيرات، أو نقاط تحتاج تحقق");
+      if (ctx.overall_condition === "poor") tips.push("⚠️ حالة الأصل سيئة — يُنصح بالتوصية بفحص إنشائي متخصص");
+      if (ctx.has_risks === "yes") tips.push("🔴 تم تسجيل مخاطر — تأكد من ذكر تأثيرها في التوصيات");
+      if (ctx.inspector_observations && ctx.inspector_recommendations) tips.push("✅ الملاحظات والتوصيات مسجلة. تأكد من شمولها لجميع النقاط الجوهرية.");
+      return tips.length > 0 ? tips.join("\n\n") : "💡 سجّل ملاحظاتك وتوصياتك المهنية بناءً على المعاينة الميدانية.";
+    }
     default:
       return "💡 أدخل البيانات المطلوبة وسيقوم الذكاء الاصطناعي بتحليلها وتقديم ملاحظات.";
   }

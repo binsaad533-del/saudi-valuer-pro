@@ -70,10 +70,11 @@ const STEPS = [
   { key: "utilities", label: "المرافق", icon: Zap, num: 8 },
   { key: "layout_areas", label: "المخطط والمساحات", icon: LayoutGrid, num: 9 },
   { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 10 },
-  { key: "documentation", label: "التوثيق", icon: Camera, num: 11 },
-  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 12 },
-  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 13 },
-  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 14 },
+  { key: "notes_recommendations", label: "ملاحظات وتوصيات", icon: ClipboardCheck, num: 11 },
+  { key: "documentation", label: "التوثيق", icon: Camera, num: 12 },
+  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 13 },
+  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 14 },
+  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 15 },
 ];
 
 /* ═══════ Types ═══════ */
@@ -246,6 +247,9 @@ interface FormData {
   negative_factors_other: string;
   environmental_factors: string;
   regulatory_factors: string;
+  inspector_observations: string;
+  inspector_recommendations: string;
+  additional_notes: string;
   has_risks: string;
   risk_details: string;
   data_complete: string;
@@ -404,6 +408,9 @@ const defaultFormData: FormData = {
   positive_factors_other: "",
   environmental_factors: "",
   regulatory_factors: "",
+  inspector_observations: "",
+  inspector_recommendations: "",
+  additional_notes: "",
   has_risks: "",
   risk_details: "",
   data_complete: "",
@@ -685,10 +692,11 @@ export default function FieldInspectionPage() {
         {step === 7 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 8 && <SectionLayoutAreas formData={formData} updateField={updateField} />}
         {step === 9 && <SectionValueFactors formData={formData} updateField={updateField} />}
-        {step === 10 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} onDescriptionChange={handlePhotoDescriptionChange} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
-        {step === 11 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 12 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
-        {step === 13 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
+        {step === 10 && <SectionNotesRecommendations formData={formData} updateField={updateField} />}
+        {step === 11 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} onDescriptionChange={handlePhotoDescriptionChange} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
+        {step === 12 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 13 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
+        {step === 14 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
 
       {/* Bottom nav */}
@@ -2438,6 +2446,52 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChang
         </div>
       </label>
     </div>
+  );
+}
+
+function SectionNotesRecommendations({ formData, updateField }: any) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={11} title="الملاحظات والتوصيات" icon={ClipboardCheck} subtitle="ملاحظات المعاين وتوصياته للمقيّم" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <FieldGroup label="📝 ملاحظات المعاين">
+          <Textarea
+            value={formData.inspector_observations}
+            onChange={(e: any) => updateField("inspector_observations", e.target.value)}
+            placeholder="ملاحظات عامة حول العقار، حالته، ومحيطه..."
+            rows={4}
+          />
+        </FieldGroup>
+        <FieldGroup label="💡 توصيات للمقيّم">
+          <Textarea
+            value={formData.inspector_recommendations}
+            onChange={(e: any) => updateField("inspector_recommendations", e.target.value)}
+            placeholder="توصيات مهنية بناءً على المعاينة (مثل: يُنصح بإجراء فحص إنشائي، التحقق من رخصة البناء...)..."
+            rows={4}
+          />
+        </FieldGroup>
+        <FieldGroup label="📎 ملاحظات إضافية">
+          <Textarea
+            value={formData.additional_notes}
+            onChange={(e: any) => updateField("additional_notes", e.target.value)}
+            placeholder="أي معلومات إضافية لم تُغطَّ في الأقسام السابقة..."
+            rows={3}
+          />
+        </FieldGroup>
+        <AiSuggestionBox
+          sectionKey="notes_recommendations"
+          promptHint="اقتراح ملاحظات وتوصيات بناءً على بيانات المعاينة"
+          context={{
+            inspector_observations: formData.inspector_observations,
+            inspector_recommendations: formData.inspector_recommendations,
+            overall_condition: formData.overall_condition,
+            has_risks: formData.has_risks,
+          }}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
