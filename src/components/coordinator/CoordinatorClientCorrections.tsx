@@ -41,6 +41,22 @@ function detectIssues(req: any): IssueType[] {
   return issues;
 }
 
+function describeIssues(req: any): string {
+  const parts: string[] = [];
+  if (!req.property_type || !req.purpose || !req.land_area) {
+    const missing: string[] = [];
+    if (!req.property_type) missing.push("نوع العقار");
+    if (!req.purpose) missing.push("الغرض");
+    if (!req.land_area) missing.push("المساحة");
+    parts.push(`بيانات ناقصة: ${missing.join("، ")}`);
+  }
+  if (!req.property_city_ar) parts.push("المدينة غير محددة");
+  if (!req.property_district_ar) parts.push("الحي غير محدد");
+  if (req.status === "awaiting_client_info") parts.push("بانتظار مستندات من العميل");
+  if (req.status === "client_comments") parts.push("العميل أرسل ملاحظات");
+  return parts.join(" • ") || "—";
+}
+
 export default function CoordinatorClientCorrections({ requests, onRefresh }: Props) {
   const [search, setSearch] = useState("");
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
