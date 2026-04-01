@@ -12,7 +12,7 @@ export const MOCK_CLIENTS = [
 ];
 
 export const MOCK_REQUESTS: any[] = [
-  // 1. قيد التنفيذ
+  // 1. قيد التنفيذ — أُدخل اليوم
   {
     id: "r1", reference_number: "VAL-001", client_id: "c1",
     property_type: "villa", purpose: "sale_purchase",
@@ -22,7 +22,7 @@ export const MOCK_REQUESTS: any[] = [
     status: "in_production", priority: "normal",
     assigned_valuer_name: "م. خالد العتيبي",
     quotation_amount: 5500,
-    created_at: daysAgo(3), updated_at: hoursAgo(4),
+    created_at: hoursAgo(2), updated_at: hoursAgo(1),
     notes: null,
   },
   // 2. مكتملة — تقرير جاهز
@@ -38,20 +38,20 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(2), updated_at: hoursAgo(8),
     notes: "إيصال الدفع مرفوع — بانتظار المراجعة والتأكيد",
   },
-  // 3. معلق — بانتظار التعيين
+  // 3. تحتاج تصحيح — بيانات ناقصة — أُدخل اليوم
   {
     id: "r3", reference_number: "VAL-003", client_id: "c3",
     property_type: "residential_land", purpose: "sale_purchase",
     property_city_ar: "الدمام", property_district_ar: null,
     land_area: null, building_area: null,
     property_description_ar: "أرض سكنية بصك إلكتروني — شارع 20م",
-    status: "submitted", priority: "normal",
+    status: "client_comments", priority: "normal",
     assigned_valuer_name: null,
     quotation_amount: 3500,
-    created_at: daysAgo(15), updated_at: daysAgo(1),
+    created_at: hoursAgo(5), updated_at: hoursAgo(3),
     notes: null,
   },
-  // 4. قيد التنفيذ — أولوية عالية
+  // 4. تحتاج تصحيح — مستندات مفقودة — أُدخل اليوم
   {
     id: "r4", reference_number: "VAL-004", client_id: "c4",
     property_type: "villa", purpose: "mortgage",
@@ -61,10 +61,10 @@ export const MOCK_REQUESTS: any[] = [
     status: "awaiting_client_info", priority: "high",
     assigned_valuer_name: "م. خالد العتيبي",
     quotation_amount: 6000,
-    created_at: daysAgo(2), updated_at: hoursAgo(3),
+    created_at: hoursAgo(4), updated_at: hoursAgo(3),
     notes: "أولوية عالية — صك الملكية غير مرفق — بانتظار العميلة",
   },
-  // 5. تحتاج متابعة — بانتظار معلومات العميل
+  // 5. تحتاج تصحيح — عنوان خاطئ
   {
     id: "r5", reference_number: "VAL-005", client_id: "c5",
     property_type: "warehouse", purpose: "insurance",
