@@ -770,85 +770,98 @@ export default function AIDocumentProcessingPage() {
                   </div>
                 )}
 
-                {/* Client Data */}
-                {extracted.client && Object.values(extracted.client).some(v => v) && (
-                  <div className="bg-card rounded-lg border border-border">
-                    <button onClick={() => setShowClientData(!showClientData)}
-                      className="w-full p-4 flex items-center justify-between border-b border-border hover:bg-muted/20 transition-colors">
+                {/* البيانات المستخرجة الموحدة */}
+                {extracted && (extracted.client && Object.values(extracted.client).some(v => v)) || (extracted?.asset && Object.values(extracted.asset).some(v => v)) ? (
+                  <div className="bg-card rounded-lg border border-border overflow-hidden">
+                    <div className="p-4 border-b border-border bg-muted/20">
                       <div className="flex items-center gap-2">
-                        <User className="w-4 h-4 text-primary" />
-                        <h3 className="text-sm font-semibold text-foreground">بيانات العميل المستخرجة</h3>
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
                       </div>
-                      {showClientData ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                    </button>
-                    {showClientData && (
-                      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                          { key: "clientName", label: "الاسم", icon: User },
-                          { key: "idNumber", label: "رقم الهوية", icon: Hash },
-                          { key: "phone", label: "الجوال", icon: Phone },
-                          { key: "email", label: "البريد", icon: Mail },
-                        ].filter(f => extracted.client[f.key as keyof typeof extracted.client]).map(f => (
-                          <div key={f.key} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50">
-                            <f.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                      <p className="text-[11px] text-muted-foreground mt-0.5">تم تجميع البيانات من جميع المستندات المحللة في عرض موحد</p>
+                    </div>
+
+                    <div className="divide-y divide-border">
+                      {/* بيانات العميل */}
+                      {extracted?.client && Object.values(extracted.client).some(v => v) && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <User className="w-4 h-4 text-primary" />
+                            <h4 className="text-xs font-semibold text-foreground">بيانات العميل</h4>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {[
+                              { key: "clientName", label: "الاسم", icon: User },
+                              { key: "idNumber", label: "رقم الهوية", icon: Hash },
+                              { key: "phone", label: "الجوال", icon: Phone },
+                              { key: "email", label: "البريد", icon: Mail },
+                            ].filter(f => extracted.client[f.key as keyof typeof extracted.client]).map(f => (
+                              <div key={f.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50 group">
+                                <f.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] text-muted-foreground">{f.label}</p>
+                                  <p className="text-xs font-medium text-foreground">{extracted.client[f.key as keyof typeof extracted.client]}</p>
+                                </div>
+                                <button onClick={() => copyToClipboard(extracted.client[f.key as keyof typeof extracted.client] || "")}
+                                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground">
+                                  <Copy className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* بيانات الأصل */}
+                      {extracted?.asset && Object.values(extracted.asset).some(v => v) && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Building2 className="w-4 h-4 text-primary" />
+                            <h4 className="text-xs font-semibold text-foreground">بيانات الأصل / العقار</h4>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {[
+                              { key: "description", label: "الوصف", icon: FileText },
+                              { key: "city", label: "المدينة", icon: MapPin },
+                              { key: "district", label: "الحي", icon: MapPin },
+                              { key: "area", label: "المساحة (م²)", icon: Ruler },
+                              { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
+                              { key: "classification", label: "التصنيف", icon: Tag },
+                              { key: "machineName", label: "اسم المعدة", icon: Building2 },
+                              { key: "manufacturer", label: "المصنع", icon: Building2 },
+                              { key: "model", label: "الموديل", icon: Tag },
+                            ].filter(f => extracted.asset[f.key as keyof typeof extracted.asset]).map(f => (
+                              <div key={f.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50 group">
+                                <f.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-[10px] text-muted-foreground">{f.label}</p>
+                                  <p className="text-xs font-medium text-foreground truncate">{extracted.asset[f.key as keyof typeof extracted.asset]}</p>
+                                </div>
+                                <button onClick={() => copyToClipboard(extracted.asset[f.key as keyof typeof extracted.asset] || "")}
+                                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground">
+                                  <Copy className="w-2.5 h-2.5" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* غرض التقييم */}
+                      {extracted?.suggestedPurpose && (
+                        <div className="p-4">
+                          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
+                            <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
                             <div>
-                              <p className="text-[10px] text-muted-foreground">{f.label}</p>
-                              <p className="text-sm font-medium text-foreground">{extracted.client[f.key as keyof typeof extracted.client]}</p>
+                              <p className="text-[10px] text-muted-foreground">غرض التقييم المقترح</p>
+                              <p className="text-sm font-semibold text-foreground">{extracted.suggestedPurpose}</p>
                             </div>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Asset Data */}
-                {extracted.asset && Object.values(extracted.asset).some(v => v) && (
-                  <div className="bg-card rounded-lg border border-border">
-                    <button onClick={() => setShowAssetData(!showAssetData)}
-                      className="w-full p-4 flex items-center justify-between border-b border-border hover:bg-muted/20 transition-colors">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-primary" />
-                        <h3 className="text-sm font-semibold text-foreground">بيانات الأصل المستخرجة</h3>
-                      </div>
-                      {showAssetData ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-                    </button>
-                    {showAssetData && (
-                      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {[
-                          { key: "description", label: "الوصف", icon: FileText },
-                          { key: "city", label: "المدينة", icon: MapPin },
-                          { key: "district", label: "الحي", icon: MapPin },
-                          { key: "area", label: "المساحة", icon: Ruler },
-                          { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
-                          { key: "classification", label: "التصنيف", icon: Tag },
-                          { key: "machineName", label: "اسم المعدة", icon: Building2 },
-                          { key: "manufacturer", label: "المصنع", icon: Building2 },
-                          { key: "model", label: "الموديل", icon: Tag },
-                        ].filter(f => extracted.asset[f.key as keyof typeof extracted.asset]).map(f => (
-                          <div key={f.key} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50">
-                            <f.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                            <div className="min-w-0">
-                              <p className="text-[10px] text-muted-foreground">{f.label}</p>
-                              <p className="text-sm font-medium text-foreground truncate">{extracted.asset[f.key as keyof typeof extracted.asset]}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Suggested Purpose */}
-                {extracted.suggestedPurpose && (
-                  <div className="bg-primary/5 rounded-lg border border-primary/20 p-4 flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                    <div>
-                      <p className="text-[11px] text-primary/60">غرض التقييم المقترح</p>
-                      <p className="text-sm font-semibold text-primary">{extracted.suggestedPurpose}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </div>
