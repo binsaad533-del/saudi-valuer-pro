@@ -82,10 +82,12 @@ export default function AIDocumentProcessingPage() {
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractionPhase, setExtractionPhase] = useState("");
+  const [extractionProgress, setExtractionProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [showClientData, setShowClientData] = useState(true);
   const [showAssetData, setShowAssetData] = useState(true);
   const [showExtractedNums, setShowExtractedNums] = useState(true);
+  const [useMock, setUseMock] = useState(false);
 
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
