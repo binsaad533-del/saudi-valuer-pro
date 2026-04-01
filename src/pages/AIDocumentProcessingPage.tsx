@@ -7,8 +7,10 @@ import {
   Brain, FileText, FolderUp, Loader2, X, Sparkles, Tag, Hash,
   FileSearch, File, FileCheck, ShieldCheck, Ruler, User, MapPin,
   Building2, Phone, Mail, Image as ImageIcon, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, Copy, Upload,
+  CheckCircle2, AlertTriangle, Copy, Upload, Home, ArrowLeft,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
