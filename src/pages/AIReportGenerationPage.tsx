@@ -128,7 +128,7 @@ const MOCK_AGGREGATED_DATA: AggregatedData = {
   assignment: {
     id: "mock-assign-001",
     reference_number: "VAL-2026-0042",
-    valuation_approach: "أسلوب المقارنة بالسوق",
+    valuation_approach: "مقارنة سوقية (رئيسي) + تكلفة (ثانوي)",
     effective_date: "2026-03-28",
   },
   client: {
