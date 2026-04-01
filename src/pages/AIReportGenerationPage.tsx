@@ -869,7 +869,14 @@ export default function AIReportGenerationPage() {
                   onClick={() => {
                     setRequestId("mock-demo-001");
                     setAggregatedData(MOCK_AGGREGATED_DATA);
-                    toast.success("تم تحميل البيانات التجريبية");
+                    setReportDraft(MOCK_REPORT_DRAFT);
+                    const initConf: Record<string, number> = {};
+                    Object.entries(MOCK_REPORT_DRAFT.sections || {}).forEach(([k, s]: [string, any]) => {
+                      initConf[k] = Math.min(95, Math.max(70, Math.round((s.content_ar?.length || 0) / 25)));
+                    });
+                    setSectionConfidence(initConf);
+                    setStep(2);
+                    toast.success("تم تحميل البيانات التجريبية مع مسودة التقرير");
                   }}
                   className="gap-2 text-xs"
                 >
