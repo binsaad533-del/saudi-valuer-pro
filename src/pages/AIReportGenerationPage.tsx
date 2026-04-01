@@ -1322,7 +1322,7 @@ export default function AIReportGenerationPage() {
             </div>
 
             {/* ─── Sticky Sidebar: Report Summary ─── */}
-            <div className="hidden lg:block w-72 shrink-0">
+            <div className="w-full lg:w-72 shrink-0">
               <div className="sticky top-4 space-y-3">
                 {/* Final Value */}
                 <Card className="border-primary/30 bg-primary/5">
