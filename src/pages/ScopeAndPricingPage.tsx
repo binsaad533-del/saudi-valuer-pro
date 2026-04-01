@@ -46,6 +46,23 @@ interface BasisOfValueAnalysis {
   allBases: BasisOption[];
 }
 
+interface ApproachOption {
+  key: string;
+  label: string;
+  labelEn: string;
+  role: "primary" | "secondary" | "supporting";
+  confidence: number;
+  reason: string;
+  ivsReference?: string;
+}
+
+interface MethodologyAnalysis {
+  primaryApproach: ApproachOption;
+  secondaryApproach: ApproachOption;
+  allApproaches: ApproachOption[];
+  justification: string;
+}
+
 interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
