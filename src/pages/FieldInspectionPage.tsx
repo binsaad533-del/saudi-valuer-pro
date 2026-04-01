@@ -981,17 +981,17 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
 
         <SectionPhotoUpload section="location" label="صور الموقع والمحيط" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
 
-        <div className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 space-y-2">
+        <div className="border border-muted bg-muted/40 rounded-lg p-3 space-y-2">
           <div className="flex items-center gap-2">
-            <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-            <span className="text-xs font-bold text-amber-700 dark:text-amber-300">ملاحظات الموقع للمعاين (سرية — للمقيّم فقط)</span>
+            <Lock className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs font-bold text-muted-foreground">🔒 ملاحظات الموقع للمعاين (سرية — للمقيّم فقط)</span>
           </div>
           <Textarea
             value={formData.location_confidential_notes}
             onChange={(e: any) => updateField("location_confidential_notes", e.target.value)}
             placeholder="ملاحظات سرية عن الموقع لا تظهر في التقرير..."
             rows={2}
-            className="border-amber-200 dark:border-amber-800 bg-white dark:bg-background"
+            className="border-muted bg-background"
           />
         </div>
 
