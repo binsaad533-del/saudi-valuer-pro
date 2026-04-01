@@ -117,14 +117,123 @@ interface PricingData {
   justification: string;
 }
 
+const MOCK_EXTRACTED_DATA = {
+  asset: {
+    description: "فيلا سكنية",
+    city: "الرياض",
+    district: "حي النرجس",
+    area: 625,
+    buildingArea: 480,
+    floors: 2,
+    yearBuilt: 2021,
+    address: "حي النرجس، شارع الأمير محمد بن سلمان",
+  },
+  suggestedPurpose: "تمويل بنكي",
+  clientName: "شركة الرياض للتطوير العقاري",
+};
+
+const MOCK_SCOPE: ScopeData = {
+  valuationType: "تقييم عقاري",
+  valuationStandard: "IVS 2024 + معايير الهيئة السعودية للمقيمين المعتمدين",
+  valuationBasis: "القيمة السوقية",
+  approaches: ["المقارنة السوقية", "التكلفة", "الدخل"],
+  primaryApproach: "المقارنة السوقية",
+  secondaryApproach: "التكلفة",
+  approachJustification: "تم اختيار منهجية المقارنة السوقية كمنهجية رئيسية نظراً لتوفر بيانات مقارنة كافية في حي النرجس بالرياض",
+  inspectionType: "معاينة ميدانية شاملة",
+  inspectionRequirements: ["فحص خارجي كامل", "فحص داخلي لجميع الأدوار", "تصوير فوتوغرافي شامل", "التحقق من إحداثيات GPS"],
+  deliverables: ["تقرير تقييم شامل بالعربية", "ملخص تنفيذي", "صور المعاينة الميدانية", "خريطة الموقع"],
+  estimatedDays: 7,
+  assumptions: [
+    "يُفترض أن المعلومات المقدمة من العميل صحيحة وكاملة",
+    "يُفترض عدم وجود تلوث بيئي أو مخاطر خفية في العقار",
+    "يُفترض أن العقار يتوافق مع أنظمة البناء والتخطيط المعمول بها",
+    "يُفترض أن الوثائق القانونية سارية المفعول وصحيحة",
+  ],
+  limitations: [
+    "لا يشمل التقييم أي أصول منقولة داخل العقار",
+    "التقييم مبني على ظروف السوق في تاريخ التقييم فقط",
+    "لم يتم إجراء فحص إنشائي تفصيلي أو فحص للتربة",
+  ],
+  disciplineAnalysis: {
+    discipline: "real_estate",
+    disciplineLabel: "تقييم عقاري",
+    confidence: 94,
+    reason: "المستندات تشير بوضوح إلى عقار سكني (فيلا) مع صك ملكية ورخصة بناء — لا توجد إشارات لآلات أو معدات",
+    signals: ["صك ملكية عقاري", "رخصة بناء سكنية", "عنوان عقاري واضح", "مخططات هندسية للمبنى"],
+    subTypes: ["سكني — فيلا خاصة"],
+  },
+  purposeAnalysis: {
+    selectedPurpose: "تمويل بنكي",
+    confidence: 91,
+    reason: "وجود خطاب من البنك الأهلي يطلب تقييم العقار لأغراض الرهن العقاري",
+    allPurposes: [
+      { key: "mortgage", label: "تمويل بنكي", confidence: 91, reason: "خطاب بنكي رسمي" },
+      { key: "sale", label: "بيع وشراء", confidence: 45, reason: "احتمال ثانوي" },
+      { key: "insurance", label: "تأمين", confidence: 20, reason: "احتمال ضعيف" },
+    ],
+  },
+  basisOfValueAnalysis: {
+    selectedBasis: "القيمة السوقية",
+    selectedBasisEn: "Market Value",
+    confidence: 96,
+    reason: "غرض التمويل البنكي يتطلب تحديد القيمة السوقية العادلة وفق IVS 104",
+    ivsReference: "IVS 104",
+    allBases: [
+      { key: "market", label: "القيمة السوقية", labelEn: "Market Value", confidence: 96, reason: "الأساس المطلوب للتمويل", ivsReference: "IVS 104" },
+      { key: "investment", label: "القيمة الاستثمارية", labelEn: "Investment Value", confidence: 30, reason: "غير مطلوب حالياً" },
+      { key: "liquidation", label: "قيمة التصفية", labelEn: "Liquidation Value", confidence: 10, reason: "غير مناسب" },
+    ],
+  },
+  methodologyAnalysis: {
+    primaryApproach: {
+      key: "market", label: "المقارنة السوقية", labelEn: "Market Comparison",
+      role: "primary", confidence: 92, reason: "توفر بيانات مبيعات مماثلة كافية في المنطقة المستهدفة",
+    },
+    secondaryApproach: {
+      key: "cost", label: "التكلفة", labelEn: "Cost Approach",
+      role: "secondary", confidence: 78, reason: "مناسبة كمنهجية داعمة للتحقق من القيمة خاصة للمباني الحديثة",
+    },
+    allApproaches: [
+      { key: "market", label: "المقارنة السوقية", labelEn: "Market Comparison", role: "primary", confidence: 92, reason: "توفر بيانات مبيعات مماثلة كافية في المنطقة" },
+      { key: "cost", label: "التكلفة", labelEn: "Cost Approach", role: "secondary", confidence: 78, reason: "مناسبة للتحقق من قيمة المباني الحديثة" },
+      { key: "income", label: "الدخل", labelEn: "Income Approach", role: "supporting", confidence: 45, reason: "أقل ملاءمة للعقارات السكنية المشغولة من المالك" },
+    ],
+    justification: "وفقاً لمعيار IVS 105، تم اختيار منهجية المقارنة السوقية كمنهجية رئيسية بسبب توفر بيانات السوق الكافية للعقارات المماثلة في حي النرجس بالرياض",
+  },
+};
+
+const MOCK_PRICING: PricingData = {
+  basePrice: 4500,
+  cityMultiplier: 1.15,
+  adjustedBase: 5175,
+  sizeCategory: "متوسط (500-1000 م²)",
+  breakdown: {
+    complexityAdjustment: 518,
+    complexityFactor: 1.1,
+    complexityReason: "فيلا سكنية بمواصفات قياسية — تعقيد منخفض إلى متوسط",
+    urgencyAdjustment: 0,
+    urgencyFactor: 1.0,
+    rentalAnalysisSurcharge: 0,
+    portfolioDiscount: 0,
+    additionalServices: [
+      { name: "تصوير فوتوغرافي احترافي", price: 350 },
+      { name: "تقرير ملخص تنفيذي إضافي", price: 200 },
+    ],
+    additionalTotal: 550,
+  },
+  totalPrice: 6243,
+  justification: "تم احتساب التسعير بناءً على السعر الأساسي للعقارات السكنية في الرياض مع مراعاة المساحة ودرجة التعقيد",
+};
+
 export default function ScopeAndPricingPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const extractedData = location.state?.extractedData;
+  const extractedData = location.state?.extractedData || MOCK_EXTRACTED_DATA;
 
   const [loading, setLoading] = useState(false);
-  const [scope, setScope] = useState<ScopeData | null>(null);
-  const [pricing, setPricing] = useState<PricingData | null>(null);
+  const [scope, setScope] = useState<ScopeData | null>(MOCK_SCOPE);
+  const [pricing, setPricing] = useState<PricingData | null>(MOCK_PRICING);
   const [editingScope, setEditingScope] = useState(false);
   const [editedNotes, setEditedNotes] = useState("");
   const [showAssumptions, setShowAssumptions] = useState(false);
