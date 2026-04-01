@@ -234,7 +234,8 @@ interface FormData {
   area_matches_license: string;
   positive_factors: string[];
   positive_factors_other: string;
-  negative_factors: string;
+  negative_factors: string[];
+  negative_factors_other: string;
   environmental_factors: string;
   regulatory_factors: string;
   has_risks: string;
