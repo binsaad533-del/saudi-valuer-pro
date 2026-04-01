@@ -77,10 +77,10 @@ interface ExtractedData {
 }
 
 const DEMO_FILES: UploadedFile[] = [
-  { file: {} as any, name: "صك_ملكية_310298765.pdf", size: 2_450_000, status: "uploaded" },
-  { file: {} as any, name: "رخصة_بناء_44-2891.pdf", size: 1_120_000, status: "uploaded" },
+  { file: {} as any, name: "صك_ملكية_1234567.pdf", size: 2_450_000, status: "uploaded" },
+  { file: {} as any, name: "رخصة_بناء_RB-2024-789.pdf", size: 1_120_000, status: "uploaded" },
   { file: {} as any, name: "مخطط_الدور_الأرضي.png", size: 3_780_000, status: "uploaded" },
-  { file: {} as any, name: "صورة_واجهة_رئيسية.jpg", size: 4_200_000, status: "uploaded" },
+  { file: {} as any, name: "عقد_إيجار_شركة_الأفق.pdf", size: 1_950_000, status: "uploaded" },
 ];
 
 export default function AIDocumentProcessingPage() {
@@ -151,7 +151,7 @@ export default function AIDocumentProcessingPage() {
         return { category: "technical_report", label: "تقرير تقييم سابق", relevance: "high", extractedInfo: "تقرير تقييم بتاريخ 1444/09/20 — القيمة السوقية: 2,350,000 ر.س" };
       // عقود إيجار
       if (n.includes("عقد") || n.includes("إيجار") || n.includes("contract") || n.includes("lease") || n.includes("rent") || n.includes("اتفاق"))
-        return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "عقد إيجار سنوي — القيمة: 85,000 ر.س — المستأجر: شركة النور" };
+        return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "إيجار سنوي: 85,000 ر.س — المستأجر: شركة الأفق — ثقة 88%" };
       // فواتير
       if (n.includes("فاتور") || n.includes("invoice") || n.includes("سند") || n.includes("إيصال") || n.includes("receipt"))
         return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة صيانة — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
@@ -221,11 +221,12 @@ export default function AIDocumentProcessingPage() {
       );
     }
     if (cats.has("contract")) {
-      const src = files[categorized.findIndex(c => c.category === "contract")]?.name || "عقد إيجار";
+      const contractSrc = files[categorized.findIndex(c => c.category === "contract")]?.name || "عقد إيجار";
       numbers.push(
-        { label: "قيمة الإيجار السنوي", value: "85,000 ر.س", source: src },
-        { label: "مدة العقد", value: "سنة واحدة — قابل للتجديد", source: src },
-        { label: "اسم المستأجر", value: "شركة النور للتجارة", source: src },
+        { label: "قيمة الإيجار السنوي", value: "85,000 ر.س", source: contractSrc },
+        { label: "اسم المستأجر", value: "شركة الأفق", source: contractSrc },
+        { label: "مدة العقد", value: "سنة واحدة — قابل للتجديد", source: contractSrc },
+        { label: "نسبة ثقة الاستخراج", value: "88%", source: contractSrc },
       );
     }
     if (cats.has("identity_doc")) {
