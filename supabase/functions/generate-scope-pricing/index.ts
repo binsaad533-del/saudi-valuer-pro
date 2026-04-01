@@ -291,7 +291,7 @@ ${extractedData.extractedNumbers?.map((n: any) => `- ${n.label}: ${n.value} (Ø«Ù
                     required: ["complexityFactor", "complexityReason", "justification"],
                   },
                 },
-                required: ["scope", "pricingAdjustments"],
+                required: ["disciplineAnalysis", "scope", "pricingAdjustments"],
                 additionalProperties: false,
               },
             },
