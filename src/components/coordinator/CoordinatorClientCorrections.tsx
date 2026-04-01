@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion, MessageSquare, Send } from "lucide-react";
+import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion, MessageSquare, Send, History, User } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Props {
   requests: any[];
@@ -59,6 +60,23 @@ function describeIssues(req: any): string {
 
 export default function CoordinatorClientCorrections({ requests, onRefresh }: Props) {
   const [search, setSearch] = useState("");
+  const [correctionLogs, setCorrectionLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true);
+
+  useEffect(() => {
+    loadCorrectionLogs();
+  }, []);
+
+  const loadCorrectionLogs = async () => {
+    const { data } = await supabase
+      .from("audit_logs")
+      .select("*")
+      .in("table_name", ["valuation_requests", "request_messages"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setCorrectionLogs(data || []);
+    setLogsLoading(false);
+  };
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
   const [editDialog, setEditDialog] = useState(false);
   const [messageDialog, setMessageDialog] = useState(false);
@@ -242,6 +260,69 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
               </TableBody>
             </Table>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Corrections Log */}
+      <Card className="shadow-card mt-4">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <History className="w-4 h-4 text-primary" />
+            سجل التصحيحات
+          </CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">من صحّح، متى، وماذا تم تغييره</p>
+        </CardHeader>
+        <CardContent className="p-0">
+          {logsLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-primary" />
+            </div>
+          ) : correctionLogs.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground text-sm">لا توجد تصحيحات مسجلة</div>
+          ) : (
+            <ScrollArea className="h-[320px]">
+              <div className="divide-y divide-border">
+                {correctionLogs.map(log => {
+                  const changes: string[] = [];
+                  if (log.old_data && log.new_data) {
+                    const oldD = typeof log.old_data === "string" ? JSON.parse(log.old_data) : log.old_data;
+                    const newD = typeof log.new_data === "string" ? JSON.parse(log.new_data) : log.new_data;
+                    for (const key of Object.keys(newD)) {
+                      if (JSON.stringify(oldD[key]) !== JSON.stringify(newD[key])) {
+                        changes.push(key);
+                      }
+                    }
+                  }
+                  return (
+                    <div key={log.id} className="px-4 py-3 flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <User className="w-3.5 h-3.5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Badge variant="outline" className="text-[10px]">
+                            {log.action === "update" ? "تعديل" : log.action === "create" ? "إنشاء" : log.action}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground font-mono">{log.table_name}</span>
+                        </div>
+                        {log.description && (
+                          <p className="text-sm text-foreground mt-1">{log.description}</p>
+                        )}
+                        {changes.length > 0 && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            الحقول المعدّلة: <span className="text-foreground">{changes.join("، ")}</span>
+                          </p>
+                        )}
+                        <span className="text-[10px] text-muted-foreground mt-1 block">
+                          {new Date(log.created_at).toLocaleString("ar-SA")}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </ScrollArea>
+          )}
         </CardContent>
       </Card>
 
