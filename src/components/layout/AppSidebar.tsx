@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import {
   LayoutDashboard,
@@ -15,6 +16,7 @@ import {
   Shield,
   ChevronDown,
   ChevronLeft,
+  ChevronRight,
   Menu,
   X,
   MapPin,
@@ -26,88 +28,89 @@ import {
 const logo = "/favicon.png";
 
 interface NavChild {
-  label: string;
+  labelKey: string;
   path: string;
 }
 
 interface NavItem {
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
   path: string;
   children?: NavChild[];
-  roles?: string[]; // which roles can see this item
+  roles?: string[];
 }
 
 interface NavSection {
-  title?: string;
+  titleKey?: string;
   items: NavItem[];
-  roles?: string[]; // which roles can see this section
+  roles?: string[];
 }
 
 const navSections: NavSection[] = [
   {
     items: [
-      { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: ["owner"] },
-      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: ["owner", "admin_coordinator"] },
-      { label: "واجهة المنسق", icon: ClipboardCheck, path: "/coordinator-dashboard", roles: ["admin_coordinator", "owner"] },
+      { labelKey: "raqeem", icon: Sparkles, path: "/raqeem", roles: ["owner"] },
+      { labelKey: "dashboard", icon: LayoutDashboard, path: "/", roles: ["owner", "admin_coordinator"] },
+      { labelKey: "coordinatorPanel", icon: ClipboardCheck, path: "/coordinator-dashboard", roles: ["admin_coordinator", "owner"] },
     ],
   },
   {
-    title: "التقييم",
+    titleKey: "valuationSection",
     items: [
-      { label: "التقييمات", icon: FileText, path: "/valuations", roles: ["owner"] },
-      { label: "التقارير", icon: FileText, path: "/reports", roles: ["owner"] },
-      { label: "المقارنات السوقية", icon: Building2, path: "/comparables", roles: ["owner"] },
+      { labelKey: "valuations", icon: FileText, path: "/valuations", roles: ["owner"] },
+      { labelKey: "reports", icon: FileText, path: "/reports", roles: ["owner"] },
+      { labelKey: "marketComparables", icon: Building2, path: "/comparables", roles: ["owner"] },
     ],
     roles: ["owner"],
   },
   {
-    title: "العمليات",
+    titleKey: "operationsSection",
     items: [
-      { label: "طلبات العملاء", icon: ClipboardCheck, path: "/client-requests", roles: ["owner", "admin_coordinator"] },
-      { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: ["owner", "admin_coordinator"] },
-      { label: "العملاء", icon: Users, path: "/clients-management", roles: ["owner", "admin_coordinator"] },
+      { labelKey: "clientRequests", icon: ClipboardCheck, path: "/client-requests", roles: ["owner", "admin_coordinator"] },
+      { labelKey: "inspections", icon: MapPin, path: "/inspectors", roles: ["owner", "admin_coordinator"] },
+      { labelKey: "clients", icon: Users, path: "/clients-management", roles: ["owner", "admin_coordinator"] },
     ],
     roles: ["owner", "admin_coordinator"],
   },
   {
-    title: "الذكاء",
+    titleKey: "aiSection",
     items: [
-      { label: "استخراج المستندات", icon: Brain, path: "/ai-document-processing", roles: ["owner", "admin_coordinator"] },
-      { label: "نطاق العمل والتسعير", icon: Calculator, path: "/ai-scope-pricing", roles: ["owner", "admin_coordinator"] },
-      { label: "توليد التقرير", icon: FileText, path: "/ai-report-generation", roles: ["owner"] },
+      { labelKey: "documentExtraction", icon: Brain, path: "/ai-document-processing", roles: ["owner", "admin_coordinator"] },
+      { labelKey: "scopeAndPricing", icon: Calculator, path: "/ai-scope-pricing", roles: ["owner", "admin_coordinator"] },
+      { labelKey: "reportGeneration", icon: FileText, path: "/ai-report-generation", roles: ["owner"] },
     ],
     roles: ["owner", "admin_coordinator"],
   },
   {
-    title: "المالية",
+    titleKey: "financeSection",
     items: [
-      { label: "لوحة المدير المالي", icon: LayoutDashboard, path: "/cfo-dashboard" },
-      { label: "الفواتير والمدفوعات", icon: FileText, path: "/valuations", roles: ["financial_manager"] },
+      { labelKey: "cfoDashboard", icon: LayoutDashboard, path: "/cfo-dashboard" },
+      { labelKey: "invoicesPayments", icon: FileText, path: "/valuations", roles: ["financial_manager"] },
     ],
   },
   {
-    title: "النظام",
+    titleKey: "systemSection",
     items: [
-      { label: "الامتثال", icon: Shield, path: "/compliance", roles: ["owner"] },
-      { label: "الإعدادات", icon: Settings, path: "/settings", roles: ["owner"] },
-      { label: "بياناتي", icon: Settings, path: "/settings", roles: ["admin_coordinator", "financial_manager"] },
+      { labelKey: "compliance", icon: Shield, path: "/compliance", roles: ["owner"] },
+      { labelKey: "settings", icon: Settings, path: "/settings", roles: ["owner"] },
+      { labelKey: "myProfile", icon: Settings, path: "/settings", roles: ["admin_coordinator", "financial_manager"] },
     ],
   },
 ];
 
-const roleLabels: Record<string, string> = {
-  owner: "مالك المنصة",
-  financial_manager: "مدير مالي",
-  admin_coordinator: "منسق إداري",
-  inspector: "معاين",
-  client: "عميل",
+const roleKeyMap: Record<string, string> = {
+  owner: "platformOwner",
+  financial_manager: "financialManager",
+  admin_coordinator: "adminCoordinator",
+  inspector: "inspector",
+  client: "client",
 };
 
 export default function AppSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, role } = useAuth();
+  const { t, language } = useLanguage();
   const [collapsed, setCollapsed] = useState(false);
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -131,14 +134,14 @@ export default function AppSidebar() {
     } catch {
       // silently ignore
     } finally {
-      toast.success("تم تسجيل الخروج");
+      toast.success(t("logout"));
       window.location.replace("/login");
     }
   };
 
-  const toggleExpand = (label: string) => {
+  const toggleExpand = (labelKey: string) => {
     setExpandedItems((prev) =>
-      prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]
+      prev.includes(labelKey) ? prev.filter((l) => l !== labelKey) : [...prev, labelKey]
     );
   };
 
@@ -159,6 +162,7 @@ export default function AppSidebar() {
     .filter((s) => s.items.length > 0);
 
   const initials = profileName ? profileName.charAt(0) : "م";
+  const CollapseIcon = language === "ar" ? ChevronLeft : ChevronRight;
 
   const sidebarContent = (
     <div className="flex flex-col h-full gradient-sidebar border-l border-sidebar-border">
@@ -170,7 +174,7 @@ export default function AppSidebar() {
             <span className="text-primary font-bold text-lg leading-tight">
               jsaas-valuation
             </span>
-            <span className="text-sidebar-muted text-[11px]">منصة التقييم المهني</span>
+            <span className="text-sidebar-muted text-[11px]">{t("platformName")}</span>
           </div>
         )}
       </div>
@@ -179,30 +183,30 @@ export default function AppSidebar() {
       <nav className="flex-1 overflow-y-auto scrollbar-none py-3 px-3 space-y-1">
         {filteredSections.map((section, sIdx) => (
           <div key={sIdx}>
-            {section.title && !collapsed && (
+            {section.titleKey && !collapsed && (
               <div className="px-3 pt-4 pb-1.5 text-[11px] font-semibold text-sidebar-muted/70 uppercase tracking-wider">
-                {section.title}
+                {t(section.titleKey)}
               </div>
             )}
-            {section.title && collapsed && <div className="my-2 mx-3 border-t border-sidebar-border" />}
+            {section.titleKey && collapsed && <div className="my-2 mx-3 border-t border-sidebar-border" />}
             <div className="space-y-0.5">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
-                const expanded = expandedItems.includes(item.label);
+                const expanded = expandedItems.includes(item.labelKey);
 
                 if (item.children) {
                   return (
-                    <div key={item.label}>
+                    <div key={item.labelKey}>
                       <button
-                        onClick={() => toggleExpand(item.label)}
+                        onClick={() => toggleExpand(item.labelKey)}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
                           ${active ? "bg-sidebar-accent text-primary font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                       >
                         <Icon className="w-[18px] h-[18px] shrink-0" />
                         {!collapsed && (
                           <>
-                            <span className="flex-1 text-right">{item.label}</span>
+                            <span className="flex-1 text-right">{t(item.labelKey)}</span>
                             <ChevronDown
                               className={`w-4 h-4 transition-transform ${expanded ? "rotate-180" : ""}`}
                             />
@@ -218,7 +222,7 @@ export default function AppSidebar() {
                               className={`block px-3 py-2 rounded-lg text-[13px] transition-all
                                 ${isActive(child.path) ? "text-primary bg-sidebar-accent font-medium" : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}
                             >
-                              {child.label}
+                              {t(child.labelKey)}
                             </Link>
                           ))}
                         </div>
@@ -229,13 +233,13 @@ export default function AppSidebar() {
 
                 return (
                   <Link
-                    key={item.path}
+                    key={item.path + item.labelKey}
                     to={item.path}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all
                       ${active ? "bg-sidebar-accent text-primary font-medium shadow-blue" : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"}`}
                   >
                     <Icon className="w-[18px] h-[18px] shrink-0" />
-                    {!collapsed && <span>{item.label}</span>}
+                    {!collapsed && <span>{t(item.labelKey)}</span>}
                   </Link>
                 );
               })}
@@ -256,7 +260,7 @@ export default function AppSidebar() {
                 {profileName || "..."}
               </span>
               <span className="text-sidebar-muted text-[11px]">
-                {roleLabels[role || ""] || role || ""}
+                {t(roleKeyMap[role || ""] || role || "")}
               </span>
             </div>
           </div>
@@ -265,7 +269,7 @@ export default function AppSidebar() {
             className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs text-destructive hover:bg-destructive/10 transition-colors"
           >
             <LogOut className="w-3.5 h-3.5" />
-            تسجيل الخروج
+            {t("logout")}
           </button>
         </div>
       ) : (
@@ -273,7 +277,7 @@ export default function AppSidebar() {
           <button
             onClick={handleLogout}
             className="p-2 rounded-lg text-destructive hover:bg-destructive/10 transition-colors"
-            title="تسجيل الخروج"
+            title={t("logout")}
           >
             <LogOut className="w-4 h-4" />
           </button>
@@ -285,7 +289,7 @@ export default function AppSidebar() {
         onClick={() => setCollapsed(!collapsed)}
         className="hidden lg:flex items-center justify-center py-3 border-t border-sidebar-border text-sidebar-muted hover:text-primary transition-colors"
       >
-        <ChevronLeft className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
+        <CollapseIcon className={`w-4 h-4 transition-transform ${collapsed ? "rotate-180" : ""}`} />
       </button>
     </div>
   );
