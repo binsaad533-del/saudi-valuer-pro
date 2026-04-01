@@ -1238,7 +1238,12 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           <Textarea value={formData.exterior_notes} onChange={(e: any) => updateField("exterior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الخارجية للمبنى..." rows={3} />
         </FieldGroup>
 
-        <SectionPhotoUpload section="exterior" label="صور المبنى من الخارج" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <Separator />
+        <p className="text-xs font-bold text-muted-foreground">📸 صور الواجهات</p>
+        <SectionPhotoUpload section="exterior_front" label="الواجهة الأمامية" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="exterior_back" label="الواجهة الخلفية" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="exterior_side" label="الواجهة الجانبية" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="exterior_general" label="صور عامة للمبنى" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <AiSuggestionBox
           sectionKey="exterior"
           promptHint="تحليل حالة المبنى الخارجية"
