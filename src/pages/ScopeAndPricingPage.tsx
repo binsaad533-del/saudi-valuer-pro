@@ -92,6 +92,7 @@ interface ScopeData {
   disciplineAnalysis?: DisciplineAnalysis;
   purposeAnalysis?: PurposeAnalysis;
   basisOfValueAnalysis?: BasisOfValueAnalysis;
+  methodologyAnalysis?: MethodologyAnalysis;
 }
 
 interface PricingBreakdown {
