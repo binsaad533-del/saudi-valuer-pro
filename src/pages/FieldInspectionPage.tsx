@@ -518,7 +518,7 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
   );
 }
 
-function SectionVerification({ formData, updateField }: any) {
+function SectionVerification({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -551,6 +551,12 @@ function SectionVerification({ formData, updateField }: any) {
         <FieldGroup label="الاستخدام الأعلى والأفضل (إن أمكن)">
           <Input value={formData.highest_best_use} onChange={(e: any) => updateField("highest_best_use", e.target.value)} placeholder="مثال: تجاري - موقع مناسب لمحلات" />
         </FieldGroup>
+        <SectionPhotoUpload section="verification" label="صور التحقق من الأصل" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="verification"
+          promptHint="تحقق من مطابقة الأصل للمستندات"
+          context={{ matches_documents: formData.matches_documents, asset_description: formData.asset_description, current_use: formData.current_use }}
+        />
       </CardContent>
     </Card>
   );
