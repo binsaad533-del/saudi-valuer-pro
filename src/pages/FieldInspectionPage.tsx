@@ -97,8 +97,6 @@ interface FormData {
   assignment_ref: string;
   valuer_name: string;
   inspection_time: string;
-  city: string;
-  district: string;
   detailed_address: string;
   gps_lat: number | null;
   gps_lng: number | null;
