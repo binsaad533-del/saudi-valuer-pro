@@ -38,15 +38,15 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(2), updated_at: hoursAgo(8),
     notes: "إيصال الدفع مرفوع — بانتظار المراجعة والتأكيد",
   },
-  // 3. مكتمل
+  // 3. معلق — بانتظار التعيين
   {
     id: "r3", reference_number: "VAL-003", client_id: "c3",
-    property_type: "apartment", purpose: "mortgage",
+    property_type: "residential_land", purpose: "sale_purchase",
     property_city_ar: "الدمام", property_district_ar: "الفيصلية",
-    land_area: null, building_area: 165,
-    property_description_ar: "شقة تمليك — الدور الرابع — 3 غرف وصالة — قريبة من الخدمات",
-    status: "completed", priority: "normal",
-    assigned_valuer_name: "م. سارة الحربي",
+    land_area: 750, building_area: null,
+    property_description_ar: "أرض سكنية بصك إلكتروني — حي الفيصلية — شارع 20م",
+    status: "submitted", priority: "normal",
+    assigned_valuer_name: null,
     quotation_amount: 3500,
     created_at: daysAgo(15), updated_at: daysAgo(1),
     notes: null,
