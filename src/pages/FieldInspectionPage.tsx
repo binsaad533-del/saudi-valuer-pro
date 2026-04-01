@@ -22,7 +22,6 @@ import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/S
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 
 /* ═══════ Constants ═══════ */
