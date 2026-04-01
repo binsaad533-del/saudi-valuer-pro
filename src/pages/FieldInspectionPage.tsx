@@ -1514,8 +1514,8 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         </div>
         </ExpandableSection>
 
-        {/* الأرضيات */}
-        <p className="text-xs font-bold text-muted-foreground">🧱 الأرضيات</p>
+        {/* التشطيبات */}
+        <ExpandableSection icon="🧱" title="الأرضيات والجدران والأسقف" defaultOpen>
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع الأرضيات" required>
             <Select value={formData.interior_floors_type} onValueChange={(v: string) => updateField("interior_floors_type", v)}>
