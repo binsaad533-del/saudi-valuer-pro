@@ -202,9 +202,12 @@ interface FormData {
   asset_age: string;
   finishing_level: string;
   condition_notes: string;
-  electricity: boolean;
-  water: boolean;
-  sewage: boolean;
+  electricity_status: string;
+  electricity_condition: string;
+  water_source: string;
+  water_condition: string;
+  sewage_type: string;
+  sewage_condition: string;
   roads_paved: boolean;
   utilities_notes: string;
   positive_factors: string;
