@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { MOCK_ACTIVITY_LOGS } from "@/data/coordinatorMockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,7 +75,7 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
       .in("table_name", ["valuation_requests", "request_messages"])
       .order("created_at", { ascending: false })
       .limit(50);
-    setCorrectionLogs(data || []);
+    setCorrectionLogs(data?.length ? data : MOCK_ACTIVITY_LOGS.filter(l => l.action === "update"));
     setLogsLoading(false);
   };
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
