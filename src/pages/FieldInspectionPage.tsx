@@ -1776,10 +1776,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <FieldGroup label="ملاحظات إضافية">
           <Textarea value={formData.interior_notes} onChange={(e: any) => updateField("interior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الداخلية، عيوب، رطوبة، روائح..." rows={3} />
         </FieldGroup>
+        </ExpandableSection>
 
         {/* صور الداخل */}
-        <Separator />
-        <p className="text-xs font-bold text-muted-foreground">📸 صور المبنى الداخلية</p>
+        <ExpandableSection icon="📸" title="صور المبنى الداخلية">
         <SectionPhotoUpload section="interior_living" label="الصالة / المعيشة" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <SectionPhotoUpload section="interior_kitchen" label="المطبخ" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <SectionPhotoUpload section="interior_bathroom" label="دورات المياه" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
