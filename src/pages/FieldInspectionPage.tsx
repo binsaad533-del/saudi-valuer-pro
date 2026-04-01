@@ -2191,66 +2191,98 @@ function SectionValueFactors({ formData, updateField }: any) {
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="✅ عوامل إيجابية">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
             {[
               { id: "view", label: "إطلالة مميزة (View)" },
               { id: "prime_location", label: "موقع مميز" },
               { id: "luxury_finish", label: "تشطيب راقي" },
               { id: "modern", label: "حديث البناء" },
-            ].map((factor) => (
-              <label key={factor.id} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-background hover:bg-accent/50 cursor-pointer transition-colors">
-                <Checkbox
-                  checked={formData.positive_factors.includes(factor.id)}
-                  onCheckedChange={(checked) => {
-                    const current = formData.positive_factors;
-                    updateField(
-                      "positive_factors",
-                      checked ? [...current, factor.id] : current.filter((f: string) => f !== factor.id)
-                    );
-                  }}
-                />
-                <span className="text-sm">{factor.label}</span>
-              </label>
-            ))}
+            ].map((factor) => {
+              const isSelected = factor.id in formData.positive_factors;
+              return (
+                <div key={factor.id} className="rounded-lg border border-border bg-background p-2.5 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        const current = { ...formData.positive_factors };
+                        if (checked) { current[factor.id] = "medium"; } else { delete current[factor.id]; }
+                        updateField("positive_factors", current);
+                      }}
+                    />
+                    <span className="text-sm font-medium">{factor.label}</span>
+                  </label>
+                  {isSelected && (
+                    <div className="flex gap-1.5 mr-6">
+                      {[
+                        { value: "weak", label: "ضعيف", style: "border-muted-foreground/30 text-muted-foreground" },
+                        { value: "medium", label: "متوسط", style: "border-primary/50 text-primary" },
+                        { value: "strong", label: "قوي", style: "border-primary text-primary font-bold" },
+                      ].map((level) => (
+                        <button
+                          key={level.value}
+                          type="button"
+                          onClick={() => updateField("positive_factors", { ...formData.positive_factors, [factor.id]: level.value })}
+                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${formData.positive_factors[factor.id] === level.value ? "bg-primary text-primary-foreground border-primary" : level.style + " bg-background hover:bg-accent/50"}`}
+                        >
+                          {level.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className="mt-2">
-            <Input
-              value={formData.positive_factors_other}
-              onChange={(e: any) => updateField("positive_factors_other", e.target.value)}
-              placeholder="أخرى (حدد)..."
-              className="text-sm"
-            />
+            <Input value={formData.positive_factors_other} onChange={(e: any) => updateField("positive_factors_other", e.target.value)} placeholder="أخرى (حدد)..." className="text-sm" />
           </div>
         </FieldGroup>
         <FieldGroup label="⚠️ عوامل سلبية">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-2">
             {[
               { id: "noise", label: "قرب ضوضاء" },
               { id: "legal_issues", label: "إشكاليات قانونية" },
               { id: "harmful_neighbor", label: "مجاور ضار" },
-            ].map((factor) => (
-              <label key={factor.id} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-background hover:bg-destructive/10 cursor-pointer transition-colors">
-                <Checkbox
-                  checked={formData.negative_factors.includes(factor.id)}
-                  onCheckedChange={(checked) => {
-                    const current = formData.negative_factors;
-                    updateField(
-                      "negative_factors",
-                      checked ? [...current, factor.id] : current.filter((f: string) => f !== factor.id)
-                    );
-                  }}
-                />
-                <span className="text-sm">{factor.label}</span>
-              </label>
-            ))}
+            ].map((factor) => {
+              const isSelected = factor.id in formData.negative_factors;
+              return (
+                <div key={factor.id} className="rounded-lg border border-border bg-background p-2.5 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        const current = { ...formData.negative_factors };
+                        if (checked) { current[factor.id] = "medium"; } else { delete current[factor.id]; }
+                        updateField("negative_factors", current);
+                      }}
+                    />
+                    <span className="text-sm font-medium">{factor.label}</span>
+                  </label>
+                  {isSelected && (
+                    <div className="flex gap-1.5 mr-6">
+                      {[
+                        { value: "weak", label: "ضعيف", style: "border-muted-foreground/30 text-muted-foreground" },
+                        { value: "medium", label: "متوسط", style: "border-destructive/50 text-destructive" },
+                        { value: "strong", label: "قوي", style: "border-destructive text-destructive font-bold" },
+                      ].map((level) => (
+                        <button
+                          key={level.value}
+                          type="button"
+                          onClick={() => updateField("negative_factors", { ...formData.negative_factors, [factor.id]: level.value })}
+                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${formData.negative_factors[factor.id] === level.value ? "bg-destructive text-destructive-foreground border-destructive" : level.style + " bg-background hover:bg-accent/50"}`}
+                        >
+                          {level.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
           <div className="mt-2">
-            <Input
-              value={formData.negative_factors_other}
-              onChange={(e: any) => updateField("negative_factors_other", e.target.value)}
-              placeholder="أخرى (حدد)..."
-              className="text-sm"
-            />
+            <Input value={formData.negative_factors_other} onChange={(e: any) => updateField("negative_factors_other", e.target.value)} placeholder="أخرى (حدد)..." className="text-sm" />
           </div>
         </FieldGroup>
         <FieldGroup label="عوامل بيئية">
