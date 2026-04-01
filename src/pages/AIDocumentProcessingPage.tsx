@@ -779,7 +779,7 @@ export default function AIDocumentProcessingPage() {
                   };
 
                   const planLowConf = isLowConfidence(nums.find(n => n.label === "غرف النوم")?.source || "");
-                  const contractLowConf = isLowConfidence(nums.find(n => n.label === "قيمة الإيجار السنوي")?.source || "");
+                  const _contractLowConf = isLowConfidence(nums.find(n => n.label === "قيمة الإيجار السنوي")?.source || "");
 
                   const hasPropertyInfo = extracted.asset?.description || extracted.asset?.city || extracted.asset?.area;
                   const hasOwnership = extracted.client?.clientName || extracted.asset?.deedNumber;
