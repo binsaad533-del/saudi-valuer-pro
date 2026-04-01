@@ -1439,16 +1439,17 @@ export default function AIReportGenerationPage() {
 
                     {sectionEntries.map(([key, sec]) => {
                       const SIcon = SECTION_ICONS[key] || FileText;
+                      const sColor = SECTION_COLORS[key] || DEFAULT_SECTION_COLOR;
                       const isEdited = editedSections.has(key);
                       const hasContent = !!(sec.content_ar && sec.content_ar.length > 20);
                       const conf = sectionConfidence[key];
                       return (
                         <div
                           key={key}
-                          className={`flex items-center gap-1.5 text-[10px] p-1.5 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? "bg-primary/10" : ""}`}
+                          className={`flex items-center gap-1.5 text-[10px] p-1.5 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? sColor.bg : ""}`}
                           onClick={() => setExpandedSection(expandedSection === key ? null : key)}
                         >
-                          <SIcon className={`w-3 h-3 shrink-0 ${hasContent ? "text-primary" : "text-muted-foreground/40"}`} />
+                          <SIcon className={`w-3 h-3 shrink-0 ${hasContent ? sColor.text : "text-muted-foreground/40"}`} />
                           <span className={`flex-1 truncate ${hasContent ? "text-foreground" : "text-muted-foreground/60"}`}>
                             {sec.title_ar || key}
                           </span>
