@@ -302,6 +302,63 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Message Client Dialog */}
+      <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              مراسلة العميل
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              طلب: <span className="font-mono text-foreground" dir="ltr">{selectedReq?.reference_number || "—"}</span>
+            </p>
+            {selectedReq && (
+              <div className="p-2 rounded-md bg-warning/10 text-xs text-warning">
+                {describeIssues(selectedReq)}
+              </div>
+            )}
+            <div className="space-y-1">
+              <Label className="text-xs">نص الرسالة للعميل *</Label>
+              <Textarea
+                placeholder="مثال: نرجو تزويدنا بصك الملكية ومخطط الموقع..."
+                value={clientMessage}
+                onChange={e => setClientMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialog(false)}>إلغاء</Button>
+            <Button
+              disabled={saving || !clientMessage.trim()}
+              onClick={async () => {
+                if (!selectedReq || !clientMessage.trim()) return;
+                setSaving(true);
+                try {
+                  await supabase.from("request_messages" as any).insert({
+                    request_id: selectedReq.id,
+                    sender_type: "admin" as any,
+                    content: clientMessage.trim(),
+                  });
+                  toast.success("تم إرسال الرسالة للعميل");
+                  setMessageDialog(false);
+                } catch {
+                  toast.error("حدث خطأ أثناء الإرسال");
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
+              <Send className="w-4 h-4 ml-1" />
+              إرسال
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
