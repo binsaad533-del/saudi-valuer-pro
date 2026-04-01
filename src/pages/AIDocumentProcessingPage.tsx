@@ -204,11 +204,12 @@ export default function AIDocumentProcessingPage() {
       );
     }
     if (cats.has("floor_plan")) {
-      const src = files[categorized.findIndex(c => c.category === "floor_plan")]?.name || "مخطط معماري";
+      const planSrc = files[categorized.findIndex(c => c.category === "floor_plan")]?.name || "مخطط معماري";
       numbers.push(
-        { label: "مساحة البناء", value: "312 م²", source: src },
-        { label: "عدد الغرف", value: "4 غرف نوم", source: src },
-        { label: "عدد دورات المياه", value: "3", source: src },
+        { label: "غرف النوم", value: "3 غرف", source: planSrc },
+        { label: "الصالات", value: "صالة واحدة", source: planSrc },
+        { label: "المطبخ", value: "1 مطبخ", source: planSrc },
+        { label: "نسبة ثقة الاستخراج", value: "73% ⚠️", source: planSrc },
       );
     }
     if (cats.has("technical_report")) {
