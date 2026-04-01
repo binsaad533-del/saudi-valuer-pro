@@ -192,6 +192,7 @@ export default function AIReportGenerationPage() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState("");
+  const [editedSections, setEditedSections] = useState<Set<string>>(new Set());
 
   // Review state
   const [reviewOutput, setReviewOutput] = useState("");
@@ -289,6 +290,7 @@ export default function AIReportGenerationPage() {
         },
       });
     }
+    setEditedSections(prev => new Set(prev).add(sectionKey));
     setEditingSection(null);
     setEditBuffer("");
     toast.success("تم حفظ التعديل");
@@ -779,6 +781,15 @@ export default function AIReportGenerationPage() {
                       <span className="font-medium text-sm">{sec.title_ar || key}</span>
                     </div>
                     <div className="flex items-center gap-2">
+                      {editedSections.has(key) ? (
+                        <Badge variant="outline" className="text-[9px] gap-1 border-amber-500/50 text-amber-600 bg-amber-50 dark:bg-amber-500/10">
+                          <Edit3 className="w-2.5 h-2.5" /> معدّل يدوياً
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-[9px] gap-1 border-primary/50 text-primary bg-primary/5">
+                          <Sparkles className="w-2.5 h-2.5" /> مولّد بالذكاء
+                        </Badge>
+                      )}
                       {sec.content_ar && (
                         <Badge variant="secondary" className="text-[9px]">
                           {sec.content_ar.length} حرف
