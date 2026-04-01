@@ -179,6 +179,7 @@ const defaultFormData: FormData = {
   access_ease: "",
   surrounding_positives: "",
   surrounding_negatives: "",
+  location_confidential_notes: "",
   matches_documents: "",
   asset_description: "",
   current_use: "",
