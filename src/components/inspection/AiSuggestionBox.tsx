@@ -148,6 +148,16 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
       if (ctx.positive_factors && ctx.negative_factors) tips.push("✅ تم تسجيل العوامل. تأكد من ذكر تأثيرها المتوقع على القيمة.");
       return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق العوامل المؤثرة على القيمة بدقة مع ذكر مدى تأثير كل عامل.";
     }
+    case "exterior": {
+      const tips: string[] = [];
+      if (!ctx.facade_material) tips.push("💡 حدد مادة الواجهة الخارجية للحصول على تقييم دقيق");
+      if (ctx.facade_condition === "poor") tips.push("⚠️ حالة الواجهة السيئة تؤثر مباشرة على القيمة — وثّق التشققات والتلف بالصور");
+      if (ctx.roof_condition === "poor") tips.push("⚠️ حالة السقف السيئة قد تشير لمشاكل تسرب — تحقق من وجود رطوبة");
+      if (ctx.fence_type === "none") tips.push("📝 عدم وجود سور يؤثر على الخصوصية والأمان — وثّق ذلك");
+      if (ctx.parking === "none") tips.push("🚗 عدم وجود مواقف قد يؤثر سلباً على القيمة خاصة في الأحياء المزدحمة");
+      if (ctx.facade_condition === "excellent" && ctx.roof_condition === "excellent") tips.push("✅ الحالة الخارجية ممتازة — تأكد من تطابقها مع الحالة الداخلية");
+      return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق جميع عناصر المبنى الخارجية بالصور مع ملاحظة أي عيوب ظاهرة.";
+    }
     case "risks": {
       if (ctx.has_risks === "yes" && (!ctx.risk_details || String(ctx.risk_details).length < 20))
         return "⚠️ وجود مخاطر يتطلب توثيقاً مفصلاً:\n- نوع الخطر (إنشائي، بيئي، نظامي)\n- مستوى الخطورة\n- التأثير المتوقع على القيمة\n- صور داعمة إن أمكن";
