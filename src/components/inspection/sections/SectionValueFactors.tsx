@@ -91,7 +91,7 @@ export default function SectionValueFactors({ formData, updateField }: any) {
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(checked) => {
-                        const current = { ...formData.negative_factors };
+                        const current = { ...negativeFactors };
                         if (checked) { current[factor.id] = "medium"; } else { delete current[factor.id]; }
                         updateField("negative_factors", current);
                       }}
