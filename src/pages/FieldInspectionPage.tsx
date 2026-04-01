@@ -132,12 +132,17 @@ interface FormData {
 }
 
 const defaultFormData: FormData = {
+  asset_type: "real_estate",
+  deed_number: "",
+  owner_name: "",
+  property_use: "",
+  property_number: "",
+  plan_number: "",
   assignment_ref: "",
   valuer_name: "",
   inspector_name: "",
   inspection_date: new Date().toISOString().split("T")[0],
   inspection_time: new Date().toTimeString().slice(0, 5),
-  asset_type: "real_estate",
   city: "",
   district: "",
   detailed_address: "",
