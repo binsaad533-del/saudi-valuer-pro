@@ -252,6 +252,11 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
             <Label className="text-sm">مساحة البناء (م²)</Label>
             <Input type="number" placeholder="0" value={form.buildingArea} onChange={e => update("buildingArea", e.target.value)} />
           </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">عدد الغرف</Label>
+            <Input type="number" placeholder="0" value={form.rooms} onChange={e => update("rooms", e.target.value)} />
+          </div>
         </div>
 
         <div className="space-y-1.5">
