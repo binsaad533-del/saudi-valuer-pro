@@ -20,6 +20,9 @@ import {
 } from "lucide-react";
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 /* ═══════ Constants ═══════ */
 
@@ -85,6 +88,7 @@ interface PhotoItem {
   file_name: string;
   preview: string;
   description: string;
+  file?: File;
 }
 
 interface ChecklistItem {
@@ -487,6 +491,9 @@ export default function FieldInspectionPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const addSectionPhoto = (photo: SectionPhoto) => setSectionPhotos(prev => [...prev, photo]);
   const removeSectionPhoto = (photo: SectionPhoto) => setSectionPhotos(prev => prev.filter(p => p !== photo));
@@ -626,11 +633,143 @@ export default function FieldInspectionPage() {
   const handleSubmit = async () => {
     if (!canSubmit()) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1500));
-    toast.success("تم إرسال المعاينة بنجاح ✅");
-    localStorage.removeItem("field-inspection-data");
-    setSubmitting(false);
+    try {
+      const inspectorId = user?.id;
+      if (!inspectorId) {
+        toast.error("يجب تسجيل الدخول أولاً");
+        setSubmitting(false);
+        return;
+      }
+
+      // Build findings summary
+      const findingsSummary = [
+        `الحالة العامة: ${formData.overall_condition}`,
+        `نوع العقار: ${formData.asset_type}`,
+        `عمر المبنى: ${formData.exterior_building_age} سنة`,
+        `عدد الطوابق: ${formData.num_floors}`,
+        formData.inspector_final_notes ? `ملاحظات: ${formData.inspector_final_notes}` : "",
+      ].filter(Boolean).join("\n");
+
+      // Determine assignment_id (required UUID)
+      const assignmentId = formData.assignment_ref && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formData.assignment_ref) ? formData.assignment_ref : null;
+
+      if (!assignmentId) {
+        toast.error("يجب ربط المعاينة بمهمة تقييم. يرجى إدخال رقم المهمة في القسم الأول.");
+        setSubmitting(false);
+        return;
+      }
+
+      const { data: inspection, error: inspError } = await supabase
+        .from("inspections")
+        .insert({
+          inspector_id: inspectorId,
+          assignment_id: assignmentId,
+          inspection_date: formData.approval_date || new Date().toISOString().split("T")[0],
+          status: "submitted",
+          completed: true,
+          latitude: formData.gps_lat ?? null,
+          longitude: formData.gps_lng ?? null,
+          gps_verified: !!(formData.gps_lat && formData.gps_lng),
+          findings_ar: findingsSummary,
+          notes_ar: formData.confidential_notes || null,
+          submitted_at: new Date().toISOString(),
+          started_at: new Date().toISOString(),
+          auto_saved_data: formData as any,
+        })
+        .select("id")
+        .single();
+
+      if (inspError) {
+        console.error("Inspection save error:", inspError);
+        toast.error("حدث خطأ أثناء حفظ المعاينة: " + inspError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      // Upload photos to storage and save records
+      if (inspection?.id && photos.length > 0) {
+        for (const photo of photos) {
+          if (!photo.file) continue;
+          const filePath = `${inspectorId}/${inspection.id}/${Date.now()}_${photo.file_name}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("inspection-photos")
+            .upload(filePath, photo.file);
+
+          if (!uploadErr) {
+            await supabase.from("inspection_photos").insert({
+              inspection_id: inspection.id,
+              file_name: photo.file_name,
+              file_path: filePath,
+              category: photo.category,
+              uploaded_by: inspectorId,
+              latitude: formData.gps_lat ?? null,
+              longitude: formData.gps_lng ?? null,
+            });
+          }
+        }
+      }
+
+      // Save checklist items
+      if (inspection?.id) {
+        const checklistRows = checklist.map((item, idx) => ({
+          inspection_id: inspection.id,
+          label_ar: item.label_ar,
+          category: item.category,
+          is_checked: item.is_checked,
+          is_required: item.is_required,
+          sort_order: idx,
+        }));
+        await supabase.from("inspection_checklist_items").insert(checklistRows);
+      }
+
+      localStorage.removeItem("field-inspection-data");
+      setSubmitted(true);
+      toast.success("تم إرسال المعاينة بنجاح ✅");
+    } catch (err: any) {
+      console.error("Submit error:", err);
+      toast.error("حدث خطأ غير متوقع أثناء الإرسال");
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  // Success screen after submission
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6" dir="rtl">
+        <div className="text-center space-y-6 max-w-sm mx-auto">
+          <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+            <CheckCircle className="w-10 h-10 text-primary" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-foreground">تم إرسال المعاينة بنجاح 🎉</h1>
+            <p className="text-sm text-muted-foreground">
+              تم حفظ جميع البيانات والصور في النظام وستُضاف تلقائياً لقائمة المقيّم المسؤول.
+            </p>
+          </div>
+          <div className="bg-muted/50 rounded-lg p-4 text-right space-y-1">
+            <p className="text-xs text-muted-foreground">المعاين: <span className="font-medium text-foreground">{formData.inspector_name}</span></p>
+            <p className="text-xs text-muted-foreground">التاريخ: <span className="font-medium text-foreground">{formData.approval_date}</span></p>
+            <p className="text-xs text-muted-foreground">نوع العقار: <span className="font-medium text-foreground">{formData.asset_type}</span></p>
+          </div>
+          <div className="flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => navigate("/inspector")}>
+              لوحة التحكم
+            </Button>
+            <Button className="flex-1" onClick={() => {
+              setSubmitted(false);
+              setFormData(defaultFormData);
+              setPhotos([]);
+              setSectionPhotos([]);
+              setStep(0);
+            }}>
+              معاينة جديدة
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24" dir="rtl">
@@ -748,7 +887,7 @@ export default function FieldInspectionPage() {
         {step === 7 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 8 && <SectionLayoutAreas formData={formData} updateField={updateField} />}
         {step === 9 && <SectionValueFactors formData={formData} updateField={updateField} />}
-        {step === 10 && <SectionNotesRecommendations formData={formData} updateField={updateField} />}
+        {step === 10 && <SectionNotesRecommendations formData={formData} updateField={updateField} submitting={submitting} onSubmit={handleSubmit} />}
         {step === 11 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} onDescriptionChange={handlePhotoDescriptionChange} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
         {step === 12 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 13 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
@@ -2494,7 +2633,7 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChang
   );
 }
 
-function SectionNotesRecommendations({ formData, updateField }: any) {
+function SectionNotesRecommendations({ formData, updateField, submitting, onSubmit }: any) {
   const [techSummary, setTechSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -2741,7 +2880,8 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
                 </p>
                 <Button
                   className="w-full h-12 text-base gap-2"
-                  onClick={() => {
+                  disabled={submitting}
+                  onClick={async () => {
                     const approvalName = formData.approval_inspector_name || formData.inspector_name;
                     if (!approvalName) {
                       toast.error("يرجى إدخال اسم المعاين في قسم الاعتماد أولاً");
@@ -2749,10 +2889,10 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
                     }
                     updateField("approval_inspector_name", approvalName);
                     updateField("approval_date", new Date().toISOString().split("T")[0]);
-                    toast.success("🎉 تم إرسال المعاينة بنجاح — ستُضاف لقائمة المقيّم");
+                    await onSubmit();
                   }}
                 >
-                  <Send className="w-5 h-5" />
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   إرسال المعاينة
                 </Button>
               </div>
