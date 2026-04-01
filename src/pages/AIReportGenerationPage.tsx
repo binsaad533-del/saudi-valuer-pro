@@ -1,10 +1,9 @@
 import { useState, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,36 +11,68 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
-  Sparkles,
-  FileText,
-  Wand2,
-  CheckCircle2,
-  Loader2,
-  Copy,
-  RefreshCw,
-  Send,
-  BookOpen,
-  ClipboardList,
-  Eye,
-  ArrowLeft,
-  ArrowRight,
-  Database,
-  Layers,
-  FileCheck,
-  Download,
-  Edit3,
-  ChevronDown,
-  ChevronUp,
-  AlertCircle,
+  Sparkles, FileText, Wand2, CheckCircle2, Loader2, Copy, RefreshCw,
+  Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
+  FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2,
+  Building2, User, MapPin, ClipboardCheck, BarChart3, Scale,
 } from "lucide-react";
-import { REPORT_SECTIONS, type ReportData } from "@/lib/report-types";
+import { supabase } from "@/integrations/supabase/client";
 
 /* ──────────────────── Types ──────────────────── */
-type Mode = "full_report" | "section" | "review" | "structured_sections";
 type PipelineStep = 0 | 1 | 2 | 3 | 4 | 5;
 
+interface ReportDraft {
+  report_title_ar?: string;
+  report_title_en?: string;
+  reference_number?: string;
+  report_date?: string;
+  sections?: Record<string, {
+    title_ar?: string;
+    title_en?: string;
+    content_ar?: string;
+    content_en?: string;
+    tables?: { caption_ar?: string; headers?: string[]; rows?: string[][] }[];
+  }>;
+  final_value?: {
+    amount?: number;
+    currency?: string;
+    text_ar?: string;
+    text_en?: string;
+    effective_date?: string;
+    basis_of_value_ar?: string;
+    confidence_level?: string;
+  };
+  metadata?: {
+    standards_referenced?: string[];
+    approaches_used?: string[];
+    data_completeness_pct?: number;
+    sections_needing_review?: string[];
+    missing_data_items?: string[];
+  };
+}
+
+interface AggregatedData {
+  request?: any;
+  client?: any;
+  assignment?: any;
+  subject?: any;
+  inspection?: any;
+  inspection_analysis?: any;
+  inspection_photos?: any[];
+  inspection_checklist?: any[];
+  comparables?: any[];
+  document_extractions?: any[];
+  assumptions?: any[];
+  reconciliation?: any;
+  compliance_checks?: any[];
+  portfolio_assets?: any[];
+  valuer?: any;
+  reviewer?: any;
+  organization?: any;
+}
+
 const PIPELINE_STEPS = [
-  { key: "data", label: "جمع البيانات", icon: Database, desc: "بيانات العقار والعميل والمعاينة" },
+  { key: "data", label: "جمع البيانات", icon: Database, desc: "ربط الطلب وجمع جميع البيانات" },
   { key: "generate", label: "توليد المسودة", icon: Wand2, desc: "توليد أقسام التقرير بالذكاء الاصطناعي" },
   { key: "sections", label: "مراجعة الأقسام", icon: Layers, desc: "مراجعة وتعديل كل قسم" },
   { key: "review", label: "فحص الجودة", icon: Eye, desc: "مراجعة شاملة وتحسينات" },
@@ -49,23 +80,18 @@ const PIPELINE_STEPS = [
   { key: "export", label: "التصدير", icon: Download, desc: "إنشاء مسودة التقرير" },
 ];
 
-const GENERABLE_SECTIONS = [
-  { key: "purpose", label: "الغرض والاستخدام المقصود" },
-  { key: "scope", label: "نطاق العمل" },
-  { key: "property_desc", label: "وصف العقار" },
-  { key: "legal", label: "الوصف القانوني والملكية" },
-  { key: "market", label: "نظرة السوق" },
-  { key: "hbu", label: "الاستخدام الأعلى والأفضل" },
-  { key: "approaches", label: "أساليب التقييم" },
-  { key: "calculations", label: "الحسابات والتحليل" },
-  { key: "reconciliation", label: "التسوية والرأي النهائي" },
-  { key: "assumptions", label: "الافتراضات والقيود" },
-  { key: "compliance", label: "بيان الامتثال" },
+const DATA_CATEGORIES = [
+  { key: "request", label: "بيانات الطلب", icon: FileText },
+  { key: "client", label: "بيانات العميل", icon: User },
+  { key: "subject", label: "وصف العقار", icon: Building2 },
+  { key: "inspection", label: "المعاينة الميدانية", icon: ClipboardCheck },
+  { key: "comparables", label: "المقارنات السوقية", icon: BarChart3 },
+  { key: "reconciliation", label: "التسوية والقيمة", icon: Scale },
 ];
 
-/* ──────────────────── Streaming helper ──────────────────── */
+/* ──────────────────── Streaming helper for review ──────────────────── */
 async function streamReportContent(
-  params: { mode: Mode; sectionKey?: string; existingText?: string; context: Record<string, any> },
+  params: { mode: string; existingText?: string; context: Record<string, any> },
   onDelta: (text: string) => void,
   onDone: () => void,
   onError: (err: string) => void
@@ -118,43 +144,23 @@ async function streamReportContent(
   onDone();
 }
 
-async function generateStructuredSections(
-  context: Record<string, any>,
-  sectionKeys: string[]
-): Promise<Record<string, string>> {
-  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-report-content`;
-  const resp = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-    },
-    body: JSON.stringify({ mode: "structured_sections", sectionKeys, context }),
-  });
-
-  if (!resp.ok) {
-    const err = await resp.json().catch(() => ({ error: "خطأ" }));
-    throw new Error(err.error || "خطأ في التوليد");
-  }
-
-  const result = await resp.json();
-  if (result.structured && result.data?.sections) {
-    return result.data.sections;
-  }
-  throw new Error("لم يتم توليد البيانات المهيكلة");
-}
-
 /* ──────────────────── Main Component ──────────────────── */
 export default function AIReportGenerationPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialRequestId = searchParams.get("request_id") || "";
+
   const [step, setStep] = useState<PipelineStep>(0);
-  const [activeTab, setActiveTab] = useState<string>("full");
+  const [requestId, setRequestId] = useState(initialRequestId);
+
+  // Data collection state
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [aggregatedData, setAggregatedData] = useState<AggregatedData | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
 
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
-  const [streamOutput, setStreamOutput] = useState("");
-  const streamRef = useRef("");
-  const [generatedSections, setGeneratedSections] = useState<Record<string, string>>({});
+  const [reportDraft, setReportDraft] = useState<ReportDraft | null>(null);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState("");
@@ -164,134 +170,107 @@ export default function AIReportGenerationPage() {
   const reviewRef = useRef("");
   const [isReviewing, setIsReviewing] = useState(false);
 
-  // Context (mock data pre-filled)
-  const [ctx, setCtx] = useState({
-    assetType: "real_estate",
-    assetDescription: "فيلا سكنية مكونة من طابقين وملحق علوي بمساحة بناء 450 متر مربع",
-    assetLocation: "حي النرجس، الرياض",
-    assetCity: "الرياض",
-    methodology: "market_comparison",
-    estimatedValue: "3250000",
-    clientName: "شركة الرحمانية للتطوير",
-    clientIdNumber: "1010XXXXXX",
-    purposeOfValuation: "تقدير القيمة السوقية للعقار لغرض البيع",
-    landArea: "625",
-    buildingArea: "450",
-    propertyType: "سكني",
-    ownershipType: "ملكية حرة كاملة",
-    inspectionDate: "2026-03-20",
-    valuationDate: "2026-03-25",
-    referenceNumber: "VAL-2026-0042",
-    inspectionSummary: "تمت المعاينة الداخلية والخارجية الكاملة. العقار بحالة جيدة جداً. تشطيبات فاخرة بدون عيوب إنشائية ظاهرة.",
-  });
-
-  const comparables = [
-    { description: "فيلا سكنية مماثلة، حي النرجس، 600 م²", value: 2800000, source: "وزارة العدل" },
-    { description: "فيلا سكنية، حي الياسمين، 650 م²", value: 3100000, source: "منصة عقار" },
-    { description: "فيلا دوبلكس، حي النرجس، 580 م²", value: 2650000, source: "وزارة العدل" },
-    { description: "فيلا سكنية، حي الملقا، 620 م²", value: 3050000, source: "تقرير تقييم سابق" },
-    { description: "فيلا مستقلة، حي العارض، 700 م²", value: 3400000, source: "وزارة العدل" },
-  ];
-
-  const buildContext = () => ({
-    ...ctx,
-    estimatedValue: Number(ctx.estimatedValue) || 0,
-    comparables,
-  });
-
-  const updateCtx = (key: string, value: string) => setCtx((p) => ({ ...p, [key]: value }));
-
-  /* ─── Handlers ─── */
-
-  const handleGenerateAll = useCallback(async () => {
-    setIsGenerating(true);
-    setStreamOutput("");
-    streamRef.current = "";
-    setStep(1);
-
-    streamReportContent(
-      { mode: "full_report", context: buildContext() },
-      (delta) => {
-        streamRef.current += delta;
-        setStreamOutput(streamRef.current);
-      },
-      () => {
-        setIsGenerating(false);
-        setStep(2);
-        toast.success("تم توليد مسودة التقرير الكاملة");
-      },
-      (err) => {
-        setIsGenerating(false);
-        setStep(0);
-        toast.error(err);
-      }
-    );
-  }, [ctx]);
-
-  const handleGenerateStructured = useCallback(async () => {
-    setIsGenerating(true);
-    setStep(1);
-    try {
-      const keys = GENERABLE_SECTIONS.map((s) => s.key);
-      const sections = await generateStructuredSections(buildContext(), keys);
-      setGeneratedSections(sections);
-      setIsGenerating(false);
-      setStep(2);
-      toast.success("تم توليد جميع الأقسام بنجاح");
-    } catch (err: any) {
-      setIsGenerating(false);
-      setStep(0);
-      toast.error(err.message || "خطأ في التوليد");
+  /* ─── Step 0: Collect Data ─── */
+  const handleCollectData = useCallback(async () => {
+    if (!requestId.trim()) {
+      toast.error("يرجى إدخال معرّف الطلب");
+      return;
     }
-  }, [ctx]);
+    setIsLoadingData(true);
+    setDataError(null);
 
-  const handleRegenerateSection = useCallback(async (sectionKey: string) => {
-    setIsGenerating(true);
     try {
-      const sections = await generateStructuredSections(buildContext(), [sectionKey]);
-      setGeneratedSections((prev) => ({ ...prev, ...sections }));
-      toast.success("تم إعادة توليد القسم");
+      const { data, error } = await supabase.functions.invoke("generate-report", {
+        body: { request_id: requestId.trim(), mode: "collect_data" },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      setAggregatedData(data);
+      toast.success("تم جمع جميع البيانات المرتبطة بالطلب");
     } catch (err: any) {
-      toast.error(err.message);
+      setDataError(err.message || "خطأ في جمع البيانات");
+      toast.error(err.message || "خطأ في جمع البيانات");
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, [requestId]);
+
+  /* ─── Step 1: Generate Draft ─── */
+  const handleGenerateDraft = useCallback(async () => {
+    setIsGenerating(true);
+    setStep(1);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-report", {
+        body: { request_id: requestId.trim(), mode: "generate_draft" },
+      });
+
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
+
+      if (data?.success && data.report_draft) {
+        setReportDraft(data.report_draft);
+        setStep(2);
+        toast.success("تم توليد مسودة التقرير بنجاح");
+      } else if (data?.raw_content) {
+        toast.warning("تم التوليد لكن لم يتم تحليل الاستجابة كـ JSON");
+        setStep(2);
+      } else {
+        throw new Error("لم يتم توليد التقرير");
+      }
+    } catch (err: any) {
+      setStep(0);
+      toast.error(err.message || "خطأ في توليد التقرير");
     } finally {
       setIsGenerating(false);
     }
-  }, [ctx]);
+  }, [requestId]);
 
+  /* ─── Handlers ─── */
   const handleSaveEdit = (sectionKey: string) => {
-    setGeneratedSections((prev) => ({ ...prev, [`${sectionKey}_ar`]: editBuffer }));
+    if (reportDraft?.sections?.[sectionKey]) {
+      setReportDraft({
+        ...reportDraft,
+        sections: {
+          ...reportDraft.sections,
+          [sectionKey]: {
+            ...reportDraft.sections[sectionKey],
+            content_ar: editBuffer,
+          },
+        },
+      });
+    }
     setEditingSection(null);
     setEditBuffer("");
     toast.success("تم حفظ التعديل");
   };
 
   const handleReviewAll = useCallback(() => {
+    if (!reportDraft?.sections) return;
     setIsReviewing(true);
     setReviewOutput("");
     reviewRef.current = "";
     setStep(3);
 
-    const allText = Object.entries(generatedSections)
-      .filter(([k]) => k.endsWith("_ar"))
-      .map(([k, v]) => `## ${k.replace("_ar", "")}\n${v}`)
+    const allText = Object.entries(reportDraft.sections)
+      .map(([key, sec]) => `## ${sec.title_ar || key}\n${sec.content_ar || ""}`)
       .join("\n\n");
 
+    const context = {
+      assetType: aggregatedData?.request?.property_type || "عقاري",
+      assetDescription: aggregatedData?.request?.property_description_ar || "",
+      assetCity: aggregatedData?.request?.property_city_ar || "",
+    };
+
     streamReportContent(
-      { mode: "review", existingText: allText, context: buildContext() },
-      (delta) => {
-        reviewRef.current += delta;
-        setReviewOutput(reviewRef.current);
-      },
-      () => {
-        setIsReviewing(false);
-        toast.success("تم فحص الجودة");
-      },
-      (err) => {
-        setIsReviewing(false);
-        toast.error(err);
-      }
+      { mode: "review", existingText: allText, context },
+      (delta) => { reviewRef.current += delta; setReviewOutput(reviewRef.current); },
+      () => { setIsReviewing(false); toast.success("تم فحص الجودة"); },
+      (err) => { setIsReviewing(false); toast.error(err); }
     );
-  }, [generatedSections, ctx]);
+  }, [reportDraft, aggregatedData]);
 
   const handleCreateDraft = () => {
     toast.success("تم إنشاء مسودة التقرير بنجاح");
@@ -303,9 +282,26 @@ export default function AIReportGenerationPage() {
     toast.success("تم النسخ");
   };
 
-  const sectionCount = Object.keys(generatedSections).filter((k) => k.endsWith("_ar")).length;
-  const hasStructuredData = sectionCount > 0;
-  const hasStreamData = streamOutput.length > 0;
+  const sectionEntries = reportDraft?.sections ? Object.entries(reportDraft.sections) : [];
+  const sectionCount = sectionEntries.length;
+
+  // Data completeness indicators
+  const dataChecks = aggregatedData ? [
+    { label: "بيانات الطلب", ok: !!aggregatedData.request?.id },
+    { label: "بيانات العميل", ok: !!aggregatedData.client?.profile || !!aggregatedData.client?.record },
+    { label: "المهمة", ok: !!aggregatedData.assignment?.id },
+    { label: "وصف العقار", ok: !!aggregatedData.subject },
+    { label: "المعاينة", ok: !!aggregatedData.inspection?.id },
+    { label: "تحليل المعاينة", ok: !!aggregatedData.inspection_analysis },
+    { label: "المقارنات", ok: (aggregatedData.comparables?.length || 0) > 0 },
+    { label: "المستندات", ok: (aggregatedData.document_extractions?.length || 0) > 0 },
+    { label: "التسوية", ok: !!aggregatedData.reconciliation },
+    { label: "المنشأة", ok: !!aggregatedData.organization },
+  ] : [];
+
+  const completeness = dataChecks.length > 0
+    ? Math.round((dataChecks.filter(d => d.ok).length / dataChecks.length) * 100)
+    : 0;
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -317,13 +313,15 @@ export default function AIReportGenerationPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">نظام توليد التقارير الآلي</h1>
-            <p className="text-sm text-muted-foreground">رقيم يُنشئ مسودة تقرير تقييم كاملة من البيانات المتاحة</p>
+            <p className="text-sm text-muted-foreground">رقيم يُنشئ مسودة تقرير تقييم كاملة وفق IVS 2025 ومعايير تقييم</p>
           </div>
         </div>
-        <Badge variant="outline" className="gap-1 text-xs">
-          <FileText className="w-3 h-3" />
-          {ctx.referenceNumber}
-        </Badge>
+        {aggregatedData?.assignment?.reference_number && (
+          <Badge variant="outline" className="gap-1 text-xs">
+            <FileText className="w-3 h-3" />
+            {aggregatedData.assignment.reference_number}
+          </Badge>
+        )}
       </div>
 
       {/* ─── Pipeline Stepper ─── */}
@@ -340,22 +338,14 @@ export default function AIReportGenerationPage() {
                     className="flex flex-col items-center gap-1 cursor-pointer"
                     onClick={() => { if (done) setStep(idx as PipelineStep); }}
                   >
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
-                        done
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : active
-                          ? "border-primary text-primary bg-primary/10 shadow-md shadow-primary/20"
-                          : "border-muted-foreground/20 text-muted-foreground/40 bg-muted/20"
-                      }`}
-                    >
-                      {done ? (
-                        <CheckCircle2 className="w-4.5 h-4.5" />
-                      ) : active && isGenerating ? (
-                        <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                      ) : (
-                        <Icon className="w-4.5 h-4.5" />
-                      )}
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
+                      done ? "bg-primary border-primary text-primary-foreground"
+                        : active ? "border-primary text-primary bg-primary/10 shadow-md shadow-primary/20"
+                        : "border-muted-foreground/20 text-muted-foreground/40 bg-muted/20"
+                    }`}>
+                      {done ? <CheckCircle2 className="w-4.5 h-4.5" />
+                        : (active && (isGenerating || isLoadingData)) ? <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                        : <Icon className="w-4.5 h-4.5" />}
                     </div>
                     <span className={`text-[10px] font-medium whitespace-nowrap ${done ? "text-primary" : active ? "text-primary font-bold" : "text-muted-foreground/40"}`}>
                       {ps.label}
@@ -373,269 +363,433 @@ export default function AIReportGenerationPage() {
         </CardContent>
       </Card>
 
-      {/* ─── Step 0: Data Collection ─── */}
+      {/* ═══════════════════════════════════════════ */}
+      {/* Step 0: Data Collection via request_id     */}
+      {/* ═══════════════════════════════════════════ */}
       {step === 0 && (
         <div className="space-y-4">
+          {/* Request ID Input */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <Database className="w-4 h-4 text-primary" />
-                بيانات التقييم
+                <Link2 className="w-4 h-4 text-primary" />
+                ربط الطلب
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {[
-                  { key: "clientName", label: "العميل" },
-                  { key: "clientIdNumber", label: "رقم الهوية / السجل" },
-                  { key: "purposeOfValuation", label: "غرض التقييم" },
-                  { key: "assetDescription", label: "وصف العقار", span: 2 },
-                  { key: "assetLocation", label: "العنوان" },
-                  { key: "assetCity", label: "المدينة" },
-                  { key: "propertyType", label: "نوع العقار" },
-                  { key: "ownershipType", label: "نوع الملكية" },
-                  { key: "landArea", label: "مساحة الأرض (م²)" },
-                  { key: "buildingArea", label: "مساحة البناء (م²)" },
-                  { key: "estimatedValue", label: "القيمة المقدرة (ر.س)" },
-                  { key: "inspectionDate", label: "تاريخ المعاينة" },
-                  { key: "valuationDate", label: "تاريخ التقييم" },
-                  { key: "referenceNumber", label: "الرقم المرجعي" },
-                ].map(({ key, label, span }) => (
-                  <div key={key} className={`space-y-1.5 ${span ? `md:col-span-${span}` : ""}`}>
-                    <Label className="text-xs text-muted-foreground">{label}</Label>
-                    <Input
-                      value={(ctx as any)[key]}
-                      onChange={(e) => updateCtx(key, e.target.value)}
-                      className="text-sm"
-                    />
-                  </div>
-                ))}
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">نوع الأصل</Label>
-                  <Select value={ctx.assetType} onValueChange={(v) => updateCtx("assetType", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="real_estate">عقاري</SelectItem>
-                      <SelectItem value="equipment">آلات ومعدات</SelectItem>
-                      <SelectItem value="vehicle">مركبات</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3 items-end">
+                <div className="flex-1 space-y-1.5">
+                  <Label className="text-xs text-muted-foreground">معرّف الطلب (Request ID)</Label>
+                  <Input
+                    value={requestId}
+                    onChange={(e) => setRequestId(e.target.value)}
+                    placeholder="أدخل معرّف الطلب (UUID)..."
+                    className="text-sm font-mono"
+                    dir="ltr"
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">المنهجية</Label>
-                  <Select value={ctx.methodology} onValueChange={(v) => updateCtx("methodology", v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="market_comparison">أسلوب المقارنة</SelectItem>
-                      <SelectItem value="income">أسلوب الدخل</SelectItem>
-                      <SelectItem value="cost">أسلوب التكلفة</SelectItem>
-                      <SelectItem value="combined">مختلط</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="md:col-span-3 space-y-1.5">
-                  <Label className="text-xs text-muted-foreground">ملخص المعاينة الميدانية</Label>
-                  <Textarea value={ctx.inspectionSummary} onChange={(e) => updateCtx("inspectionSummary", e.target.value)} rows={2} />
-                </div>
+                <Button
+                  onClick={handleCollectData}
+                  disabled={isLoadingData || !requestId.trim()}
+                  className="gap-2"
+                >
+                  {isLoadingData ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  جمع البيانات
+                </Button>
               </div>
+
+              {dataError && (
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  {dataError}
+                </div>
+              )}
             </CardContent>
           </Card>
 
-          {/* Comparables Card */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Layers className="w-4 h-4 text-primary" />
-                المقارنات السوقية ({comparables.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {comparables.map((c, i) => (
-                  <div key={i} className="flex items-center justify-between p-2.5 rounded-lg bg-muted/40 text-sm">
-                    <div>
-                      <span className="font-medium">{c.description}</span>
-                      <span className="text-xs text-muted-foreground mr-2">({c.source})</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs font-mono">
-                      {c.value.toLocaleString()} ر.س
+          {/* Aggregated Data Summary */}
+          {aggregatedData && (
+            <>
+              {/* Completeness bar */}
+              <Card>
+                <CardContent className="py-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium">اكتمال البيانات</span>
+                    <Badge variant={completeness >= 80 ? "default" : completeness >= 50 ? "secondary" : "destructive"} className="text-xs">
+                      {completeness}%
                     </Badge>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+                  <div className="w-full h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${completeness >= 80 ? "bg-primary" : completeness >= 50 ? "bg-yellow-500" : "bg-destructive"}`}
+                      style={{ width: `${completeness}%` }}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {dataChecks.map((check) => (
+                      <Badge key={check.label} variant={check.ok ? "default" : "outline"} className={`text-[10px] gap-1 ${check.ok ? "" : "text-muted-foreground"}`}>
+                        {check.ok ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {check.label}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
 
-          {/* Generate Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center pt-2">
-            <Button size="lg" className="gap-2 min-w-[220px]" onClick={handleGenerateStructured}>
-              <Wand2 className="w-4 h-4" />
-              توليد أقسام مهيكلة
-            </Button>
-            <span className="text-xs text-muted-foreground">أو</span>
-            <Button size="lg" variant="outline" className="gap-2 min-w-[220px]" onClick={handleGenerateAll}>
-              <FileText className="w-4 h-4" />
-              توليد تقرير نصي كامل
-            </Button>
-          </div>
+              {/* Data Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Request Info */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <FileText className="w-4 h-4 text-primary" />
+                      بيانات الطلب
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    <InfoRow label="النوع" value={aggregatedData.request?.property_type} />
+                    <InfoRow label="الغرض" value={aggregatedData.request?.purpose} />
+                    <InfoRow label="أساس القيمة" value={aggregatedData.request?.basis_of_value} />
+                    <InfoRow label="الحالة" value={aggregatedData.request?.status} />
+                    <InfoRow label="مساحة الأرض" value={aggregatedData.request?.land_area ? `${aggregatedData.request.land_area} م²` : null} />
+                    <InfoRow label="مساحة البناء" value={aggregatedData.request?.building_area ? `${aggregatedData.request.building_area} م²` : null} />
+                  </CardContent>
+                </Card>
+
+                {/* Client Info */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <User className="w-4 h-4 text-primary" />
+                      بيانات العميل
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    <InfoRow label="الاسم" value={aggregatedData.client?.record?.name_ar || aggregatedData.client?.profile?.full_name_ar} />
+                    <InfoRow label="النوع" value={aggregatedData.client?.record?.client_type} />
+                    <InfoRow label="الهوية" value={aggregatedData.client?.record?.id_number} />
+                    <InfoRow label="الهاتف" value={aggregatedData.client?.record?.phone || aggregatedData.client?.profile?.phone} />
+                    <InfoRow label="البريد" value={aggregatedData.client?.record?.email || aggregatedData.client?.profile?.email} />
+                  </CardContent>
+                </Card>
+
+                {/* Property Subject */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-primary" />
+                      العقار
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    {aggregatedData.subject ? (
+                      <>
+                        <InfoRow label="الصك" value={aggregatedData.subject.title_deed_number} />
+                        <InfoRow label="المدينة" value={aggregatedData.subject.city_ar} />
+                        <InfoRow label="الحي" value={aggregatedData.subject.district_ar} />
+                        <InfoRow label="المساحة" value={aggregatedData.subject.land_area ? `${aggregatedData.subject.land_area} م²` : null} />
+                        <InfoRow label="الاستخدام" value={aggregatedData.subject.current_use_ar} />
+                        <InfoRow label="الحالة" value={aggregatedData.subject.building_condition} />
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">لا توجد بيانات عقار مسجّلة</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Inspection */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <ClipboardCheck className="w-4 h-4 text-primary" />
+                      المعاينة الميدانية
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    {aggregatedData.inspection ? (
+                      <>
+                        <InfoRow label="التاريخ" value={aggregatedData.inspection.inspection_date} />
+                        <InfoRow label="الحالة" value={aggregatedData.inspection.status} />
+                        <InfoRow label="GPS" value={aggregatedData.inspection.gps_verified ? "✓ تم التحقق" : "✗"} />
+                        {aggregatedData.inspection_analysis && (
+                          <>
+                            <InfoRow label="تقييم الحالة" value={aggregatedData.inspection_analysis.condition_rating} />
+                            <InfoRow label="درجة الجودة" value={aggregatedData.inspection_analysis.quality_score?.toString()} />
+                            <InfoRow label="الإهلاك المادي" value={aggregatedData.inspection_analysis.physical_depreciation_pct ? `${aggregatedData.inspection_analysis.physical_depreciation_pct}%` : null} />
+                          </>
+                        )}
+                        <InfoRow label="الصور" value={`${aggregatedData.inspection_photos?.length || 0} صورة`} />
+                      </>
+                    ) : (
+                      <p className="text-muted-foreground">لم تتم المعاينة بعد</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Comparables */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4 text-primary" />
+                      المقارنات ({aggregatedData.comparables?.length || 0})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1.5">
+                    {aggregatedData.comparables?.length ? (
+                      aggregatedData.comparables.slice(0, 4).map((comp: any, i: number) => (
+                        <div key={i} className="flex justify-between p-1.5 rounded bg-muted/40">
+                          <span>{comp.comparable?.district_ar || comp.comparable?.city_ar || `مقارنة ${i + 1}`}</span>
+                          <span className="font-mono text-primary">
+                            {comp.comparable?.price ? `${Number(comp.comparable.price).toLocaleString()} ر.س` : "—"}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground">لا توجد مقارنات مسجّلة</p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Reconciliation & Organization */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                      <Scale className="w-4 h-4 text-primary" />
+                      التسوية والمنشأة
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-xs space-y-1">
+                    {aggregatedData.reconciliation ? (
+                      <>
+                        <InfoRow label="القيمة النهائية" value={`${Number(aggregatedData.reconciliation.final_value).toLocaleString()} ر.س`} />
+                        <InfoRow label="مستوى الثقة" value={aggregatedData.reconciliation.confidence_level} />
+                      </>
+                    ) : (
+                      <InfoRow label="التسوية" value="لم تتم بعد" />
+                    )}
+                    <Separator className="my-1.5" />
+                    <InfoRow label="المنشأة" value={aggregatedData.organization?.name_ar} />
+                    <InfoRow label="المقيّم" value={aggregatedData.valuer?.full_name_ar} />
+                    <InfoRow label="المراجع" value={aggregatedData.reviewer?.full_name_ar} />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Generate Button */}
+              <div className="flex justify-center pt-2">
+                <Button size="lg" className="gap-2 min-w-[280px]" onClick={handleGenerateDraft}>
+                  <Wand2 className="w-5 h-5" />
+                  توليد مسودة التقرير الكاملة
+                </Button>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* ─── Step 1: Generating ─── */}
+      {/* ═══════════════════════════════════════════ */}
+      {/* Step 1: Generating                         */}
+      {/* ═══════════════════════════════════════════ */}
       {step === 1 && (
         <Card className="border-primary/20">
           <CardContent className="py-12 text-center space-y-4">
             <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
             <div>
               <h3 className="text-lg font-bold text-foreground">جارٍ توليد التقرير...</h3>
-              <p className="text-sm text-muted-foreground mt-1">رقيم يحلل البيانات ويكتب أقسام التقرير وفقاً لمعايير IVS 2025</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                رقيم يحلل جميع البيانات ويكتب 20+ قسماً وفقاً لمعايير IVS 2025 وتقييم
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">قد يستغرق هذا 30-60 ثانية</p>
             </div>
-            {streamOutput && (
-              <div className="mt-6 text-right">
-                <div className="prose prose-sm dark:prose-invert max-w-none bg-muted/30 rounded-lg p-4 max-h-[300px] overflow-y-auto">
-                  <ReactMarkdown>{streamOutput}</ReactMarkdown>
-                </div>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}
 
-      {/* ─── Step 2: Section Review ─── */}
-      {step === 2 && (
+      {/* ═══════════════════════════════════════════ */}
+      {/* Step 2: Section Review                     */}
+      {/* ═══════════════════════════════════════════ */}
+      {step === 2 && reportDraft && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
               <Layers className="w-5 h-5 text-primary" />
               أقسام التقرير المُولّدة
-              {hasStructuredData && (
-                <Badge variant="secondary" className="text-[10px]">{sectionCount} قسم</Badge>
-              )}
+              <Badge variant="secondary" className="text-[10px]">{sectionCount} قسم</Badge>
             </h2>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setStep(0)} className="gap-1">
-                <ArrowRight className="w-3 h-3" />
-                رجوع
+                <ArrowRight className="w-3 h-3" /> رجوع
               </Button>
-              <Button size="sm" onClick={() => hasStructuredData ? handleReviewAll() : setStep(3)} className="gap-1">
-                فحص الجودة
-                <ArrowLeft className="w-3 h-3" />
+              <Button size="sm" onClick={handleReviewAll} className="gap-1">
+                فحص الجودة <ArrowLeft className="w-3 h-3" />
               </Button>
             </div>
           </div>
 
-          {/* Structured sections */}
-          {hasStructuredData && (
-            <div className="space-y-2">
-              {GENERABLE_SECTIONS.map((sec) => {
-                const arKey = `${sec.key}_ar`;
-                const content = generatedSections[arKey];
-                const isExpanded = expandedSection === sec.key;
-                const isEditing = editingSection === sec.key;
-
-                return (
-                  <Card key={sec.key} className={`transition-all ${content ? "" : "opacity-50"}`}>
-                    <div
-                      className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
-                      onClick={() => setExpandedSection(isExpanded ? null : sec.key)}
-                    >
-                      <div className="flex items-center gap-2">
-                        {content ? (
-                          <CheckCircle2 className="w-4 h-4 text-primary" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4 text-muted-foreground" />
-                        )}
-                        <span className="font-medium text-sm">{sec.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {content && (
-                          <Badge variant="secondary" className="text-[9px]">
-                            {content.length} حرف
-                          </Badge>
-                        )}
-                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </div>
-                    </div>
-                    {isExpanded && content && (
-                      <CardContent className="pt-0 space-y-3">
-                        <Separator />
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <Textarea
-                              value={editBuffer}
-                              onChange={(e) => setEditBuffer(e.target.value)}
-                              rows={8}
-                              className="text-sm"
-                            />
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="outline" size="sm" onClick={() => setEditingSection(null)}>إلغاء</Button>
-                              <Button size="sm" onClick={() => handleSaveEdit(sec.key)}>حفظ</Button>
-                            </div>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="prose prose-sm dark:prose-invert max-w-none text-right bg-muted/20 rounded-lg p-3 max-h-[250px] overflow-y-auto">
-                              <ReactMarkdown>{content}</ReactMarkdown>
-                            </div>
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleCopy(content)}>
-                                <Copy className="w-3 h-3" />
-                                نسخ
-                              </Button>
-                              <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditingSection(sec.key); setEditBuffer(content); }}>
-                                <Edit3 className="w-3 h-3" />
-                                تعديل
-                              </Button>
-                              <Button variant="ghost" size="sm" className="gap-1 text-xs" disabled={isGenerating} onClick={() => handleRegenerateSection(sec.key)}>
-                                <RefreshCw className={`w-3 h-3 ${isGenerating ? "animate-spin" : ""}`} />
-                                إعادة توليد
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </CardContent>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
+          {/* Metadata summary */}
+          {reportDraft.metadata && (
+            <Card className="bg-muted/30">
+              <CardContent className="py-3">
+                <div className="flex flex-wrap gap-4 text-xs">
+                  {reportDraft.metadata.data_completeness_pct != null && (
+                    <span>اكتمال البيانات: <strong>{reportDraft.metadata.data_completeness_pct}%</strong></span>
+                  )}
+                  {reportDraft.metadata.approaches_used?.length ? (
+                    <span>الأساليب: <strong>{reportDraft.metadata.approaches_used.join("، ")}</strong></span>
+                  ) : null}
+                  {reportDraft.metadata.standards_referenced?.length ? (
+                    <span>المعايير: <strong>{reportDraft.metadata.standards_referenced.join("، ")}</strong></span>
+                  ) : null}
+                </div>
+                {reportDraft.metadata.missing_data_items?.length ? (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {reportDraft.metadata.missing_data_items.map((item, i) => (
+                      <Badge key={i} variant="destructive" className="text-[9px]">{item}</Badge>
+                    ))}
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
           )}
 
-          {/* Stream output (non-structured) */}
-          {!hasStructuredData && hasStreamData && (
-            <Card>
-              <CardContent className="pt-4">
-                <div className="prose prose-sm dark:prose-invert max-w-none text-right bg-muted/20 rounded-lg p-4 max-h-[500px] overflow-y-auto">
-                  <ReactMarkdown>{streamOutput}</ReactMarkdown>
-                </div>
-                <div className="flex gap-2 justify-end mt-3">
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => handleCopy(streamOutput)}>
-                    <Copy className="w-3 h-3" />
-                    نسخ الكل
-                  </Button>
+          {/* Final Value Card */}
+          {reportDraft.final_value && (
+            <Card className="border-primary/30 bg-primary/5">
+              <CardContent className="py-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">القيمة النهائية المستنتجة</p>
+                    <p className="text-2xl font-bold text-primary mt-1">
+                      {reportDraft.final_value.amount?.toLocaleString()} {reportDraft.final_value.currency || "ر.س"}
+                    </p>
+                    {reportDraft.final_value.text_ar && (
+                      <p className="text-xs text-muted-foreground mt-1">{reportDraft.final_value.text_ar}</p>
+                    )}
+                  </div>
+                  <div className="text-left text-xs space-y-1">
+                    {reportDraft.final_value.basis_of_value_ar && (
+                      <p>أساس القيمة: <strong>{reportDraft.final_value.basis_of_value_ar}</strong></p>
+                    )}
+                    {reportDraft.final_value.confidence_level && (
+                      <Badge variant={reportDraft.final_value.confidence_level === "high" ? "default" : "secondary"} className="text-[9px]">
+                        ثقة: {reportDraft.final_value.confidence_level === "high" ? "عالية" : reportDraft.final_value.confidence_level === "medium" ? "متوسطة" : "منخفضة"}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
+
+          {/* Sections List */}
+          <div className="space-y-2">
+            {sectionEntries.map(([key, sec]) => {
+              const isExpanded = expandedSection === key;
+              const isEditing = editingSection === key;
+
+              return (
+                <Card key={key} className="transition-all">
+                  <div
+                    className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
+                    onClick={() => setExpandedSection(isExpanded ? null : key)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span className="font-medium text-sm">{sec.title_ar || key}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {sec.content_ar && (
+                        <Badge variant="secondary" className="text-[9px]">
+                          {sec.content_ar.length} حرف
+                        </Badge>
+                      )}
+                      {sec.tables?.length ? (
+                        <Badge variant="outline" className="text-[9px]">{sec.tables.length} جدول</Badge>
+                      ) : null}
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+                  </div>
+                  {isExpanded && (
+                    <CardContent className="pt-0 space-y-3">
+                      <Separator />
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={editBuffer}
+                            onChange={(e) => setEditBuffer(e.target.value)}
+                            rows={10}
+                            className="text-sm"
+                          />
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => setEditingSection(null)}>إلغاء</Button>
+                            <Button size="sm" onClick={() => handleSaveEdit(key)}>حفظ</Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="prose prose-sm dark:prose-invert max-w-none text-right bg-muted/20 rounded-lg p-3 max-h-[350px] overflow-y-auto">
+                            <ReactMarkdown>{sec.content_ar || "لا يوجد محتوى"}</ReactMarkdown>
+                          </div>
+
+                          {/* Tables */}
+                          {sec.tables?.map((tbl, tIdx) => (
+                            <div key={tIdx} className="overflow-x-auto">
+                              {tbl.caption_ar && <p className="text-xs font-bold mb-1">{tbl.caption_ar}</p>}
+                              <table className="w-full text-xs border border-border rounded-lg">
+                                <thead>
+                                  <tr className="bg-muted/50">
+                                    {tbl.headers?.map((h, hIdx) => (
+                                      <th key={hIdx} className="p-2 text-right border-b border-border">{h}</th>
+                                    ))}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {tbl.rows?.map((row, rIdx) => (
+                                    <tr key={rIdx} className="hover:bg-muted/20">
+                                      {row.map((cell, cIdx) => (
+                                        <td key={cIdx} className="p-2 border-b border-border/50">{cell}</td>
+                                      ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ))}
+
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleCopy(sec.content_ar || "")}>
+                              <Copy className="w-3 h-3" /> نسخ
+                            </Button>
+                            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditingSection(key); setEditBuffer(sec.content_ar || ""); }}>
+                              <Edit3 className="w-3 h-3" /> تعديل
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </CardContent>
+                  )}
+                </Card>
+              );
+            })}
+          </div>
         </div>
       )}
 
-      {/* ─── Step 3: Quality Review ─── */}
+      {/* ═══════════════════════════════════════════ */}
+      {/* Step 3: Quality Review                     */}
+      {/* ═══════════════════════════════════════════ */}
       {step === 3 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <Eye className="w-5 h-5 text-primary" />
-              فحص الجودة والامتثال
+              <Eye className="w-5 h-5 text-primary" /> فحص الجودة والامتثال
             </h2>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setStep(2)} className="gap-1">
-                <ArrowRight className="w-3 h-3" />
-                رجوع
+                <ArrowRight className="w-3 h-3" /> رجوع
               </Button>
               <Button size="sm" onClick={() => setStep(4)} className="gap-1" disabled={isReviewing}>
-                التالي
-                <ArrowLeft className="w-3 h-3" />
+                التالي <ArrowLeft className="w-3 h-3" />
               </Button>
             </div>
           </div>
@@ -644,10 +798,9 @@ export default function AIReportGenerationPage() {
             <Card className="border-dashed">
               <CardContent className="py-8 text-center space-y-3">
                 <Eye className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-                <p className="text-sm text-muted-foreground">رقيم سيراجع جميع الأقسام ويقدّم تقرير جودة شامل</p>
+                <p className="text-sm text-muted-foreground">رقيم سيراجع جميع الأقسام ويفحص الامتثال لمعايير IVS 2025</p>
                 <Button className="gap-2" onClick={handleReviewAll}>
-                  <Sparkles className="w-4 h-4" />
-                  بدء فحص الجودة
+                  <Sparkles className="w-4 h-4" /> بدء فحص الجودة
                 </Button>
               </CardContent>
             </Card>
@@ -657,14 +810,8 @@ export default function AIReportGenerationPage() {
             <Card className="border-primary/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" />
-                  تقرير الجودة
-                  {isReviewing && (
-                    <Badge variant="secondary" className="gap-1 text-[10px]">
-                      <Loader2 className="w-3 h-3 animate-spin" />
-                      جارٍ المراجعة
-                    </Badge>
-                  )}
+                  <Sparkles className="w-4 h-4 text-primary" /> تقرير الجودة
+                  {isReviewing && <Badge variant="secondary" className="gap-1 text-[10px]"><Loader2 className="w-3 h-3 animate-spin" /> جارٍ المراجعة</Badge>}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -677,35 +824,33 @@ export default function AIReportGenerationPage() {
         </div>
       )}
 
-      {/* ─── Step 4: Preview ─── */}
+      {/* ═══════════════════════════════════════════ */}
+      {/* Step 4: Preview                            */}
+      {/* ═══════════════════════════════════════════ */}
       {step === 4 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold flex items-center gap-2">
-              <FileCheck className="w-5 h-5 text-primary" />
-              معاينة التقرير
+              <FileCheck className="w-5 h-5 text-primary" /> معاينة التقرير
             </h2>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setStep(3)} className="gap-1">
-                <ArrowRight className="w-3 h-3" />
-                رجوع
+                <ArrowRight className="w-3 h-3" /> رجوع
               </Button>
               <Button size="sm" onClick={() => setStep(5)} className="gap-1">
-                إنشاء المسودة
-                <ArrowLeft className="w-3 h-3" />
+                إنشاء المسودة <ArrowLeft className="w-3 h-3" />
               </Button>
             </div>
           </div>
 
           <Card>
             <CardContent className="pt-4 space-y-4">
-              {/* Quick summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "العميل", value: ctx.clientName },
-                  { label: "العقار", value: ctx.propertyType + " — " + ctx.assetCity },
-                  { label: "المنهجية", value: ctx.methodology === "market_comparison" ? "أسلوب المقارنة" : ctx.methodology === "income" ? "أسلوب الدخل" : ctx.methodology === "cost" ? "أسلوب التكلفة" : "مختلط" },
-                  { label: "القيمة", value: Number(ctx.estimatedValue).toLocaleString() + " ر.س" },
+                  { label: "العميل", value: aggregatedData?.client?.record?.name_ar || aggregatedData?.client?.profile?.full_name_ar || "—" },
+                  { label: "العقار", value: `${aggregatedData?.request?.property_type || "—"} — ${aggregatedData?.request?.property_city_ar || ""}` },
+                  { label: "المرجع", value: reportDraft?.reference_number || aggregatedData?.assignment?.reference_number || "—" },
+                  { label: "القيمة", value: reportDraft?.final_value?.amount ? `${reportDraft.final_value.amount.toLocaleString()} ر.س` : "—" },
                 ].map((item) => (
                   <div key={item.label} className="p-3 rounded-lg bg-muted/40">
                     <p className="text-[10px] text-muted-foreground">{item.label}</p>
@@ -716,74 +861,75 @@ export default function AIReportGenerationPage() {
 
               <Separator />
 
-              {/* Sections preview */}
               <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {hasStructuredData ? (
-                  GENERABLE_SECTIONS.filter((s) => generatedSections[`${s.key}_ar`]).map((sec) => (
-                    <div key={sec.key} className="p-3 rounded-lg bg-muted/20">
-                      <h4 className="text-sm font-bold text-primary mb-1">{sec.label}</h4>
-                      <p className="text-xs text-muted-foreground line-clamp-3">
-                        {generatedSections[`${sec.key}_ar`]?.substring(0, 200)}...
-                      </p>
-                    </div>
-                  ))
-                ) : hasStreamData ? (
-                  <div className="prose prose-sm dark:prose-invert max-w-none text-right">
-                    <ReactMarkdown>{streamOutput.substring(0, 1500) + "\n\n..."}</ReactMarkdown>
+                {sectionEntries.map(([key, sec]) => (
+                  <div key={key} className="p-3 rounded-lg bg-muted/20">
+                    <h4 className="text-sm font-bold text-primary mb-1">{sec.title_ar || key}</h4>
+                    <p className="text-xs text-muted-foreground line-clamp-3">{sec.content_ar?.substring(0, 200)}...</p>
                   </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground text-center py-4">لا توجد بيانات للمعاينة</p>
-                )}
+                ))}
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* ─── Step 5: Export ─── */}
+      {/* ═══════════════════════════════════════════ */}
+      {/* Step 5: Export                             */}
+      {/* ═══════════════════════════════════════════ */}
       {step === 5 && (
-        <div className="space-y-4">
-          <Card className="border-primary/20">
-            <CardContent className="py-10 text-center space-y-5">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <CheckCircle2 className="w-8 h-8 text-primary" />
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-foreground">التقرير جاهز للإنشاء</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  تم توليد ومراجعة جميع أقسام التقرير. يمكنك الآن إنشاء مسودة رسمية في نظام التقارير.
-                </p>
-              </div>
+        <Card className="border-primary/20">
+          <CardContent className="py-10 text-center space-y-5">
+            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+              <CheckCircle2 className="w-8 h-8 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-foreground">التقرير جاهز للإنشاء</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                تم توليد ومراجعة جميع أقسام التقرير وفق معايير IVS 2025 ومعايير الهيئة السعودية للمقيمين المعتمدين
+              </p>
+            </div>
 
-              <div className="grid grid-cols-3 gap-3 max-w-md mx-auto text-center">
-                <div className="p-3 rounded-lg bg-muted/40">
-                  <p className="text-2xl font-bold text-primary">{sectionCount || "—"}</p>
-                  <p className="text-[10px] text-muted-foreground">أقسام مُولّدة</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/40">
-                  <p className="text-2xl font-bold text-primary">{comparables.length}</p>
-                  <p className="text-[10px] text-muted-foreground">مقارنات سوقية</p>
-                </div>
-                <div className="p-3 rounded-lg bg-muted/40">
-                  <p className="text-2xl font-bold text-primary">IVS</p>
-                  <p className="text-[10px] text-muted-foreground">معايير 2025</p>
-                </div>
+            <div className="grid grid-cols-4 gap-3 max-w-lg mx-auto text-center">
+              <div className="p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold text-primary">{sectionCount}</p>
+                <p className="text-[10px] text-muted-foreground">أقسام مُولّدة</p>
               </div>
+              <div className="p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold text-primary">{aggregatedData?.comparables?.length || 0}</p>
+                <p className="text-[10px] text-muted-foreground">مقارنات</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold text-primary">{completeness}%</p>
+                <p className="text-[10px] text-muted-foreground">اكتمال</p>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/40">
+                <p className="text-2xl font-bold text-primary">IVS</p>
+                <p className="text-[10px] text-muted-foreground">2025</p>
+              </div>
+            </div>
 
-              <div className="flex gap-3 justify-center pt-2">
-                <Button variant="outline" className="gap-2" onClick={() => setStep(2)}>
-                  <Edit3 className="w-4 h-4" />
-                  تعديل الأقسام
-                </Button>
-                <Button size="lg" className="gap-2" onClick={handleCreateDraft}>
-                  <FileText className="w-4 h-4" />
-                  إنشاء مسودة التقرير
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            <div className="flex gap-3 justify-center pt-2">
+              <Button variant="outline" className="gap-2" onClick={() => setStep(2)}>
+                <Edit3 className="w-4 h-4" /> تعديل الأقسام
+              </Button>
+              <Button size="lg" className="gap-2" onClick={handleCreateDraft}>
+                <FileText className="w-4 h-4" /> إنشاء مسودة التقرير
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
+    </div>
+  );
+}
+
+/* ─── Helper Component ─── */
+function InfoRow({ label, value }: { label: string; value?: string | null }) {
+  return (
+    <div className="flex justify-between">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{value || "—"}</span>
     </div>
   );
 }
