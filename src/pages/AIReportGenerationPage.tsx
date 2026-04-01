@@ -15,6 +15,8 @@ import {
   Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
   FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2,
   Building2, User, MapPin, ClipboardCheck, BarChart3, Scale, XCircle,
+  BookOpen, Target, Landmark, Map, TrendingUp, Home, Gavel, Calculator,
+  DollarSign, ShieldCheck, Award, Paperclip, type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
