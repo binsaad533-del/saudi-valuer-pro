@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { MOCK_REQUESTS, MOCK_CLIENTS } from "@/data/coordinatorMockData";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -31,8 +32,8 @@ export default function CoordinatorDashboard() {
       supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }),
       supabase.from("clients").select("*").order("created_at", { ascending: false }),
     ]);
-    setRequests((reqRes.data as any[]) || []);
-    setClients(clientRes.data || []);
+    setRequests((reqRes.data as any[])?.length ? (reqRes.data as any[]) : MOCK_REQUESTS);
+    setClients(clientRes.data?.length ? clientRes.data : MOCK_CLIENTS);
     setLoading(false);
   };
 
