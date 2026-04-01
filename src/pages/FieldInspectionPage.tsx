@@ -17,6 +17,8 @@ import {
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
   FileCheck, UserCheck,
 } from "lucide-react";
+import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
+import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 
 /* ═══════ Constants ═══════ */
 
