@@ -3,7 +3,9 @@ import { invoices, statusLabels, type Invoice } from "@/data/cfoMockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, FileText, FileSpreadsheet } from "lucide-react";
+import { exportInvoicesPDF, exportInvoicesExcel } from "@/lib/cfo-export";
 
 const statusColors: Record<Invoice["status"], string> = {
   paid: "bg-success/10 text-success border-success/20",
