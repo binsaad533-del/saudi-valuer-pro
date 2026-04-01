@@ -58,11 +58,11 @@ export const MOCK_REQUESTS: any[] = [
     property_city_ar: "الرياض", property_district_ar: "الياسمين",
     land_area: 500, building_area: 380,
     property_description_ar: "فيلا دوبلكس — 6 غرف — مسبح خاص — حي الياسمين",
-    status: "in_production", priority: "high",
+    status: "awaiting_client_info", priority: "high",
     assigned_valuer_name: "م. خالد العتيبي",
     quotation_amount: 6000,
     created_at: daysAgo(2), updated_at: hoursAgo(3),
-    notes: "أولوية عالية — العميلة تحتاج التقرير للبنك خلال أسبوع",
+    notes: "أولوية عالية — صك الملكية غير مرفق — بانتظار العميلة",
   },
   // 5. تحتاج متابعة — بانتظار معلومات العميل
   {
