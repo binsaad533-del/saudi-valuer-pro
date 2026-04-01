@@ -16,6 +16,59 @@ const ACTION_LABELS: Record<string, string> = {
   assign: "تكليف",
 };
 
+const TABLE_LABELS: Record<string, string> = {
+  valuation_requests: "طلب",
+  valuation_assignments: "تكليف",
+  clients: "عميل",
+  inspections: "معاينة",
+  request_messages: "رسالة",
+  payments: "دفعة",
+};
+
+function formatLogMessage(log: any): string {
+  if (log.description) return log.description;
+
+  const table = TABLE_LABELS[log.table_name] || log.table_name;
+  const action = ACTION_LABELS[log.action] || log.action;
+  const newData = log.new_data ? (typeof log.new_data === "string" ? JSON.parse(log.new_data) : log.new_data) : {};
+  const oldData = log.old_data ? (typeof log.old_data === "string" ? JSON.parse(log.old_data) : log.old_data) : {};
+  const ref = newData.reference_number || oldData.reference_number || "";
+  const clientName = newData.client_name_ar || newData.name_ar || oldData.client_name_ar || oldData.name_ar || "";
+
+  if (log.table_name === "valuation_requests") {
+    if (log.action === "create") {
+      return `أدخل ${table} ${ref ? "#" + ref : ""} ${clientName ? "نيابة عن العميل " + clientName : ""}`.trim();
+    }
+    if (log.action === "update") {
+      const changes: string[] = [];
+      for (const key of Object.keys(newData)) {
+        if (JSON.stringify(oldData[key]) !== JSON.stringify(newData[key])) {
+          if (key.includes("city") || key.includes("district") || key.includes("address")) changes.push("العنوان");
+          else if (key.includes("area")) changes.push("المساحة");
+          else if (key === "status") changes.push("الحالة");
+          else if (key.includes("description")) changes.push("الوصف");
+          else changes.push(key);
+        }
+      }
+      const unique = [...new Set(changes)];
+      return `صحّح ${unique.length > 0 ? unique.join(" و") : "بيانات"} ${table} ${ref ? "#" + ref : ""}`.trim();
+    }
+    if (log.action === "status_change") {
+      return `غيّر حالة ${table} ${ref ? "#" + ref : ""} إلى ${newData.status || "—"}`;
+    }
+  }
+
+  if (log.table_name === "request_messages" && log.action === "create") {
+    return `أرسل رسالة على ${ref ? "طلب #" + ref : "طلب"} ${newData.content ? '— "' + (newData.content as string).slice(0, 40) + '..."' : ""}`.trim();
+  }
+
+  if (log.action === "assign") {
+    return `كلّف مقيّم على ${table} ${ref ? "#" + ref : ""}`.trim();
+  }
+
+  return `${action} ${table} ${ref ? "#" + ref : ""}`.trim();
+}
+
 export default function CoordinatorActivityLog() {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
