@@ -8,7 +8,7 @@ export const MOCK_CLIENTS = [
   { id: "c2", name_ar: "سارة الغامدي", name_en: "Sara Al-Ghamdi", phone: "0541239876", email: "sara.ghamdi@gmail.com", client_type: "individual", city_ar: "جدة", organization_id: "org1", is_active: true, created_at: daysAgo(120), updated_at: daysAgo(2) },
   { id: "c3", name_ar: "محمد الدوسري", name_en: "Mohammed Al-Dosari", phone: "0509876543", email: "m.dosari@outlook.sa", client_type: "individual", city_ar: "الدمام", organization_id: "org1", is_active: true, created_at: daysAgo(60), updated_at: daysAgo(3) },
   { id: "c4", name_ar: "فاطمة الشهري", name_en: "Fatima Al-Shahri", phone: "0538765432", email: "fatima.shahri@gmail.com", client_type: "individual", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(200), updated_at: daysAgo(0) },
-  { id: "c5", name_ar: "عبدالله الشمري", name_en: "Abdullah Al-Shammari", phone: "0567891234", email: "a.shammari@gmail.com", client_type: "individual", city_ar: "مكة المكرمة", organization_id: "org1", is_active: true, created_at: daysAgo(30), updated_at: daysAgo(5) },
+  { id: "c5", name_ar: "عبدالله الحربي", name_en: "Abdullah Al-Harbi", phone: "0567891234", email: "a.harbi@gmail.com", client_type: "individual", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(30), updated_at: daysAgo(5) },
 ];
 
 export const MOCK_REQUESTS: any[] = [
@@ -64,17 +64,17 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(2), updated_at: hoursAgo(3),
     notes: "أولوية عالية — العميلة تحتاج التقرير للبنك خلال أسبوع",
   },
-  // 5. معاينة ميدانية جارية
+  // 5. تحتاج متابعة — بانتظار معلومات العميل
   {
     id: "r5", reference_number: "VAL-005", client_id: "c5",
-    property_type: "residential_land", purpose: "sale_purchase",
-    property_city_ar: "مكة المكرمة", property_district_ar: "العزيزية",
-    land_area: 900, building_area: null,
-    property_description_ar: "أرض سكنية بصك إلكتروني — شارعين — منطقة العزيزية",
-    status: "inspection_in_progress", priority: "normal",
-    assigned_valuer_name: "م. عمر القحطاني",
-    quotation_amount: 4000,
-    created_at: daysAgo(4), updated_at: hoursAgo(2),
-    notes: "المعاين في الموقع حالياً",
+    property_type: "warehouse", purpose: "insurance",
+    property_city_ar: "الرياض", property_district_ar: "المدينة الصناعية الثانية",
+    land_area: 3000, building_area: 2400,
+    property_description_ar: "مستودع صناعي مع مكاتب إدارية — منطقة صناعية",
+    status: "awaiting_client_info", priority: "normal",
+    assigned_valuer_name: null,
+    quotation_amount: 7000,
+    created_at: daysAgo(6), updated_at: daysAgo(5),
+    notes: "بانتظار صك الملكية ورخصة البناء من العميل",
   },
 ];
