@@ -2655,6 +2655,45 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
             has_risks: formData.has_risks,
           }}
         />
+
+        <Separator />
+
+        {/* Technical Summary Generator */}
+        <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-primary">
+              <FileCheck className="w-5 h-5" />
+              <span className="text-sm font-bold">📄 ملخص فني جاهز للتقرير</span>
+            </div>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={generateTechSummary}
+              disabled={summaryLoading}
+              className="h-8 text-xs gap-1.5"
+            >
+              {summaryLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {summaryLoading ? "جاري التوليد..." : "توليد الملخص"}
+            </Button>
+          </div>
+          <p className="text-[11px] text-muted-foreground">
+            يُولّد ملخصاً تقنياً مهنياً شاملاً من جميع بيانات المعاينة — جاهز للنسخ واللصق في التقرير
+          </p>
+
+          {techSummary && (
+            <div className="relative group">
+              <pre className="bg-card border rounded-lg p-3 text-xs leading-relaxed whitespace-pre-wrap font-sans text-foreground max-h-[400px] overflow-y-auto">
+                {techSummary}
+              </pre>
+              <div className="flex gap-2 mt-2">
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" onClick={handleCopySummary}>
+                  {copied ? <CheckCircle className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied ? "تم النسخ" : "نسخ الملخص"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
