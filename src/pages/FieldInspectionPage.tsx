@@ -387,6 +387,7 @@ const defaultFormData: FormData = {
   garden_area: "",
   parking_area: "",
   annex_area: "",
+  area_matches_license: "",
   positive_factors: "",
   negative_factors: "",
   environmental_factors: "",
