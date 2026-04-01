@@ -9,7 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion, MessageSquare, Send } from "lucide-react";
+import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion, MessageSquare, Send, History, User } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Props {
   requests: any[];
