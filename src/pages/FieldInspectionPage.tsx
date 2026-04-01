@@ -413,6 +413,8 @@ const defaultFormData: FormData = {
   inspector_observations: "",
   inspector_recommendations: "",
   additional_notes: "",
+  inspector_verdict: "",
+  inspector_verdict_notes: "",
   has_risks: "",
   risk_details: "",
   data_complete: "",
