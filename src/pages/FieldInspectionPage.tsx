@@ -2350,7 +2350,7 @@ function SectionValueFactors({ formData, updateField }: any) {
   );
 }
 
-function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, requiredPhotoTotal }: any) {
+function SectionDocumentation({ photos, onCapture, onRemove, onDescriptionChange, requiredPhotoDone, requiredPhotoTotal }: any) {
   const groups = [
     { key: "exterior", title: "📸 صور خارجية", icon: "🏢" },
     { key: "interior", title: "🏠 صور داخلية", icon: "🛋️" },
