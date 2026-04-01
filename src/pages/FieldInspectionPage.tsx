@@ -306,45 +306,72 @@ export default function FieldInspectionPage() {
   return (
     <div className="min-h-screen bg-background pb-24" dir="rtl">
       {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-card border-b p-3 shadow-sm">
-        <div className="flex items-center justify-between mb-2">
+      <div className="sticky top-0 z-20 bg-card border-b shadow-sm">
+        {/* Title row */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <h1 className="text-sm font-bold text-primary flex items-center gap-2">
             <ClipboardCheck className="w-5 h-5" />
             نموذج المعاينة الميدانية
           </h1>
-          <Badge variant="outline" className="text-xs">
-            {STEPS[step].num} / {STEPS.length}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">{overallProgress}%</span>
+            <Badge variant="outline" className="text-xs">
+              {STEPS[step].num} / {STEPS.length}
+            </Badge>
+          </div>
         </div>
 
-        {/* Progress */}
-        <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-          <span>الإنجاز الكلي</span>
-          <span>{overallProgress}%</span>
+        {/* Progress bar */}
+        <div className="px-4 pb-2">
+          <Progress value={overallProgress} className="h-1.5" />
         </div>
-        <Progress value={overallProgress} className="h-2" />
 
-        {/* Step indicators */}
-        <div className="flex gap-0.5 mt-2 overflow-x-auto pb-1">
-          {STEPS.map((s, i) => {
-            const Icon = s.icon;
-            return (
-              <button
-                key={s.key}
-                onClick={() => setStep(i)}
-                className={`shrink-0 flex flex-col items-center py-1 px-1.5 rounded transition-colors min-w-[48px] ${
-                  i === step
-                    ? "bg-primary text-primary-foreground"
-                    : sectionComplete[i]
-                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400"
-                      : "bg-muted text-muted-foreground"
-                }`}
-              >
-                <Icon className="w-3 h-3" />
-                <span className="text-[8px] mt-0.5 leading-tight">{s.num}</span>
-              </button>
-            );
-          })}
+        {/* Horizontal Stepper */}
+        <div className="relative px-2 pb-3">
+          <div className="flex items-start overflow-x-auto gap-0 pb-1 scrollbar-hide">
+            {STEPS.map((s, i) => {
+              const isActive = i === step;
+              const isDone = sectionComplete[i] && !isActive;
+              return (
+                <div key={s.key} className="flex flex-col items-center shrink-0 relative" style={{ minWidth: "64px" }}>
+                  {/* Connector line */}
+                  {i > 0 && (
+                    <div
+                      className={`absolute top-[14px] right-[50%] h-[2px] transition-colors ${
+                        sectionComplete[i - 1] ? "bg-primary" : "bg-border"
+                      }`}
+                      style={{ width: "100%", zIndex: 0 }}
+                    />
+                  )}
+
+                  {/* Circle */}
+                  <button
+                    onClick={() => setStep(i)}
+                    className={`relative z-10 flex items-center justify-center w-7 h-7 rounded-full border-2 transition-all ${
+                      isActive
+                        ? "border-primary bg-primary text-primary-foreground shadow-md scale-110"
+                        : isDone
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-muted-foreground/30 bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {isDone ? (
+                      <CheckCircle className="w-4 h-4" />
+                    ) : (
+                      <span className="text-[10px] font-bold">{s.num}</span>
+                    )}
+                  </button>
+
+                  {/* Label */}
+                  <span className={`text-[9px] mt-1 text-center leading-tight max-w-[60px] ${
+                    isActive ? "text-primary font-bold" : isDone ? "text-primary/70" : "text-muted-foreground"
+                  }`}>
+                    {s.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
 
