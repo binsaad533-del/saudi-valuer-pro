@@ -228,6 +228,9 @@ interface FormData {
   floor_areas: string;
   floor_count_detail: string;
   layout_notes: string;
+  garden_area: string;
+  parking_area: string;
+  annex_area: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
