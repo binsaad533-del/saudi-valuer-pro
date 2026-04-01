@@ -15,7 +15,7 @@ import {
   MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
-  FileCheck, UserCheck, Save,
+  FileCheck, UserCheck,
 } from "lucide-react";
 
 /* ═══════ Constants ═══════ */
