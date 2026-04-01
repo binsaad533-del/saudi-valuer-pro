@@ -7,8 +7,10 @@ import {
   Brain, FileText, FolderUp, Loader2, X, Sparkles, Tag, Hash,
   FileSearch, File, FileCheck, ShieldCheck, Ruler, User, MapPin,
   Building2, Phone, Mail, Image as ImageIcon, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, Copy, Upload,
+  CheckCircle2, AlertTriangle, Copy, Upload, Home, ArrowLeft,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -91,9 +93,6 @@ export default function AIDocumentProcessingPage() {
   const [extractionPhase, setExtractionPhase] = useState("");
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
-  const [, setShowClientData] = useState(true);
-  const [, setShowAssetData] = useState(true);
-  const [, setShowExtractedNums] = useState(true);
   const [useMock, setUseMock] = useState(true);
   const [autoAnalyzePending, setAutoAnalyzePending] = useState(true);
 
@@ -646,9 +645,6 @@ export default function AIDocumentProcessingPage() {
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             onClick={() => {
-                              setShowClientData(true);
-                              setShowAssetData(true);
-                              setShowExtractedNums(true);
                               toast.info("تم فتح جميع الأقسام للمراجعة — عدّل البيانات غير الصحيحة");
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
@@ -740,150 +736,164 @@ export default function AIDocumentProcessingPage() {
                 </div>
 
                 {/* البيانات المستخرجة الموحدة */}
-                {extracted && (
-                  <div className="bg-card rounded-lg border border-border overflow-hidden">
-                    <div className="p-4 border-b border-border bg-muted/20">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-primary" />
-                          <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
+                {extracted && (() => {
+                  const nums = extracted.extractedNumbers || [];
+                  const getNum = (label: string) => nums.find(n => n.label === label);
+                  const isLowConfidence = (source: string) => {
+                    const conf = nums.find(n => n.label.includes("ثقة") && n.source === source);
+                    return conf ? parseInt(conf.value) < 80 : false;
+                  };
+
+                  const fieldCard = (label: string, value: string | undefined, icon: React.ElementType, lowConf?: boolean) => {
+                    if (!value) return null;
+                    const Icon = icon;
+                    return (
+                      <div className={`flex items-center gap-2 p-2.5 rounded-lg border group transition-colors ${
+                        lowConf
+                          ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700"
+                          : "bg-muted/30 border-border/50"
+                      }`}>
+                        <Icon className={`w-3.5 h-3.5 shrink-0 ${lowConf ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}`} />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] text-muted-foreground">{label}</p>
+                          <p className={`text-xs font-medium ${lowConf ? "text-yellow-700 dark:text-yellow-300" : "text-foreground"}`}>{value}</p>
                         </div>
-                        <Badge variant="outline" className="text-[10px]">
-                          {(extracted.extractedNumbers?.length || 0) + Object.values(extracted.client || {}).filter(Boolean).length + Object.values(extracted.asset || {}).filter(Boolean).length} حقل
-                        </Badge>
+                        {lowConf && (
+                          <Badge variant="outline" className="text-[8px] h-4 px-1 border-yellow-400 text-yellow-600 dark:text-yellow-400 shrink-0">
+                            <AlertTriangle className="w-2 h-2 ml-0.5" />
+                            غير مؤكد
+                          </Badge>
+                        )}
+                        <button onClick={() => copyToClipboard(value)}
+                          className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground shrink-0">
+                          <Copy className="w-2.5 h-2.5" />
+                        </button>
                       </div>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">تم تجميع جميع البيانات من {extracted.totalFilesCount} مستند في نموذج موحد</p>
-                    </div>
+                    );
+                  };
 
-                    <div className="divide-y divide-border">
-                      {/* بيانات العميل */}
-                      {extracted.client && Object.values(extracted.client).some(v => v) && (
-                        <div className="p-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <User className="w-4 h-4 text-primary" />
-                            <h4 className="text-xs font-semibold text-foreground">بيانات العميل</h4>
-                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والهوية</Badge>
+                  const planLowConf = isLowConfidence(nums.find(n => n.label === "غرف النوم")?.source || "");
+                  const _contractLowConf = isLowConfidence(nums.find(n => n.label === "قيمة الإيجار السنوي")?.source || "");
+
+                  const hasPropertyInfo = extracted.asset?.description || extracted.asset?.city || extracted.asset?.area;
+                  const hasOwnership = extracted.client?.clientName || extracted.asset?.deedNumber;
+                  const hasBuildingInfo = getNum("مساحة البناء المرخصة") || getNum("عدد الطوابق") || getNum("غرف النوم");
+                  const hasRentalInfo = getNum("قيمة الإيجار السنوي");
+
+                  return (
+                    <div className="space-y-3">
+                      <div className="bg-card rounded-lg border border-border overflow-hidden">
+                        <div className="p-4 border-b border-border bg-muted/20">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-primary" />
+                              <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
+                            </div>
+                            <Badge variant="outline" className="text-[10px]">
+                              {nums.length + Object.values(extracted.client || {}).filter(Boolean).length + Object.values(extracted.asset || {}).filter(Boolean).length} حقل
+                            </Badge>
                           </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {[
-                              { key: "clientName", label: "الاسم", icon: User },
-                              { key: "idNumber", label: "رقم الهوية", icon: Hash },
-                              { key: "phone", label: "الجوال", icon: Phone },
-                              { key: "email", label: "البريد", icon: Mail },
-                            ].filter(f => extracted.client[f.key as keyof typeof extracted.client]).map(f => (
-                              <div key={f.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50 group">
-                                <f.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[10px] text-muted-foreground">{f.label}</p>
-                                  <p className="text-xs font-medium text-foreground">{extracted.client[f.key as keyof typeof extracted.client]}</p>
-                                </div>
-                                <button onClick={() => copyToClipboard(extracted.client[f.key as keyof typeof extracted.client] || "")}
-                                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground">
-                                  <Copy className="w-2.5 h-2.5" />
-                                </button>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">تم تجميع جميع البيانات من {extracted.totalFilesCount} مستند في نموذج موحد</p>
+                        </div>
+
+                        <div className="divide-y divide-border">
+                          {/* 1. معلومات العقار */}
+                          {hasPropertyInfo && (
+                            <div className="p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Building2 className="w-4 h-4 text-primary" />
+                                <h4 className="text-xs font-semibold text-foreground">معلومات العقار</h4>
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">النوع والموقع والمساحة</Badge>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* بيانات الأصل */}
-                      {extracted.asset && Object.values(extracted.asset).some(v => v) && (
-                        <div className="p-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <Building2 className="w-4 h-4 text-primary" />
-                            <h4 className="text-xs font-semibold text-foreground">بيانات الأصل / العقار</h4>
-                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والرخصة</Badge>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {[
-                              { key: "description", label: "الوصف", icon: FileText },
-                              { key: "city", label: "المدينة", icon: MapPin },
-                              { key: "district", label: "الحي", icon: MapPin },
-                              { key: "area", label: "المساحة (م²)", icon: Ruler },
-                              { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
-                              { key: "classification", label: "التصنيف", icon: Tag },
-                              { key: "machineName", label: "اسم المعدة", icon: Building2 },
-                              { key: "manufacturer", label: "المصنع", icon: Building2 },
-                              { key: "model", label: "الموديل", icon: Tag },
-                            ].filter(f => extracted.asset[f.key as keyof typeof extracted.asset]).map(f => (
-                              <div key={f.key} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50 group">
-                                <f.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-[10px] text-muted-foreground">{f.label}</p>
-                                  <p className="text-xs font-medium text-foreground truncate">{extracted.asset[f.key as keyof typeof extracted.asset]}</p>
-                                </div>
-                                <button onClick={() => copyToClipboard(extracted.asset[f.key as keyof typeof extracted.asset] || "")}
-                                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground">
-                                  <Copy className="w-2.5 h-2.5" />
-                                </button>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {fieldCard("نوع العقار", extracted.asset?.description, Home)}
+                                {fieldCard("التصنيف", extracted.asset?.classification, Tag)}
+                                {fieldCard("المدينة", extracted.asset?.city, MapPin)}
+                                {fieldCard("الحي", extracted.asset?.district, MapPin)}
+                                {fieldCard("مساحة الأرض (م²)", extracted.asset?.area ? `${extracted.asset.area} م²` : undefined, Ruler)}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          )}
+
+                          {/* 2. معلومات الملكية */}
+                          {hasOwnership && (
+                            <div className="p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <FileCheck className="w-4 h-4 text-primary" />
+                                <h4 className="text-xs font-semibold text-foreground">معلومات الملكية</h4>
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والهوية</Badge>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {fieldCard("اسم المالك", extracted.client?.clientName, User)}
+                                {fieldCard("رقم الهوية", extracted.client?.idNumber, Hash)}
+                                {fieldCard("رقم الصك", extracted.asset?.deedNumber, FileCheck)}
+                                {fieldCard("الجوال", extracted.client?.phone, Phone)}
+                                {fieldCard("البريد الإلكتروني", extracted.client?.email, Mail)}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 3. معلومات البناء */}
+                          {hasBuildingInfo && (
+                            <div className="p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Home className="w-4 h-4 text-primary" />
+                                <h4 className="text-xs font-semibold text-foreground">معلومات البناء</h4>
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الرخصة والمخطط</Badge>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {fieldCard("مساحة البناء", getNum("مساحة البناء المرخصة")?.value, Ruler)}
+                                {fieldCard("عدد الطوابق", getNum("عدد الطوابق")?.value, Building2)}
+                                {fieldCard("غرف النوم", getNum("غرف النوم")?.value, Home, planLowConf)}
+                                {fieldCard("الصالات", getNum("الصالات")?.value, Home, planLowConf)}
+                                {fieldCard("المطبخ", getNum("المطبخ")?.value, Home, planLowConf)}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* 4. معلومات الإيجار */}
+                          {hasRentalInfo && (
+                            <div className="p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <FileText className="w-4 h-4 text-primary" />
+                                <h4 className="text-xs font-semibold text-foreground">معلومات الإيجار</h4>
+                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من عقد الإيجار</Badge>
+                              </div>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                {fieldCard("الإيجار السنوي", getNum("قيمة الإيجار السنوي")?.value, Hash)}
+                                {fieldCard("المستأجر", getNum("اسم المستأجر")?.value, User)}
+                                {fieldCard("مدة العقد", getNum("مدة العقد")?.value, FileText)}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* غرض التقييم */}
+                          {extracted.suggestedPurpose && (
+                            <div className="p-4">
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
+                                <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                                <div>
+                                  <p className="text-[10px] text-muted-foreground">غرض التقييم المقترح</p>
+                                  <p className="text-sm font-semibold text-foreground">{extracted.suggestedPurpose}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      )}
+                      </div>
 
-                      {/* البيانات المستخرجة مجمّعة حسب المصدر */}
-                      {extracted.extractedNumbers && extracted.extractedNumbers.length > 0 && (() => {
-                        const grouped = extracted.extractedNumbers!.reduce((acc, en) => {
-                          const src = en.source || "أخرى";
-                          if (!acc[src]) acc[src] = [];
-                          acc[src].push(en);
-                          return acc;
-                        }, {} as Record<string, ExtractedNumber[]>);
-
-                        return Object.entries(grouped).map(([source, items]) => (
-                          <div key={source} className="p-4">
-                            <div className="flex items-center gap-2 mb-3">
-                              <Hash className="w-4 h-4 text-primary" />
-                              <h4 className="text-xs font-semibold text-foreground">بيانات من: {source}</h4>
-                              <Badge variant="outline" className="text-[9px] px-1.5 py-0">{items.length} حقل</Badge>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                              {items.map((en, i) => {
-                                const isConfidence = en.label.includes("ثقة");
-                                const confidenceVal = isConfidence ? parseInt(en.value) : null;
-                                return (
-                                  <div key={i} className={`flex items-start justify-between gap-2 p-2.5 rounded-lg border group ${
-                                    isConfidence && confidenceVal !== null && confidenceVal < 80
-                                      ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
-                                      : "bg-primary/5 border-primary/10"
-                                  }`}>
-                                    <div className="min-w-0 flex-1">
-                                      <p className="text-[10px] text-muted-foreground">{en.label}</p>
-                                      <p className={`text-sm font-semibold ${
-                                        isConfidence && confidenceVal !== null && confidenceVal < 80
-                                          ? "text-yellow-700 dark:text-yellow-400"
-                                          : "text-foreground"
-                                      }`}>{en.value}</p>
-                                    </div>
-                                    <button onClick={() => copyToClipboard(en.value)}
-                                      className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground shrink-0">
-                                      <Copy className="w-2.5 h-2.5" />
-                                    </button>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ));
-                      })()}
-
-                      {/* غرض التقييم */}
-                      {extracted.suggestedPurpose && (
-                        <div className="p-4">
-                          <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
-                            <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
-                            <div>
-                              <p className="text-[10px] text-muted-foreground">غرض التقييم المقترح</p>
-                              <p className="text-sm font-semibold text-foreground">{extracted.suggestedPurpose}</p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
+                      {/* زر المتابعة */}
+                      <Button
+                        className="w-full gap-2 text-sm py-5"
+                        size="lg"
+                        onClick={() => toast.success("جاري الانتقال لتحديد نطاق العمل...")}
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        متابعة لتحديد نطاق العمل
+                      </Button>
                     </div>
-                  </div>
-                )}
+                  );
+                })()}
               </div>
             )}
           </div>
