@@ -234,7 +234,8 @@ interface FormData {
   area_matches_license: string;
   positive_factors: string[];
   positive_factors_other: string;
-  negative_factors: string;
+  negative_factors: string[];
+  negative_factors_other: string;
   environmental_factors: string;
   regulatory_factors: string;
   has_risks: string;
@@ -390,8 +391,9 @@ const defaultFormData: FormData = {
   annex_area: "",
   area_matches_license: "",
   positive_factors: [] as string[],
+  negative_factors: [] as string[],
+  negative_factors_other: "",
   positive_factors_other: "",
-  negative_factors: "",
   environmental_factors: "",
   regulatory_factors: "",
   has_risks: "",
@@ -2220,8 +2222,36 @@ function SectionValueFactors({ formData, updateField }: any) {
             />
           </div>
         </FieldGroup>
-        <FieldGroup label="سلبيات الموقع">
-          <Textarea value={formData.negative_factors} onChange={(e: any) => updateField("negative_factors", e.target.value)} placeholder="ضوضاء، ازدحام، بعد عن الخدمات..." rows={3} />
+        <FieldGroup label="⚠️ عوامل سلبية">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: "noise", label: "قرب ضوضاء" },
+              { id: "legal_issues", label: "إشكاليات قانونية" },
+              { id: "harmful_neighbor", label: "مجاور ضار" },
+            ].map((factor) => (
+              <label key={factor.id} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-background hover:bg-destructive/10 cursor-pointer transition-colors">
+                <Checkbox
+                  checked={formData.negative_factors.includes(factor.id)}
+                  onCheckedChange={(checked) => {
+                    const current = formData.negative_factors;
+                    updateField(
+                      "negative_factors",
+                      checked ? [...current, factor.id] : current.filter((f: string) => f !== factor.id)
+                    );
+                  }}
+                />
+                <span className="text-sm">{factor.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-2">
+            <Input
+              value={formData.negative_factors_other}
+              onChange={(e: any) => updateField("negative_factors_other", e.target.value)}
+              placeholder="أخرى (حدد)..."
+              className="text-sm"
+            />
+          </div>
         </FieldGroup>
         <FieldGroup label="عوامل بيئية">
           <Textarea value={formData.environmental_factors} onChange={(e: any) => updateField("environmental_factors", e.target.value)} placeholder="تلوث، مصادر إزعاج، مناطق فيضانية..." rows={2} />
@@ -2232,7 +2262,7 @@ function SectionValueFactors({ formData, updateField }: any) {
         <AiSuggestionBox
           sectionKey="value_factors"
           promptHint="تحليل العوامل المؤثرة على القيمة"
-          context={{ positive_factors: formData.positive_factors.join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: formData.negative_factors }}
+          context={{ positive_factors: formData.positive_factors.join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: formData.negative_factors.join(', '), negative_factors_other: formData.negative_factors_other }}
         />
       </CardContent>
     </Card>
