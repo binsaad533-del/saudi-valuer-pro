@@ -10,7 +10,7 @@ import {
   Sparkles, FileText, Ruler, ClipboardList, DollarSign, CheckCircle2,
   AlertTriangle, ArrowRight, Loader2, Building2, MapPin, RefreshCw,
   Edit3, ChevronDown, ChevronUp, Calculator, Shield, Clock, Star,
-  Wrench, Layers, Home, Target, Landmark, ShieldCheck, Scale, Gavel,
+  Wrench, Layers, Home, Target, Landmark, Scale, Gavel,
   Briefcase, TrendingUp, RotateCcw, HeartPulse,
 } from "lucide-react";
 
