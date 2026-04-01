@@ -654,6 +654,15 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
           </RadioGroup>
         </FieldGroup>
 
+        <Separator />
+
+        <FieldGroup label="✅ إيجابيات المحيط">
+          <Textarea value={formData.surrounding_positives} onChange={(e: any) => updateField("surrounding_positives", e.target.value)} placeholder="مثال: قرب من مدارس ومساجد، شوارع مسفلتة، إنارة جيدة، حدائق..." rows={3} />
+        </FieldGroup>
+        <FieldGroup label="⚠️ سلبيات المحيط">
+          <Textarea value={formData.surrounding_negatives} onChange={(e: any) => updateField("surrounding_negatives", e.target.value)} placeholder="مثال: ضوضاء، ازدحام مروري، قرب من محطة كهرباء، أرض فضاء مهملة..." rows={3} />
+        </FieldGroup>
+
         <SectionPhotoUpload section="location" label="صور الموقع والمحيط" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
       </CardContent>
     </Card>
