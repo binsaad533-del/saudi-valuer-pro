@@ -817,7 +817,7 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove }: any) {
   );
 }
 
-function SectionRisks({ formData, updateField }: any) {
+function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -839,6 +839,12 @@ function SectionRisks({ formData, updateField }: any) {
             <Textarea value={formData.risk_details} onChange={(e: any) => updateField("risk_details", e.target.value)} placeholder="وصف تفصيلي للمخاطر المحددة..." rows={4} className="border-destructive/30" />
           </FieldGroup>
         )}
+        <SectionPhotoUpload section="risks" label="صور المخاطر المكتشفة" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="risks"
+          promptHint="تحليل المخاطر"
+          context={{ has_risks: formData.has_risks, risk_details: formData.risk_details }}
+        />
       </CardContent>
     </Card>
   );
