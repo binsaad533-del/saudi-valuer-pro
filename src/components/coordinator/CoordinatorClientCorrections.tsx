@@ -75,7 +75,7 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
       .in("table_name", ["valuation_requests", "request_messages"])
       .order("created_at", { ascending: false })
       .limit(50);
-    setCorrectionLogs(data || []);
+    setCorrectionLogs(data?.length ? data : MOCK_ACTIVITY_LOGS.filter(l => l.action === "update"));
     setLogsLoading(false);
   };
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");

@@ -54,7 +54,7 @@ export const MOCK_REQUESTS: any[] = [
   // 4. قيد التنفيذ — أولوية عالية — مستندات مفقودة
   {
     id: "r4", reference_number: "VAL-004", client_id: "c4",
-    property_type: "villa", purpose: "mortgage",
+    property_type: "villa", purpose: null,
     property_city_ar: "الرياض", property_district_ar: "الياسمين",
     land_area: 500, building_area: 380,
     property_description_ar: "فيلا دوبلكس — 6 غرف — مسبح خاص — حي الياسمين",
