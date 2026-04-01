@@ -76,9 +76,16 @@ interface ExtractedData {
   totalFilesCount?: number;
 }
 
+const DEMO_FILES: UploadedFile[] = [
+  { file: {} as any, name: "صك_ملكية_310298765.pdf", size: 2_450_000, status: "uploaded" },
+  { file: {} as any, name: "رخصة_بناء_44-2891.pdf", size: 1_120_000, status: "uploaded" },
+  { file: {} as any, name: "مخطط_الدور_الأرضي.png", size: 3_780_000, status: "uploaded" },
+  { file: {} as any, name: "صورة_واجهة_رئيسية.jpg", size: 4_200_000, status: "uploaded" },
+];
+
 export default function AIDocumentProcessingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(DEMO_FILES);
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractionPhase, setExtractionPhase] = useState("");
@@ -88,7 +95,7 @@ export default function AIDocumentProcessingPage() {
   const [showAssetData, setShowAssetData] = useState(true);
   const [showExtractedNums, setShowExtractedNums] = useState(true);
   const [useMock, setUseMock] = useState(true);
-  const [autoAnalyzePending, setAutoAnalyzePending] = useState(false);
+  const [autoAnalyzePending, setAutoAnalyzePending] = useState(true);
 
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
