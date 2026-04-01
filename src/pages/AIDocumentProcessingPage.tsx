@@ -619,7 +619,46 @@ export default function AIDocumentProcessingPage() {
                   </div>
                 </div>
 
-                {/* AI Notes */}
+                {/* Low confidence warning */}
+                {extracted.confidence < 80 && (
+                  <div className="bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-300 dark:border-yellow-700 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
+                      <div className="flex-1 space-y-2">
+                        <div>
+                          <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">نسبة الثقة منخفضة ({extracted.confidence}%)</p>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
+                            لم يتمكن النظام من التأكد بشكل كافٍ من البيانات المستخرجة. يرجى مراجعة المعلومات أدناه والتأكد من صحتها.
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            onClick={() => {
+                              setShowClientData(true);
+                              setShowAssetData(true);
+                              setShowExtractedNums(true);
+                              toast.info("تم فتح جميع الأقسام للمراجعة — عدّل البيانات غير الصحيحة");
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
+                          >
+                            <FileSearch className="w-3.5 h-3.5" />
+                            مراجعة وتعديل البيانات
+                          </button>
+                          <button
+                            onClick={() => {
+                              toast.success("تم تأكيد صحة البيانات");
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors"
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            نعم، البيانات صحيحة
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {extracted.notes.length > 0 && (
                   <div className="bg-accent/50 rounded-lg border border-accent p-4">
                     <div className="flex items-center gap-2 mb-2 text-accent-foreground font-medium text-sm">
