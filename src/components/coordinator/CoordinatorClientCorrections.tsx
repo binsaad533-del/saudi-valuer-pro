@@ -195,17 +195,15 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">الرقم المرجعي</TableHead>
-                  <TableHead className="text-right">الوصف</TableHead>
-                  <TableHead className="text-right">المدينة</TableHead>
-                  <TableHead className="text-right">المساحة</TableHead>
+                  <TableHead className="text-right">وصف المشكلة</TableHead>
                   <TableHead className="text-right">نوع المشكلة</TableHead>
-                  <TableHead className="text-right">إجراء</TableHead>
+                  <TableHead className="text-right">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-sm">
                       لا توجد طلبات تحتاج تصحيح 🎉
                     </TableCell>
                   </TableRow>
@@ -213,9 +211,9 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
                   filtered.slice(0, 30).map(req => (
                     <TableRow key={req.id}>
                       <TableCell className="font-mono text-xs" dir="ltr">{req.reference_number || "—"}</TableCell>
-                      <TableCell className="text-sm max-w-[180px] truncate">{req.property_description_ar || "—"}</TableCell>
-                      <TableCell className="text-sm">{req.property_city_ar || <span className="text-destructive">—</span>}</TableCell>
-                      <TableCell className="text-sm">{req.land_area ? `${req.land_area} م²` : <span className="text-destructive">—</span>}</TableCell>
+                      <TableCell className="text-sm max-w-[280px]">
+                        {describeIssues(req)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {req._issues.map((issue: IssueType) => {
@@ -229,9 +227,14 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button size="sm" variant="outline" onClick={() => openEdit(req)}>
-                          <Edit3 className="w-3 h-3 ml-1" />تصحيح
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                          <Button size="sm" variant="outline" onClick={() => openEdit(req)}>
+                            <Edit3 className="w-3 h-3 ml-1" />تصحيح
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => { setSelectedReq(req); setClientMessage(""); setMessageDialog(true); }}>
+                            <MessageSquare className="w-3 h-3 ml-1" />مراسلة العميل
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
