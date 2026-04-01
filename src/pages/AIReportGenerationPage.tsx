@@ -260,6 +260,14 @@ export default function AIReportGenerationPage() {
 
       if (data?.success && data.report_draft) {
         setReportDraft(data.report_draft);
+        // Set initial confidence for all generated sections
+        if (data.report_draft.sections) {
+          const initialConfidence: Record<string, number> = {};
+          Object.entries(data.report_draft.sections).forEach(([key, sec]: [string, any]) => {
+            initialConfidence[key] = Math.min(95, Math.max(55, Math.round((sec.content_ar?.length || 0) / 20)));
+          });
+          setSectionConfidence(initialConfidence);
+        }
         setStep(2);
         toast.success("تم توليد مسودة التقرير بنجاح");
       } else if (data?.raw_content) {
