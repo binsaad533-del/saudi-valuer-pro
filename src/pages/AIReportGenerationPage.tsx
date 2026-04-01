@@ -843,29 +843,138 @@ export default function AIReportGenerationPage() {
             </div>
           </div>
 
-          <Card>
-            <CardContent className="pt-4 space-y-4">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {[
-                  { label: "العميل", value: aggregatedData?.client?.record?.name_ar || aggregatedData?.client?.profile?.full_name_ar || "—" },
-                  { label: "العقار", value: `${aggregatedData?.request?.property_type || "—"} — ${aggregatedData?.request?.property_city_ar || ""}` },
-                  { label: "المرجع", value: reportDraft?.reference_number || aggregatedData?.assignment?.reference_number || "—" },
-                  { label: "القيمة", value: reportDraft?.final_value?.amount ? `${reportDraft.final_value.amount.toLocaleString()} ر.س` : "—" },
-                ].map((item) => (
-                  <div key={item.label} className="p-3 rounded-lg bg-muted/40">
-                    <p className="text-[10px] text-muted-foreground">{item.label}</p>
-                    <p className="text-sm font-bold mt-0.5">{item.value}</p>
+          {/* ─── Cover Page ─── */}
+          <Card className="border-2 border-primary/20 overflow-hidden">
+            <div className="relative bg-gradient-to-br from-primary/10 via-background to-primary/5 p-8 md:p-12">
+              {/* Decorative corner accents */}
+              <div className="absolute top-0 left-0 w-20 h-20 border-t-4 border-l-4 border-primary/30 rounded-tl-lg" />
+              <div className="absolute bottom-0 right-0 w-20 h-20 border-b-4 border-r-4 border-primary/30 rounded-br-lg" />
+
+              <div className="flex flex-col items-center text-center space-y-6 py-6">
+                {/* Organization Logo/Name */}
+                {aggregatedData?.organization?.name_ar && (
+                  <div className="space-y-1">
+                    <p className="text-sm tracking-widest text-muted-foreground font-medium uppercase">
+                      {aggregatedData.organization.name_en || "Valuation Report"}
+                    </p>
+                    <h3 className="text-lg font-bold text-foreground">
+                      {aggregatedData.organization.name_ar}
+                    </h3>
+                    {aggregatedData.organization.taqeem_registration && (
+                      <p className="text-[10px] text-muted-foreground">
+                        رقم التسجيل: {aggregatedData.organization.taqeem_registration}
+                      </p>
+                    )}
                   </div>
-                ))}
+                )}
+
+                <Separator className="w-1/3 mx-auto" />
+
+                {/* Report Title */}
+                <div className="space-y-2">
+                  <p className="text-xs tracking-[0.3em] text-primary font-semibold uppercase">
+                    تقرير تقييم عقاري
+                  </p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-foreground leading-tight">
+                    {reportDraft?.report_title_ar || "تقرير تقييم القيمة السوقية"}
+                  </h2>
+                  {reportDraft?.report_title_en && (
+                    <p className="text-sm text-muted-foreground" dir="ltr">
+                      {reportDraft.report_title_en}
+                    </p>
+                  )}
+                </div>
+
+                <Separator className="w-1/3 mx-auto" />
+
+                {/* Cover Page Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-lg text-right">
+                  {/* Client Name */}
+                  <div className="p-4 rounded-xl bg-background/80 border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <User className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] text-muted-foreground font-medium">اسم العميل</span>
+                    </div>
+                    <p className="text-sm font-bold text-foreground">
+                      {aggregatedData?.client?.record?.name_ar
+                        || aggregatedData?.client?.profile?.full_name_ar
+                        || "—"}
+                    </p>
+                    {(aggregatedData?.client?.record?.id_number || aggregatedData?.client?.record?.cr_number) && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        {aggregatedData.client.record.id_type || "هوية"}: {aggregatedData.client.record.id_number || aggregatedData.client.record.cr_number}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Property Type */}
+                  <div className="p-4 rounded-xl bg-background/80 border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Building2 className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] text-muted-foreground font-medium">نوع العقار</span>
+                    </div>
+                    <p className="text-sm font-bold text-foreground">
+                      {aggregatedData?.request?.property_type || "—"}
+                    </p>
+                    {aggregatedData?.request?.property_city_ar && (
+                      <p className="text-[10px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {aggregatedData.request.property_city_ar}
+                        {aggregatedData.request.property_district_ar ? ` — ${aggregatedData.request.property_district_ar}` : ""}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Report Number */}
+                  <div className="p-4 rounded-xl bg-background/80 border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <FileText className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] text-muted-foreground font-medium">رقم التقرير</span>
+                    </div>
+                    <p className="text-sm font-bold text-foreground font-mono" dir="ltr">
+                      {reportDraft?.reference_number
+                        || aggregatedData?.assignment?.reference_number
+                        || "—"}
+                    </p>
+                  </div>
+
+                  {/* Date */}
+                  <div className="p-4 rounded-xl bg-background/80 border border-border/50 shadow-sm">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <span className="text-[10px] text-muted-foreground font-medium">تاريخ التقرير</span>
+                    </div>
+                    <p className="text-sm font-bold text-foreground">
+                      {reportDraft?.report_date
+                        || new Date().toLocaleDateString("ar-SA", { year: "numeric", month: "long", day: "numeric" })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Standards Badge */}
+                <div className="flex flex-wrap gap-2 justify-center pt-2">
+                  <Badge variant="outline" className="text-[10px] gap-1">IVS 2025</Badge>
+                  <Badge variant="outline" className="text-[10px] gap-1">معايير تقييم</Badge>
+                  <Badge variant="outline" className="text-[10px] gap-1">سرّي وخاص</Badge>
+                </div>
               </div>
+            </div>
+          </Card>
 
-              <Separator />
-
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {sectionEntries.map(([key, sec]) => (
-                  <div key={key} className="p-3 rounded-lg bg-muted/20">
-                    <h4 className="text-sm font-bold text-primary mb-1">{sec.title_ar || key}</h4>
-                    <p className="text-xs text-muted-foreground line-clamp-3">{sec.content_ar?.substring(0, 200)}...</p>
+          {/* ─── Sections Preview ─── */}
+          <Card>
+            <CardContent className="pt-4 space-y-3">
+              <h3 className="text-sm font-bold text-foreground mb-2">فهرس أقسام التقرير</h3>
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                {sectionEntries.map(([key, sec], idx) => (
+                  <div key={key} className="flex items-start gap-3 p-3 rounded-lg bg-muted/20">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      {idx + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-sm font-bold text-primary">{sec.title_ar || key}</h4>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{sec.content_ar?.substring(0, 150)}...</p>
+                    </div>
                   </div>
                 ))}
               </div>
