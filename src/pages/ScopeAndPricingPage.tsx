@@ -248,6 +248,9 @@ export default function ScopeAndPricingPage() {
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState("");
   const [sentToManager, setSentToManager] = useState(false);
+  const [managerDecision, setManagerDecision] = useState<"pending" | "accepted" | "adjusting">("pending");
+  const [adjustedPrice, setAdjustedPrice] = useState("");
+  const [adjustmentReason, setAdjustmentReason] = useState("");
 
   useEffect(() => {
     if (extractedData) {
@@ -1349,7 +1352,7 @@ export default function ScopeAndPricingPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-2 gap-2 text-center">
                   <div className="p-2.5 rounded-lg bg-muted/20 border border-border/30">
                     <p className="text-[9px] text-muted-foreground">الإجمالي المقترح</p>
                     <p className="text-xs font-bold text-primary">{formatCurrency(pricing.totalPrice)}</p>
@@ -1358,11 +1361,99 @@ export default function ScopeAndPricingPage() {
                     <p className="text-[9px] text-muted-foreground">المدة المقدرة</p>
                     <p className="text-xs font-bold text-foreground">{scope.estimatedDays} أيام</p>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/30">
-                    <p className="text-[9px] text-muted-foreground">حالة الاعتماد</p>
-                    <p className="text-xs font-bold text-yellow-600 dark:text-yellow-400">بانتظار المراجعة</p>
-                  </div>
                 </div>
+
+                {/* Manager Decision */}
+                {managerDecision === "accepted" ? (
+                  <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div>
+                      <p className="text-xs font-bold text-foreground">تم قبول السعر من المدير</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">وافق المدير (أواب) على التسعير المقترح ({formatCurrency(pricing.totalPrice)})</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button
+                        className="flex-1 gap-2 rounded-xl"
+                        onClick={() => {
+                          setManagerDecision("accepted");
+                          toast.success("تم قبول السعر المقترح من المدير");
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                        قبول السعر
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="flex-1 gap-2 rounded-xl border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                        onClick={() => setManagerDecision(managerDecision === "adjusting" ? "pending" : "adjusting")}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                        تعديل السعر
+                      </Button>
+                    </div>
+
+                    {managerDecision === "adjusting" && (
+                      <div className="p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 bg-yellow-50/50 dark:bg-yellow-950/10 space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Edit3 className="w-3.5 h-3.5 text-yellow-600 dark:text-yellow-400" />
+                          <p className="text-xs font-bold text-foreground">تعديل السعر</p>
+                        </div>
+                        <div className="space-y-2">
+                          <div>
+                            <label className="text-[10px] text-muted-foreground mb-1 block">السعر الجديد (ر.س)</label>
+                            <input
+                              type="number"
+                              value={adjustedPrice}
+                              onChange={(e) => setAdjustedPrice(e.target.value)}
+                              placeholder={String(pricing.subtotal)}
+                              className="w-full px-3 py-2 text-sm rounded-lg border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+                              dir="ltr"
+                            />
+                          </div>
+                          <div>
+                            <label className="text-[10px] text-muted-foreground mb-1 block">سبب التعديل</label>
+                            <Textarea
+                              value={adjustmentReason}
+                              onChange={(e) => setAdjustmentReason(e.target.value)}
+                              placeholder="اكتب سبب تعديل السعر..."
+                              className="text-xs min-h-[80px] resize-none"
+                              dir="rtl"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs"
+                            onClick={() => {
+                              setManagerDecision("pending");
+                              setAdjustedPrice("");
+                              setAdjustmentReason("");
+                            }}
+                          >
+                            إلغاء
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="text-xs gap-1.5"
+                            disabled={!adjustedPrice.trim() || !adjustmentReason.trim()}
+                            onClick={() => {
+                              toast.success(`تم تعديل السعر إلى ${Number(adjustedPrice).toLocaleString()} ر.س — بانتظار موافقة الإدارة`);
+                              setManagerDecision("accepted");
+                            }}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            اعتماد السعر المعدّل
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="p-4 space-y-3">
