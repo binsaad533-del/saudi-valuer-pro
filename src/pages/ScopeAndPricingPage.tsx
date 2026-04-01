@@ -46,6 +46,23 @@ interface BasisOfValueAnalysis {
   allBases: BasisOption[];
 }
 
+interface ApproachOption {
+  key: string;
+  label: string;
+  labelEn: string;
+  role: "primary" | "secondary" | "supporting";
+  confidence: number;
+  reason: string;
+  ivsReference?: string;
+}
+
+interface MethodologyAnalysis {
+  primaryApproach: ApproachOption;
+  secondaryApproach: ApproachOption;
+  allApproaches: ApproachOption[];
+  justification: string;
+}
+
 interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
@@ -75,6 +92,7 @@ interface ScopeData {
   disciplineAnalysis?: DisciplineAnalysis;
   purposeAnalysis?: PurposeAnalysis;
   basisOfValueAnalysis?: BasisOfValueAnalysis;
+  methodologyAnalysis?: MethodologyAnalysis;
 }
 
 interface PricingBreakdown {
@@ -526,6 +544,115 @@ export default function ScopeAndPricingPage() {
                             </div>
                           );
                         })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Methodology Analysis — IVS 105 */}
+        {scope?.methodologyAnalysis && !loading && (() => {
+          const methodIcons: Record<string, typeof Calculator> = {
+            "مقارنة": TrendingUp,
+            "سوق": TrendingUp,
+            "Market": TrendingUp,
+            "دخل": Landmark,
+            "Income": Landmark,
+            "رسملة": Landmark,
+            "تكلفة": Briefcase,
+            "Cost": Briefcase,
+            "إحلال": Briefcase,
+          };
+          const getMethodIcon = (label: string) => {
+            for (const [key, Icon] of Object.entries(methodIcons)) {
+              if (label.includes(key)) return Icon;
+            }
+            return Calculator;
+          };
+          const ma = scope.methodologyAnalysis!;
+          const roleLabels: Record<string, string> = {
+            primary: "رئيسي",
+            secondary: "ثانوي",
+            supporting: "داعم",
+          };
+          const roleBorderColors: Record<string, string> = {
+            primary: "border-primary bg-primary/5",
+            secondary: "border-accent bg-accent/5",
+            supporting: "border-border/50 bg-muted/20 opacity-60",
+          };
+
+          return (
+            <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-border bg-gradient-to-l from-accent/10 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                      <Calculator className="w-4 h-4 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">منهجية التقييم المقترحة</h3>
+                      <p className="text-[10px] text-muted-foreground">محددة تلقائياً وفق IVS 105 — للمراجعة والموافقة</p>
+                    </div>
+                  </div>
+                  <Badge className="text-[9px] bg-primary/10 text-primary border-0 gap-1">
+                    <Shield className="w-2.5 h-2.5" />
+                    IVS 105
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* All approaches as cards sorted by role */}
+                <div className="grid grid-cols-1 gap-2.5">
+                  {ma.allApproaches
+                    .sort((a, b) => {
+                      const order = { primary: 0, secondary: 1, supporting: 2 };
+                      return (order[a.role] ?? 2) - (order[b.role] ?? 2);
+                    })
+                    .map((ap) => {
+                      const ApIcon = getMethodIcon(ap.label);
+                      const isPrimary = ap.role === "primary";
+                      return (
+                        <div key={ap.key} className={`flex items-center gap-4 p-4 rounded-xl border-2 ${roleBorderColors[ap.role]}`}>
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isPrimary ? "bg-primary/10" : "bg-muted/30"}`}>
+                            <ApIcon className={`w-5 h-5 ${isPrimary ? "text-primary" : "text-muted-foreground"}`} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <p className={`text-xs font-bold ${isPrimary ? "text-foreground" : "text-foreground/80"}`}>{ap.label}</p>
+                              {isPrimary && <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0" />}
+                              <Badge variant={isPrimary ? "default" : "secondary"} className="text-[8px] px-1.5 py-0">
+                                {roleLabels[ap.role]}
+                              </Badge>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">{ap.labelEn}</p>
+                            <p className="text-[10px] text-muted-foreground mt-0.5 leading-relaxed">{ap.reason}</p>
+                          </div>
+                          <div className="text-left shrink-0">
+                            <p className={`text-sm font-bold ${
+                              ap.confidence >= 85
+                                ? "text-emerald-600 dark:text-emerald-400"
+                                : ap.confidence >= 65
+                                ? "text-yellow-600 dark:text-yellow-400"
+                                : "text-red-600 dark:text-red-400"
+                            }`}>
+                              {ap.confidence}%
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                {/* Justification */}
+                {ma.justification && (
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] font-medium text-muted-foreground mb-0.5">تبرير اختيار المنهجيات (IVS 105)</p>
+                      <p className="text-xs text-foreground leading-relaxed">{ma.justification}</p>
                     </div>
                   </div>
                 )}
