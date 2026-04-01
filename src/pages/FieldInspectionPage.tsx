@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import {
-  MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft,
+  MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft, ChevronDown,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
   FileCheck, UserCheck, Home, Upload, LayoutGrid, Sparkles, Copy,
@@ -451,6 +452,25 @@ function FieldGroup({ label, required, children }: { label: string; required?: b
       </Label>
       {children}
     </div>
+  );
+}
+
+function ExpandableSection({ icon, title, children, defaultOpen = false, badge }: { icon: string; title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="w-full flex items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-right transition-colors hover:bg-muted/50">
+          <span className="text-sm">{icon}</span>
+          <span className="text-xs font-bold text-foreground flex-1">{title}</span>
+          {badge && <Badge variant="secondary" className="text-[10px] h-5">{badge}</Badge>}
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3 space-y-3">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
   );
 }
 
@@ -1198,7 +1218,7 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <Separator />
 
         {/* الواجهة */}
-        <p className="text-xs font-bold text-muted-foreground">🏗️ الواجهة الخارجية</p>
+        <ExpandableSection icon="🏗️" title="الواجهة الخارجية" defaultOpen>
         <FieldGroup label="مادة الواجهة" required>
           <Select value={formData.exterior_facade_material} onValueChange={(v: string) => updateField("exterior_facade_material", v)}>
             <SelectTrigger><SelectValue placeholder="اختر مادة الواجهة" /></SelectTrigger>
@@ -1248,11 +1268,10 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             ))}
           </RadioGroup>
         </FieldGroup>
-
-        <Separator />
+        </ExpandableSection>
 
         {/* النوافذ والأبواب */}
-        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ والأبواب</p>
+        <ExpandableSection icon="🪟" title="النوافذ والأبواب">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع النوافذ">
             <Select value={formData.exterior_windows_type} onValueChange={(v: string) => updateField("exterior_windows_type", v)}>
@@ -1295,11 +1314,10 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
-
-        <Separator />
+        </ExpandableSection>
 
         {/* السطح */}
-        <p className="text-xs font-bold text-muted-foreground">🏠 السطح</p>
+        <ExpandableSection icon="🏠" title="السطح والعزل">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع السطح">
             <Select value={formData.exterior_roof_type} onValueChange={(v: string) => updateField("exterior_roof_type", v)}>
@@ -1344,11 +1362,10 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </RadioGroup>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* الأسوار والمداخل */}
-        <p className="text-xs font-bold text-muted-foreground">🚧 الأسوار والمدخل والمواقف</p>
+        {/* الأسوار والمداخل والمواقف */}
+        <ExpandableSection icon="🚧" title="الأسوار والمدخل والمواقف">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع السور">
             <Select value={formData.exterior_fence_type} onValueChange={(v: string) => updateField("exterior_fence_type", v)}>
@@ -1372,7 +1389,6 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* المدخل الرئيسي */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع المدخل الرئيسي">
             <Select value={formData.exterior_main_entrance_type} onValueChange={(v: string) => updateField("exterior_main_entrance_type", v)}>
@@ -1396,7 +1412,6 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* المواقف */}
         <FieldGroup label="المواقف">
           <RadioGroup value={formData.exterior_parking} onValueChange={(v: string) => updateField("exterior_parking", v)} className="flex gap-2">
             {[{ value: "covered", label: "مغطاة" }, { value: "open", label: "مفتوحة" }, { value: "basement", label: "سرداب" }, { value: "none", label: "لا يوجد" }].map(opt => (
@@ -1435,12 +1450,13 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <FieldGroup label="عدد المداخل">
           <Input type="number" value={formData.exterior_entrance_count} onChange={(e: any) => updateField("exterior_entrance_count", e.target.value)} placeholder="مثال: 2" />
         </FieldGroup>
+        </ExpandableSection>
 
-        <Separator />
-
+        <ExpandableSection icon="📝" title="ملاحظات إضافية">
         <FieldGroup label="ملاحظات إضافية">
           <Textarea value={formData.exterior_notes} onChange={(e: any) => updateField("exterior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الخارجية للمبنى..." rows={3} />
         </FieldGroup>
+        </ExpandableSection>
 
         <Separator />
         <p className="text-xs font-bold text-muted-foreground">📸 صور الواجهات</p>
@@ -1480,8 +1496,8 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <SectionHeader num={6} title="المبنى - الداخل" icon={Building2} subtitle="وصف مكونات المبنى الداخلية وحالتها" />
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* عدد الغرف والصالات */}
-        <p className="text-xs font-bold text-muted-foreground">🏠 التوزيع الداخلي</p>
+        {/* التوزيع الداخلي */}
+        <ExpandableSection icon="🏠" title="التوزيع الداخلي" defaultOpen>
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="عدد الغرف">
             <Input type="number" value={formData.interior_rooms_count} onChange={(e: any) => updateField("interior_rooms_count", e.target.value)} placeholder="مثال: 5" />
@@ -1496,11 +1512,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             <Input type="number" value={formData.interior_kitchens_count} onChange={(e: any) => updateField("interior_kitchens_count", e.target.value)} placeholder="مثال: 1" />
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* الأرضيات */}
-        <p className="text-xs font-bold text-muted-foreground">🧱 الأرضيات</p>
+        {/* التشطيبات */}
+        <ExpandableSection icon="🧱" title="الأرضيات والجدران والأسقف" defaultOpen>
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع الأرضيات" required>
             <Select value={formData.interior_floors_type} onValueChange={(v: string) => updateField("interior_floors_type", v)}>
@@ -1528,8 +1543,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* الجدران */}
-        <p className="text-xs font-bold text-muted-foreground">🧱 الجدران</p>
+        {/* Remove standalone label - content flows inside ExpandableSection */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع التشطيب">
             <Select value={formData.interior_walls_type} onValueChange={(v: string) => updateField("interior_walls_type", v)}>
@@ -1555,8 +1569,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* الأسقف */}
-        <p className="text-xs font-bold text-muted-foreground">✨ الأسقف الداخلية</p>
+        {/* الأسقف - inside same ExpandableSection */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع الأسقف">
             <Select value={formData.interior_ceilings_type} onValueChange={(v: string) => updateField("interior_ceilings_type", v)}>
@@ -1581,8 +1594,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* النوافذ */}
-        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ</p>
+        {/* النوافذ - still inside same ExpandableSection */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع النوافذ">
             <Select value={formData.interior_windows_type} onValueChange={(v: string) => updateField("interior_windows_type", v)}>
@@ -1606,11 +1618,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* المطبخ */}
-        <p className="text-xs font-bold text-muted-foreground">🍳 المطبخ</p>
+        {/* المطبخ والحمامات */}
+        <ExpandableSection icon="🍳" title="المطبخ ودورات المياه">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع المطبخ">
             <Select value={formData.interior_kitchen_type} onValueChange={(v: string) => updateField("interior_kitchen_type", v)}>
@@ -1649,11 +1660,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* الأبواب الداخلية */}
-        <p className="text-xs font-bold text-muted-foreground">🚪 الأبواب والسلالم</p>
+        {/* الأبواب والسلالم */}
+        <ExpandableSection icon="🚪" title="الأبواب والسلالم">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع الأبواب الداخلية">
             <Select value={formData.interior_doors_type} onValueChange={(v: string) => updateField("interior_doors_type", v)}>
@@ -1699,11 +1709,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
-
-        <Separator />
+        </ExpandableSection>
 
         {/* التكييف والأنظمة */}
-        <p className="text-xs font-bold text-muted-foreground">❄️ التكييف والأنظمة</p>
+        <ExpandableSection icon="❄️" title="التكييف والأنظمة">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع التكييف">
             <Select value={formData.interior_ac_type} onValueChange={(v: string) => updateField("interior_ac_type", v)}>
@@ -1745,11 +1754,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* حالة التشطيب الداخلي الكلية */}
-        <p className="text-xs font-bold text-muted-foreground">⭐ التقييم الكلي للتشطيب الداخلي</p>
+        {/* التقييم الكلي */}
+        <ExpandableSection icon="⭐" title="التقييم الكلي للتشطيب الداخلي" defaultOpen>
         <FieldGroup label="حالة التشطيب الداخلي الكلية" required>
           <Select value={formData.interior_overall_finishing} onValueChange={(v: string) => updateField("interior_overall_finishing", v)}>
             <SelectTrigger><SelectValue placeholder="اختر التقييم الكلي" /></SelectTrigger>
@@ -1768,10 +1776,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <FieldGroup label="ملاحظات إضافية">
           <Textarea value={formData.interior_notes} onChange={(e: any) => updateField("interior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الداخلية، عيوب، رطوبة، روائح..." rows={3} />
         </FieldGroup>
+        </ExpandableSection>
 
         {/* صور الداخل */}
-        <Separator />
-        <p className="text-xs font-bold text-muted-foreground">📸 صور المبنى الداخلية</p>
+        <ExpandableSection icon="📸" title="صور المبنى الداخلية">
         <SectionPhotoUpload section="interior_living" label="الصالة / المعيشة" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <SectionPhotoUpload section="interior_kitchen" label="المطبخ" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <SectionPhotoUpload section="interior_bathroom" label="دورات المياه" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
@@ -1795,6 +1803,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             rooms_count: formData.interior_rooms_count,
           }}
         />
+        </ExpandableSection>
       </CardContent>
     </Card>
   );
