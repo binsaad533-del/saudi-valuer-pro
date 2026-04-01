@@ -2929,7 +2929,7 @@ function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemo
   );
 }
 
-function SectionFinalCheck({ formData, updateField, sectionComplete, photos, checkedRequired, totalRequired, submitting, onSubmit }: any) {
+function SectionFinalCheck({ formData, updateField, sectionComplete, photos, checkedRequired, totalRequired }: any) {
   const reviewItems = [
     { label: "معلومات عامة", done: sectionComplete[0] },
     { label: "بيانات الموقع + GPS", done: sectionComplete[1] },
