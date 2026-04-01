@@ -113,7 +113,7 @@ export default function SectionNotesRecommendations({ formData, updateField, sub
       }
 
       lines.push("");
-      lines.push(`═══ نهاية الملخص — ${new Date().toLocaleDateString("ar-SA")} ═══`);
+      lines.push(`═══ نهاية الملخص — ${formatDate(new Date())} ═══`);
 
       setTechSummary(lines.join("\n"));
       setSummaryLoading(false);
