@@ -650,12 +650,14 @@ export default function FieldInspectionPage() {
         formData.inspector_final_notes ? `ملاحظات: ${formData.inspector_final_notes}` : "",
       ].filter(Boolean).join("\n");
 
-      // Save inspection record
+      // Determine assignment_id (must be valid UUID or skip)
+      const assignmentId = formData.assignment_ref && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(formData.assignment_ref) ? formData.assignment_ref : undefined;
+
       const { data: inspection, error: inspError } = await supabase
         .from("inspections")
         .insert({
           inspector_id: inspectorId,
-          assignment_id: formData.assignment_ref || undefined,
+          ...(assignmentId ? { assignment_id: assignmentId } : {}),
           inspection_date: formData.approval_date || new Date().toISOString().split("T")[0],
           status: "submitted",
           completed: true,
