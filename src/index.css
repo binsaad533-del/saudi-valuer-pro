@@ -51,6 +51,11 @@
     --info: 212 60% 50%;
     --info-foreground: 0 0% 100%;
 
+    /* AI accent - Golden/Amber */
+    --ai: 38 92% 50%;
+    --ai-foreground: 0 0% 100%;
+    --ai-light: 38 90% 95%;
+
     --border: 214 25% 92%;
     --input: 214 22% 91%;
     --ring: 212 60% 50%;
