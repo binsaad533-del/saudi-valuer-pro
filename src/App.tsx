@@ -48,6 +48,7 @@ import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
+import CFODashboardPage from "@/pages/CFODashboardPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
