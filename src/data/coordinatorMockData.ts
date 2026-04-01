@@ -51,18 +51,18 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(15), updated_at: daysAgo(1),
     notes: null,
   },
-  // 4. بانتظار معلومات العميل (بيانات ناقصة)
+  // 4. قيد التنفيذ — أولوية عالية
   {
     id: "r4", reference_number: "VAL-004", client_id: "c4",
-    property_type: "commercial_land", purpose: "financing",
-    property_city_ar: null, property_district_ar: null,
-    land_area: null, building_area: null,
-    property_description_ar: null,
-    status: "awaiting_client_info", priority: "urgent",
-    assigned_valuer_name: null,
-    quotation_amount: 8000,
-    created_at: daysAgo(5), updated_at: daysAgo(4),
-    notes: "العميل لم يرسل صك الملكية ولم يحدد الموقع — طلب عاجل من البنك",
+    property_type: "villa", purpose: "mortgage",
+    property_city_ar: "الرياض", property_district_ar: "الياسمين",
+    land_area: 500, building_area: 380,
+    property_description_ar: "فيلا دوبلكس — 6 غرف — مسبح خاص — حي الياسمين",
+    status: "in_production", priority: "high",
+    assigned_valuer_name: "م. خالد العتيبي",
+    quotation_amount: 6000,
+    created_at: daysAgo(2), updated_at: hoursAgo(3),
+    notes: "أولوية عالية — العميلة تحتاج التقرير للبنك خلال أسبوع",
   },
   // 5. معاينة ميدانية جارية
   {
