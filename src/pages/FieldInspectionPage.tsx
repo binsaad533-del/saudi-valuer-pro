@@ -58,13 +58,14 @@ const STEPS = [
   { key: "verification", label: "التحقق من الأصل", icon: Building2, num: 3 },
   { key: "dimensions", label: "المساحات", icon: Ruler, num: 4 },
   { key: "exterior", label: "المبنى - الخارج", icon: Home, num: 5 },
-  { key: "condition", label: "حالة الأصل", icon: Wrench, num: 6 },
-  { key: "utilities", label: "المرافق", icon: Zap, num: 7 },
-  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 8 },
-  { key: "documentation", label: "التوثيق", icon: Camera, num: 9 },
-  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 10 },
-  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 11 },
-  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 12 },
+  { key: "interior", label: "المبنى - الداخل", icon: Building2, num: 6 },
+  { key: "condition", label: "حالة الأصل", icon: Wrench, num: 7 },
+  { key: "utilities", label: "المرافق", icon: Zap, num: 8 },
+  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 9 },
+  { key: "documentation", label: "التوثيق", icon: Camera, num: 10 },
+  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 11 },
+  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 12 },
+  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 13 },
 ];
 
 /* ═══════ Types ═══════ */
@@ -170,6 +171,28 @@ interface FormData {
   exterior_landscaping: string;
   exterior_entrance_count: string;
   exterior_notes: string;
+  // Section 6: المبنى - الداخل
+  interior_floors_type: string;
+  interior_floors_condition: string;
+  interior_walls_type: string;
+  interior_walls_condition: string;
+  interior_ceilings_type: string;
+  interior_ceilings_condition: string;
+  interior_kitchen_type: string;
+  interior_kitchen_condition: string;
+  interior_bathrooms_count: string;
+  interior_bathrooms_condition: string;
+  interior_doors_type: string;
+  interior_doors_condition: string;
+  interior_stairs_type: string;
+  interior_stairs_condition: string;
+  interior_ac_type: string;
+  interior_ac_condition: string;
+  interior_electrical_condition: string;
+  interior_plumbing_condition: string;
+  interior_rooms_count: string;
+  interior_halls_count: string;
+  interior_notes: string;
   overall_condition: string;
   asset_age: string;
   finishing_level: string;
@@ -276,6 +299,27 @@ const defaultFormData: FormData = {
   exterior_landscaping: "",
   exterior_entrance_count: "",
   exterior_notes: "",
+  interior_floors_type: "",
+  interior_floors_condition: "",
+  interior_walls_type: "",
+  interior_walls_condition: "",
+  interior_ceilings_type: "",
+  interior_ceilings_condition: "",
+  interior_kitchen_type: "",
+  interior_kitchen_condition: "",
+  interior_bathrooms_count: "",
+  interior_bathrooms_condition: "",
+  interior_doors_type: "",
+  interior_doors_condition: "",
+  interior_stairs_type: "",
+  interior_stairs_condition: "",
+  interior_ac_type: "",
+  interior_ac_condition: "",
+  interior_electrical_condition: "",
+  interior_plumbing_condition: "",
+  interior_rooms_count: "",
+  interior_halls_count: "",
+  interior_notes: "",
   overall_condition: "",
   asset_age: "",
   finishing_level: "",
@@ -415,6 +459,7 @@ export default function FieldInspectionPage() {
     !!(formData.matches_documents && formData.asset_description),
     !!(formData.land_area || formData.building_area),
     !!(formData.exterior_facade_material),
+    !!(formData.interior_floors_type),
     !!(formData.overall_condition),
     true,
     true,
@@ -522,13 +567,14 @@ export default function FieldInspectionPage() {
         {step === 2 && <SectionVerification formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 3 && <SectionDimensions formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 4 && <SectionExterior formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 5 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 6 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 7 && <SectionValueFactors formData={formData} updateField={updateField} />}
-        {step === 8 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
-        {step === 9 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 10 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
-        {step === 11 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
+        {step === 5 && <SectionInterior formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 6 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 7 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 8 && <SectionValueFactors formData={formData} updateField={updateField} />}
+        {step === 9 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
+        {step === 10 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 11 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
+        {step === 12 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
 
       {/* Bottom nav */}
@@ -1262,11 +1308,296 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
   );
 }
 
+function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
+  const conditionOptions = [
+    { value: "excellent", label: "ممتازة" },
+    { value: "good", label: "جيدة" },
+    { value: "acceptable", label: "مقبولة" },
+    { value: "poor", label: "رديئة" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={6} title="المبنى - الداخل" icon={Building2} subtitle="وصف مكونات المبنى الداخلية وحالتها" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* عدد الغرف والصالات */}
+        <p className="text-xs font-bold text-muted-foreground">🏠 التوزيع الداخلي</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="عدد الغرف">
+            <Input type="number" value={formData.interior_rooms_count} onChange={(e: any) => updateField("interior_rooms_count", e.target.value)} placeholder="مثال: 5" />
+          </FieldGroup>
+          <FieldGroup label="عدد الصالات">
+            <Input type="number" value={formData.interior_halls_count} onChange={(e: any) => updateField("interior_halls_count", e.target.value)} placeholder="مثال: 2" />
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* الأرضيات */}
+        <p className="text-xs font-bold text-muted-foreground">🧱 الأرضيات</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع الأرضيات" required>
+            <Select value={formData.interior_floors_type} onValueChange={(v: string) => updateField("interior_floors_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="marble">رخام</SelectItem>
+                <SelectItem value="ceramic">سيراميك</SelectItem>
+                <SelectItem value="porcelain">بورسلان</SelectItem>
+                <SelectItem value="granite">جرانيت</SelectItem>
+                <SelectItem value="parquet">باركيه</SelectItem>
+                <SelectItem value="carpet">موكيت</SelectItem>
+                <SelectItem value="vinyl">فينيل</SelectItem>
+                <SelectItem value="concrete">خرساني بدون تشطيب</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة الأرضيات">
+            <Select value={formData.interior_floors_condition} onValueChange={(v: string) => updateField("interior_floors_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        {/* الجدران */}
+        <p className="text-xs font-bold text-muted-foreground">🧱 الجدران</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع التشطيب">
+            <Select value={formData.interior_walls_type} onValueChange={(v: string) => updateField("interior_walls_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="paint">دهان</SelectItem>
+                <SelectItem value="wallpaper">ورق جدران</SelectItem>
+                <SelectItem value="wood_panels">تجليد خشب</SelectItem>
+                <SelectItem value="stone">حجر</SelectItem>
+                <SelectItem value="gypsum">جبس</SelectItem>
+                <SelectItem value="plaster">لياسة بدون دهان</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة الجدران">
+            <Select value={formData.interior_walls_condition} onValueChange={(v: string) => updateField("interior_walls_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        {/* الأسقف */}
+        <p className="text-xs font-bold text-muted-foreground">✨ الأسقف الداخلية</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع الأسقف">
+            <Select value={formData.interior_ceilings_type} onValueChange={(v: string) => updateField("interior_ceilings_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gypsum_board">جبس بورد</SelectItem>
+                <SelectItem value="paint">دهان مباشر</SelectItem>
+                <SelectItem value="decorative">ديكور مزخرف</SelectItem>
+                <SelectItem value="suspended">سقف معلق</SelectItem>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="concrete">خرساني ظاهر</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة الأسقف">
+            <Select value={formData.interior_ceilings_condition} onValueChange={(v: string) => updateField("interior_ceilings_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* المطبخ */}
+        <p className="text-xs font-bold text-muted-foreground">🍳 المطبخ</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع المطبخ">
+            <Select value={formData.interior_kitchen_type} onValueChange={(v: string) => updateField("interior_kitchen_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="builtin">مطبخ مدمج</SelectItem>
+                <SelectItem value="modular">تجهيز جاهز</SelectItem>
+                <SelectItem value="open">مفتوح</SelectItem>
+                <SelectItem value="basic">أساسي</SelectItem>
+                <SelectItem value="none">بدون تجهيز</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة المطبخ">
+            <Select value={formData.interior_kitchen_condition} onValueChange={(v: string) => updateField("interior_kitchen_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        {/* دورات المياه */}
+        <p className="text-xs font-bold text-muted-foreground">🚿 دورات المياه</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="العدد">
+            <Input type="number" value={formData.interior_bathrooms_count} onChange={(e: any) => updateField("interior_bathrooms_count", e.target.value)} placeholder="مثال: 4" />
+          </FieldGroup>
+          <FieldGroup label="الحالة">
+            <Select value={formData.interior_bathrooms_condition} onValueChange={(v: string) => updateField("interior_bathrooms_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* الأبواب الداخلية */}
+        <p className="text-xs font-bold text-muted-foreground">🚪 الأبواب والسلالم</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع الأبواب الداخلية">
+            <Select value={formData.interior_doors_type} onValueChange={(v: string) => updateField("interior_doors_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="wood_solid">خشب صلب</SelectItem>
+                <SelectItem value="wood_hollow">خشب مفرغ</SelectItem>
+                <SelectItem value="pvc">PVC</SelectItem>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="glass">زجاج</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة الأبواب">
+            <Select value={formData.interior_doors_condition} onValueChange={(v: string) => updateField("interior_doors_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع السلالم">
+            <Select value={formData.interior_stairs_type} onValueChange={(v: string) => updateField("interior_stairs_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="marble">رخام</SelectItem>
+                <SelectItem value="granite">جرانيت</SelectItem>
+                <SelectItem value="concrete">خرساني</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="none">لا يوجد (دور واحد)</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة السلالم">
+            <Select value={formData.interior_stairs_condition} onValueChange={(v: string) => updateField("interior_stairs_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* التكييف والأنظمة */}
+        <p className="text-xs font-bold text-muted-foreground">❄️ التكييف والأنظمة</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع التكييف">
+            <Select value={formData.interior_ac_type} onValueChange={(v: string) => updateField("interior_ac_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="central">مركزي</SelectItem>
+                <SelectItem value="split">سبلت</SelectItem>
+                <SelectItem value="window">شباك</SelectItem>
+                <SelectItem value="ducted">مخفي (دكت)</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+                <SelectItem value="none">لا يوجد</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة التكييف">
+            <Select value={formData.interior_ac_condition} onValueChange={(v: string) => updateField("interior_ac_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="حالة الكهرباء الداخلية">
+            <Select value={formData.interior_electrical_condition} onValueChange={(v: string) => updateField("interior_electrical_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة السباكة">
+            <Select value={formData.interior_plumbing_condition} onValueChange={(v: string) => updateField("interior_plumbing_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        <FieldGroup label="ملاحظات إضافية">
+          <Textarea value={formData.interior_notes} onChange={(e: any) => updateField("interior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الداخلية، عيوب، رطوبة، روائح..." rows={3} />
+        </FieldGroup>
+
+        {/* صور الداخل */}
+        <Separator />
+        <p className="text-xs font-bold text-muted-foreground">📸 صور المبنى الداخلية</p>
+        <SectionPhotoUpload section="interior_living" label="الصالة / المعيشة" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="interior_kitchen" label="المطبخ" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="interior_bathroom" label="دورات المياه" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="interior_rooms" label="غرف النوم" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="interior_general" label="صور عامة داخلية" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+
+        <AiSuggestionBox
+          sectionKey="interior"
+          promptHint="تحليل حالة المبنى الداخلية والتشطيبات"
+          context={{
+            floors_type: formData.interior_floors_type,
+            floors_condition: formData.interior_floors_condition,
+            walls_condition: formData.interior_walls_condition,
+            ceilings_condition: formData.interior_ceilings_condition,
+            kitchen_condition: formData.interior_kitchen_condition,
+            bathrooms_condition: formData.interior_bathrooms_condition,
+            ac_type: formData.interior_ac_type,
+            ac_condition: formData.interior_ac_condition,
+            electrical: formData.interior_electrical_condition,
+            plumbing: formData.interior_plumbing_condition,
+            rooms_count: formData.interior_rooms_count,
+          }}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={6} title="حالة الأصل" icon={Wrench} subtitle="تقييم الحالة الفعلية" />
+        <SectionHeader num={7} title="حالة الأصل" icon={Wrench} subtitle="تقييم الحالة الفعلية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="الحالة العامة" required>
@@ -1332,7 +1663,7 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
-          <SectionHeader num={7} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
+          <SectionHeader num={8} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
         </CardHeader>
         <CardContent className="space-y-3">
           {[
@@ -1394,7 +1725,7 @@ function SectionValueFactors({ formData, updateField }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={8} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
+        <SectionHeader num={9} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="إيجابيات الموقع">
@@ -1425,7 +1756,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, 
 
   return (
     <div className="space-y-4">
-      <SectionHeader num={9} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
+      <SectionHeader num={10} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
       {requiredPhotoDone < requiredPhotoTotal && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -1489,7 +1820,7 @@ function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemo
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={10} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
+        <SectionHeader num={11} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="هل توجد مخاطر تؤثر على التقييم؟" required>
@@ -1535,7 +1866,7 @@ function SectionFinalCheck({ formData, updateField, sectionComplete, photos, che
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={11} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
+        <SectionHeader num={12} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
       </CardHeader>
       <CardContent className="space-y-3">
         {reviewItems.map((item, i) => (
@@ -1583,7 +1914,7 @@ function SectionApproval({ formData, updateField, canSubmit, submitting, onSubmi
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={12} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
+        <SectionHeader num={13} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center space-y-2">

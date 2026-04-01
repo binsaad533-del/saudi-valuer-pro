@@ -158,6 +158,20 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
       if (ctx.facade_condition === "excellent" && ctx.roof_condition === "excellent") tips.push("✅ الحالة الخارجية ممتازة — تأكد من تطابقها مع الحالة الداخلية");
       return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق جميع عناصر المبنى الخارجية بالصور مع ملاحظة أي عيوب ظاهرة.";
     }
+    case "interior": {
+      const tips: string[] = [];
+      if (!ctx.floors_type) tips.push("💡 حدد نوع الأرضيات للحصول على تقييم دقيق للتشطيبات");
+      if (ctx.floors_condition === "poor") tips.push("⚠️ حالة الأرضيات الرديئة تستوجب تقدير تكلفة الاستبدال");
+      if (ctx.walls_condition === "poor") tips.push("⚠️ تحقق من أسباب تدهور الجدران (رطوبة، تسربات، إهمال)");
+      if (ctx.electrical === "poor") tips.push("🔌 حالة الكهرباء الرديئة تمثل خطراً — وثّق المشاكل بالتفصيل");
+      if (ctx.plumbing === "poor") tips.push("🚰 مشاكل السباكة قد تسبب أضراراً هيكلية — تحقق من تسربات المياه");
+      if (ctx.ac_type === "none") tips.push("❄️ عدم وجود تكييف يؤثر على القيمة خاصة في المناطق الحارة");
+      if (ctx.bathrooms_condition === "poor") tips.push("🚿 حالة دورات المياه الرديئة تحتاج توثيق التلف والتسربات");
+      const poorCount = ["floors_condition", "walls_condition", "ceilings_condition", "kitchen_condition", "bathrooms_condition"].filter(k => ctx[k] === "poor").length;
+      if (poorCount >= 3) tips.push("⚠️ معظم التشطيبات الداخلية بحالة رديئة — يُنصح بتقدير تكلفة تجديد شاملة");
+      if (poorCount === 0 && ctx.floors_type) tips.push("✅ التشطيبات الداخلية بحالة جيدة عموماً");
+      return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق حالة جميع عناصر الداخل بالصور مع التركيز على العيوب.";
+    }
     case "risks": {
       if (ctx.has_risks === "yes" && (!ctx.risk_details || String(ctx.risk_details).length < 20))
         return "⚠️ وجود مخاطر يتطلب توثيقاً مفصلاً:\n- نوع الخطر (إنشائي، بيئي، نظامي)\n- مستوى الخطورة\n- التأثير المتوقع على القيمة\n- صور داعمة إن أمكن";
