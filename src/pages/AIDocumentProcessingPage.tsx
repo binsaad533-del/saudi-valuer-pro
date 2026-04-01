@@ -410,16 +410,23 @@ export default function AIDocumentProcessingPage() {
                   })}
                 </div>
 
+                {/* Mock toggle */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={useMock} onChange={(e) => setUseMock(e.target.checked)}
+                    className="rounded border-border accent-primary w-3.5 h-3.5" />
+                  <span className="text-[11px] text-muted-foreground">وضع تجريبي (Mock)</span>
+                </label>
+
                 {/* Analyze button */}
                 <button
                   onClick={runExtraction}
                   disabled={extracting}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
                 >
                   {extracting ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /><span className="text-xs">{extractionPhase}</span></>
                   ) : (
-                    <><Brain className="w-4 h-4" />تحليل بالذكاء الاصطناعي</>
+                    <><Brain className="w-4 h-4" />{useMock ? "تحليل تجريبي" : "تحليل بالذكاء الاصطناعي"}</>
                   )}
                 </button>
               </div>
