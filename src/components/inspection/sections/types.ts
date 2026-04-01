@@ -1,5 +1,42 @@
 import type { SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 
+export const PHOTO_CATEGORIES = [
+  { key: "exterior_front", label: "الواجهة الأمامية", group: "exterior", required: true },
+  { key: "exterior_back", label: "الواجهة الخلفية", group: "exterior", required: true },
+  { key: "exterior_left", label: "الواجهة اليسرى", group: "exterior", required: true },
+  { key: "exterior_right", label: "الواجهة اليمنى", group: "exterior", required: true },
+  { key: "street_view", label: "منظر الشارع", group: "exterior", required: true },
+  { key: "interior_living", label: "صالة المعيشة", group: "interior", required: false },
+  { key: "interior_kitchen", label: "المطبخ", group: "interior", required: false },
+  { key: "interior_bathroom", label: "دورة المياه", group: "interior", required: false },
+  { key: "interior_bedroom", label: "غرفة النوم", group: "interior", required: false },
+  { key: "surroundings", label: "المحيط العام", group: "exterior", required: true },
+  { key: "site_plan", label: "المخطط / الكروكي", group: "plan", required: false },
+  { key: "floor_plan", label: "مخطط الأدوار", group: "plan", required: false },
+  { key: "deed_photo", label: "صورة الصك", group: "plan", required: false },
+  { key: "problem_cracks", label: "تشققات / عيوب", group: "problems", required: false },
+  { key: "problem_moisture", label: "رطوبة / تسربات", group: "problems", required: false },
+  { key: "problem_other", label: "مشاكل أخرى", group: "problems", required: false },
+  { key: "other", label: "صور إضافية", group: "other", required: false },
+];
+
+export const DEFAULT_CHECKLIST = [
+  { category: "structure", label_ar: "الهيكل الإنشائي سليم", is_required: true },
+  { category: "structure", label_ar: "لا توجد تشققات ظاهرة", is_required: true },
+  { category: "structure", label_ar: "حالة السقف جيدة", is_required: true },
+  { category: "utilities", label_ar: "توصيلات الكهرباء متوفرة", is_required: true },
+  { category: "utilities", label_ar: "توصيلات المياه متوفرة", is_required: true },
+  { category: "utilities", label_ar: "نظام الصرف الصحي يعمل", is_required: true },
+  { category: "exterior", label_ar: "حالة الأسوار والبوابات", is_required: false },
+  { category: "exterior", label_ar: "المواقف متوفرة", is_required: false },
+  { category: "exterior", label_ar: "التشجير والمسطحات الخضراء", is_required: false },
+  { category: "interior", label_ar: "حالة الأرضيات", is_required: true },
+  { category: "interior", label_ar: "حالة الدهانات والجدران", is_required: true },
+  { category: "interior", label_ar: "حالة النوافذ والأبواب", is_required: true },
+  { category: "compliance", label_ar: "مطابقة للمخطط المعتمد", is_required: true },
+  { category: "compliance", label_ar: "لا توجد مخالفات بناء", is_required: true },
+];
+
 export interface PhotoItem {
   category: string;
   file_name: string;
