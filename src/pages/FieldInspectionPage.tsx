@@ -82,12 +82,19 @@ interface ChecklistItem {
 }
 
 interface FormData {
+  // Section 1: بيانات العقار الأساسية
+  asset_type: string;
+  deed_number: string;
+  owner_name: string;
+  property_use: string;
+  property_number: string;
+  plan_number: string;
+  // Inspector info (auto/secondary)
   assignment_ref: string;
   valuer_name: string;
   inspector_name: string;
   inspection_date: string;
   inspection_time: string;
-  asset_type: string;
   city: string;
   district: string;
   detailed_address: string;
@@ -125,12 +132,17 @@ interface FormData {
 }
 
 const defaultFormData: FormData = {
+  asset_type: "real_estate",
+  deed_number: "",
+  owner_name: "",
+  property_use: "",
+  property_number: "",
+  plan_number: "",
   assignment_ref: "",
   valuer_name: "",
   inspector_name: "",
   inspection_date: new Date().toISOString().split("T")[0],
   inspection_time: new Date().toTimeString().slice(0, 5),
-  asset_type: "real_estate",
   city: "",
   district: "",
   detailed_address: "",
@@ -426,30 +438,17 @@ function SectionGeneral({ formData, updateField }: { formData: FormData; updateF
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={1} title="معلومات عامة" icon={Info} subtitle="البيانات الأساسية للمعاينة" />
+        <SectionHeader num={1} title="بيانات العقار الأساسية" icon={Building2} subtitle="معلومات العقار والملكية" />
       </CardHeader>
       <CardContent className="space-y-4">
-        <FieldGroup label="رقم المهمة">
-          <Input value={formData.assignment_ref} onChange={e => updateField("assignment_ref", e.target.value)} placeholder="أدخل رقم المهمة" />
-        </FieldGroup>
-        <FieldGroup label="اسم المقيّم">
-          <Input value={formData.valuer_name} onChange={e => updateField("valuer_name", e.target.value)} placeholder="اسم المقيّم المسؤول" />
-        </FieldGroup>
-        <FieldGroup label="اسم المعاين" required>
-          <Input value={formData.inspector_name} onChange={e => updateField("inspector_name", e.target.value)} placeholder="اسمك الكامل" />
-        </FieldGroup>
-        <div className="grid grid-cols-2 gap-3">
-          <FieldGroup label="تاريخ المعاينة" required>
-            <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} />
-          </FieldGroup>
-          <FieldGroup label="وقت المعاينة">
-            <Input type="time" value={formData.inspection_time} onChange={e => updateField("inspection_time", e.target.value)} />
-          </FieldGroup>
-        </div>
-        <FieldGroup label="نوع الأصل" required>
+        <FieldGroup label="نوع العقار" required>
           <RadioGroup value={formData.asset_type} onValueChange={v => updateField("asset_type", v)} className="grid grid-cols-2 gap-2">
             {[
-              { value: "real_estate", label: "عقار" },
+              { value: "real_estate", label: "أرض" },
+              { value: "villa", label: "فيلا" },
+              { value: "apartment", label: "شقة" },
+              { value: "commercial", label: "تجاري" },
+              { value: "building", label: "عمارة" },
               { value: "facility", label: "منشأة" },
               { value: "machinery", label: "آلات ومعدات" },
               { value: "other", label: "أخرى" },
@@ -461,6 +460,41 @@ function SectionGeneral({ formData, updateField }: { formData: FormData; updateF
             ))}
           </RadioGroup>
         </FieldGroup>
+        <FieldGroup label="رقم الصك / العقد" required>
+          <Input value={formData.deed_number} onChange={e => updateField("deed_number", e.target.value)} placeholder="أدخل رقم الصك أو العقد" />
+        </FieldGroup>
+        <FieldGroup label="اسم المالك" required>
+          <Input value={formData.owner_name} onChange={e => updateField("owner_name", e.target.value)} placeholder="اسم مالك العقار" />
+        </FieldGroup>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="رقم القطعة">
+            <Input value={formData.property_number} onChange={e => updateField("property_number", e.target.value)} placeholder="رقم القطعة" />
+          </FieldGroup>
+          <FieldGroup label="رقم المخطط">
+            <Input value={formData.plan_number} onChange={e => updateField("plan_number", e.target.value)} placeholder="رقم المخطط" />
+          </FieldGroup>
+        </div>
+        <FieldGroup label="الاستخدام المحدد بالصك">
+          <Input value={formData.property_use} onChange={e => updateField("property_use", e.target.value)} placeholder="مثال: سكني، تجاري، زراعي" />
+        </FieldGroup>
+        <Separator />
+        <p className="text-xs text-muted-foreground font-medium">بيانات المعاينة</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="رقم المهمة">
+            <Input value={formData.assignment_ref} onChange={e => updateField("assignment_ref", e.target.value)} placeholder="رقم المهمة" />
+          </FieldGroup>
+          <FieldGroup label="اسم المعاين" required>
+            <Input value={formData.inspector_name} onChange={e => updateField("inspector_name", e.target.value)} placeholder="اسمك الكامل" />
+          </FieldGroup>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="تاريخ المعاينة" required>
+            <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} />
+          </FieldGroup>
+          <FieldGroup label="وقت المعاينة">
+            <Input type="time" value={formData.inspection_time} onChange={e => updateField("inspection_time", e.target.value)} />
+          </FieldGroup>
+        </div>
       </CardContent>
     </Card>
   );
