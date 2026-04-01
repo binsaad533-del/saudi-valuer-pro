@@ -1005,6 +1005,15 @@ export default function AIReportGenerationPage() {
                     <InfoRow label="الرقم المرجعي" value={reportDraft.reference_number || aggregatedData?.assignment?.reference_number} />
                     <InfoRow label="المقيّم" value={aggregatedData?.valuer?.full_name_ar} />
                     <InfoRow label="المنشأة" value={aggregatedData?.organization?.name_ar} />
+                    <Separator className="my-1" />
+                    <InfoRow label="المنهجية الرئيسية" value={
+                      reportDraft.metadata?.approaches_used?.[0] ||
+                      aggregatedData?.assignment?.valuation_approach ||
+                      "—"
+                    } />
+                    <InfoRow label="عدد المقارنات" value={
+                      String(aggregatedData?.comparables?.length ?? reportDraft.metadata?.comparables_count ?? "—")
+                    } />
                   </CardContent>
                 </Card>
 
