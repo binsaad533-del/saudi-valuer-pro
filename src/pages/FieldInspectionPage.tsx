@@ -215,6 +215,7 @@ interface FormData {
   elevator_status: string;
   elevator_count: string;
   utilities_notes: string;
+  utilities_confidential_notes: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
@@ -355,6 +356,7 @@ const defaultFormData: FormData = {
   elevator_status: "",
   elevator_count: "",
   utilities_notes: "",
+  utilities_confidential_notes: "",
   positive_factors: "",
   negative_factors: "",
   environmental_factors: "",
@@ -1938,6 +1940,20 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
         </CardContent>
       </Card>
       <SectionPhotoUpload section="utilities" label="صور المرافق والخدمات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+
+      <div className="border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 rounded-lg p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <span className="text-xs font-bold text-amber-700 dark:text-amber-300">ملاحظات المعاين على الخدمات (سرية — للمقيّم فقط)</span>
+        </div>
+        <Textarea
+          value={formData.utilities_confidential_notes}
+          onChange={(e: any) => updateField("utilities_confidential_notes", e.target.value)}
+          placeholder="ملاحظات سرية عن حالة الخدمات لا تظهر في التقرير... (مثال: اشتباه بتوصيلات غير نظامية، روائح صرف صحي)"
+          rows={2}
+          className="border-amber-200 dark:border-amber-800 bg-white dark:bg-background"
+        />
+      </div>
 
       <AiSuggestionBox
         sectionKey="utilities"
