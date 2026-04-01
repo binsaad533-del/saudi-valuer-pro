@@ -13,7 +13,7 @@ import { Search, Filter, RefreshCw, MoreHorizontal, Eye, UserCog, Flag } from "l
 import { STATUS_LABELS as WF_STATUS_LABELS, STATUS_COLORS } from "@/lib/workflow-engine";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = Object.fromEntries(
@@ -268,7 +268,7 @@ export default function CoordinatorRequestsTable({ requests, clients, onRefresh 
                 <div><span className="text-muted-foreground">مساحة الأرض:</span><br />{selectedReq.land_area ? `${selectedReq.land_area} م²` : "—"}</div>
                 <div><span className="text-muted-foreground">مساحة البناء:</span><br />{selectedReq.building_area ? `${selectedReq.building_area} م²` : "—"}</div>
                 <div><span className="text-muted-foreground">الحالة:</span><br />{getStatusBadge(selectedReq.status)}</div>
-                <div><span className="text-muted-foreground">المبلغ:</span><br />{selectedReq.quotation_amount ? `${Number(selectedReq.quotation_amount).toLocaleString()} ر.س` : "—"}</div>
+                <div><span className="text-muted-foreground">المبلغ:</span><br />{selectedReq.quotation_amount ? `${formatNumber(Number(selectedReq.quotation_amount))} ر.س` : "—"}</div>
                 <div><span className="text-muted-foreground">المقيّم:</span><br />{selectedReq.assigned_valuer_name || "لم يُعيَّن"}</div>
                 <div><span className="text-muted-foreground">تاريخ الإدخال:</span><br />{formatDate(selectedReq.created_at)}</div>
               </div>

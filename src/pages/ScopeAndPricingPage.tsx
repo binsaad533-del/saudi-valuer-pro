@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatNumber } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import { Badge } from "@/components/ui/badge";
@@ -287,7 +288,7 @@ export default function ScopeAndPricingPage() {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("ar-SA").format(Math.round(amount)) + " ر.س";
+    formatNumber(Math.round(amount)) + " ر.س";
 
   if (!extractedData) {
     return (
@@ -1484,7 +1485,7 @@ export default function ScopeAndPricingPage() {
                             className="text-xs gap-1.5"
                             disabled={!adjustedPrice.trim() || !adjustmentReason.trim()}
                             onClick={() => {
-                              toast.success(`تم تعديل السعر إلى ${Number(adjustedPrice).toLocaleString()} ر.س — بانتظار موافقة الإدارة`);
+                              toast.success(`تم تعديل السعر إلى ${formatNumber(Number(adjustedPrice))} ر.س — بانتظار موافقة الإدارة`);
                               setManagerDecision("accepted");
                             }}
                           >

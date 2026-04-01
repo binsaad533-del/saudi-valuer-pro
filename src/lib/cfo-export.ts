@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import { formatNumber } from "@/lib/utils";
 
 // Generic CSV export
 function exportCSV(headers: string[], rows: string[][], filename: string) {
@@ -55,7 +56,7 @@ import { statusLabels } from "@/data/cfoMockData";
 const invoiceHeaders = ["Invoice #", "Client", "Type", "Amount (SAR)", "Issue Date", "Due Date", "Status"];
 
 function invoiceToRow(inv: Invoice): string[] {
-  return [inv.invoiceNumber, inv.clientName, inv.valuationType, inv.amount.toLocaleString(), inv.issueDate, inv.dueDate, statusLabels[inv.status]];
+  return [inv.invoiceNumber, inv.clientName, inv.valuationType, formatNumber(inv.amount), inv.issueDate, inv.dueDate, statusLabels[inv.status]];
 }
 
 export function exportInvoicesPDF(data: Invoice[]) {
@@ -73,7 +74,7 @@ import { methodLabels } from "@/data/cfoMockData";
 const paymentHeaders = ["Payment #", "Invoice #", "Client", "Amount (SAR)", "Method", "Date"];
 
 function paymentToRow(p: Payment): string[] {
-  return [p.paymentNumber, p.invoiceNumber, p.clientName, p.amount.toLocaleString(), methodLabels[p.method], p.date];
+  return [p.paymentNumber, p.invoiceNumber, p.clientName, formatNumber(p.amount), methodLabels[p.method], p.date];
 }
 
 export function exportPaymentsPDF(data: Payment[]) {

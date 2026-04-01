@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback } from "react";
+import { formatNumber } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1053,7 +1054,7 @@ export default function AIReportGenerationPage() {
                         <div key={i} className="flex justify-between p-1.5 rounded bg-muted/40">
                           <span>{comp.comparable?.district_ar || comp.comparable?.city_ar || `مقارنة ${i + 1}`}</span>
                           <span className="font-mono text-primary">
-                            {comp.comparable?.price ? `${Number(comp.comparable.price).toLocaleString()} ر.س` : "—"}
+                            {comp.comparable?.price ? `${formatNumber(Number(comp.comparable.price))} ر.س` : "—"}
                           </span>
                         </div>
                       ))
@@ -1074,7 +1075,7 @@ export default function AIReportGenerationPage() {
                   <CardContent className="text-xs space-y-1">
                     {aggregatedData.reconciliation ? (
                       <>
-                        <InfoRow label="القيمة النهائية" value={`${Number(aggregatedData.reconciliation.final_value).toLocaleString()} ر.س`} />
+                        <InfoRow label="القيمة النهائية" value={`${formatNumber(Number(aggregatedData.reconciliation.final_value))} ر.س`} />
                         <InfoRow label="مستوى الثقة" value={aggregatedData.reconciliation.confidence_level} />
                       </>
                     ) : (
@@ -1177,7 +1178,7 @@ export default function AIReportGenerationPage() {
                   <div>
                     <p className="text-xs text-muted-foreground">القيمة النهائية المستنتجة</p>
                     <p className="text-2xl font-bold text-primary mt-1">
-                      {reportDraft.final_value.amount?.toLocaleString()} {reportDraft.final_value.currency || "ر.س"}
+                      {formatNumber(reportDraft.final_value.amount ?? 0)} {reportDraft.final_value.currency || "ر.س"}
                     </p>
                     {reportDraft.final_value.text_ar && (
                       <p className="text-xs text-muted-foreground mt-1">{reportDraft.final_value.text_ar}</p>
@@ -1363,7 +1364,7 @@ export default function AIReportGenerationPage() {
                     {reportDraft.final_value?.amount ? (
                       <div className="space-y-2">
                         <p className="text-xl font-extrabold text-primary">
-                          {reportDraft.final_value.amount.toLocaleString()} <span className="text-sm">{reportDraft.final_value.currency || "ر.س"}</span>
+                          {formatNumber(reportDraft.final_value.amount)} <span className="text-sm">{reportDraft.final_value.currency || "ر.س"}</span>
                         </p>
                         {reportDraft.final_value.text_ar && (
                           <p className="text-[10px] text-muted-foreground leading-relaxed">{reportDraft.final_value.text_ar}</p>

@@ -18,7 +18,7 @@ import {
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 import { StatusBadge, StatusTransitionButton } from "@/components/workflow/StatusComponents";
-import { formatDate } from "@/lib/utils";
+import { formatDate, formatNumber } from "@/lib/utils";
 import {
   STATUS_LABELS as WF_STATUS_LABELS,
   STATUS_COLORS,
@@ -163,7 +163,7 @@ export default function ClientRequests() {
       await supabase.from("request_messages" as any).insert({
         request_id: selectedRequest.id,
         sender_type: "system" as any,
-        content: `تم إرسال عرض السعر: ${totalFees.toLocaleString()} ر.س\nنطاق العمل: ${pricingForm.scopeOfWorkAr}\nالمدة المتوقعة: ${pricingForm.turnaround}`,
+        content: `تم إرسال عرض السعر: ${formatNumber(totalFees)} ر.س\nنطاق العمل: ${pricingForm.scopeOfWorkAr}\nالمدة المتوقعة: ${pricingForm.turnaround}`,
       });
 
       toast({ title: "تم إرسال عرض السعر للعميل" });
@@ -300,7 +300,7 @@ export default function ClientRequests() {
                           {req.property_city_ar && <span>📍 {req.property_city_ar}</span>}
                           {req.land_area && <span>📐 {req.land_area} م²</span>}
                           <span>📅 {formatDate(req.created_at)}</span>
-                          {req.quotation_amount && <span className="text-primary font-medium">💰 {Number(req.quotation_amount).toLocaleString()} ر.س</span>}
+                          {req.quotation_amount && <span className="text-primary font-medium">💰 {formatNumber(Number(req.quotation_amount))} ر.س</span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -448,8 +448,8 @@ export default function ClientRequests() {
                 />
                 {pricingForm.quotationAmount && (
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>الدفعة الأولى: {(parseFloat(pricingForm.quotationAmount) * parseFloat(pricingForm.firstPaymentPercentage) / 100).toLocaleString()} ر.س</span>
-                    <span>الدفعة النهائية: {(parseFloat(pricingForm.quotationAmount) * (1 - parseFloat(pricingForm.firstPaymentPercentage) / 100)).toLocaleString()} ر.س</span>
+                    <span>الدفعة الأولى: {formatNumber(parseFloat(pricingForm.quotationAmount) * parseFloat(pricingForm.firstPaymentPercentage) / 100)} ر.س</span>
+                    <span>الدفعة النهائية: {formatNumber(parseFloat(pricingForm.quotationAmount) * (1 - parseFloat(pricingForm.firstPaymentPercentage) / 100))} ر.س</span>
                   </div>
                 )}
               </div>
@@ -510,7 +510,7 @@ export default function ClientRequests() {
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium text-sm">{pay.payment_type === "first" ? "الدفعة الأولى" : pay.payment_type === "final" ? "الدفعة النهائية" : "دفعة"}</span>
-                    <span className="text-lg font-bold" dir="ltr">{Number(pay.amount).toLocaleString()} {pay.currency}</span>
+                    <span className="text-lg font-bold" dir="ltr">{formatNumber(Number(pay.amount))} {pay.currency}</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     <p>الملف: {pay.file_name}</p>
