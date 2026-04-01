@@ -47,6 +47,7 @@ const navSections: NavSection[] = [
     items: [
       { label: "رقيم", icon: Sparkles, path: "/raqeem", roles: ["owner"] },
       { label: "لوحة التحكم", icon: LayoutDashboard, path: "/", roles: ["owner", "admin_coordinator"] },
+      { label: "واجهة المنسق", icon: ClipboardCheck, path: "/coordinator-dashboard", roles: ["admin_coordinator", "owner"] },
     ],
   },
   {
