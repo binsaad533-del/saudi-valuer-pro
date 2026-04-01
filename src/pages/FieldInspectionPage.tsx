@@ -83,17 +83,19 @@ interface ChecklistItem {
 
 interface FormData {
   // Section 1: بيانات العقار الأساسية
+  request_number: string;
+  inspection_date: string;
+  inspector_name: string;
   asset_type: string;
   deed_number: string;
-  owner_name: string;
-  property_use: string;
-  property_number: string;
-  plan_number: string;
-  // Inspector info (auto/secondary)
+  city: string;
+  district: string;
+  street: string;
+  building_number: string;
+  valuation_purpose: string;
+  // Legacy/secondary
   assignment_ref: string;
   valuer_name: string;
-  inspector_name: string;
-  inspection_date: string;
   inspection_time: string;
   city: string;
   district: string;
