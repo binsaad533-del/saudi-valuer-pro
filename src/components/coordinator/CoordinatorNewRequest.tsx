@@ -30,6 +30,7 @@ const PROPERTY_TYPES = [
 
 const PURPOSES = [
   { value: "sale_purchase", label: "بيع / شراء" },
+  { value: "mortgage", label: "رهن عقاري" },
   { value: "financing", label: "تمويل" },
   { value: "insurance", label: "تأمين" },
   { value: "legal", label: "قضائي" },
