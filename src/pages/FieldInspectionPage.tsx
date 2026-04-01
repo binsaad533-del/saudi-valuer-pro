@@ -459,6 +459,7 @@ export default function FieldInspectionPage() {
     !!(formData.matches_documents && formData.asset_description),
     !!(formData.land_area || formData.building_area),
     !!(formData.exterior_facade_material),
+    !!(formData.interior_floors_type),
     !!(formData.overall_condition),
     true,
     true,
