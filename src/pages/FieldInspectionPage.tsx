@@ -171,6 +171,28 @@ interface FormData {
   exterior_landscaping: string;
   exterior_entrance_count: string;
   exterior_notes: string;
+  // Section 6: المبنى - الداخل
+  interior_floors_type: string;
+  interior_floors_condition: string;
+  interior_walls_type: string;
+  interior_walls_condition: string;
+  interior_ceilings_type: string;
+  interior_ceilings_condition: string;
+  interior_kitchen_type: string;
+  interior_kitchen_condition: string;
+  interior_bathrooms_count: string;
+  interior_bathrooms_condition: string;
+  interior_doors_type: string;
+  interior_doors_condition: string;
+  interior_stairs_type: string;
+  interior_stairs_condition: string;
+  interior_ac_type: string;
+  interior_ac_condition: string;
+  interior_electrical_condition: string;
+  interior_plumbing_condition: string;
+  interior_rooms_count: string;
+  interior_halls_count: string;
+  interior_notes: string;
   overall_condition: string;
   asset_age: string;
   finishing_level: string;
