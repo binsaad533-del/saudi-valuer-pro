@@ -1838,6 +1838,72 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
             </div>
           </label>
 
+          <Separator />
+
+          {/* الغاز */}
+          <p className="text-xs font-bold text-muted-foreground">🔥 الغاز</p>
+          <FieldGroup label="حالة الغاز">
+            <Select value={formData.gas_status} onValueChange={(v: string) => updateField("gas_status", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="central">غاز مركزي</SelectItem>
+                <SelectItem value="cylinder">أسطوانات</SelectItem>
+                <SelectItem value="unavailable">غير متوفر</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+
+          {/* الإنترنت */}
+          <p className="text-xs font-bold text-muted-foreground">🌐 الإنترنت</p>
+          <FieldGroup label="حالة الإنترنت">
+            <Select value={formData.internet_status} onValueChange={(v: string) => updateField("internet_status", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fiber">ألياف بصرية</SelectItem>
+                <SelectItem value="dsl">DSL</SelectItem>
+                <SelectItem value="available">متوفر</SelectItem>
+                <SelectItem value="unavailable">غير متوفر</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+
+          <Separator />
+
+          {/* التكييف المركزي */}
+          <p className="text-xs font-bold text-muted-foreground">❄️ التكييف المركزي</p>
+          <FieldGroup label="حالة التكييف المركزي">
+            <Select value={formData.central_ac_status} onValueChange={(v: string) => updateField("central_ac_status", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="available_working">متوفر ويعمل</SelectItem>
+                <SelectItem value="available_broken">متوفر لا يعمل</SelectItem>
+                <SelectItem value="unavailable">غير متوفر</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+
+          {/* المصعد */}
+          <p className="text-xs font-bold text-muted-foreground">🛗 المصعد</p>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldGroup label="حالة المصعد">
+              <Select value={formData.elevator_status} onValueChange={(v: string) => updateField("elevator_status", v)}>
+                <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="available_working">متوفر ويعمل</SelectItem>
+                  <SelectItem value="available_broken">متوفر لا يعمل</SelectItem>
+                  <SelectItem value="unavailable">غير متوفر</SelectItem>
+                </SelectContent>
+              </Select>
+            </FieldGroup>
+            {formData.elevator_status && formData.elevator_status !== "unavailable" && (
+              <FieldGroup label="عدد المصاعد">
+                <Input type="number" value={formData.elevator_count} onChange={(e: any) => updateField("elevator_count", e.target.value)} placeholder="مثال: 2" />
+              </FieldGroup>
+            )}
+          </div>
+
+          <Separator />
+
           <FieldGroup label="ملاحظات المرافق">
             <Textarea value={formData.utilities_notes} onChange={(e: any) => updateField("utilities_notes", e.target.value)} placeholder="ملاحظات إضافية..." rows={2} />
           </FieldGroup>
