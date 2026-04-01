@@ -7,7 +7,7 @@ import {
   Brain, FileText, FolderUp, Loader2, X, Sparkles, Tag, Hash,
   FileSearch, File, FileCheck, ShieldCheck, Ruler, User, MapPin,
   Building2, Phone, Mail, Image as ImageIcon, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Copy, Download,
+  CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Copy, Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -25,10 +25,14 @@ const DOC_CATEGORIES = [
   { value: "other", label: "أخرى", icon: File },
 ];
 
+type FileStatus = "pending" | "uploading" | "uploaded" | "error";
+
 interface UploadedFile {
   file: File;
   name: string;
   size: number;
+  status: FileStatus;
+  errorMsg?: string;
   category?: string;
   categoryLabel?: string;
   relevance?: string;
@@ -86,7 +90,7 @@ export default function AIDocumentProcessingPage() {
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
     const newFiles: UploadedFile[] = Array.from(files).map(f => ({
-      file: f, name: f.name, size: f.size,
+      file: f, name: f.name, size: f.size, status: "pending" as FileStatus,
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
   }, []);
@@ -131,12 +135,16 @@ export default function AIDocumentProcessingPage() {
       const tempId = `ai_${Date.now()}`;
       const storagePaths: { path: string; name: string; mimeType: string }[] = [];
 
-      for (const uf of uploadedFiles) {
+      for (let idx = 0; idx < uploadedFiles.length; idx++) {
+        const uf = uploadedFiles[idx];
+        setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploading" as FileStatus } : f));
         const filePath = `${tempId}/${Date.now()}_${uf.name}`;
         const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
         if (!uploadErr) {
           storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.file.type });
-          uf.storagePath = filePath;
+          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploaded" as FileStatus, storagePath: filePath } : f));
+        } else {
+          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "error" as FileStatus, errorMsg: uploadErr.message } : f));
         }
       }
 
@@ -247,13 +255,26 @@ export default function AIDocumentProcessingPage() {
                 <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
                   {uploadedFiles.map((f, i) => {
                     const Icon = getFileIcon(f.name);
+                    const statusConfig = {
+                      pending: { icon: Upload, color: "text-muted-foreground", bg: "bg-muted/20", label: "جاهز للرفع" },
+                      uploading: { icon: Loader2, color: "text-primary", bg: "bg-primary/5", label: "جارٍ الرفع..." },
+                      uploaded: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/20", label: "تم الرفع" },
+                      error: { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/5", label: f.errorMsg || "فشل الرفع" },
+                    }[f.status];
+                    const StatusIcon = statusConfig.icon;
                     return (
-                      <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border/50 group">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div key={i} className={`flex items-center justify-between p-2.5 rounded-lg border border-border/50 group transition-colors ${statusConfig.bg}`}>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <Icon className="w-4 h-4 text-muted-foreground" />
+                            <StatusIcon className={`w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 ${statusConfig.color} ${f.status === "uploading" ? "animate-spin" : ""}`} />
+                          </div>
                           <div className="min-w-0">
                             <p className="text-xs text-foreground truncate">{f.name}</p>
-                            <p className="text-[9px] text-muted-foreground">{formatFileSize(f.size)}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-muted-foreground">{formatFileSize(f.size)}</span>
+                              <span className={`text-[9px] ${statusConfig.color}`}>{statusConfig.label}</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
