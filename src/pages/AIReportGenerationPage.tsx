@@ -1112,7 +1112,7 @@ export default function AIReportGenerationPage() {
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col-reverse lg:flex-row gap-4">
             {/* ─── Main Content ─── */}
             <div className="flex-1 min-w-0 space-y-4">
 
