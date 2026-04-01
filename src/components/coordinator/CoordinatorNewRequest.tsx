@@ -49,6 +49,7 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
     districtAr: "",
     landArea: "",
     buildingArea: "",
+    rooms: "",
     descriptionAr: "",
     notes: "",
   });
