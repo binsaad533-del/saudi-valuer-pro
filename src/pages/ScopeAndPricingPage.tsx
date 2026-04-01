@@ -113,6 +113,9 @@ interface PricingData {
   adjustedBase: number;
   sizeCategory: string;
   breakdown: PricingBreakdown;
+  subtotal: number;
+  vatRate: number;
+  vatAmount: number;
   totalPrice: number;
   justification: string;
 }
@@ -222,8 +225,11 @@ const MOCK_PRICING: PricingData = {
     ],
     additionalTotal: 1500,
   },
-  totalPrice: 5928,
-  justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) مع معامل الموقع الجغرافي للرياض (×1.15) ودرجة التعقيد لمنهجيتين مطلوبتين",
+  subtotal: 5000,
+  vatRate: 15,
+  vatAmount: 750,
+  totalPrice: 5750,
+  justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) + رسوم المعاينة (500 ر.س) + رسوم تحليل الدخل (1,000 ر.س) = 5,000 ر.س قبل الضريبة",
 };
 
 export default function ScopeAndPricingPage() {
@@ -1165,8 +1171,20 @@ export default function ScopeAndPricingPage() {
                       </div>
                     )}
 
+                    {/* Subtotal */}
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50 mt-1">
+                      <span className="text-xs font-semibold text-foreground">المجموع قبل الضريبة</span>
+                      <span className="text-sm font-bold text-foreground">{formatCurrency(pricing.subtotal)}</span>
+                    </div>
+
+                    {/* VAT */}
+                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50">
+                      <span className="text-xs text-muted-foreground">ضريبة القيمة المضافة ({pricing.vatRate}%)</span>
+                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(pricing.vatAmount)}</span>
+                    </div>
+
                     {/* Total */}
-                    <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20 mt-1">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
                       <span className="text-sm font-bold text-foreground">الإجمالي (شامل الضريبة)</span>
                       <span className="text-lg font-bold text-primary">{formatCurrency(pricing.totalPrice)}</span>
                     </div>
