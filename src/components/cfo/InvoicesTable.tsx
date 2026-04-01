@@ -3,7 +3,9 @@ import { invoices, statusLabels, type Invoice } from "@/data/cfoMockData";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, FileText, FileSpreadsheet } from "lucide-react";
+import { exportInvoicesPDF, exportInvoicesExcel } from "@/lib/cfo-export";
 
 const statusColors: Record<Invoice["status"], string> = {
   paid: "bg-success/10 text-success border-success/20",
@@ -32,8 +34,16 @@ export default function InvoicesTable() {
 
   return (
     <div className="bg-card rounded-lg border border-border shadow-card">
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <h3 className="font-semibold text-foreground">جدول الفواتير</h3>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportInvoicesPDF(filtered)}>
+            <FileText className="w-4 h-4 ml-1" /> تصدير PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => exportInvoicesExcel(filtered)}>
+            <FileSpreadsheet className="w-4 h-4 ml-1" /> تصدير Excel
+          </Button>
+        </div>
       </div>
       <div className="p-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
