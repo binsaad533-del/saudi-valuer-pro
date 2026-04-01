@@ -34,8 +34,16 @@ export default function InvoicesTable() {
 
   return (
     <div className="bg-card rounded-lg border border-border shadow-card">
-      <div className="px-5 py-4 border-b border-border">
+      <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <h3 className="font-semibold text-foreground">جدول الفواتير</h3>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => exportInvoicesPDF(filtered)}>
+            <FileText className="w-4 h-4 ml-1" /> تصدير PDF
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => exportInvoicesExcel(filtered)}>
+            <FileSpreadsheet className="w-4 h-4 ml-1" /> تصدير Excel
+          </Button>
+        </div>
       </div>
       <div className="p-4 flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
