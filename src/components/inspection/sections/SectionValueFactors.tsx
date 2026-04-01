@@ -21,6 +21,8 @@ import type { FormData, PhotoItem, ChecklistItem } from "./types";
 import { toast } from "sonner";
 
 export default function SectionValueFactors({ formData, updateField }: any) {
+  const positiveFactors: Record<string, string> = (formData.positive_factors && typeof formData.positive_factors === 'object' && !Array.isArray(formData.positive_factors)) ? formData.positive_factors : {};
+  const negativeFactors: Record<string, string> = (formData.negative_factors && typeof formData.negative_factors === 'object' && !Array.isArray(formData.negative_factors)) ? formData.negative_factors : {};
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -35,14 +37,14 @@ export default function SectionValueFactors({ formData, updateField }: any) {
               { id: "luxury_finish", label: "تشطيب راقي" },
               { id: "modern", label: "حديث البناء" },
             ].map((factor) => {
-              const isSelected = factor.id in formData.positive_factors;
+              const isSelected = factor.id in positiveFactors;
               return (
                 <div key={factor.id} className="rounded-lg border border-border bg-background p-2.5 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(checked) => {
-                        const current = { ...formData.positive_factors };
+                        const current = { ...positiveFactors };
                         if (checked) { current[factor.id] = "medium"; } else { delete current[factor.id]; }
                         updateField("positive_factors", current);
                       }}
@@ -59,8 +61,8 @@ export default function SectionValueFactors({ formData, updateField }: any) {
                         <button
                           key={level.value}
                           type="button"
-                          onClick={() => updateField("positive_factors", { ...formData.positive_factors, [factor.id]: level.value })}
-                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${formData.positive_factors[factor.id] === level.value ? "bg-primary text-primary-foreground border-primary" : level.style + " bg-background hover:bg-accent/50"}`}
+                          onClick={() => updateField("positive_factors", { ...positiveFactors, [factor.id]: level.value })}
+                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${positiveFactors[factor.id] === level.value ? "bg-primary text-primary-foreground border-primary" : level.style + " bg-background hover:bg-accent/50"}`}
                         >
                           {level.label}
                         </button>
@@ -82,14 +84,14 @@ export default function SectionValueFactors({ formData, updateField }: any) {
               { id: "legal_issues", label: "إشكاليات قانونية" },
               { id: "harmful_neighbor", label: "مجاور ضار" },
             ].map((factor) => {
-              const isSelected = factor.id in formData.negative_factors;
+              const isSelected = factor.id in negativeFactors;
               return (
                 <div key={factor.id} className="rounded-lg border border-border bg-background p-2.5 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
                     <Checkbox
                       checked={isSelected}
                       onCheckedChange={(checked) => {
-                        const current = { ...formData.negative_factors };
+                        const current = { ...negativeFactors };
                         if (checked) { current[factor.id] = "medium"; } else { delete current[factor.id]; }
                         updateField("negative_factors", current);
                       }}
@@ -106,8 +108,8 @@ export default function SectionValueFactors({ formData, updateField }: any) {
                         <button
                           key={level.value}
                           type="button"
-                          onClick={() => updateField("negative_factors", { ...formData.negative_factors, [factor.id]: level.value })}
-                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${formData.negative_factors[factor.id] === level.value ? "bg-destructive text-destructive-foreground border-destructive" : level.style + " bg-background hover:bg-accent/50"}`}
+                          onClick={() => updateField("negative_factors", { ...negativeFactors, [factor.id]: level.value })}
+                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${negativeFactors[factor.id] === level.value ? "bg-destructive text-destructive-foreground border-destructive" : level.style + " bg-background hover:bg-accent/50"}`}
                         >
                           {level.label}
                         </button>
@@ -131,7 +133,7 @@ export default function SectionValueFactors({ formData, updateField }: any) {
         <AiSuggestionBox
           sectionKey="value_factors"
           promptHint="تحليل العوامل المؤثرة على القيمة"
-          context={{ positive_factors: Object.entries(formData.positive_factors).map(([k,v]) => `${k}:${v}`).join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: Object.entries(formData.negative_factors).map(([k,v]) => `${k}:${v}`).join(', '), negative_factors_other: formData.negative_factors_other, environmental_factors: formData.environmental_factors, regulatory_factors: formData.regulatory_factors }}
+          context={{ positive_factors: Object.entries(positiveFactors).map(([k,v]) => `${k}:${v}`).join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: Object.entries(negativeFactors).map(([k,v]) => `${k}:${v}`).join(', '), negative_factors_other: formData.negative_factors_other, environmental_factors: formData.environmental_factors, regulatory_factors: formData.regulatory_factors }}
         />
       </CardContent>
     </Card>
