@@ -109,7 +109,7 @@ export default function CoordinatorDashboard() {
         </TabsList>
 
         <TabsContent value="requests" className="mt-4">
-          <CoordinatorRequestsTable requests={requests} onRefresh={loadData} />
+          <CoordinatorRequestsTable requests={requests} clients={clients} onRefresh={loadData} />
         </TabsContent>
 
         <TabsContent value="new-request" className="mt-4">

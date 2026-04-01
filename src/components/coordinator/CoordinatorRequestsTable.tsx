@@ -5,25 +5,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Filter, Eye, RefreshCw } from "lucide-react";
+import { Search, Filter, RefreshCw } from "lucide-react";
 import { STATUS_LABELS as WF_STATUS_LABELS, STATUS_COLORS } from "@/lib/workflow-engine";
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = Object.fromEntries(
   Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])
 );
 
+const REPORT_STATUS_MAP: Record<string, string> = {
+  draft: "مسودة",
+  under_client_review: "مراجعة العميل",
+  draft_report_ready: "تقرير جاهز",
+  revision_in_progress: "قيد التعديل",
+  report_issued: "صادر",
+  closed: "مغلق",
+};
+
 interface Props {
   requests: any[];
+  clients: any[];
   onRefresh: () => void;
 }
 
-export default function CoordinatorRequestsTable({ requests, onRefresh }: Props) {
+export default function CoordinatorRequestsTable({ requests, clients, onRefresh }: Props) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  const clientMap = Object.fromEntries(clients.map(c => [c.id, c.name_ar]));
+
   const filtered = requests.filter(r => {
-    const matchSearch = !search || 
-      (r.property_description_ar || "").includes(search) ||
+    const clientName = clientMap[r.client_id] || "";
+    const matchSearch = !search ||
+      clientName.includes(search) ||
       (r.reference_number || "").includes(search) ||
       (r.property_city_ar || "").includes(search);
     const matchStatus = statusFilter === "all" || r.status === statusFilter;
@@ -35,13 +48,21 @@ export default function CoordinatorRequestsTable({ requests, onRefresh }: Props)
     return <Badge className={`${s.color} text-[10px]`}>{s.label}</Badge>;
   };
 
+  const getReportStatus = (status: string) => {
+    const reportStatuses = ["draft_report_ready", "under_client_review", "revision_in_progress", "report_issued", "closed"];
+    if (reportStatuses.includes(status)) {
+      return REPORT_STATUS_MAP[status] || "—";
+    }
+    return "—";
+  };
+
   const uniqueStatuses = [...new Set(requests.map(r => r.status))];
 
   return (
     <Card className="shadow-card">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <CardTitle className="text-base">جدول الطلبات</CardTitle>
+          <CardTitle className="text-base">متابعة الطلبات والإجراءات</CardTitle>
           <Button size="sm" variant="outline" onClick={onRefresh}>
             <RefreshCw className="w-3.5 h-3.5 ml-1" />تحديث
           </Button>
@@ -50,7 +71,7 @@ export default function CoordinatorRequestsTable({ requests, onRefresh }: Props)
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="بحث بالوصف أو الرقم المرجعي أو المدينة..."
+              placeholder="بحث بالاسم أو الرقم المرجعي أو المدينة..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pr-9 text-sm"
@@ -77,13 +98,13 @@ export default function CoordinatorRequestsTable({ requests, onRefresh }: Props)
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-right">الرقم المرجعي</TableHead>
-                <TableHead className="text-right">الوصف</TableHead>
-                <TableHead className="text-right">المدينة</TableHead>
-                <TableHead className="text-right">النوع</TableHead>
-                <TableHead className="text-right">المبلغ</TableHead>
-                <TableHead className="text-right">الحالة</TableHead>
-                <TableHead className="text-right">التاريخ</TableHead>
+                <TableHead className="text-right">رقم الطلب</TableHead>
+                <TableHead className="text-right">اسم العميل</TableHead>
+                <TableHead className="text-right">نوع التقييم</TableHead>
+                <TableHead className="text-right">الحالة الحالية</TableHead>
+                <TableHead className="text-right">تاريخ الإدخال</TableHead>
+                <TableHead className="text-right">المقيّم المعين</TableHead>
+                <TableHead className="text-right">حالة التقرير</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -96,16 +117,26 @@ export default function CoordinatorRequestsTable({ requests, onRefresh }: Props)
               ) : (
                 filtered.map(req => (
                   <TableRow key={req.id} className="cursor-pointer hover:bg-muted/50">
-                    <TableCell className="font-mono text-xs" dir="ltr">{req.reference_number || "—"}</TableCell>
-                    <TableCell className="text-sm max-w-[200px] truncate">{req.property_description_ar || "طلب تقييم"}</TableCell>
-                    <TableCell className="text-sm">{req.property_city_ar || "—"}</TableCell>
-                    <TableCell className="text-sm">{req.property_type || "—"}</TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {req.quotation_amount ? `${Number(req.quotation_amount).toLocaleString()} ر.س` : "—"}
+                    <TableCell className="font-mono text-xs" dir="ltr">
+                      {req.reference_number || "—"}
                     </TableCell>
-                    <TableCell>{getStatusBadge(req.status)}</TableCell>
+                    <TableCell className="text-sm font-medium">
+                      {clientMap[req.client_id] || "—"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {req.property_type || "—"}
+                    </TableCell>
+                    <TableCell>
+                      {getStatusBadge(req.status)}
+                    </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {new Date(req.created_at).toLocaleDateString("ar-SA")}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {req.assigned_valuer_name || "لم يُعيَّن"}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {getReportStatus(req.status)}
                     </TableCell>
                   </TableRow>
                 ))
