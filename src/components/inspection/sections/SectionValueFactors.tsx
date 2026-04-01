@@ -133,7 +133,7 @@ export default function SectionValueFactors({ formData, updateField }: any) {
         <AiSuggestionBox
           sectionKey="value_factors"
           promptHint="تحليل العوامل المؤثرة على القيمة"
-          context={{ positive_factors: Object.entries(formData.positive_factors).map(([k,v]) => `${k}:${v}`).join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: Object.entries(formData.negative_factors).map(([k,v]) => `${k}:${v}`).join(', '), negative_factors_other: formData.negative_factors_other, environmental_factors: formData.environmental_factors, regulatory_factors: formData.regulatory_factors }}
+          context={{ positive_factors: Object.entries(positiveFactors).map(([k,v]) => `${k}:${v}`).join(', '), positive_factors_other: formData.positive_factors_other, negative_factors: Object.entries(negativeFactors).map(([k,v]) => `${k}:${v}`).join(', '), negative_factors_other: formData.negative_factors_other, environmental_factors: formData.environmental_factors, regulatory_factors: formData.regulatory_factors }}
         />
       </CardContent>
     </Card>
