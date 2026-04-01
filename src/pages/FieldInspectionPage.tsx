@@ -1335,6 +1335,12 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           <FieldGroup label="عدد الصالات">
             <Input type="number" value={formData.interior_halls_count} onChange={(e: any) => updateField("interior_halls_count", e.target.value)} placeholder="مثال: 2" />
           </FieldGroup>
+          <FieldGroup label="عدد دورات المياه">
+            <Input type="number" value={formData.interior_bathrooms_count_num} onChange={(e: any) => updateField("interior_bathrooms_count_num", e.target.value)} placeholder="مثال: 4" />
+          </FieldGroup>
+          <FieldGroup label="عدد المطابخ">
+            <Input type="number" value={formData.interior_kitchens_count} onChange={(e: any) => updateField("interior_kitchens_count", e.target.value)} placeholder="مثال: 1" />
+          </FieldGroup>
         </div>
 
         <Separator />
