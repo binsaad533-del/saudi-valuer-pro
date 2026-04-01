@@ -61,11 +61,12 @@ const STEPS = [
   { key: "interior", label: "المبنى - الداخل", icon: Building2, num: 6 },
   { key: "condition", label: "حالة الأصل", icon: Wrench, num: 7 },
   { key: "utilities", label: "المرافق", icon: Zap, num: 8 },
-  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 9 },
-  { key: "documentation", label: "التوثيق", icon: Camera, num: 10 },
-  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 11 },
-  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 12 },
-  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 13 },
+  { key: "layout_areas", label: "المخطط والمساحات", icon: LayoutGrid, num: 9 },
+  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 10 },
+  { key: "documentation", label: "التوثيق", icon: Camera, num: 11 },
+  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 12 },
+  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 13 },
+  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 14 },
 ];
 
 /* ═══════ Types ═══════ */
