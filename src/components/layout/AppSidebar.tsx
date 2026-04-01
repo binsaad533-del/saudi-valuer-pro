@@ -70,10 +70,10 @@ const navSections: NavSection[] = [
   {
     title: "المالية",
     items: [
-      { label: "لوحة المالية", icon: LayoutDashboard, path: "/", roles: ["financial_manager"] },
+      { label: "لوحة المدير المالي", icon: LayoutDashboard, path: "/cfo-dashboard", roles: ["owner", "financial_manager"] },
       { label: "الفواتير والمدفوعات", icon: FileText, path: "/valuations", roles: ["financial_manager"] },
     ],
-    roles: ["financial_manager"],
+    roles: ["owner", "financial_manager"],
   },
   {
     title: "النظام",
