@@ -289,7 +289,7 @@ export default function AIReportGenerationPage() {
       { mode: "review", existingText: allText, context },
       (delta) => { reviewRef.current += delta; setReviewOutput(reviewRef.current); },
       () => { setIsReviewing(false); toast.success("تم فحص الجودة"); },
-      (err) => { setIsReviewing(false); toast.error(err); }
+      (err) => { setIsReviewing(false); setStepErrors(prev => ({ ...prev, 3: err })); toast.error(err); }
     );
   }, [reportDraft, aggregatedData]);
 
