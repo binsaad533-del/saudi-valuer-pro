@@ -510,7 +510,7 @@ export default function FieldInspectionPage() {
   const handlePhotoCapture = (category: string, files: FileList | null) => {
     if (!files) return;
     for (const file of Array.from(files)) {
-      setPhotos(prev => [...prev, { category, file_name: file.name, preview: URL.createObjectURL(file) }]);
+      setPhotos(prev => [...prev, { category, file_name: file.name, preview: URL.createObjectURL(file), description: "" }]);
     }
     toast.success("تم إضافة الصور بنجاح");
   };
