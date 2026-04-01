@@ -645,7 +645,7 @@ function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, on
   );
 }
 
-function SectionUtilities({ formData, updateField, checklist, setChecklist }: any) {
+function SectionUtilities({ formData, updateField, checklist, setChecklist, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   const categoryLabels: Record<string, string> = {
     structure: "الهيكل الإنشائي",
     utilities: "المرافق والخدمات",
