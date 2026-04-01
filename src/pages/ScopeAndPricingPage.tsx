@@ -17,6 +17,7 @@ interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
   confidence: number;
+  reason: string;
   signals: string[];
   subTypes?: string[];
 }
