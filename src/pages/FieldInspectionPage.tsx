@@ -82,6 +82,7 @@ interface PhotoItem {
   category: string;
   file_name: string;
   preview: string;
+  description: string;
 }
 
 interface ChecklistItem {
