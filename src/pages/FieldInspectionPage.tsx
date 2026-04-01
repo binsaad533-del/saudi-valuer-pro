@@ -184,6 +184,8 @@ interface FormData {
   interior_bathrooms_condition: string;
   interior_doors_type: string;
   interior_doors_condition: string;
+  interior_windows_type: string;
+  interior_windows_condition: string;
   interior_stairs_type: string;
   interior_stairs_condition: string;
   interior_ac_type: string;
