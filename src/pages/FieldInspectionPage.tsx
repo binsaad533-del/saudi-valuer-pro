@@ -717,6 +717,7 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
           ))}
         </CardContent>
       </Card>
+      <SectionPhotoUpload section="utilities" label="صور المرافق والخدمات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
     </div>
   );
 }
