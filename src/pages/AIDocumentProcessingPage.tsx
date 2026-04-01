@@ -169,31 +169,120 @@ export default function AIDocumentProcessingPage() {
     };
 
     const categorized = files.map(f => guessCategory(f.name));
+    const cats = new Set(categorized.map(c => c.category));
+
+    // بناء البيانات المستخرجة ديناميكياً حسب أنواع المستندات المكتشفة
+    const numbers: ExtractedNumber[] = [];
+
+    if (cats.has("deed")) {
+      numbers.push(
+        { label: "رقم الصك", value: "310298765", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "مساحة الأرض", value: "625 م²", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "اسم المالك", value: "أحمد بن عبدالله المالكي", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "موقع العقار", value: "حي النرجس — الرياض", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "تاريخ إصدار الصك", value: "1445/03/15 هـ", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+        { label: "نوع الاستخدام", value: "سكني", source: files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية" },
+      );
+    }
+    if (cats.has("building_permit")) {
+      const src = files[categorized.findIndex(c => c.category === "building_permit")]?.name || "رخصة بناء";
+      numbers.push(
+        { label: "رقم الرخصة", value: "44/2891", source: src },
+        { label: "تاريخ الرخصة", value: "1443/06/12 هـ", source: src },
+        { label: "عدد الأدوار المرخصة", value: "دورين + ملحق علوي", source: src },
+        { label: "نسبة البناء المسموحة", value: "60%", source: src },
+      );
+    }
+    if (cats.has("floor_plan")) {
+      const src = files[categorized.findIndex(c => c.category === "floor_plan")]?.name || "مخطط معماري";
+      numbers.push(
+        { label: "مساحة البناء", value: "312 م²", source: src },
+        { label: "عدد الغرف", value: "4 غرف نوم", source: src },
+        { label: "عدد دورات المياه", value: "3", source: src },
+      );
+    }
+    if (cats.has("technical_report")) {
+      const src = files[categorized.findIndex(c => c.category === "technical_report")]?.name || "تقرير تقييم";
+      numbers.push(
+        { label: "القيمة السوقية السابقة", value: "2,350,000 ر.س", source: src },
+        { label: "تاريخ التقييم السابق", value: "1444/09/20 هـ", source: src },
+        { label: "سعر المتر المربع", value: "3,760 ر.س/م²", source: src },
+      );
+    }
+    if (cats.has("contract")) {
+      const src = files[categorized.findIndex(c => c.category === "contract")]?.name || "عقد إيجار";
+      numbers.push(
+        { label: "قيمة الإيجار السنوي", value: "85,000 ر.س", source: src },
+        { label: "مدة العقد", value: "سنة واحدة — قابل للتجديد", source: src },
+        { label: "اسم المستأجر", value: "شركة النور للتجارة", source: src },
+      );
+    }
+    if (cats.has("identity_doc")) {
+      const src = files[categorized.findIndex(c => c.category === "identity_doc")]?.name || "وثيقة هوية";
+      numbers.push(
+        { label: "رقم الهوية", value: "1088456723", source: src },
+        { label: "الاسم الكامل", value: "أحمد بن عبدالله المالكي", source: src },
+        { label: "تاريخ الانتهاء", value: "1450/02/28 هـ", source: src },
+      );
+    }
+    if (cats.has("invoice")) {
+      const src = files[categorized.findIndex(c => c.category === "invoice")]?.name || "فاتورة";
+      numbers.push(
+        { label: "مبلغ الفاتورة", value: "12,500 ر.س", source: src },
+        { label: "تاريخ الفاتورة", value: "2024/03/15", source: src },
+      );
+    }
+    if (cats.has("location_map")) {
+      const src = files[categorized.findIndex(c => c.category === "location_map")]?.name || "خريطة موقع";
+      numbers.push(
+        { label: "خط العرض", value: "24.7136°N", source: src },
+        { label: "خط الطول", value: "46.6753°E", source: src },
+      );
+    }
+    if (cats.has("property_photo")) {
+      const src = files[categorized.findIndex(c => c.category === "property_photo")]?.name || "صورة عقار";
+      numbers.push(
+        { label: "حالة التشطيب", value: "جيدة — سوبر لوكس", source: src },
+        { label: "عدد الطوابق المرئية", value: "طابقين", source: src },
+      );
+    }
+
+    // إذا لم يتم اكتشاف أي نوع معروف
+    if (numbers.length === 0) {
+      numbers.push(
+        { label: "عدد المستندات", value: `${files.length} ملف`, source: "النظام" },
+        { label: "حالة التحليل", value: "لم يتم اكتشاف بيانات محددة", source: "النظام" },
+      );
+    }
 
     return {
       discipline: "real_estate",
       discipline_label: "تقييم عقاري",
-      confidence: 87,
-      client: {
+      confidence: Math.min(95, 70 + categorized.filter(c => c.relevance === "high").length * 8),
+      client: cats.has("deed") || cats.has("identity_doc") ? {
         clientName: "أحمد بن عبدالله المالكي",
         idNumber: "1088456723",
         phone: "0551234567",
         email: "ahmed.maliki@email.com",
-      },
-      asset: {
+      } : {},
+      asset: cats.has("deed") || cats.has("floor_plan") || cats.has("building_permit") ? {
         description: "فيلا سكنية دورين مع ملحق",
         city: "الرياض",
         district: "حي النرجس",
         area: "625",
-        deedNumber: "310298765",
+        deedNumber: cats.has("deed") ? "310298765" : undefined,
         classification: "سكني",
-      },
-      suggestedPurpose: "تمويل عقاري — بنك الراجحي",
+      } : {},
+      suggestedPurpose: cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
       notes: [
-        "تم التعرف على صك إلكتروني يحتوي على بيانات الملكية",
-        "المساحة المذكورة في الصك تتطابق مع المخطط المعماري",
-        "يُنصح بالتحقق من تاريخ رخصة البناء",
-        `تم تصنيف ${files.length} مستند: ${categorized.filter(c => c.relevance === "high").length} مهم، ${categorized.filter(c => c.relevance === "medium").length} متوسط`,
+        ...(cats.has("deed") ? ["تم التعرف على صك إلكتروني — استُخرج رقم الصك واسم المالك والمساحة والموقع"] : []),
+        ...(cats.has("building_permit") ? ["تم اكتشاف رخصة بناء — استُخرج رقم الرخصة وعدد الأدوار المرخصة"] : []),
+        ...(cats.has("floor_plan") ? ["تم تحليل المخطط المعماري — استُخرجت مساحة البناء وعدد الغرف"] : []),
+        ...(cats.has("technical_report") ? ["تم اكتشاف تقرير تقييم سابق — استُخرجت القيمة السوقية وسعر المتر"] : []),
+        ...(cats.has("contract") ? ["تم تحليل عقد إيجار — استُخرجت قيمة الإيجار ومدة العقد"] : []),
+        ...(cats.has("deed") && cats.has("floor_plan") ? ["✅ المساحة في الصك متطابقة مع المخطط المعماري"] : []),
+        ...(cats.has("building_permit") ? ["⚠️ يُنصح بالتحقق من صلاحية رخصة البناء"] : []),
+        `📊 تم تصنيف ${files.length} مستند: ${categorized.filter(c => c.relevance === "high").length} مهم، ${categorized.filter(c => c.relevance === "medium").length} متوسط`,
         "⚠️ هذه بيانات تجريبية (Mock) للعرض التوضيحي",
       ],
       documentCategories: files.map((f, i) => ({
@@ -203,14 +292,7 @@ export default function AIDocumentProcessingPage() {
         relevance: categorized[i].relevance,
         extractedInfo: categorized[i].extractedInfo,
       })),
-      extractedNumbers: [
-        { label: "رقم الصك", value: "310298765", source: files[0]?.name || "صك" },
-        { label: "مساحة الأرض", value: "625 م²", source: files[0]?.name || "صك" },
-        { label: "رقم الهوية", value: "1088456723", source: "وثيقة هوية" },
-        { label: "تاريخ الإصدار", value: "1445/03/15 هـ", source: files[0]?.name || "صك" },
-        { label: "قيمة تقييم سابقة", value: "2,350,000 ر.س", source: "تقرير تقييم" },
-        { label: "إيجار سنوي", value: "85,000 ر.س", source: "عقد إيجار" },
-      ],
+      extractedNumbers: numbers,
       analysisMethod: "mock_simulation",
       analyzedFilesCount: files.length,
       totalFilesCount: files.length,
