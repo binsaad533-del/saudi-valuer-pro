@@ -128,18 +128,47 @@ export default function AIDocumentProcessingPage() {
   const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
   const generateMockResult = (files: UploadedFile[]): ExtractedData => {
-    const guessCategory = (name: string) => {
+    const guessCategory = (name: string): { category: string; label: string; extractedInfo?: string; relevance: string } => {
       const n = name.toLowerCase();
-      if (n.includes("صك") || n.includes("deed")) return { category: "deed", label: "صك ملكية" };
-      if (n.includes("رخص") || n.includes("permit")) return { category: "building_permit", label: "رخصة بناء" };
-      if (n.includes("مخطط") || n.includes("plan")) return { category: "floor_plan", label: "مخطط معماري" };
-      if (n.includes("هوي") || n.includes("id")) return { category: "identity_doc", label: "وثيقة هوية" };
-      if (n.includes("فاتور") || n.includes("invoice")) return { category: "invoice", label: "فاتورة / سند" };
-      if (n.includes("عقد") || n.includes("contract")) return { category: "contract", label: "عقد / اتفاقية" };
-      if (/\.(jpg|jpeg|png|webp)$/i.test(n)) return { category: "property_photo", label: "صورة عقار" };
-      if (n.includes("map") || n.includes("خريط")) return { category: "location_map", label: "خريطة موقع" };
-      return { category: "other", label: "أخرى" };
+      // صكوك ملكية
+      if (n.includes("صك") || n.includes("deed") || n.includes("ملكي") || n.includes("title"))
+        return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 310298765 — المالك: أحمد المالكي — المساحة: 625 م²" };
+      // رخص بناء
+      if (n.includes("رخص") || n.includes("permit") || n.includes("بناء") || n.includes("building"))
+        return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: 44/2891 — تاريخ: 1443/06/12 — نوع: سكني" };
+      // مخططات معمارية
+      if (n.includes("مخطط") || n.includes("plan") || n.includes("كروكي") || n.includes("layout") || n.includes("floor"))
+        return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "مخطط دور أرضي — 4 غرف، صالة، مطبخ — مساحة البناء: 312 م²" };
+      // تقارير تقييم سابقة
+      if (n.includes("تقرير") || n.includes("تقييم") || n.includes("report") || n.includes("valuation") || n.includes("appraisal"))
+        return { category: "technical_report", label: "تقرير تقييم سابق", relevance: "high", extractedInfo: "تقرير تقييم بتاريخ 1444/09/20 — القيمة السوقية: 2,350,000 ر.س" };
+      // عقود إيجار
+      if (n.includes("عقد") || n.includes("إيجار") || n.includes("contract") || n.includes("lease") || n.includes("rent") || n.includes("اتفاق"))
+        return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "عقد إيجار سنوي — القيمة: 85,000 ر.س — المستأجر: شركة النور" };
+      // فواتير
+      if (n.includes("فاتور") || n.includes("invoice") || n.includes("سند") || n.includes("إيصال") || n.includes("receipt"))
+        return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة صيانة — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
+      // وثائق هوية
+      if (n.includes("هوي") || n.includes("جواز") || n.includes("إقام") || n.includes("id") || n.includes("passport") || n.includes("iqama"))
+        return { category: "identity_doc", label: "وثيقة هوية", relevance: "medium", extractedInfo: "هوية وطنية — رقم: 1088456723 — الاسم: أحمد بن عبدالله المالكي" };
+      // خرائط مواقع
+      if (n.includes("map") || n.includes("خريط") || n.includes("موقع") || n.includes("location") || n.includes("gps"))
+        return { category: "location_map", label: "خريطة موقع", relevance: "medium", extractedInfo: "إحداثيات: 24.7136°N, 46.6753°E — حي النرجس، الرياض" };
+      // صور عقارية
+      if (/\.(jpg|jpeg|png|webp|tif|tiff|gif)$/i.test(n) || n.includes("صور") || n.includes("واجه") || n.includes("photo") || n.includes("img"))
+        return { category: "property_photo", label: "صورة عقار", relevance: "medium", extractedInfo: "صورة واجهة رئيسية — حالة التشطيب: جيدة — طابقين" };
+      // PDF عام
+      if (n.endsWith(".pdf"))
+        return { category: "technical_report", label: "مستند PDF", relevance: "medium", extractedInfo: "مستند PDF — يحتوي على بيانات نصية قابلة للاستخراج" };
+      // Word/Excel
+      if (/\.(doc|docx)$/i.test(n))
+        return { category: "technical_report", label: "مستند Word", relevance: "medium", extractedInfo: "مستند نصي — قد يحتوي على جداول وبيانات تفصيلية" };
+      if (/\.(xls|xlsx)$/i.test(n))
+        return { category: "invoice", label: "جدول بيانات", relevance: "medium", extractedInfo: "ملف Excel — قد يحتوي على بيانات مالية أو جداول مقارنة" };
+      return { category: "other", label: "أخرى", relevance: "low" };
     };
+
+    const categorized = files.map(f => guessCategory(f.name));
 
     return {
       discipline: "real_estate",
@@ -164,25 +193,23 @@ export default function AIDocumentProcessingPage() {
         "تم التعرف على صك إلكتروني يحتوي على بيانات الملكية",
         "المساحة المذكورة في الصك تتطابق مع المخطط المعماري",
         "يُنصح بالتحقق من تاريخ رخصة البناء",
+        `تم تصنيف ${files.length} مستند: ${categorized.filter(c => c.relevance === "high").length} مهم، ${categorized.filter(c => c.relevance === "medium").length} متوسط`,
         "⚠️ هذه بيانات تجريبية (Mock) للعرض التوضيحي",
       ],
-      documentCategories: files.map(f => {
-        const cat = guessCategory(f.name);
-        return {
-          fileName: f.name,
-          category: cat.category,
-          categoryLabel: cat.label,
-          relevance: cat.category === "other" ? "low" : cat.category === "deed" ? "high" : "medium",
-          extractedInfo: cat.category === "deed" ? "رقم الصك: 310298765 — المساحة: 625 م²" :
-            cat.category === "identity_doc" ? "رقم الهوية: 1088456723" :
-            cat.category === "property_photo" ? "واجهة رئيسية — حالة جيدة" : undefined,
-        };
-      }),
+      documentCategories: files.map((f, i) => ({
+        fileName: f.name,
+        category: categorized[i].category,
+        categoryLabel: categorized[i].label,
+        relevance: categorized[i].relevance,
+        extractedInfo: categorized[i].extractedInfo,
+      })),
       extractedNumbers: [
         { label: "رقم الصك", value: "310298765", source: files[0]?.name || "صك" },
         { label: "مساحة الأرض", value: "625 م²", source: files[0]?.name || "صك" },
         { label: "رقم الهوية", value: "1088456723", source: "وثيقة هوية" },
         { label: "تاريخ الإصدار", value: "1445/03/15 هـ", source: files[0]?.name || "صك" },
+        { label: "قيمة تقييم سابقة", value: "2,350,000 ر.س", source: "تقرير تقييم" },
+        { label: "إيجار سنوي", value: "85,000 ر.س", source: "عقد إيجار" },
       ],
       analysisMethod: "mock_simulation",
       analyzedFilesCount: files.length,
