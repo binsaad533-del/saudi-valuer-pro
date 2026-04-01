@@ -348,7 +348,16 @@ ${extractedData.extractedNumbers?.map((n: any) => `- ${n.label}: ${n.value} (ث�
     const totalPrice = adjustedBase + complexityAdj + urgencyAdj + rentalAdj - portfolioDisc + additionalTotal;
 
     const result = {
-      scope: aiData.scope,
+      scope: {
+        ...aiData.scope,
+        disciplineAnalysis: aiData.disciplineAnalysis || {
+          discipline: "real_estate",
+          disciplineLabel: "تقييم عقاري",
+          confidence: 70,
+          signals: ["تصنيف افتراضي"],
+          subTypes: [],
+        },
+      },
       pricing: {
         basePrice,
         cityMultiplier,
