@@ -250,6 +250,8 @@ interface FormData {
   inspector_observations: string;
   inspector_recommendations: string;
   additional_notes: string;
+  inspector_verdict: string;
+  inspector_verdict_notes: string;
   has_risks: string;
   risk_details: string;
   data_complete: string;
