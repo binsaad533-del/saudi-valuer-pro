@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { MOCK_ACTIVITY_LOGS } from "@/data/coordinatorMockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -84,7 +85,7 @@ export default function CoordinatorActivityLog() {
       .select("*")
       .order("created_at", { ascending: false })
       .limit(100);
-    setLogs(data || []);
+    setLogs(data?.length ? data : MOCK_ACTIVITY_LOGS);
     setLoading(false);
   };
 
