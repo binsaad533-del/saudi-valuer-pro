@@ -809,35 +809,81 @@ export default function ScopeAndPricingPage() {
                 </div>
               )}
 
-              {/* Assumptions & Limitations */}
+              {/* Assumptions & Limiting Conditions — IVS + TAQEEM */}
               <div className="p-4">
                 <button
                   onClick={() => setShowAssumptions(!showAssumptions)}
-                  className="flex items-center justify-between w-full text-xs font-bold text-foreground"
+                  className="flex items-center justify-between w-full"
                 >
-                  <span>الافتراضات والقيود ({scope.assumptions.length + scope.limitations.length})</span>
-                  {showAssumptions ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-md bg-accent/20 flex items-center justify-center shrink-0">
+                      <FileText className="w-3.5 h-3.5 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-foreground">الافتراضات والشروط المقيدة</span>
+                      <p className="text-[9px] text-muted-foreground">وفق IVS 2024 ومعايير الهيئة السعودية للمقيّمين المعتمدين</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-[8px] gap-1 border-primary/30 text-primary">
+                      {scope.assumptions.length + scope.limitations.length} بند
+                    </Badge>
+                    {showAssumptions ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </div>
                 </button>
                 {showAssumptions && (
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-3 space-y-4">
+                    {/* Standards Tags */}
+                    <div className="flex flex-wrap gap-1.5">
+                      <Badge variant="outline" className="text-[8px] gap-1 border-primary/20 text-primary">
+                        <Shield className="w-2 h-2" />
+                        IVS 2024 — Framework §20
+                      </Badge>
+                      <Badge variant="outline" className="text-[8px] gap-1 border-primary/20 text-primary">
+                        <Shield className="w-2 h-2" />
+                        IVS 104 — أسس القيمة
+                      </Badge>
+                      <Badge variant="outline" className="text-[8px] gap-1 border-primary/20 text-primary">
+                        <Shield className="w-2 h-2" />
+                        معايير تقييم السعودية — القسم 5
+                      </Badge>
+                    </div>
+
+                    {/* Assumptions */}
                     {scope.assumptions.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-medium text-muted-foreground mb-1.5">الافتراضات (وفق IVS 104)</p>
-                        {scope.assumptions.map((a, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
-                            <span className="text-primary mt-0.5">•</span> {a}
-                          </div>
-                        ))}
+                      <div className="rounded-lg border border-border/50 overflow-hidden">
+                        <div className="px-3 py-2 bg-muted/30 border-b border-border/50 flex items-center gap-2">
+                          <CheckCircle2 className="w-3 h-3 text-primary" />
+                          <p className="text-[10px] font-bold text-foreground">الافتراضات العامة والخاصة</p>
+                          <Badge variant="secondary" className="text-[8px] mr-auto">{scope.assumptions.length}</Badge>
+                        </div>
+                        <div className="divide-y divide-border/30">
+                          {scope.assumptions.map((a, i) => (
+                            <div key={i} className="flex items-start gap-2.5 px-3 py-2.5 text-xs text-foreground hover:bg-muted/10 transition-colors">
+                              <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-bold text-primary shrink-0 mt-0.5">{i + 1}</span>
+                              <span className="leading-relaxed">{a}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
+
+                    {/* Limiting Conditions */}
                     {scope.limitations.length > 0 && (
-                      <div>
-                        <p className="text-[10px] font-medium text-muted-foreground mb-1.5">القيود والتحفظات</p>
-                        {scope.limitations.map((l, i) => (
-                          <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
-                            <AlertTriangle className="w-3 h-3 text-yellow-500 shrink-0 mt-0.5" /> {l}
-                          </div>
-                        ))}
+                      <div className="rounded-lg border border-border/50 overflow-hidden">
+                        <div className="px-3 py-2 bg-muted/30 border-b border-border/50 flex items-center gap-2">
+                          <AlertTriangle className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                          <p className="text-[10px] font-bold text-foreground">الشروط المقيدة والتحفظات</p>
+                          <Badge variant="secondary" className="text-[8px] mr-auto">{scope.limitations.length}</Badge>
+                        </div>
+                        <div className="divide-y divide-border/30">
+                          {scope.limitations.map((l, i) => (
+                            <div key={i} className="flex items-start gap-2.5 px-3 py-2.5 text-xs text-foreground hover:bg-muted/10 transition-colors">
+                              <AlertTriangle className="w-3.5 h-3.5 text-yellow-500 shrink-0 mt-0.5" />
+                              <span className="leading-relaxed">{l}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </div>
