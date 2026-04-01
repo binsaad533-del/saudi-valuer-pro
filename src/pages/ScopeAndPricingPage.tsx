@@ -191,15 +191,15 @@ const MOCK_SCOPE: ScopeData = {
       role: "primary", confidence: 92, reason: "توفر بيانات مبيعات مماثلة كافية في المنطقة المستهدفة",
     },
     secondaryApproach: {
-      key: "cost", label: "التكلفة", labelEn: "Cost Approach",
-      role: "secondary", confidence: 78, reason: "مناسبة كمنهجية داعمة للتحقق من القيمة خاصة للمباني الحديثة",
+      key: "income", label: "الدخل", labelEn: "Income Approach",
+      role: "secondary", confidence: 85, reason: "وجود عقد إيجار ساري يتيح تطبيق أسلوب الدخل للتحقق من القيمة السوقية",
     },
     allApproaches: [
       { key: "market", label: "المقارنة السوقية", labelEn: "Market Comparison", role: "primary", confidence: 92, reason: "توفر بيانات مبيعات مماثلة كافية في المنطقة" },
-      { key: "cost", label: "التكلفة", labelEn: "Cost Approach", role: "secondary", confidence: 78, reason: "مناسبة للتحقق من قيمة المباني الحديثة" },
-      { key: "income", label: "الدخل", labelEn: "Income Approach", role: "supporting", confidence: 45, reason: "أقل ملاءمة للعقارات السكنية المشغولة من المالك" },
+      { key: "income", label: "الدخل", labelEn: "Income Approach", role: "secondary", confidence: 85, reason: "عقد إيجار ساري يدعم تحليل التدفقات النقدية" },
+      { key: "cost", label: "التكلفة", labelEn: "Cost Approach", role: "supporting", confidence: 55, reason: "داعمة للتحقق من تكلفة الإحلال" },
     ],
-    justification: "وفقاً لمعيار IVS 105، تم اختيار منهجية المقارنة السوقية كمنهجية رئيسية بسبب توفر بيانات السوق الكافية للعقارات المماثلة في حي النرجس بالرياض",
+    justification: "وفقاً لمعيار IVS 105، تم اختيار المقارنة السوقية كمنهجية رئيسية مع أسلوب الدخل كمنهجية ثانوية نظراً لوجود عقد إيجار ساري يوفر بيانات تدفقات نقدية فعلية",
   },
 };
 
