@@ -882,7 +882,7 @@ export default function FieldInspectionPage() {
         {step === 10 && <SectionNotesRecommendations formData={formData} updateField={updateField} />}
         {step === 11 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} onDescriptionChange={handlePhotoDescriptionChange} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
         {step === 12 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 13 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
+        {step === 13 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} submitting={submitting} onSubmit={handleSubmit} />}
         {step === 14 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
 
