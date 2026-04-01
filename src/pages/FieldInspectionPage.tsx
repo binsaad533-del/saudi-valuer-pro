@@ -633,10 +633,96 @@ export default function FieldInspectionPage() {
   const handleSubmit = async () => {
     if (!canSubmit()) return;
     setSubmitting(true);
-    await new Promise(r => setTimeout(r, 1500));
-    toast.success("تم إرسال المعاينة بنجاح ✅");
-    localStorage.removeItem("field-inspection-data");
-    setSubmitting(false);
+    try {
+      const inspectorId = user?.id;
+      if (!inspectorId) {
+        toast.error("يجب تسجيل الدخول أولاً");
+        setSubmitting(false);
+        return;
+      }
+
+      // Build findings summary
+      const findingsSummary = [
+        `الحالة العامة: ${formData.overall_condition}`,
+        `نوع العقار: ${formData.asset_type}`,
+        `عمر المبنى: ${formData.building_age} سنة`,
+        `عدد الطوابق: ${formData.floors_count}`,
+        formData.inspector_final_notes ? `ملاحظات: ${formData.inspector_final_notes}` : "",
+      ].filter(Boolean).join("\n");
+
+      // Save inspection record
+      const { data: inspection, error: inspError } = await supabase
+        .from("inspections")
+        .insert({
+          inspector_id: inspectorId,
+          assignment_id: formData.assignment_id || undefined,
+          inspection_date: formData.approval_date || new Date().toISOString().split("T")[0],
+          status: "submitted",
+          completed: true,
+          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+          gps_verified: !!(formData.latitude && formData.longitude),
+          findings_ar: findingsSummary,
+          notes_ar: formData.confidential_notes || null,
+          submitted_at: new Date().toISOString(),
+          started_at: new Date().toISOString(),
+          auto_saved_data: formData as any,
+        })
+        .select("id")
+        .single();
+
+      if (inspError) {
+        console.error("Inspection save error:", inspError);
+        toast.error("حدث خطأ أثناء حفظ المعاينة: " + inspError.message);
+        setSubmitting(false);
+        return;
+      }
+
+      // Upload photos to storage and save records
+      if (inspection?.id && photos.length > 0) {
+        for (const photo of photos) {
+          if (!photo.file) continue;
+          const filePath = `${inspectorId}/${inspection.id}/${Date.now()}_${photo.file_name}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("inspection-photos")
+            .upload(filePath, photo.file);
+
+          if (!uploadErr) {
+            await supabase.from("inspection_photos").insert({
+              inspection_id: inspection.id,
+              file_name: photo.file_name,
+              file_path: filePath,
+              category: photo.category,
+              uploaded_by: inspectorId,
+              latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+              longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+            });
+          }
+        }
+      }
+
+      // Save checklist items
+      if (inspection?.id) {
+        const checklistRows = checklist.map((item, idx) => ({
+          inspection_id: inspection.id,
+          label_ar: item.label,
+          category: item.category,
+          is_checked: item.is_checked,
+          is_required: item.required,
+          sort_order: idx,
+        }));
+        await supabase.from("inspection_checklist_items").insert(checklistRows);
+      }
+
+      localStorage.removeItem("field-inspection-data");
+      setSubmitted(true);
+      toast.success("تم إرسال المعاينة بنجاح ✅");
+    } catch (err: any) {
+      console.error("Submit error:", err);
+      toast.error("حدث خطأ غير متوقع أثناء الإرسال");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
