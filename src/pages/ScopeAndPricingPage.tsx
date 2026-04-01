@@ -303,6 +303,109 @@ export default function ScopeAndPricingPage() {
           </div>
         )}
 
+        {/* Purpose Analysis — Smart AI Suggestion */}
+        {scope?.purposeAnalysis && !loading && (() => {
+          const purposeIcons: Record<string, typeof Landmark> = {
+            "تمويل بنكي": Landmark,
+            "تمويل عقاري": Landmark,
+            "شراء": DollarSign,
+            "بيع": DollarSign,
+            "بيع وشراء": DollarSign,
+            "رهن": Shield,
+            "تقسيم تركة": Scale,
+            "فض نزاع": Gavel,
+            "حكم قضائي": Gavel,
+            "تصفية": RotateCcw,
+            "محاسبة": Briefcase,
+            "قوائم مالية": Briefcase,
+            "تأمين": HeartPulse,
+            "استثمار": TrendingUp,
+            "إعادة تقييم": RotateCcw,
+          };
+          const getIcon = (label: string) => {
+            for (const [key, Icon] of Object.entries(purposeIcons)) {
+              if (label.includes(key)) return Icon;
+            }
+            return Target;
+          };
+          const pa = scope.purposeAnalysis!;
+          const SelectedIcon = getIcon(pa.selectedPurpose);
+
+          return (
+            <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-border bg-gradient-to-l from-accent/10 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                      <Target className="w-4 h-4 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">الغرض من التقييم</h3>
+                      <p className="text-[10px] text-muted-foreground">تم تحديده تلقائياً من المستندات — اقتراح ذكي للمراجعة</p>
+                    </div>
+                  </div>
+                  <Badge className="text-[9px] bg-primary/10 text-primary border-0 gap-1">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    اقتراح ذكي
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* Selected Purpose — prominent card */}
+                <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <SelectedIcon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-bold text-foreground">{pa.selectedPurpose}</p>
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{pa.reason}</p>
+                  </div>
+                  <div className="text-left shrink-0">
+                    <p className={`text-lg font-bold ${
+                      pa.confidence >= 85
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : pa.confidence >= 65
+                        ? "text-yellow-600 dark:text-yellow-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}>
+                      {pa.confidence}%
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">نسبة الثقة</p>
+                  </div>
+                </div>
+
+                {/* Other possible purposes as smaller cards */}
+                {pa.allPurposes.filter(p => p.key !== pa.selectedPurpose).length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-2">أغراض محتملة أخرى</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {pa.allPurposes
+                        .filter(p => p.key !== pa.selectedPurpose)
+                        .map((p) => {
+                          const PIcon = getIcon(p.label);
+                          return (
+                            <div key={p.key} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border/50 bg-muted/20 opacity-60">
+                              <PIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-medium text-foreground truncate">{p.label}</p>
+                                <p className="text-[9px] text-muted-foreground truncate">{p.reason}</p>
+                              </div>
+                              <span className="text-[9px] text-muted-foreground shrink-0">{p.confidence}%</span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Loading State */}
         {loading && (
           <div className="bg-card rounded-xl border border-border p-12 flex flex-col items-center gap-4">
