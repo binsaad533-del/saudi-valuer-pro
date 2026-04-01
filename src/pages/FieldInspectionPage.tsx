@@ -1914,7 +1914,7 @@ function SectionApproval({ formData, updateField, canSubmit, submitting, onSubmi
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={12} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
+        <SectionHeader num={13} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center space-y-2">
