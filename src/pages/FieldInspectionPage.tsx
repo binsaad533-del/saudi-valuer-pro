@@ -393,7 +393,7 @@ const defaultFormData: FormData = {
   positive_factors: [] as string[],
   negative_factors: [] as string[],
   negative_factors_other: "",
-  negative_factors: "",
+  positive_factors_other: "",
   environmental_factors: "",
   regulatory_factors: "",
   has_risks: "",
