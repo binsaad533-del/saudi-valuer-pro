@@ -201,12 +201,16 @@ export default function FieldInspectionPage() {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(defaultFormData);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [sectionPhotos, setSectionPhotos] = useState<SectionPhoto[]>([]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(
     DEFAULT_CHECKLIST.map(c => ({ ...c, is_checked: false }))
   );
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const addSectionPhoto = (photo: SectionPhoto) => setSectionPhotos(prev => [...prev, photo]);
+  const removeSectionPhoto = (photo: SectionPhoto) => setSectionPhotos(prev => prev.filter(p => p !== photo));
 
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [key]: value }));
