@@ -15,7 +15,7 @@ import {
   MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
-  FileCheck, UserCheck,
+  FileCheck, UserCheck, Home, Upload,
 } from "lucide-react";
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
@@ -57,13 +57,14 @@ const STEPS = [
   { key: "location", label: "بيانات الموقع", icon: MapPin, num: 2 },
   { key: "verification", label: "التحقق من الأصل", icon: Building2, num: 3 },
   { key: "dimensions", label: "المساحات", icon: Ruler, num: 4 },
-  { key: "condition", label: "حالة الأصل", icon: Wrench, num: 5 },
-  { key: "utilities", label: "المرافق", icon: Zap, num: 6 },
-  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 7 },
-  { key: "documentation", label: "التوثيق", icon: Camera, num: 8 },
-  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 9 },
-  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 10 },
-  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 11 },
+  { key: "exterior", label: "المبنى - الخارج", icon: Home, num: 5 },
+  { key: "condition", label: "حالة الأصل", icon: Wrench, num: 6 },
+  { key: "utilities", label: "المرافق", icon: Zap, num: 7 },
+  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 8 },
+  { key: "documentation", label: "التوثيق", icon: Camera, num: 9 },
+  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 10 },
+  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 11 },
+  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 12 },
 ];
 
 /* ═══════ Types ═══════ */
@@ -143,6 +144,23 @@ interface FormData {
   building_area: string;
   num_floors: string;
   dimensions_notes: string;
+  // Section 5: المبنى - الخارج
+  exterior_facade_material: string;
+  exterior_facade_condition: string;
+  exterior_paint_condition: string;
+  exterior_windows_type: string;
+  exterior_windows_condition: string;
+  exterior_doors_type: string;
+  exterior_doors_condition: string;
+  exterior_roof_type: string;
+  exterior_roof_condition: string;
+  exterior_fence_type: string;
+  exterior_fence_condition: string;
+  exterior_parking: string;
+  exterior_parking_count: string;
+  exterior_landscaping: string;
+  exterior_entrance_count: string;
+  exterior_notes: string;
   overall_condition: string;
   asset_age: string;
   finishing_level: string;
@@ -224,6 +242,22 @@ const defaultFormData: FormData = {
   building_area: "",
   num_floors: "",
   dimensions_notes: "",
+  exterior_facade_material: "",
+  exterior_facade_condition: "",
+  exterior_paint_condition: "",
+  exterior_windows_type: "",
+  exterior_windows_condition: "",
+  exterior_doors_type: "",
+  exterior_doors_condition: "",
+  exterior_roof_type: "",
+  exterior_roof_condition: "",
+  exterior_fence_type: "",
+  exterior_fence_condition: "",
+  exterior_parking: "",
+  exterior_parking_count: "",
+  exterior_landscaping: "",
+  exterior_entrance_count: "",
+  exterior_notes: "",
   overall_condition: "",
   asset_age: "",
   finishing_level: "",
@@ -362,6 +396,7 @@ export default function FieldInspectionPage() {
     !!(formData.city && formData.gps_lat),
     !!(formData.matches_documents && formData.asset_description),
     !!(formData.land_area || formData.building_area),
+    !!(formData.exterior_facade_material),
     !!(formData.overall_condition),
     true,
     true,
@@ -468,13 +503,14 @@ export default function FieldInspectionPage() {
         {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 2 && <SectionVerification formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 3 && <SectionDimensions formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 4 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 5 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 6 && <SectionValueFactors formData={formData} updateField={updateField} />}
-        {step === 7 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
-        {step === 8 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
-        {step === 9 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
-        {step === 10 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
+        {step === 4 && <SectionExterior formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 5 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 6 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 7 && <SectionValueFactors formData={formData} updateField={updateField} />}
+        {step === 8 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
+        {step === 9 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 10 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
+        {step === 11 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
 
       {/* Bottom nav */}
@@ -882,6 +918,16 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
           <Textarea value={formData.dimensions_notes} onChange={(e: any) => updateField("dimensions_notes", e.target.value)} placeholder="عدد الوحدات، المواقف، الملاحق، السرداب..." rows={3} />
         </FieldGroup>
 
+        {/* رفع صورة مخطط الموقع */}
+        <div className="border border-dashed border-primary/30 rounded-lg p-4 space-y-3 bg-primary/5">
+          <div className="flex items-center gap-2">
+            <Upload className="w-4 h-4 text-primary" />
+            <span className="text-sm font-bold text-primary">رفع صورة مخطط الموقع</span>
+          </div>
+          <p className="text-xs text-muted-foreground">أرفق مخطط الموقع المعتمد أو الكروكي (صورة أو مسح ضوئي)</p>
+          <SectionPhotoUpload section="site_plan" label="مخطط الموقع" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        </div>
+
         <SectionPhotoUpload section="dimensions" label="صور القياسات والمخططات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <AiSuggestionBox
           sectionKey="dimensions"
@@ -893,11 +939,215 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
   );
 }
 
+function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
+  const conditionOptions = [
+    { value: "excellent", label: "ممتاز" },
+    { value: "good", label: "جيد" },
+    { value: "average", label: "متوسط" },
+    { value: "poor", label: "سيء" },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={5} title="المبنى - الخارج" icon={Home} subtitle="وصف مكونات المبنى الخارجية وحالتها" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* الواجهة */}
+        <p className="text-xs font-bold text-muted-foreground">🏗️ الواجهة الخارجية</p>
+        <FieldGroup label="مادة الواجهة" required>
+          <Select value={formData.exterior_facade_material} onValueChange={(v: string) => updateField("exterior_facade_material", v)}>
+            <SelectTrigger><SelectValue placeholder="اختر مادة الواجهة" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="stone">حجر</SelectItem>
+              <SelectItem value="brick">طوب</SelectItem>
+              <SelectItem value="plaster">لياسة / بياض</SelectItem>
+              <SelectItem value="glass">زجاج</SelectItem>
+              <SelectItem value="cladding">كلادينج</SelectItem>
+              <SelectItem value="mixed">مختلط</SelectItem>
+              <SelectItem value="other">أخرى</SelectItem>
+            </SelectContent>
+          </Select>
+        </FieldGroup>
+        <FieldGroup label="حالة الواجهة">
+          <RadioGroup value={formData.exterior_facade_condition} onValueChange={(v: string) => updateField("exterior_facade_condition", v)} className="flex gap-2">
+            {conditionOptions.map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_facade_condition === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <FieldGroup label="حالة الدهان الخارجي">
+          <RadioGroup value={formData.exterior_paint_condition} onValueChange={(v: string) => updateField("exterior_paint_condition", v)} className="flex gap-2">
+            {conditionOptions.map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_paint_condition === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <Separator />
+
+        {/* النوافذ والأبواب */}
+        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ والأبواب</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع النوافذ">
+            <Select value={formData.exterior_windows_type} onValueChange={(v: string) => updateField("exterior_windows_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="upvc">UPVC</SelectItem>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة النوافذ">
+            <Select value={formData.exterior_windows_condition} onValueChange={(v: string) => updateField("exterior_windows_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع الأبواب الخارجية">
+            <Select value={formData.exterior_doors_type} onValueChange={(v: string) => updateField("exterior_doors_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="wood">خشب</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="aluminum">ألمنيوم</SelectItem>
+                <SelectItem value="glass">زجاج</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة الأبواب">
+            <Select value={formData.exterior_doors_condition} onValueChange={(v: string) => updateField("exterior_doors_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* السقف */}
+        <p className="text-xs font-bold text-muted-foreground">🏠 السقف</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع السقف">
+            <Select value={formData.exterior_roof_type} onValueChange={(v: string) => updateField("exterior_roof_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="concrete">خرساني</SelectItem>
+                <SelectItem value="steel">حديد / معدني</SelectItem>
+                <SelectItem value="tiles">قرميد</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة السقف">
+            <Select value={formData.exterior_roof_condition} onValueChange={(v: string) => updateField("exterior_roof_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <Separator />
+
+        {/* الأسوار والمداخل */}
+        <p className="text-xs font-bold text-muted-foreground">🚧 الأسوار والمواقف والتشجير</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="نوع السور">
+            <Select value={formData.exterior_fence_type} onValueChange={(v: string) => updateField("exterior_fence_type", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="concrete_block">بلك خرساني</SelectItem>
+                <SelectItem value="stone">حجر</SelectItem>
+                <SelectItem value="iron">حديد</SelectItem>
+                <SelectItem value="mixed">مختلط</SelectItem>
+                <SelectItem value="none">لا يوجد</SelectItem>
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+          <FieldGroup label="حالة السور">
+            <Select value={formData.exterior_fence_condition} onValueChange={(v: string) => updateField("exterior_fence_condition", v)}>
+              <SelectTrigger><SelectValue placeholder="اختر" /></SelectTrigger>
+              <SelectContent>
+                {conditionOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </FieldGroup>
+        </div>
+
+        <FieldGroup label="المواقف">
+          <RadioGroup value={formData.exterior_parking} onValueChange={(v: string) => updateField("exterior_parking", v)} className="flex gap-2">
+            {[{ value: "covered", label: "مغطاة" }, { value: "open", label: "مفتوحة" }, { value: "none", label: "لا يوجد" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_parking === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+        {formData.exterior_parking && formData.exterior_parking !== "none" && (
+          <FieldGroup label="عدد المواقف">
+            <Input type="number" value={formData.exterior_parking_count} onChange={(e: any) => updateField("exterior_parking_count", e.target.value)} placeholder="0" />
+          </FieldGroup>
+        )}
+
+        <FieldGroup label="التشجير والمسطحات الخضراء">
+          <RadioGroup value={formData.exterior_landscaping} onValueChange={(v: string) => updateField("exterior_landscaping", v)} className="flex gap-2">
+            {[{ value: "excellent", label: "ممتاز" }, { value: "average", label: "متوسط" }, { value: "none", label: "لا يوجد" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2 cursor-pointer text-xs transition-colors ${formData.exterior_landscaping === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <FieldGroup label="عدد المداخل">
+          <Input type="number" value={formData.exterior_entrance_count} onChange={(e: any) => updateField("exterior_entrance_count", e.target.value)} placeholder="مثال: 2" />
+        </FieldGroup>
+
+        <Separator />
+
+        <FieldGroup label="ملاحظات إضافية">
+          <Textarea value={formData.exterior_notes} onChange={(e: any) => updateField("exterior_notes", e.target.value)} placeholder="أي ملاحظات إضافية عن الحالة الخارجية للمبنى..." rows={3} />
+        </FieldGroup>
+
+        <SectionPhotoUpload section="exterior" label="صور المبنى من الخارج" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="exterior"
+          promptHint="تحليل حالة المبنى الخارجية"
+          context={{
+            facade_material: formData.exterior_facade_material,
+            facade_condition: formData.exterior_facade_condition,
+            paint_condition: formData.exterior_paint_condition,
+            roof_type: formData.exterior_roof_type,
+            roof_condition: formData.exterior_roof_condition,
+            fence_type: formData.exterior_fence_type,
+            parking: formData.exterior_parking,
+          }}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={5} title="حالة الأصل" icon={Wrench} subtitle="تقييم الحالة الفعلية" />
+        <SectionHeader num={6} title="حالة الأصل" icon={Wrench} subtitle="تقييم الحالة الفعلية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="الحالة العامة" required>
@@ -963,7 +1213,7 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-3">
-          <SectionHeader num={6} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
+          <SectionHeader num={7} title="المرافق والخدمات" icon={Zap} subtitle="توفر الخدمات الأساسية" />
         </CardHeader>
         <CardContent className="space-y-3">
           {[
@@ -1025,7 +1275,7 @@ function SectionValueFactors({ formData, updateField }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={7} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
+        <SectionHeader num={8} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="إيجابيات الموقع">
@@ -1056,7 +1306,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, 
 
   return (
     <div className="space-y-4">
-      <SectionHeader num={8} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
+      <SectionHeader num={9} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
       {requiredPhotoDone < requiredPhotoTotal && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -1120,7 +1370,7 @@ function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemo
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={9} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
+        <SectionHeader num={10} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="هل توجد مخاطر تؤثر على التقييم؟" required>
@@ -1166,7 +1416,7 @@ function SectionFinalCheck({ formData, updateField, sectionComplete, photos, che
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={10} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
+        <SectionHeader num={11} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
       </CardHeader>
       <CardContent className="space-y-3">
         {reviewItems.map((item, i) => (
@@ -1214,7 +1464,7 @@ function SectionApproval({ formData, updateField, canSubmit, submitting, onSubmi
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={11} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
+        <SectionHeader num={12} title="اعتماد المعاينة" icon={UserCheck} subtitle="تأكيد واعتماد المعاينة" />
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center space-y-2">
