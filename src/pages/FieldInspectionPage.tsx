@@ -646,8 +646,8 @@ export default function FieldInspectionPage() {
       const findingsSummary = [
         `الحالة العامة: ${formData.overall_condition}`,
         `نوع العقار: ${formData.asset_type}`,
-        `عمر المبنى: ${formData.building_age} سنة`,
-        `عدد الطوابق: ${formData.floors_count}`,
+        `عمر المبنى: ${formData.exterior_building_age} سنة`,
+        `عدد الطوابق: ${formData.num_floors}`,
         formData.inspector_final_notes ? `ملاحظات: ${formData.inspector_final_notes}` : "",
       ].filter(Boolean).join("\n");
 
@@ -656,13 +656,13 @@ export default function FieldInspectionPage() {
         .from("inspections")
         .insert({
           inspector_id: inspectorId,
-          assignment_id: formData.assignment_id || undefined,
+          assignment_id: formData.assignment_ref || undefined,
           inspection_date: formData.approval_date || new Date().toISOString().split("T")[0],
           status: "submitted",
           completed: true,
-          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-          gps_verified: !!(formData.latitude && formData.longitude),
+          latitude: formData.gps_lat ?? null,
+          longitude: formData.gps_lng ?? null,
+          gps_verified: !!(formData.gps_lat && formData.gps_lng),
           findings_ar: findingsSummary,
           notes_ar: formData.confidential_notes || null,
           submitted_at: new Date().toISOString(),
@@ -695,8 +695,8 @@ export default function FieldInspectionPage() {
               file_path: filePath,
               category: photo.category,
               uploaded_by: inspectorId,
-              latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-              longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+              latitude: formData.gps_lat ?? null,
+              longitude: formData.gps_lng ?? null,
             });
           }
         }
@@ -706,10 +706,10 @@ export default function FieldInspectionPage() {
       if (inspection?.id) {
         const checklistRows = checklist.map((item, idx) => ({
           inspection_id: inspection.id,
-          label_ar: item.label,
+          label_ar: item.label_ar,
           category: item.category,
           is_checked: item.is_checked,
-          is_required: item.required,
+          is_required: item.is_required,
           sort_order: idx,
         }));
         await supabase.from("inspection_checklist_items").insert(checklistRows);
