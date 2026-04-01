@@ -98,6 +98,7 @@ const App = () => (
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
             <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
             <Route path="/ai-document-processing" element={<AIDocumentProcessingPage />} />
+            <Route path="/scope-and-pricing" element={<ScopeAndPricingPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
