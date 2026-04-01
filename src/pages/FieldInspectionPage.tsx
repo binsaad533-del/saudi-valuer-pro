@@ -2674,21 +2674,20 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
         <Separator />
 
         {/* Technical Summary Generator */}
-        <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-4 space-y-3">
+        <div className="rounded-lg border-2 border-ai/30 bg-ai-light p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-primary">
-              <FileCheck className="w-5 h-5" />
-              <span className="text-sm font-bold">📄 ملخص فني جاهز للتقرير</span>
+            <div className="flex items-center gap-2 text-ai">
+              <Sparkles className="w-5 h-5" />
+              <span className="text-sm font-bold">✨ ملخص فني جاهز للتقرير</span>
             </div>
             <Button
-              variant="default"
               size="sm"
               onClick={generateTechSummary}
               disabled={summaryLoading}
-              className="h-8 text-xs gap-1.5"
+              className="h-8 text-xs gap-1.5 bg-ai text-ai-foreground hover:bg-ai/90"
             >
               {summaryLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              {summaryLoading ? "جاري التوليد..." : "توليد الملخص"}
+              {summaryLoading ? "جاري التوليد..." : "✨ توليد الملخص"}
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
