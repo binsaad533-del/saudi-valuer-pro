@@ -158,6 +158,8 @@ interface FormData {
   exterior_doors_condition: string;
   exterior_roof_type: string;
   exterior_roof_condition: string;
+  exterior_roof_insulation: string;
+  exterior_roof_leaks: string;
   exterior_fence_type: string;
   exterior_fence_condition: string;
   exterior_parking: string;
