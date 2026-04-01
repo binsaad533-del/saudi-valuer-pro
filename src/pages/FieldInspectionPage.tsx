@@ -1594,8 +1594,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* النوافذ */}
-        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ</p>
+        {/* النوافذ - still inside same ExpandableSection */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع النوافذ">
             <Select value={formData.interior_windows_type} onValueChange={(v: string) => updateField("interior_windows_type", v)}>
