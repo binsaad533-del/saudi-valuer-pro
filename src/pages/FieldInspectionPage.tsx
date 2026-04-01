@@ -2384,7 +2384,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, onDescriptionChange
             <CardHeader className="pb-2"><CardTitle className="text-sm">{g.title}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               {cats.map((cat) => (
-                <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} />
+                <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} onDescriptionChange={onDescriptionChange} />
               ))}
             </CardContent>
           </Card>
