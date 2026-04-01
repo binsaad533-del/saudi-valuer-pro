@@ -2188,8 +2188,37 @@ function SectionValueFactors({ formData, updateField }: any) {
         <SectionHeader num={10} title="العوامل المؤثرة على القيمة" icon={TrendingUp} subtitle="العوامل الإيجابية والسلبية" />
       </CardHeader>
       <CardContent className="space-y-4">
-        <FieldGroup label="إيجابيات الموقع">
-          <Textarea value={formData.positive_factors} onChange={(e: any) => updateField("positive_factors", e.target.value)} placeholder="قرب من الخدمات، واجهة تجارية، شارع رئيسي..." rows={3} />
+        <FieldGroup label="✅ عوامل إيجابية">
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: "view", label: "إطلالة مميزة (View)" },
+              { id: "prime_location", label: "موقع مميز" },
+              { id: "luxury_finish", label: "تشطيب راقي" },
+              { id: "modern", label: "حديث البناء" },
+            ].map((factor) => (
+              <label key={factor.id} className="flex items-center gap-2 p-2.5 rounded-lg border border-border bg-background hover:bg-accent/50 cursor-pointer transition-colors">
+                <Checkbox
+                  checked={formData.positive_factors.includes(factor.id)}
+                  onCheckedChange={(checked) => {
+                    const current = formData.positive_factors;
+                    updateField(
+                      "positive_factors",
+                      checked ? [...current, factor.id] : current.filter((f: string) => f !== factor.id)
+                    );
+                  }}
+                />
+                <span className="text-sm">{factor.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="mt-2">
+            <Input
+              value={formData.positive_factors_other}
+              onChange={(e: any) => updateField("positive_factors_other", e.target.value)}
+              placeholder="أخرى (حدد)..."
+              className="text-sm"
+            />
+          </div>
         </FieldGroup>
         <FieldGroup label="سلبيات الموقع">
           <Textarea value={formData.negative_factors} onChange={(e: any) => updateField("negative_factors", e.target.value)} placeholder="ضوضاء، ازدحام، بعد عن الخدمات..." rows={3} />
