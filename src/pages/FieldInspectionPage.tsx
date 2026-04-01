@@ -2161,7 +2161,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, 
 
   return (
     <div className="space-y-4">
-      <SectionHeader num={10} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
+      <SectionHeader num={11} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
       {requiredPhotoDone < requiredPhotoTotal && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
