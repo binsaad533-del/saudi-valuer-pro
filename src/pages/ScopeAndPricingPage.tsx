@@ -175,79 +175,78 @@ export default function ScopeAndPricingPage() {
           </div>
         </div>
 
-        {/* Discipline Analysis */}
+        {/* Discipline Analysis — System Decision, Approval Only */}
         {scope?.disciplineAnalysis && !loading && (
           <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
             <div className="p-4 border-b border-border bg-gradient-to-l from-accent/10 to-transparent">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                  <Layers className="w-4 h-4 text-accent-foreground" />
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                    <Layers className="w-4 h-4 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">تحليل نوع التقييم</h3>
+                    <p className="text-[10px] text-muted-foreground">تم التحديد تلقائياً بواسطة الذكاء الاصطناعي — للمراجعة والموافقة</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">تحليل نوع التقييم</h3>
-                  <p className="text-[10px] text-muted-foreground">تم التحديد تلقائياً من المستندات المرفقة</p>
-                </div>
+                <Badge className="text-[9px] bg-primary/10 text-primary border-0 gap-1">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  قرار النظام
+                </Badge>
               </div>
             </div>
             <div className="p-4 space-y-4">
-              {/* Discipline type cards */}
-              <div className="grid grid-cols-3 gap-3">
-                {([
-                  { key: "real_estate", label: "عقاري", icon: Home, desc: "أراضي ومباني" },
-                  { key: "machinery", label: "آلات ومعدات", icon: Wrench, desc: "معدات وأصول متحركة" },
-                  { key: "mixed", label: "مختلط", icon: Layers, desc: "عقاري + آلات" },
-                ] as const).map((d) => {
-                  const isActive = scope.disciplineAnalysis!.discipline === d.key;
-                  return (
-                    <div
-                      key={d.key}
-                      className={`relative p-3 rounded-xl border-2 text-center transition-all ${
-                        isActive
-                          ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-border/50 bg-muted/10 opacity-50"
-                      }`}
-                    >
-                      {isActive && (
-                        <div className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                          <CheckCircle2 className="w-3 h-3 text-primary-foreground" />
-                        </div>
-                      )}
-                      <d.icon className={`w-6 h-6 mx-auto mb-1.5 ${isActive ? "text-primary" : "text-muted-foreground"}`} />
-                      <p className={`text-xs font-bold ${isActive ? "text-foreground" : "text-muted-foreground"}`}>{d.label}</p>
-                      <p className="text-[9px] text-muted-foreground">{d.desc}</p>
+              {/* Selected discipline — prominent */}
+              {(() => {
+                const cfg: Record<string, { label: string; icon: typeof Home; desc: string }> = {
+                  real_estate: { label: "تقييم عقاري", icon: Home, desc: "أراضي ومباني وعقارات" },
+                  machinery: { label: "تقييم آلات ومعدات", icon: Wrench, desc: "معدات وأصول متحركة وصناعية" },
+                  mixed: { label: "تقييم مختلط", icon: Layers, desc: "عقاري + آلات ومعدات" },
+                };
+                const selected = cfg[scope.disciplineAnalysis!.discipline];
+                const SelectedIcon = selected.icon;
+                return (
+                  <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5">
+                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <SelectedIcon className="w-6 h-6 text-primary" />
                     </div>
-                  );
-                })}
-              </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-sm font-bold text-foreground">{selected.label}</p>
+                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                      </div>
+                      <p className="text-xs text-muted-foreground">{selected.desc}</p>
+                    </div>
+                    <div className="text-left shrink-0">
+                      <p className={`text-lg font-bold ${
+                        scope.disciplineAnalysis!.confidence >= 85
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : scope.disciplineAnalysis!.confidence >= 65
+                          ? "text-yellow-600 dark:text-yellow-400"
+                          : "text-red-600 dark:text-red-400"
+                      }`}>
+                        {scope.disciplineAnalysis!.confidence}%
+                      </p>
+                      <p className="text-[9px] text-muted-foreground">نسبة الثقة</p>
+                    </div>
+                  </div>
+                );
+              })()}
 
-              {/* Confidence bar */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-muted-foreground">نسبة الثقة في التصنيف</span>
-                    <span className={`text-xs font-bold ${
-                      scope.disciplineAnalysis.confidence >= 85
-                        ? "text-emerald-600 dark:text-emerald-400"
-                        : scope.disciplineAnalysis.confidence >= 65
-                        ? "text-yellow-600 dark:text-yellow-400"
-                        : "text-red-600 dark:text-red-400"
-                    }`}>
-                      {scope.disciplineAnalysis.confidence}%
-                    </span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all ${
-                        scope.disciplineAnalysis.confidence >= 85
-                          ? "bg-emerald-500"
-                          : scope.disciplineAnalysis.confidence >= 65
-                          ? "bg-yellow-500"
-                          : "bg-red-500"
-                      }`}
-                      style={{ width: `${scope.disciplineAnalysis.confidence}%` }}
-                    />
-                  </div>
-                </div>
+              {/* Other types — greyed out */}
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: "real_estate", label: "عقاري", icon: Home },
+                  { key: "machinery", label: "آلات ومعدات", icon: Wrench },
+                  { key: "mixed", label: "مختلط", icon: Layers },
+                ] as const)
+                  .filter((d) => d.key !== scope.disciplineAnalysis!.discipline)
+                  .map((d) => (
+                    <div key={d.key} className="flex items-center gap-2 p-2 rounded-lg border border-border/30 bg-muted/10 opacity-40">
+                      <d.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                      <span className="text-[10px] text-muted-foreground">{d.label}</span>
+                    </div>
+                  ))}
               </div>
 
               {/* Reason */}
@@ -258,6 +257,7 @@ export default function ScopeAndPricingPage() {
                 </div>
               )}
 
+              {/* Signals */}
               {scope.disciplineAnalysis.signals.length > 0 && (
                 <div>
                   <p className="text-[10px] font-medium text-muted-foreground mb-1.5">إشارات التصنيف المكتشفة</p>
