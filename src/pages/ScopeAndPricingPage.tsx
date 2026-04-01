@@ -10,6 +10,7 @@ import {
   Sparkles, FileText, Ruler, ClipboardList, DollarSign, CheckCircle2,
   AlertTriangle, ArrowRight, Loader2, Building2, MapPin, RefreshCw,
   Edit3, ChevronDown, ChevronUp, Calculator, Shield, Clock, Star,
+  Wrench, Layers, Home,
 } from "lucide-react";
 
 interface ScopeData {
