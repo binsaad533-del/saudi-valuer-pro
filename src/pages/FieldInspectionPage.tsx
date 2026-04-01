@@ -356,6 +356,7 @@ const defaultFormData: FormData = {
   elevator_status: "",
   elevator_count: "",
   utilities_notes: "",
+  utilities_confidential_notes: "",
   positive_factors: "",
   negative_factors: "",
   environmental_factors: "",
