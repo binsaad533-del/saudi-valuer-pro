@@ -122,11 +122,56 @@ function generateLocalSuggestion(section: string, ctx: Record<string, any>): str
       const condition = ctx.overall_condition;
       const age = ctx.asset_age ? Number(ctx.asset_age) : 0;
       const finishing = ctx.finishing_level;
+      const maintenance = ctx.maintenance_rating;
       const tips: string[] = [];
       if (condition === "poor") tips.push("⚠️ الحالة السيئة تتطلب توثيق مفصل للعيوب والتشققات بالصور");
       if (age > 20) tips.push("🏗️ عمر الأصل يتجاوز 20 سنة — تحقق من الإهلاك الوظيفي والاقتصادي");
       if (finishing === "shell") tips.push("📝 أصل على العظم: وثّق نسبة الإنجاز ونوع الهيكل الإنشائي");
       if (condition === "excellent" && age > 15) tips.push("🔍 حالة ممتازة مع عمر مرتفع — تأكد من وجود تجديدات حديثة");
+      if (maintenance === "needs_maintenance") tips.push("🔧 العقار يحتاج صيانة — وثّق بنود الصيانة المطلوبة بالتفصيل");
+      if (maintenance === "poor") tips.push("⚠️ صيانة رديئة — يُتوقع تأثير سلبي كبير على القيمة");
+
+      // Damage-based maintenance cost estimation
+      const severityLabels: Record<string, string> = { minor: "بسيط", moderate: "متوسط", severe: "خطير" };
+      const damages: string[] = [];
+      const costEstimates: string[] = [];
+      if (ctx.cracks_severity && ctx.cracks_severity !== "none") {
+        damages.push(`تشققات (${severityLabels[ctx.cracks_severity as string] || ctx.cracks_severity})`);
+        if (ctx.cracks_severity === "minor") costEstimates.push("تشققات بسيطة: 2,000 - 8,000 ر.س");
+        else if (ctx.cracks_severity === "moderate") costEstimates.push("تشققات متوسطة: 10,000 - 30,000 ر.س");
+        else costEstimates.push("تشققات خطيرة: 50,000 - 150,000+ ر.س (قد تحتاج ترميم هيكلي)");
+      }
+      if (ctx.moisture_severity && ctx.moisture_severity !== "none") {
+        damages.push(`رطوبة (${severityLabels[ctx.moisture_severity as string] || ctx.moisture_severity})`);
+        if (ctx.moisture_severity === "minor") costEstimates.push("رطوبة بسيطة: 3,000 - 10,000 ر.س");
+        else if (ctx.moisture_severity === "moderate") costEstimates.push("رطوبة متوسطة: 15,000 - 40,000 ر.س");
+        else costEstimates.push("رطوبة خطيرة: 40,000 - 100,000+ ر.س (عزل شامل)");
+      }
+      if (ctx.corrosion_severity && ctx.corrosion_severity !== "none") {
+        damages.push(`تآكل (${severityLabels[ctx.corrosion_severity as string] || ctx.corrosion_severity})`);
+        if (ctx.corrosion_severity === "minor") costEstimates.push("تآكل بسيط: 2,000 - 5,000 ر.س");
+        else if (ctx.corrosion_severity === "moderate") costEstimates.push("تآكل متوسط: 10,000 - 25,000 ر.س");
+        else costEstimates.push("تآكل خطير: 30,000 - 80,000+ ر.س");
+      }
+      if (ctx.fire_damage_severity && ctx.fire_damage_severity !== "none") {
+        damages.push(`أضرار حريق (${severityLabels[ctx.fire_damage_severity as string] || ctx.fire_damage_severity})`);
+        if (ctx.fire_damage_severity === "minor") costEstimates.push("أضرار حريق بسيطة: 5,000 - 20,000 ر.س");
+        else if (ctx.fire_damage_severity === "moderate") costEstimates.push("أضرار حريق متوسطة: 30,000 - 80,000 ر.س");
+        else costEstimates.push("أضرار حريق خطيرة: 100,000 - 500,000+ ر.س (إعادة بناء جزئية)");
+      }
+      if (ctx.structural_damage_severity && ctx.structural_damage_severity !== "none") {
+        damages.push(`أضرار هيكلية (${severityLabels[ctx.structural_damage_severity as string] || ctx.structural_damage_severity})`);
+        if (ctx.structural_damage_severity === "minor") costEstimates.push("أضرار هيكلية بسيطة: 10,000 - 30,000 ر.س");
+        else if (ctx.structural_damage_severity === "moderate") costEstimates.push("أضرار هيكلية متوسطة: 50,000 - 150,000 ر.س");
+        else costEstimates.push("أضرار هيكلية خطيرة: 200,000+ ر.س (قد يستوجب هدم وإعادة بناء)");
+      }
+
+      if (damages.length > 0) {
+        tips.push(`🔍 الأضرار المكتشفة: ${damages.join("، ")}`);
+        tips.push("💰 تقدير تكلفة الصيانة التقريبية:\n" + costEstimates.map(c => `  • ${c}`).join("\n"));
+        if (damages.length >= 3) tips.push("⚠️ تعدد الأضرار يشير لإهمال عام — يُنصح بتقرير فني متخصص");
+      }
+
       return tips.length > 0 ? tips.join("\n\n") : "💡 وثّق حالة التشطيبات الداخلية والخارجية بالتفصيل، خاصة أي عيوب ظاهرة.";
     }
     case "dimensions": {

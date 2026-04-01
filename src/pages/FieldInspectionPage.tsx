@@ -1775,9 +1775,10 @@ function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, on
           <Textarea value={formData.condition_notes} onChange={(e: any) => updateField("condition_notes", e.target.value)} placeholder="تفاصيل عن الحالة الإنشائية، التشطيبات، العيوب..." rows={3} />
         </FieldGroup>
         <SectionPhotoUpload section="condition" label="صور حالة الأصل والعيوب" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <SectionPhotoUpload section="damage" label="📸 صور المشاكل والأضرار (تشققات، رطوبة، تلف)" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <AiSuggestionBox
           sectionKey="condition"
-          promptHint="تقييم حالة الأصل والصيانة"
+          promptHint="تقييم حالة الأصل والصيانة مع تقدير تكلفة الصيانة المتوقعة"
           context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, maintenance_rating: formData.maintenance_rating, cracks_severity: formData.cracks_severity, moisture_severity: formData.moisture_severity, corrosion_severity: formData.corrosion_severity, fire_damage_severity: formData.fire_damage_severity, structural_damage_severity: formData.structural_damage_severity, damage_details: formData.damage_details, condition_notes: formData.condition_notes }}
         />
       </CardContent>
