@@ -239,8 +239,10 @@ export default function AIReportGenerationPage() {
         throw new Error("لم يتم توليد التقرير");
       }
     } catch (err: any) {
+      const msg = err.message || "خطأ في توليد التقرير";
+      setStepErrors(prev => ({ ...prev, 1: msg }));
       setStep(0);
-      toast.error(err.message || "خطأ في توليد التقرير");
+      toast.error(msg);
     } finally {
       setIsGenerating(false);
     }
