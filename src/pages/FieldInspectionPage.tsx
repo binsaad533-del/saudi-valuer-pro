@@ -701,6 +701,23 @@ export default function FieldInspectionPage() {
 
       {/* Step content */}
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
+        {/* Section navigation hint */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {step > 0 && (
+            <>
+              <span>{STEPS[step - 1].label}</span>
+              <ChevronLeft className="w-3 h-3" />
+            </>
+          )}
+          <span className="font-bold text-primary">{STEPS[step].label}</span>
+          {step < STEPS.length - 1 && (
+            <>
+              <ChevronLeft className="w-3 h-3" />
+              <span>{STEPS[step + 1].label}</span>
+            </>
+          )}
+        </div>
+
         {step === 0 && <SectionGeneral formData={formData} updateField={updateField} />}
         {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 2 && <SectionVerification formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
