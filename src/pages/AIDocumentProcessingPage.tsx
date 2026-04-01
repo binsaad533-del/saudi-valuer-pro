@@ -312,6 +312,14 @@ export default function AIDocumentProcessingPage() {
     }
   }, [uploadedFiles, useMock]);
 
+  // Auto-trigger mock analysis when files are added in mock mode
+  useEffect(() => {
+    if (autoAnalyzePending && uploadedFiles.length > 0 && !extracting) {
+      setAutoAnalyzePending(false);
+      runExtraction();
+    }
+  }, [autoAnalyzePending, uploadedFiles, extracting, runExtraction]);
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast.success("تم النسخ");
