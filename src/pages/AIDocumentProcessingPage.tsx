@@ -975,7 +975,7 @@ export default function AIDocumentProcessingPage() {
                       <Button
                         className="w-full gap-2 text-sm py-5 rounded-xl shadow-sm"
                         size="lg"
-                        onClick={() => toast.success("جاري الانتقال لتحديد نطاق العمل...")}
+                        onClick={() => navigate("/scope-and-pricing", { state: { extractedData: extracted } })}
                       >
                         <ArrowLeft className="w-4 h-4" />
                         متابعة لتحديد نطاق العمل
