@@ -1218,7 +1218,7 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <Separator />
 
         {/* الواجهة */}
-        <p className="text-xs font-bold text-muted-foreground">🏗️ الواجهة الخارجية</p>
+        <ExpandableSection icon="🏗️" title="الواجهة الخارجية" defaultOpen>
         <FieldGroup label="مادة الواجهة" required>
           <Select value={formData.exterior_facade_material} onValueChange={(v: string) => updateField("exterior_facade_material", v)}>
             <SelectTrigger><SelectValue placeholder="اختر مادة الواجهة" /></SelectTrigger>
@@ -1268,11 +1268,10 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             ))}
           </RadioGroup>
         </FieldGroup>
-
-        <Separator />
+        </ExpandableSection>
 
         {/* النوافذ والأبواب */}
-        <p className="text-xs font-bold text-muted-foreground">🪟 النوافذ والأبواب</p>
+        <ExpandableSection icon="🪟" title="النوافذ والأبواب">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع النوافذ">
             <Select value={formData.exterior_windows_type} onValueChange={(v: string) => updateField("exterior_windows_type", v)}>
@@ -1315,6 +1314,7 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
         <Separator />
 
