@@ -124,7 +124,7 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
       } as any);
 
       if (error) throw error;
-      toast.success("تم إنشاء الطلب بنجاح نيابةً عن العميل");
+      toast.success("تم الإدخال بواسطة المنسق الإداري — الطلب جاهز للمعالجة");
       setForm({ clientId: "", propertyType: "", purpose: "", cityAr: "", districtAr: "", landArea: "", buildingArea: "", rooms: "", descriptionAr: "", notes: "" });
       setNewClient({ nameAr: "", phone: "", email: "" });
       onCreated();
