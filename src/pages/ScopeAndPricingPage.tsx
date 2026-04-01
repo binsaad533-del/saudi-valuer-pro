@@ -28,6 +28,24 @@ interface PurposeAnalysis {
   allPurposes: PurposeOption[];
 }
 
+interface BasisOption {
+  key: string;
+  label: string;
+  labelEn: string;
+  confidence: number;
+  reason: string;
+  ivsReference?: string;
+}
+
+interface BasisOfValueAnalysis {
+  selectedBasis: string;
+  selectedBasisEn: string;
+  confidence: number;
+  reason: string;
+  ivsReference: string;
+  allBases: BasisOption[];
+}
+
 interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
