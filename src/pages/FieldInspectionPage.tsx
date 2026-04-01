@@ -2100,6 +2100,7 @@ function SectionLayoutAreas({ formData, updateField }: any) {
           </div>
         )}
 
+        {formData.floor_count_detail && parseInt(formData.floor_count_detail) > 0 && (
           <>
             <Separator />
             <p className="text-xs font-bold text-muted-foreground">📐 مساحة كل دور (م²)</p>
