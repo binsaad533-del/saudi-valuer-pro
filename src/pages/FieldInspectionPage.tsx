@@ -231,6 +231,7 @@ interface FormData {
   garden_area: string;
   parking_area: string;
   annex_area: string;
+  area_matches_license: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
@@ -386,6 +387,7 @@ const defaultFormData: FormData = {
   garden_area: "",
   parking_area: "",
   annex_area: "",
+  area_matches_license: "",
   positive_factors: "",
   negative_factors: "",
   environmental_factors: "",
@@ -2146,6 +2148,27 @@ function SectionLayoutAreas({ formData, updateField }: any) {
             <Input type="number" value={formData.annex_area} onChange={(e: any) => updateField("annex_area", e.target.value)} placeholder="م²" />
           </FieldGroup>
         </div>
+
+        <Separator />
+
+        <FieldGroup label="تطابق المساحة مع الرخصة" required>
+          <RadioGroup value={formData.area_matches_license} onValueChange={(v: string) => updateField("area_matches_license", v)} className="grid grid-cols-2 gap-2">
+            {[
+              { value: "yes", label: "✅ نعم", color: "border-green-500 bg-green-50 dark:bg-green-900/20" },
+              { value: "no", label: "❌ لا", color: "border-red-500 bg-red-50 dark:bg-red-900/20" },
+            ].map(opt => (
+              <label key={opt.value} className={`flex items-center justify-center gap-2 border rounded-lg p-3 cursor-pointer text-sm transition-colors ${formData.area_matches_license === opt.value ? opt.color + " font-bold" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+        {formData.area_matches_license === "no" && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            عدم تطابق المساحة مع الرخصة يستوجب التوثيق بالتفصيل وإبلاغ المقيّم
+          </div>
+        )}
 
         <FieldGroup label="ملاحظات المخطط">
           <Textarea value={formData.layout_notes} onChange={(e: any) => updateField("layout_notes", e.target.value)} placeholder="ملاحظات عن توزيع المساحات، الملاحق، السطح..." rows={2} />
