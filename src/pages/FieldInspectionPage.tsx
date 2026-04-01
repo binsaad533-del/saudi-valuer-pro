@@ -1820,7 +1820,7 @@ function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemo
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={10} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
+        <SectionHeader num={11} title="المخاطر والملاحظات" icon={ShieldAlert} subtitle="أي مخاطر تؤثر على التقييم" />
       </CardHeader>
       <CardContent className="space-y-4">
         <FieldGroup label="هل توجد مخاطر تؤثر على التقييم؟" required>
