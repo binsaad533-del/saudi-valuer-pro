@@ -220,7 +220,7 @@ export default function CoordinatorRequestsTable({ requests, clients, onRefresh 
                               <MoreHorizontal className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" dir="rtl">
+                          <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => openDetail(req)}>
                               <Eye className="w-3.5 h-3.5 ml-2" />
                               عرض التفاصيل
