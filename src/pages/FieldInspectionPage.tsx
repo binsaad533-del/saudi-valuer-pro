@@ -373,15 +373,6 @@ export default function FieldInspectionPage() {
               );
             })}
           </div>
-        </div>
-                }`}
-              >
-                <Icon className="w-3 h-3" />
-                <span className="text-[8px] mt-0.5 leading-tight">{s.num}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Step content */}
