@@ -1660,11 +1660,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* الأبواب الداخلية */}
-        <p className="text-xs font-bold text-muted-foreground">🚪 الأبواب والسلالم</p>
+        {/* الأبواب والسلالم */}
+        <ExpandableSection icon="🚪" title="الأبواب والسلالم">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع الأبواب الداخلية">
             <Select value={formData.interior_doors_type} onValueChange={(v: string) => updateField("interior_doors_type", v)}>
