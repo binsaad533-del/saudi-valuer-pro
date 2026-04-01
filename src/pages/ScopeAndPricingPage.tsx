@@ -28,6 +28,24 @@ interface PurposeAnalysis {
   allPurposes: PurposeOption[];
 }
 
+interface BasisOption {
+  key: string;
+  label: string;
+  labelEn: string;
+  confidence: number;
+  reason: string;
+  ivsReference?: string;
+}
+
+interface BasisOfValueAnalysis {
+  selectedBasis: string;
+  selectedBasisEn: string;
+  confidence: number;
+  reason: string;
+  ivsReference: string;
+  allBases: BasisOption[];
+}
+
 interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
@@ -56,6 +74,7 @@ interface ScopeData {
   complianceNotes?: string[];
   disciplineAnalysis?: DisciplineAnalysis;
   purposeAnalysis?: PurposeAnalysis;
+  basisOfValueAnalysis?: BasisOfValueAnalysis;
 }
 
 interface PricingBreakdown {
@@ -395,6 +414,115 @@ export default function ScopeAndPricingPage() {
                                 <p className="text-[9px] text-muted-foreground truncate">{p.reason}</p>
                               </div>
                               <span className="text-[9px] text-muted-foreground shrink-0">{p.confidence}%</span>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Basis of Value Analysis — IVS Compliant */}
+        {scope?.basisOfValueAnalysis && !loading && (() => {
+          const basisIcons: Record<string, typeof DollarSign> = {
+            "القيمة السوقية": DollarSign,
+            "Market Value": DollarSign,
+            "القيمة العادلة": Scale,
+            "Fair Value": Scale,
+            "قيمة التصفية": RotateCcw,
+            "Liquidation Value": RotateCcw,
+            "قيمة الإيجار": Landmark,
+            "Rental Value": Landmark,
+            "قيمة الاستثمار": TrendingUp,
+            "Investment Value": TrendingUp,
+            "قيمة التأمين": HeartPulse,
+            "Insurable Value": HeartPulse,
+          };
+          const getIcon = (label: string) => {
+            for (const [key, Icon] of Object.entries(basisIcons)) {
+              if (label.includes(key)) return Icon;
+            }
+            return DollarSign;
+          };
+          const ba = scope.basisOfValueAnalysis!;
+          const SelectedIcon = getIcon(ba.selectedBasis);
+
+          return (
+            <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+              <div className="p-4 border-b border-border bg-gradient-to-l from-accent/10 to-transparent">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
+                      <Scale className="w-4 h-4 text-accent-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">أساس القيمة</h3>
+                      <p className="text-[10px] text-muted-foreground">محدد تلقائياً وفق IVS 104 — للمراجعة والموافقة</p>
+                    </div>
+                  </div>
+                  <Badge className="text-[9px] bg-primary/10 text-primary border-0 gap-1">
+                    <Shield className="w-2.5 h-2.5" />
+                    IVS 104
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* Selected Basis — prominent card */}
+                <div className="flex items-center gap-4 p-4 rounded-xl border-2 border-primary bg-primary/5">
+                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <SelectedIcon className="w-6 h-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-bold text-foreground">{ba.selectedBasis}</p>
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0" />
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">{ba.selectedBasisEn}</p>
+                    <p className="text-xs text-muted-foreground leading-relaxed mt-1">{ba.reason}</p>
+                  </div>
+                  <div className="text-left shrink-0">
+                    <p className={`text-lg font-bold ${
+                      ba.confidence >= 85
+                        ? "text-emerald-600 dark:text-emerald-400"
+                        : ba.confidence >= 65
+                        ? "text-yellow-600 dark:text-yellow-400"
+                        : "text-red-600 dark:text-red-400"
+                    }`}>
+                      {ba.confidence}%
+                    </p>
+                    <p className="text-[9px] text-muted-foreground">نسبة الثقة</p>
+                  </div>
+                </div>
+
+                {/* IVS Reference */}
+                {ba.ivsReference && (
+                  <div className="flex items-start gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50">
+                    <Shield className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">{ba.ivsReference}</p>
+                  </div>
+                )}
+
+                {/* Other possible bases as smaller cards */}
+                {ba.allBases.filter(b => b.key !== ba.selectedBasis).length > 0 && (
+                  <div>
+                    <p className="text-[10px] font-medium text-muted-foreground mb-2">أسس قيمة محتملة أخرى</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                      {ba.allBases
+                        .filter(b => b.key !== ba.selectedBasis)
+                        .map((b) => {
+                          const BIcon = getIcon(b.label);
+                          return (
+                            <div key={b.key} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-border/50 bg-muted/20 opacity-60">
+                              <BIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-medium text-foreground truncate">{b.label}</p>
+                                <p className="text-[9px] text-muted-foreground truncate">{b.labelEn}</p>
+                              </div>
+                              <span className="text-[9px] text-muted-foreground shrink-0">{b.confidence}%</span>
                             </div>
                           );
                         })}
