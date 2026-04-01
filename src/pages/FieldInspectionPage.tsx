@@ -203,6 +203,12 @@ interface FormData {
   finishing_level: string;
   condition_notes: string;
   maintenance_rating: string;
+  has_cracks: boolean;
+  has_moisture: boolean;
+  has_corrosion: boolean;
+  has_fire_damage: boolean;
+  has_structural_damage: boolean;
+  damage_details: string;
   electricity_status: string;
   electricity_condition: string;
   water_source: string;
