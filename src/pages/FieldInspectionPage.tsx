@@ -455,6 +455,25 @@ function FieldGroup({ label, required, children }: { label: string; required?: b
   );
 }
 
+function ExpandableSection({ icon, title, children, defaultOpen = false, badge }: { icon: string; title: string; children: React.ReactNode; defaultOpen?: boolean; badge?: string }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <Collapsible open={open} onOpenChange={setOpen}>
+      <CollapsibleTrigger asChild>
+        <button className="w-full flex items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-right transition-colors hover:bg-muted/50">
+          <span className="text-sm">{icon}</span>
+          <span className="text-xs font-bold text-foreground flex-1">{title}</span>
+          {badge && <Badge variant="secondary" className="text-[10px] h-5">{badge}</Badge>}
+          <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent className="pt-3 space-y-3">
+        {children}
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
 /* ═══════ Main Component ═══════ */
 
 export default function FieldInspectionPage() {
