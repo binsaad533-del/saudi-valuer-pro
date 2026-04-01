@@ -635,6 +635,21 @@ export default function FieldInspectionPage() {
           <Progress value={overallProgress} className="h-1.5" />
         </div>
 
+        {/* Current section indicator */}
+        <div className="px-4 pb-2">
+          <div className="flex items-center gap-2.5 bg-primary/10 border border-primary/20 rounded-lg px-3 py-2">
+            {(() => { const Icon = STEPS[step].icon; return <Icon className="w-4 h-4 text-primary" />; })()}
+            <span className="text-xs font-bold text-primary">
+              القسم {STEPS[step].num}
+            </span>
+            <Separator orientation="vertical" className="h-4 bg-primary/20" />
+            <span className="text-xs font-semibold text-foreground">{STEPS[step].label}</span>
+            {sectionComplete[step] && (
+              <CheckCircle className="w-3.5 h-3.5 text-primary mr-auto" />
+            )}
+          </div>
+        </div>
+
         {/* Horizontal Stepper */}
         <div className="relative px-2 pb-3">
           <div className="flex items-start overflow-x-auto gap-0 pb-1 scrollbar-hide">
