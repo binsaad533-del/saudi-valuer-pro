@@ -745,6 +745,10 @@ export default function AIReportGenerationPage() {
             </div>
           </div>
 
+          <div className="flex gap-4">
+            {/* ─── Main Content ─── */}
+            <div className="flex-1 min-w-0 space-y-4">
+
           {/* Metadata summary */}
           {reportDraft.metadata && (
             <Card className="bg-muted/30">
