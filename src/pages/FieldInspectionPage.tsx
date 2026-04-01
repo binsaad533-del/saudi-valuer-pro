@@ -2394,7 +2394,7 @@ function SectionDocumentation({ photos, onCapture, onRemove, onDescriptionChange
   );
 }
 
-function PhotoCategoryRow({ cat, photos, onCapture, onRemove }: any) {
+function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChange }: any) {
   const catPhotos = photos.filter((p: PhotoItem) => p.category === cat.key);
   return (
     <div className={`border rounded-lg p-3 ${catPhotos.length > 0 ? "border-green-200 dark:border-green-800" : cat.required ? "border-yellow-200 dark:border-yellow-800" : "border-border"}`}>
@@ -2406,13 +2406,21 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove }: any) {
         <Badge variant={catPhotos.length > 0 ? "default" : "outline"} className="text-[10px]">{catPhotos.length} صور</Badge>
       </div>
       {catPhotos.length > 0 && (
-        <div className="flex gap-2 mb-2 overflow-x-auto pb-1">
+        <div className="space-y-2 mb-2">
           {catPhotos.map((p: PhotoItem, i: number) => (
-            <div key={i} className="relative shrink-0 w-16 h-16 bg-muted rounded overflow-hidden group">
-              <img src={p.preview} alt="" className="w-full h-full object-cover" />
-              <button onClick={() => onRemove(p)} className="absolute top-0 left-0 bg-destructive/80 text-white p-0.5 rounded-br opacity-0 group-hover:opacity-100 transition-opacity">
-                <Trash2 className="w-3 h-3" />
-              </button>
+            <div key={i} className="flex gap-2 items-start">
+              <div className="relative shrink-0 w-16 h-16 bg-muted rounded overflow-hidden group">
+                <img src={p.preview} alt="" className="w-full h-full object-cover" />
+                <button onClick={() => onRemove(p)} className="absolute top-0 left-0 bg-destructive/80 text-white p-0.5 rounded-br opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Trash2 className="w-3 h-3" />
+                </button>
+              </div>
+              <Input
+                value={p.description || ""}
+                onChange={(e: any) => onDescriptionChange(p, e.target.value)}
+                placeholder="وصف الصورة..."
+                className="text-xs h-8 flex-1"
+              />
             </div>
           ))}
         </div>
