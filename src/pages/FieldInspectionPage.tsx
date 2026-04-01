@@ -1543,8 +1543,7 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
           </FieldGroup>
         </div>
 
-        {/* الجدران */}
-        <p className="text-xs font-bold text-muted-foreground">🧱 الجدران</p>
+        {/* Remove standalone label - content flows inside ExpandableSection */}
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع التشطيب">
             <Select value={formData.interior_walls_type} onValueChange={(v: string) => updateField("interior_walls_type", v)}>
