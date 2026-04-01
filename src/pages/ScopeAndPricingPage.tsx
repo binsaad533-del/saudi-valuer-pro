@@ -1320,10 +1320,19 @@ export default function ScopeAndPricingPage() {
                   </div>
                 </div>
                 {sentToManager && (
-                  <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 gap-1">
-                    <CheckCircle2 className="w-2.5 h-2.5" />
-                    تم الإرسال
-                  </Badge>
+                  (() => {
+                    const cfg = {
+                      pending: { label: "بانتظار موافقة المدير", cls: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400", icon: <Clock className="w-2.5 h-2.5" /> },
+                      accepted: { label: "تم القبول", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400", icon: <CheckCircle2 className="w-2.5 h-2.5" /> },
+                      adjusting: { label: "تم التعديل", cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400", icon: <Edit3 className="w-2.5 h-2.5" /> },
+                    }[managerDecision];
+                    return (
+                      <Badge className={`text-[9px] border-0 gap-1 ${cfg.cls}`}>
+                        {cfg.icon}
+                        {cfg.label}
+                      </Badge>
+                    );
+                  })()
                 )}
               </div>
             </div>
