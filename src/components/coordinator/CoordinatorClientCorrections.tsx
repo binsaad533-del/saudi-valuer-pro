@@ -60,6 +60,23 @@ function describeIssues(req: any): string {
 
 export default function CoordinatorClientCorrections({ requests, onRefresh }: Props) {
   const [search, setSearch] = useState("");
+  const [correctionLogs, setCorrectionLogs] = useState<any[]>([]);
+  const [logsLoading, setLogsLoading] = useState(true);
+
+  useEffect(() => {
+    loadCorrectionLogs();
+  }, []);
+
+  const loadCorrectionLogs = async () => {
+    const { data } = await supabase
+      .from("audit_logs")
+      .select("*")
+      .in("table_name", ["valuation_requests", "request_messages"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setCorrectionLogs(data || []);
+    setLogsLoading(false);
+  };
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
   const [editDialog, setEditDialog] = useState(false);
   const [messageDialog, setMessageDialog] = useState(false);
