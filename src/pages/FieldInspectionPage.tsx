@@ -215,6 +215,7 @@ interface FormData {
   elevator_status: string;
   elevator_count: string;
   utilities_notes: string;
+  utilities_confidential_notes: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
