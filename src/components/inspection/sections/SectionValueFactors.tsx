@@ -21,6 +21,8 @@ import type { FormData, PhotoItem, ChecklistItem } from "./types";
 import { toast } from "sonner";
 
 export default function SectionValueFactors({ formData, updateField }: any) {
+  const positiveFactors: Record<string, string> = (formData.positive_factors && typeof formData.positive_factors === 'object' && !Array.isArray(formData.positive_factors)) ? formData.positive_factors : {};
+  const negativeFactors: Record<string, string> = (formData.negative_factors && typeof formData.negative_factors === 'object' && !Array.isArray(formData.negative_factors)) ? formData.negative_factors : {};
   return (
     <Card>
       <CardHeader className="pb-3">
