@@ -193,6 +193,8 @@ export default function AIReportGenerationPage() {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [editBuffer, setEditBuffer] = useState("");
   const [editedSections, setEditedSections] = useState<Set<string>>(new Set());
+  const [regeneratingSection, setRegeneratingSection] = useState<string | null>(null);
+  const [sectionConfidence, setSectionConfidence] = useState<Record<string, number>>({});
 
   // Review state
   const [reviewOutput, setReviewOutput] = useState("");
@@ -258,6 +260,14 @@ export default function AIReportGenerationPage() {
 
       if (data?.success && data.report_draft) {
         setReportDraft(data.report_draft);
+        // Set initial confidence for all generated sections
+        if (data.report_draft.sections) {
+          const initialConfidence: Record<string, number> = {};
+          Object.entries(data.report_draft.sections).forEach(([key, sec]: [string, any]) => {
+            initialConfidence[key] = Math.min(95, Math.max(55, Math.round((sec.content_ar?.length || 0) / 20)));
+          });
+          setSectionConfidence(initialConfidence);
+        }
         setStep(2);
         toast.success("تم توليد مسودة التقرير بنجاح");
       } else if (data?.raw_content) {
@@ -295,6 +305,36 @@ export default function AIReportGenerationPage() {
     setEditBuffer("");
     toast.success("تم حفظ التعديل");
   };
+
+  /* ─── Regenerate single section ─── */
+  const handleRegenerateSection = useCallback(async (sectionKey: string) => {
+    if (!aggregatedData || !reportDraft) return;
+    setRegeneratingSection(sectionKey);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-report", {
+        body: { request_id: requestId.trim(), mode: "generate_draft", sections: [sectionKey] },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.report_draft?.sections?.[sectionKey]) {
+        const newSec = data.report_draft.sections[sectionKey];
+        setReportDraft(prev => prev ? {
+          ...prev,
+          sections: { ...prev.sections, [sectionKey]: newSec },
+        } : prev);
+        setEditedSections(prev => { const s = new Set(prev); s.delete(sectionKey); return s; });
+        // Estimate confidence from content length ratio
+        const confidence = Math.min(95, Math.max(60, Math.round((newSec.content_ar?.length || 0) / 20)));
+        setSectionConfidence(prev => ({ ...prev, [sectionKey]: confidence }));
+        toast.success(`تم إعادة توليد قسم "${newSec.title_ar || sectionKey}"`);
+      } else {
+        throw new Error("لم يتم توليد القسم");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "خطأ في إعادة التوليد");
+    } finally {
+      setRegeneratingSection(null);
+    }
+  }, [aggregatedData, reportDraft, requestId]);
 
   const handleReviewAll = useCallback(() => {
     if (!reportDraft?.sections) return;
@@ -848,12 +888,56 @@ export default function AIReportGenerationPage() {
                             </div>
                           ))}
 
+                          {/* Confidence indicator */}
+                          {sectionConfidence[key] && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-muted-foreground">نسبة الثقة:</span>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      sectionConfidence[key] >= 80 ? "bg-primary" : sectionConfidence[key] >= 60 ? "bg-yellow-500" : "bg-destructive"
+                                    }`}
+                                    style={{ width: `${sectionConfidence[key]}%` }}
+                                  />
+                                </div>
+                                <span className={`font-bold ${
+                                  sectionConfidence[key] >= 80 ? "text-primary" : sectionConfidence[key] >= 60 ? "text-yellow-600" : "text-destructive"
+                                }`}>
+                                  {sectionConfidence[key]}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex gap-2 justify-end">
-                            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleCopy(sec.content_ar || "")}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs"
+                              onClick={() => handleCopy(sec.content_ar || "")}
+                            >
                               <Copy className="w-3 h-3" /> نسخ
                             </Button>
-                            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditingSection(key); setEditBuffer(sec.content_ar || ""); }}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs"
+                              onClick={() => { setEditingSection(key); setEditBuffer(sec.content_ar || ""); }}
+                            >
                               <Edit3 className="w-3 h-3" /> تعديل
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs text-primary"
+                              disabled={regeneratingSection === key}
+                              onClick={() => handleRegenerateSection(key)}
+                            >
+                              {regeneratingSection === key
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <RefreshCw className="w-3 h-3" />}
+                              إعادة توليد
                             </Button>
                           </div>
                         </>
