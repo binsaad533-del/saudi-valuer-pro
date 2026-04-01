@@ -10,7 +10,7 @@ import {
   CheckCircle2, AlertTriangle, Copy, Upload, Home, ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
