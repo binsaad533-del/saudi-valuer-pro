@@ -20,6 +20,7 @@ import {
   MapPin,
   Sparkles,
   LogOut,
+  Brain,
 } from "lucide-react";
 const logo = "/favicon.png";
 
