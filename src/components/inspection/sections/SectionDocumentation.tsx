@@ -17,7 +17,7 @@ import {
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 import { SectionHeader, FieldGroup, ExpandableSection } from "./helpers";
-import type { FormData, PhotoItem, ChecklistItem } from "./types";
+import { FormData, PhotoItem, ChecklistItem, PHOTO_CATEGORIES } from "./types";
 import { toast } from "sonner";
 
 export default function SectionDocumentation({ photos, onCapture, onRemove, onDescriptionChange, requiredPhotoDone, requiredPhotoTotal }: any) {
