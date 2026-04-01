@@ -10,7 +10,7 @@ import {
   CheckCircle2, AlertTriangle, Copy, Upload, Home, ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -86,6 +86,7 @@ const DEMO_FILES: UploadedFile[] = [
 ];
 
 export default function AIDocumentProcessingPage() {
+  const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(DEMO_FILES);
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
@@ -975,7 +976,7 @@ export default function AIDocumentProcessingPage() {
                       <Button
                         className="w-full gap-2 text-sm py-5 rounded-xl shadow-sm"
                         size="lg"
-                        onClick={() => toast.success("جاري الانتقال لتحديد نطاق العمل...")}
+                        onClick={() => navigate("/scope-and-pricing", { state: { extractedData: extracted } })}
                       >
                         <ArrowLeft className="w-4 h-4" />
                         متابعة لتحديد نطاق العمل

@@ -51,7 +51,7 @@ import FieldInspectionPage from "@/pages/FieldInspectionPage";
 import CFODashboardPage from "@/pages/CFODashboardPage";
 import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
-
+import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
@@ -98,6 +98,7 @@ const App = () => (
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
             <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
             <Route path="/ai-document-processing" element={<AIDocumentProcessingPage />} />
+            <Route path="/scope-and-pricing" element={<ScopeAndPricingPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
