@@ -18,13 +18,17 @@ interface ScopeData {
   valuationBasis: string;
   approaches: string[];
   primaryApproach: string;
+  secondaryApproach?: string;
+  approachJustification?: string;
   inspectionType: string;
+  inspectionRequirements?: string[];
   deliverables: string[];
   estimatedDays: number;
   assumptions: string[];
   limitations: string[];
   requiredDocuments?: string[];
   specialConsiderations?: string[];
+  complianceNotes?: string[];
 }
 
 interface PricingBreakdown {
