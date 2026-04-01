@@ -25,10 +25,14 @@ const DOC_CATEGORIES = [
   { value: "other", label: "أخرى", icon: File },
 ];
 
+type FileStatus = "pending" | "uploading" | "uploaded" | "error";
+
 interface UploadedFile {
   file: File;
   name: string;
   size: number;
+  status: FileStatus;
+  errorMsg?: string;
   category?: string;
   categoryLabel?: string;
   relevance?: string;
