@@ -97,6 +97,7 @@ const App = () => (
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
             <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
+            <Route path="/ai-document-processing" element={<AIDocumentProcessingPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}

@@ -70,6 +70,13 @@ const navSections: NavSection[] = [
     roles: ["owner", "admin_coordinator"],
   },
   {
+    title: "الذكاء",
+    items: [
+      { label: "استخراج المستندات", icon: Brain, path: "/ai-document-processing", roles: ["owner", "admin_coordinator"] },
+    ],
+    roles: ["owner", "admin_coordinator"],
+  },
+  {
     title: "المالية",
     items: [
       { label: "لوحة المدير المالي", icon: LayoutDashboard, path: "/cfo-dashboard" },
