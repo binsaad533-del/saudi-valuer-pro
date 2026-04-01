@@ -562,7 +562,7 @@ function SectionVerification({ formData, updateField, sectionPhotos, onAddPhoto,
   );
 }
 
-function SectionDimensions({ formData, updateField }: any) {
+function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -583,6 +583,12 @@ function SectionDimensions({ formData, updateField }: any) {
         <FieldGroup label="تفاصيل إضافية">
           <Textarea value={formData.dimensions_notes} onChange={(e: any) => updateField("dimensions_notes", e.target.value)} placeholder="عدد الوحدات، المواقف، الملاحق، السرداب..." rows={3} />
         </FieldGroup>
+        <SectionPhotoUpload section="dimensions" label="صور القياسات والمخططات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="dimensions"
+          promptHint="تحليل المساحات والأبعاد"
+          context={{ land_area: formData.land_area, building_area: formData.building_area, num_floors: formData.num_floors }}
+        />
       </CardContent>
     </Card>
   );
