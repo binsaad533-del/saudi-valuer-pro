@@ -2625,7 +2625,7 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChang
   );
 }
 
-function SectionNotesRecommendations({ formData, updateField }: any) {
+function SectionNotesRecommendations({ formData, updateField, submitting, onSubmit }: any) {
   const [techSummary, setTechSummary] = useState<string | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [copied, setCopied] = useState(false);
