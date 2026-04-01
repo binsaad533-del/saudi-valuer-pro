@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { toast } from "sonner";
 import {
-  MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft,
+  MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft, ChevronDown,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
   FileCheck, UserCheck, Home, Upload, LayoutGrid, Sparkles, Copy,
