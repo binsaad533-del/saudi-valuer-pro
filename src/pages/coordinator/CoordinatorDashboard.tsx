@@ -46,17 +46,40 @@ export default function CoordinatorDashboard() {
 
   return (
     <div className="p-4 md:p-6 space-y-6" dir="rtl">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">واجهة المنسق الإداري</h1>
-          <p className="text-sm text-muted-foreground">إدارة الطلبات ومتابعة الإجراءات</p>
-        </div>
-        <Badge variant="outline" className="text-xs">
-          <Clock className="w-3 h-3 ml-1" />
-          آخر تحديث: {new Date().toLocaleTimeString("ar-SA")}
-        </Badge>
-      </div>
+      {/* Welcome Bar */}
+      <Card className="shadow-card border-primary/20 bg-gradient-to-l from-primary/5 to-transparent">
+        <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-bold text-foreground">
+              واجهة المنسق الإداري — مرحباً عوب 👋
+            </h1>
+            <p className="text-sm text-muted-foreground mt-0.5">إدارة الطلبات ومتابعة الإجراءات وتصحيح البيانات</p>
+          </div>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-1.5 text-sm">
+              <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-muted-foreground">نشطة:</span>
+              <span className="font-bold text-foreground">
+                {requests.filter(r => !["completed", "closed", "report_issued"].includes(r.status)).length}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-sm">
+              <span className="w-2 h-2 rounded-full bg-success" />
+              <span className="text-muted-foreground">اليوم:</span>
+              <span className="font-bold text-foreground">
+                {requests.filter(r => new Date(r.created_at).toDateString() === new Date().toDateString()).length}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 text-sm">
+              <span className="w-2 h-2 rounded-full bg-warning" />
+              <span className="text-muted-foreground">تحتاج تصحيح:</span>
+              <span className="font-bold text-foreground">
+                {requests.filter(r => ["awaiting_client_info", "client_comments"].includes(r.status)).length}
+              </span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Alerts */}
       <CoordinatorAlerts requests={requests} />
