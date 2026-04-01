@@ -49,6 +49,7 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
     districtAr: "",
     landArea: "",
     buildingArea: "",
+    rooms: "",
     descriptionAr: "",
     notes: "",
   });
@@ -123,7 +124,7 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
 
       if (error) throw error;
       toast.success("تم إنشاء الطلب بنجاح نيابةً عن العميل");
-      setForm({ clientId: "", propertyType: "", purpose: "", cityAr: "", districtAr: "", landArea: "", buildingArea: "", descriptionAr: "", notes: "" });
+      setForm({ clientId: "", propertyType: "", purpose: "", cityAr: "", districtAr: "", landArea: "", buildingArea: "", rooms: "", descriptionAr: "", notes: "" });
       setNewClient({ nameAr: "", phone: "", email: "" });
       onCreated();
     } catch (err: any) {
@@ -250,6 +251,11 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
           <div className="space-y-1.5">
             <Label className="text-sm">مساحة البناء (م²)</Label>
             <Input type="number" placeholder="0" value={form.buildingArea} onChange={e => update("buildingArea", e.target.value)} />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-sm">عدد الغرف</Label>
+            <Input type="number" placeholder="0" value={form.rooms} onChange={e => update("rooms", e.target.value)} />
           </div>
         </div>
 
