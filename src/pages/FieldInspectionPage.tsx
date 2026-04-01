@@ -947,10 +947,10 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
 
 function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   const conditionOptions = [
-    { value: "excellent", label: "ممتاز" },
-    { value: "good", label: "جيد" },
-    { value: "average", label: "متوسط" },
-    { value: "poor", label: "سيء" },
+    { value: "excellent", label: "ممتازة" },
+    { value: "good", label: "جيدة" },
+    { value: "acceptable", label: "مقبولة" },
+    { value: "poor", label: "رديئة" },
   ];
 
   return (
