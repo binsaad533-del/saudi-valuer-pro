@@ -116,6 +116,59 @@ const DATA_CATEGORIES = [
   { key: "reconciliation", label: "التسوية والقيمة", icon: Scale },
 ];
 
+const MOCK_AGGREGATED_DATA: AggregatedData = {
+  request: {
+    id: "mock-demo-001",
+    property_type: "فيلا سكنية",
+    property_city_ar: "الرياض",
+    property_district_ar: "حي النرجس",
+    valuation_purpose: "رهن عقاري",
+    status: "in_production",
+  },
+  assignment: {
+    id: "mock-assign-001",
+    reference_number: "VAL-2026-0042",
+    valuation_approach: "أسلوب المقارنة بالسوق",
+    effective_date: "2026-03-28",
+  },
+  client: {
+    record: { name_ar: "شركة دار الإعمار للتطوير العقاري", email: "info@dar-alemar.sa", phone: "0112345678" },
+    profile: { full_name_ar: "محمد بن عبدالله العتيبي" },
+  },
+  subject: {
+    property_type: "villa",
+    land_area: 625,
+    building_area: 480,
+    city_ar: "الرياض",
+    district_ar: "حي النرجس",
+    address_ar: "شارع الأمير سلطان، حي النرجس، الرياض",
+    year_built: 2021,
+    number_of_floors: 2,
+    zoning_ar: "سكني",
+    condition: "ممتازة",
+    finishing_level: "سوبر ديلوكس",
+    description_ar: "فيلا سكنية مكونة من دورين وملحق علوي، تشطيب سوبر ديلوكس، تتضمن 5 غرف نوم و6 دورات مياه وصالة استقبال ومجلس وغرفة خادمة ومطبخ مجهز وموقف سيارتين مغطى وحديقة خلفية.",
+  },
+  inspection: {
+    inspection_date: "2026-03-25",
+    inspector_name: "خالد بن سعد الدوسري",
+    condition_rating: "ممتازة",
+    notes_ar: "العقار بحالة ممتازة، التشطيبات عالية الجودة، لا توجد عيوب ظاهرية. الموقع مميز بالقرب من طريق الملك سلمان.",
+    gps_verified: true,
+    latitude: 24.8234,
+    longitude: 46.6721,
+  },
+  comparables: [
+    { id: "c1", property_type: "villa", city_ar: "الرياض", district_ar: "حي النرجس", land_area: 600, price: 3200000, price_per_sqm: 5333, transaction_date: "2026-02-15", confidence_score: 92 },
+    { id: "c2", property_type: "villa", city_ar: "الرياض", district_ar: "حي النرجس", land_area: 650, price: 3500000, price_per_sqm: 5384, transaction_date: "2026-01-20", confidence_score: 90 },
+    { id: "c3", property_type: "villa", city_ar: "الرياض", district_ar: "حي الياسمين", land_area: 580, price: 2900000, price_per_sqm: 5000, transaction_date: "2025-12-10", confidence_score: 85 },
+    { id: "c4", property_type: "villa", city_ar: "الرياض", district_ar: "حي العارض", land_area: 700, price: 3100000, price_per_sqm: 4428, transaction_date: "2026-03-01", confidence_score: 82 },
+  ],
+  valuer: { full_name_ar: "أحمد بن سعد المالكي", taqeem_id: "1210000XXX", rics_number: "RICS-12345" },
+  reviewer: { full_name_ar: "أواب المالكي" },
+  organization: { name_ar: "المالكي والشركاء للتقييم العقاري", license_number: "1210000001", cr_number: "1010XXXXXX" },
+} as any;
+
 /* ──────────────────── Streaming helper for review ──────────────────── */
 async function streamReportContent(
   params: { mode: string; existingText?: string; context: Record<string, any> },
@@ -514,6 +567,17 @@ export default function AIReportGenerationPage() {
                 >
                   {isLoadingData ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   جمع البيانات
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setRequestId("mock-demo-001");
+                    setAggregatedData(MOCK_AGGREGATED_DATA);
+                    toast.success("تم تحميل البيانات التجريبية");
+                  }}
+                  className="gap-2 text-xs"
+                >
+                  <Database className="w-4 h-4" /> بيانات تجريبية
                 </Button>
               </div>
 
