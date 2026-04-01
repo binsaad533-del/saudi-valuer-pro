@@ -2127,6 +2127,7 @@ function SectionLayoutAreas({ formData, updateField }: any) {
 }
 
 
+function SectionValueFactors({ formData, updateField }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
