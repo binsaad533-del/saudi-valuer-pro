@@ -5,7 +5,7 @@ const hoursAgo = (h: number) => new Date(now.getTime() - h * 3600000).toISOStrin
 
 export const MOCK_CLIENTS = [
   { id: "c1", name_ar: "أحمد المالكي", name_en: "Ahmed Al-Malki", phone: "0551234567", email: "ahmed.malki@gmail.com", client_type: "individual", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(90), updated_at: daysAgo(1) },
-  { id: "c2", name_ar: "شركة النخبة العقارية", name_en: "Al Nukhba Real Estate", phone: "0112345678", email: "info@nukhba-re.sa", client_type: "corporate", city_ar: "جدة", organization_id: "org1", is_active: true, created_at: daysAgo(120), updated_at: daysAgo(2) },
+  { id: "c2", name_ar: "سارة الغامدي", name_en: "Sara Al-Ghamdi", phone: "0541239876", email: "sara.ghamdi@gmail.com", client_type: "individual", city_ar: "جدة", organization_id: "org1", is_active: true, created_at: daysAgo(120), updated_at: daysAgo(2) },
   { id: "c3", name_ar: "فاطمة الزهراني", name_en: "Fatima Al-Zahrani", phone: "0509876543", email: "fatima.z@outlook.sa", client_type: "individual", city_ar: "الدمام", organization_id: "org1", is_active: true, created_at: daysAgo(60), updated_at: daysAgo(3) },
   { id: "c4", name_ar: "بنك الإنماء", name_en: "Alinma Bank", phone: "0118001234", email: "valuation@alinma.com", client_type: "corporate", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(200), updated_at: daysAgo(0) },
   { id: "c5", name_ar: "عبدالله الشمري", name_en: "Abdullah Al-Shammari", phone: "0567891234", email: "a.shammari@gmail.com", client_type: "individual", city_ar: "مكة المكرمة", organization_id: "org1", is_active: true, created_at: daysAgo(30), updated_at: daysAgo(5) },
@@ -25,15 +25,15 @@ export const MOCK_REQUESTS: any[] = [
     created_at: daysAgo(3), updated_at: hoursAgo(4),
     notes: null,
   },
-  // 2. بانتظار الدفع
+  // 2. مكتملة — تقرير جاهز
   {
     id: "r2", reference_number: "VAL-002", client_id: "c2",
     property_type: "commercial_building", purpose: "financing",
     property_city_ar: "جدة", property_district_ar: "الشاطئ",
     land_area: 1800, building_area: 5400,
     property_description_ar: "مجمع تجاري — 3 طوابق — 12 محل تجاري على شارع الأمير سلطان",
-    status: "payment_uploaded", priority: "high",
-    assigned_valuer_name: null,
+    status: "report_issued", priority: "normal",
+    assigned_valuer_name: "م. فهد السبيعي",
     quotation_amount: 12000,
     created_at: daysAgo(2), updated_at: hoursAgo(8),
     notes: "إيصال الدفع مرفوع — بانتظار المراجعة والتأكيد",
