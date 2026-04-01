@@ -322,7 +322,7 @@ ${extractedData.extractedNumbers?.map((n: any) => `- ${n.label}: ${n.value} (Ø«Ù
                     required: ["complexityFactor", "complexityReason", "justification"],
                   },
                 },
-                required: ["disciplineAnalysis", "scope", "pricingAdjustments"],
+                required: ["disciplineAnalysis", "purposeAnalysis", "scope", "pricingAdjustments"],
                 additionalProperties: false,
               },
             },
