@@ -52,7 +52,7 @@ export default function CoordinatorDashboard() {
         <CardContent className="p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
           <div>
             <h1 className="text-lg font-bold text-foreground">
-              واجهة المنسق الإداري — مرحباً عوب 👋
+              واجهة المنسق الإداري — مرحباً أواب 👋
             </h1>
             <p className="text-sm text-muted-foreground mt-0.5">إدارة الطلبات ومتابعة الإجراءات وتصحيح البيانات</p>
           </div>
