@@ -51,7 +51,6 @@ function exportPDF(title: string, headers: string[], rows: string[][], filename:
 
 // Invoices
 import type { Invoice } from "@/data/cfoMockData";
-import { formatNumber } from "@/lib/utils";
 import { statusLabels } from "@/data/cfoMockData";
 
 const invoiceHeaders = ["Invoice #", "Client", "Type", "Amount (SAR)", "Issue Date", "Due Date", "Status"];

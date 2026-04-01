@@ -1,7 +1,6 @@
 import TopBar from "@/components/layout/TopBar";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { formatNumber } from "@/lib/utils";
 import { Search, Filter, Building2, MapPin, TrendingUp, Star, Plus } from "lucide-react";
 
 const comparables = [

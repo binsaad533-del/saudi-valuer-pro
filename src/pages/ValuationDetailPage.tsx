@@ -1,7 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { formatNumber } from "@/lib/utils";
 import {
-import { formatNumber } from "@/lib/utils";
   ArrowRight, MapPin, User, Building2, DollarSign,
   Clock, AlertTriangle, Camera, StickyNote,
 } from "lucide-react";

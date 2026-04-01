@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from "react";
 import { formatNumber } from "@/lib/utils";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { formatNumber } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
