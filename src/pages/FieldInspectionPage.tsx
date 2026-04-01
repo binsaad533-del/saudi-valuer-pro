@@ -114,6 +114,8 @@ interface FormData {
   gps_lat: number | null;
   gps_lng: number | null;
   access_ease: string;
+  surrounding_positives: string;
+  surrounding_negatives: string;
   matches_documents: string;
   asset_description: string;
   current_use: string;
