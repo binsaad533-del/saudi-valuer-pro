@@ -14,6 +14,20 @@ import {
   Briefcase, TrendingUp, RotateCcw, HeartPulse,
 } from "lucide-react";
 
+interface PurposeOption {
+  key: string;
+  label: string;
+  confidence: number;
+  reason: string;
+}
+
+interface PurposeAnalysis {
+  selectedPurpose: string;
+  confidence: number;
+  reason: string;
+  allPurposes: PurposeOption[];
+}
+
 interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
