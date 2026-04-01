@@ -959,6 +959,28 @@ function SectionExterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
         <SectionHeader num={5} title="المبنى - الخارج" icon={Home} subtitle="وصف مكونات المبنى الخارجية وحالتها" />
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* بيانات المبنى الأساسية */}
+        <p className="text-xs font-bold text-muted-foreground">🏢 بيانات المبنى الأساسية</p>
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="عمر المبنى (سنة)" required>
+            <Input type="number" value={formData.exterior_building_age} onChange={(e: any) => updateField("exterior_building_age", e.target.value)} placeholder="مثال: 10" />
+          </FieldGroup>
+          <FieldGroup label="عدد الأدوار" required>
+            <Input type="number" value={formData.exterior_num_floors} onChange={(e: any) => updateField("exterior_num_floors", e.target.value)} placeholder="مثال: 3" />
+          </FieldGroup>
+        </div>
+        <FieldGroup label="نوع الهيكل الإنشائي" required>
+          <RadioGroup value={formData.exterior_structure_type} onValueChange={(v: string) => updateField("exterior_structure_type", v)} className="flex gap-2">
+            {[{ value: "concrete", label: "خرساني" }, { value: "steel", label: "حديدي" }, { value: "wood", label: "خشبي" }, { value: "mixed", label: "مختلط" }].map(opt => (
+              <label key={opt.value} className={`flex-1 text-center border rounded-lg p-2.5 cursor-pointer text-xs transition-colors ${formData.exterior_structure_type === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />{opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <Separator />
+
         {/* الواجهة */}
         <p className="text-xs font-bold text-muted-foreground">🏗️ الواجهة الخارجية</p>
         <FieldGroup label="مادة الواجهة" required>
