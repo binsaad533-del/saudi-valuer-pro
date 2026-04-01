@@ -2480,6 +2480,27 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
             rows={3}
           />
         </FieldGroup>
+
+        <Separator />
+
+        {/* Confidential section */}
+        <div className="rounded-lg border-2 border-destructive/30 bg-destructive/5 p-4 space-y-3">
+          <div className="flex items-center gap-2 text-destructive">
+            <ShieldAlert className="w-5 h-5" />
+            <span className="text-sm font-bold">🔒 ملاحظات سرية — للمقيّم فقط</span>
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            هذه الملاحظات لا تُضاف للتقرير النهائي ولا تُعرض للعميل. مخصصة فقط للمقيّم المسؤول.
+          </p>
+          <Textarea
+            value={formData.confidential_notes}
+            onChange={(e: any) => updateField("confidential_notes", e.target.value)}
+            placeholder="ملاحظات سرية: شكوك حول صحة المستندات، مخاوف من تضخم القيمة، ملاحظات حول سلوك المالك، معلومات حساسة..."
+            rows={4}
+            className="border-destructive/20 bg-background"
+          />
+        </div>
+
         <AiSuggestionBox
           sectionKey="notes_recommendations"
           promptHint="اقتراح ملاحظات وتوصيات بناءً على بيانات المعاينة"
