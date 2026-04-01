@@ -248,6 +248,9 @@ export default function ScopeAndPricingPage() {
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState("");
   const [sentToManager, setSentToManager] = useState(false);
+  const [managerDecision, setManagerDecision] = useState<"pending" | "accepted" | "adjusting">("pending");
+  const [adjustedPrice, setAdjustedPrice] = useState("");
+  const [adjustmentReason, setAdjustmentReason] = useState("");
 
   useEffect(() => {
     if (extractedData) {
