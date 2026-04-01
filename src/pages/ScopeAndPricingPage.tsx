@@ -247,6 +247,7 @@ export default function ScopeAndPricingPage() {
   const [clientApproved, setClientApproved] = useState(false);
   const [showRevisionDialog, setShowRevisionDialog] = useState(false);
   const [revisionNotes, setRevisionNotes] = useState("");
+  const [sentToManager, setSentToManager] = useState(false);
 
   useEffect(() => {
     if (extractedData) {
