@@ -37,7 +37,7 @@ export default function SectionValueFactors({ formData, updateField }: any) {
               { id: "luxury_finish", label: "تشطيب راقي" },
               { id: "modern", label: "حديث البناء" },
             ].map((factor) => {
-              const isSelected = factor.id in formData.positive_factors;
+              const isSelected = factor.id in positiveFactors;
               return (
                 <div key={factor.id} className="rounded-lg border border-border bg-background p-2.5 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
