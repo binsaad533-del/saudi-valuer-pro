@@ -15,6 +15,8 @@ import {
   Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
   FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2,
   Building2, User, MapPin, ClipboardCheck, BarChart3, Scale, XCircle,
+  BookOpen, Target, Landmark, Map, TrendingUp, Home, Gavel, Calculator,
+  DollarSign, ShieldCheck, Award, Paperclip, type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -79,6 +81,31 @@ const PIPELINE_STEPS = [
   { key: "preview", label: "المعاينة", icon: FileCheck, desc: "معاينة التقرير النهائي" },
   { key: "export", label: "التصدير", icon: Download, desc: "إنشاء مسودة التقرير" },
 ];
+
+const SECTION_ICONS: Record<string, LucideIcon> = {
+  cover_page: FileText,
+  table_of_contents: BookOpen,
+  executive_summary: Sparkles,
+  engagement_letter: FileCheck,
+  purpose_and_intended_use: Target,
+  scope_of_work: ClipboardCheck,
+  property_identification: Landmark,
+  property_description: Building2,
+  legal_description: Gavel,
+  location_analysis: Map,
+  market_overview: TrendingUp,
+  highest_and_best_use: Home,
+  valuation_approaches: Layers,
+  sales_comparison_approach: BarChart3,
+  cost_approach: Calculator,
+  income_approach: DollarSign,
+  reconciliation: Scale,
+  assumptions_and_limiting_conditions: AlertCircle,
+  compliance_statement: ShieldCheck,
+  valuer_certification: Award,
+  appendices: Paperclip,
+};
+
 
 const DATA_CATEGORIES = [
   { key: "request", label: "بيانات الطلب", icon: FileText },
@@ -737,6 +764,8 @@ export default function AIReportGenerationPage() {
               const isExpanded = expandedSection === key;
               const isEditing = editingSection === key;
 
+              const SectionIcon = SECTION_ICONS[key] || FileText;
+
               return (
                 <Card key={key} className="transition-all">
                   <div
@@ -744,7 +773,9 @@ export default function AIReportGenerationPage() {
                     onClick={() => setExpandedSection(isExpanded ? null : key)}
                   >
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <SectionIcon className="w-3.5 h-3.5 text-primary" />
+                      </div>
                       <span className="font-medium text-sm">{sec.title_ar || key}</span>
                     </div>
                     <div className="flex items-center gap-2">
