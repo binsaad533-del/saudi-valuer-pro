@@ -7,7 +7,7 @@ export const MOCK_CLIENTS = [
   { id: "c1", name_ar: "أحمد المالكي", name_en: "Ahmed Al-Malki", phone: "0551234567", email: "ahmed.malki@gmail.com", client_type: "individual", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(90), updated_at: daysAgo(1) },
   { id: "c2", name_ar: "سارة الغامدي", name_en: "Sara Al-Ghamdi", phone: "0541239876", email: "sara.ghamdi@gmail.com", client_type: "individual", city_ar: "جدة", organization_id: "org1", is_active: true, created_at: daysAgo(120), updated_at: daysAgo(2) },
   { id: "c3", name_ar: "محمد الدوسري", name_en: "Mohammed Al-Dosari", phone: "0509876543", email: "m.dosari@outlook.sa", client_type: "individual", city_ar: "الدمام", organization_id: "org1", is_active: true, created_at: daysAgo(60), updated_at: daysAgo(3) },
-  { id: "c4", name_ar: "بنك الإنماء", name_en: "Alinma Bank", phone: "0118001234", email: "valuation@alinma.com", client_type: "corporate", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(200), updated_at: daysAgo(0) },
+  { id: "c4", name_ar: "فاطمة الشهري", name_en: "Fatima Al-Shahri", phone: "0538765432", email: "fatima.shahri@gmail.com", client_type: "individual", city_ar: "الرياض", organization_id: "org1", is_active: true, created_at: daysAgo(200), updated_at: daysAgo(0) },
   { id: "c5", name_ar: "عبدالله الشمري", name_en: "Abdullah Al-Shammari", phone: "0567891234", email: "a.shammari@gmail.com", client_type: "individual", city_ar: "مكة المكرمة", organization_id: "org1", is_active: true, created_at: daysAgo(30), updated_at: daysAgo(5) },
 ];
 
