@@ -645,9 +645,6 @@ export default function AIDocumentProcessingPage() {
                         <div className="flex items-center gap-2 pt-1">
                           <button
                             onClick={() => {
-                              setShowClientData(true);
-                              setShowAssetData(true);
-                              setShowExtractedNums(true);
                               toast.info("تم فتح جميع الأقسام للمراجعة — عدّل البيانات غير الصحيحة");
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
