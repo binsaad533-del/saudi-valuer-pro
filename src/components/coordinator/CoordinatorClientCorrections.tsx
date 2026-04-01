@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion } from "lucide-react";
+import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion, MessageSquare, Send } from "lucide-react";
 
 interface Props {
   requests: any[];
@@ -41,11 +41,29 @@ function detectIssues(req: any): IssueType[] {
   return issues;
 }
 
+function describeIssues(req: any): string {
+  const parts: string[] = [];
+  if (!req.property_type || !req.purpose || !req.land_area) {
+    const missing: string[] = [];
+    if (!req.property_type) missing.push("نوع العقار");
+    if (!req.purpose) missing.push("الغرض");
+    if (!req.land_area) missing.push("المساحة");
+    parts.push(`بيانات ناقصة: ${missing.join("، ")}`);
+  }
+  if (!req.property_city_ar) parts.push("المدينة غير محددة");
+  if (!req.property_district_ar) parts.push("الحي غير محدد");
+  if (req.status === "awaiting_client_info") parts.push("بانتظار مستندات من العميل");
+  if (req.status === "client_comments") parts.push("العميل أرسل ملاحظات");
+  return parts.join(" • ") || "—";
+}
+
 export default function CoordinatorClientCorrections({ requests, onRefresh }: Props) {
   const [search, setSearch] = useState("");
   const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
   const [editDialog, setEditDialog] = useState(false);
+  const [messageDialog, setMessageDialog] = useState(false);
   const [selectedReq, setSelectedReq] = useState<any>(null);
+  const [clientMessage, setClientMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [editForm, setEditForm] = useState({
     cityAr: "",
@@ -177,17 +195,15 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
               <TableHeader>
                 <TableRow>
                   <TableHead className="text-right">الرقم المرجعي</TableHead>
-                  <TableHead className="text-right">الوصف</TableHead>
-                  <TableHead className="text-right">المدينة</TableHead>
-                  <TableHead className="text-right">المساحة</TableHead>
+                  <TableHead className="text-right">وصف المشكلة</TableHead>
                   <TableHead className="text-right">نوع المشكلة</TableHead>
-                  <TableHead className="text-right">إجراء</TableHead>
+                  <TableHead className="text-right">إجراءات</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground text-sm">
                       لا توجد طلبات تحتاج تصحيح 🎉
                     </TableCell>
                   </TableRow>
@@ -195,9 +211,9 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
                   filtered.slice(0, 30).map(req => (
                     <TableRow key={req.id}>
                       <TableCell className="font-mono text-xs" dir="ltr">{req.reference_number || "—"}</TableCell>
-                      <TableCell className="text-sm max-w-[180px] truncate">{req.property_description_ar || "—"}</TableCell>
-                      <TableCell className="text-sm">{req.property_city_ar || <span className="text-destructive">—</span>}</TableCell>
-                      <TableCell className="text-sm">{req.land_area ? `${req.land_area} م²` : <span className="text-destructive">—</span>}</TableCell>
+                      <TableCell className="text-sm max-w-[280px]">
+                        {describeIssues(req)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-1">
                           {req._issues.map((issue: IssueType) => {
@@ -211,9 +227,14 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Button size="sm" variant="outline" onClick={() => openEdit(req)}>
-                          <Edit3 className="w-3 h-3 ml-1" />تصحيح
-                        </Button>
+                        <div className="flex items-center gap-1.5">
+                          <Button size="sm" variant="outline" onClick={() => openEdit(req)}>
+                            <Edit3 className="w-3 h-3 ml-1" />تصحيح
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => { setSelectedReq(req); setClientMessage(""); setMessageDialog(true); }}>
+                            <MessageSquare className="w-3 h-3 ml-1" />مراسلة العميل
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -277,6 +298,63 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
             <Button onClick={handleSave} disabled={saving}>
               {saving ? <Loader2 className="w-4 h-4 ml-1 animate-spin" /> : <Save className="w-4 h-4 ml-1" />}
               حفظ التصحيح
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Message Client Dialog */}
+      <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
+        <DialogContent className="max-w-md" dir="rtl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <MessageSquare className="w-4 h-4 text-primary" />
+              مراسلة العميل
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              طلب: <span className="font-mono text-foreground" dir="ltr">{selectedReq?.reference_number || "—"}</span>
+            </p>
+            {selectedReq && (
+              <div className="p-2 rounded-md bg-warning/10 text-xs text-warning">
+                {describeIssues(selectedReq)}
+              </div>
+            )}
+            <div className="space-y-1">
+              <Label className="text-xs">نص الرسالة للعميل *</Label>
+              <Textarea
+                placeholder="مثال: نرجو تزويدنا بصك الملكية ومخطط الموقع..."
+                value={clientMessage}
+                onChange={e => setClientMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialog(false)}>إلغاء</Button>
+            <Button
+              disabled={saving || !clientMessage.trim()}
+              onClick={async () => {
+                if (!selectedReq || !clientMessage.trim()) return;
+                setSaving(true);
+                try {
+                  await supabase.from("request_messages" as any).insert({
+                    request_id: selectedReq.id,
+                    sender_type: "admin" as any,
+                    content: clientMessage.trim(),
+                  });
+                  toast.success("تم إرسال الرسالة للعميل");
+                  setMessageDialog(false);
+                } catch {
+                  toast.error("حدث خطأ أثناء الإرسال");
+                } finally {
+                  setSaving(false);
+                }
+              }}
+            >
+              <Send className="w-4 h-4 ml-1" />
+              إرسال
             </Button>
           </DialogFooter>
         </DialogContent>
