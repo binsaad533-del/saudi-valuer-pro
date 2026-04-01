@@ -594,7 +594,7 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
   );
 }
 
-function SectionCondition({ formData, updateField }: any) {
+function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -634,6 +634,12 @@ function SectionCondition({ formData, updateField }: any) {
         <FieldGroup label="ملاحظات الحالة">
           <Textarea value={formData.condition_notes} onChange={(e: any) => updateField("condition_notes", e.target.value)} placeholder="تفاصيل عن الحالة الإنشائية، التشطيبات، العيوب..." rows={3} />
         </FieldGroup>
+        <SectionPhotoUpload section="condition" label="صور حالة الأصل والعيوب" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="condition"
+          promptHint="تقييم حالة الأصل"
+          context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, condition_notes: formData.condition_notes }}
+        />
       </CardContent>
     </Card>
   );
