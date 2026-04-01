@@ -122,7 +122,7 @@ const MOCK_AGGREGATED_DATA: AggregatedData = {
     property_type: "فيلا سكنية",
     property_city_ar: "الرياض",
     property_district_ar: "حي النرجس",
-    valuation_purpose: "رهن عقاري",
+    valuation_purpose: "تمويل بنكي",
     status: "in_production",
   },
   assignment: {
@@ -132,8 +132,8 @@ const MOCK_AGGREGATED_DATA: AggregatedData = {
     effective_date: "2026-03-28",
   },
   client: {
-    record: { name_ar: "شركة دار الإعمار للتطوير العقاري", email: "info@dar-alemar.sa", phone: "0112345678" },
-    profile: { full_name_ar: "محمد بن عبدالله العتيبي" },
+    record: { name_ar: "أحمد المالكي", email: "ahmed@almalkivaluation.sa", phone: "0551234567" },
+    profile: { full_name_ar: "أحمد المالكي" },
   },
   subject: {
     property_type: "villa",
