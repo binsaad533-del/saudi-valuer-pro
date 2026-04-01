@@ -255,13 +255,26 @@ export default function AIDocumentProcessingPage() {
                 <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
                   {uploadedFiles.map((f, i) => {
                     const Icon = getFileIcon(f.name);
+                    const statusConfig = {
+                      pending: { icon: Upload, color: "text-muted-foreground", bg: "bg-muted/20", label: "جاهز للرفع" },
+                      uploading: { icon: Loader2, color: "text-primary", bg: "bg-primary/5", label: "جارٍ الرفع..." },
+                      uploaded: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50 dark:bg-green-950/20", label: "تم الرفع" },
+                      error: { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/5", label: f.errorMsg || "فشل الرفع" },
+                    }[f.status];
+                    const StatusIcon = statusConfig.icon;
                     return (
-                      <div key={i} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border/50 group">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                      <div key={i} className={`flex items-center justify-between p-2.5 rounded-lg border border-border/50 group transition-colors ${statusConfig.bg}`}>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="relative shrink-0">
+                            <Icon className="w-4 h-4 text-muted-foreground" />
+                            <StatusIcon className={`w-2.5 h-2.5 absolute -bottom-0.5 -right-0.5 ${statusConfig.color} ${f.status === "uploading" ? "animate-spin" : ""}`} />
+                          </div>
                           <div className="min-w-0">
                             <p className="text-xs text-foreground truncate">{f.name}</p>
-                            <p className="text-[9px] text-muted-foreground">{formatFileSize(f.size)}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] text-muted-foreground">{formatFileSize(f.size)}</span>
+                              <span className={`text-[9px] ${statusConfig.color}`}>{statusConfig.label}</span>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
