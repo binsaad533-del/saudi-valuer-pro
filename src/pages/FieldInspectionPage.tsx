@@ -464,7 +464,7 @@ function SectionGeneral({ formData, updateField }: { formData: FormData; updateF
   );
 }
 
-function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptureGPS }: any) {
+function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptureGPS, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -512,6 +512,7 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
             ))}
           </RadioGroup>
         </FieldGroup>
+        <SectionPhotoUpload section="location" label="صور الموقع والمحيط" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
       </CardContent>
     </Card>
   );
