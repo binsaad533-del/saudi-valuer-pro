@@ -61,8 +61,8 @@ export default function SectionValueFactors({ formData, updateField }: any) {
                         <button
                           key={level.value}
                           type="button"
-                          onClick={() => updateField("positive_factors", { ...formData.positive_factors, [factor.id]: level.value })}
-                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${formData.positive_factors[factor.id] === level.value ? "bg-primary text-primary-foreground border-primary" : level.style + " bg-background hover:bg-accent/50"}`}
+                          onClick={() => updateField("positive_factors", { ...positiveFactors, [factor.id]: level.value })}
+                          className={`px-3 py-1 rounded-full text-xs border transition-colors ${positiveFactors[factor.id] === level.value ? "bg-primary text-primary-foreground border-primary" : level.style + " bg-background hover:bg-accent/50"}`}
                         >
                           {level.label}
                         </button>
