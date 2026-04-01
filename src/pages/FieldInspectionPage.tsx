@@ -209,6 +209,11 @@ interface FormData {
   sewage_type: string;
   sewage_condition: string;
   roads_paved: boolean;
+  gas_status: string;
+  internet_status: string;
+  central_ac_status: string;
+  elevator_status: string;
+  elevator_count: string;
   utilities_notes: string;
   positive_factors: string;
   negative_factors: string;
