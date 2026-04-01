@@ -168,7 +168,7 @@ export default function RequestDetails() {
 
       await supabase.from("request_messages" as any).insert({
         request_id: id!, sender_type: "system" as any,
-        content: `📎 تم رفع إيصال دفع بمبلغ ${amount.toLocaleString()} ر.س - ${isFirst ? "الدفعة الأولى" : "الدفعة النهائية"}`,
+        content: `📎 تم رفع إيصال دفع بمبلغ ${formatNumber(amount)} ر.س - ${isFirst ? "الدفعة الأولى" : "الدفعة النهائية"}`,
       });
 
       toast({ title: "تم رفع الإيصال بنجاح" });
@@ -331,10 +331,10 @@ export default function RequestDetails() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-center p-3 bg-primary/5 rounded-lg">
-                    <p className="text-2xl font-bold text-primary" dir="ltr">{Number(request.quotation_amount).toLocaleString()} ر.س</p>
+                    <p className="text-2xl font-bold text-primary" dir="ltr">{formatNumber(Number(request.quotation_amount))} ر.س</p>
                     {request.payment_structure === "partial" && (
                       <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                        <p>الدفعة الأولى: {Number(request.first_payment_amount).toLocaleString()} ر.س</p>
+                        <p>الدفعة الأولى: {formatNumber(Number(request.first_payment_amount))} ر.س</p>
                         <p>الدفعة النهائية: {(request.total_fees - request.first_payment_amount).toLocaleString()} ر.س</p>
                       </div>
                     )}

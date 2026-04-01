@@ -268,7 +268,7 @@ export default function CoordinatorRequestsTable({ requests, clients, onRefresh 
                 <div><span className="text-muted-foreground">مساحة الأرض:</span><br />{selectedReq.land_area ? `${selectedReq.land_area} م²` : "—"}</div>
                 <div><span className="text-muted-foreground">مساحة البناء:</span><br />{selectedReq.building_area ? `${selectedReq.building_area} م²` : "—"}</div>
                 <div><span className="text-muted-foreground">الحالة:</span><br />{getStatusBadge(selectedReq.status)}</div>
-                <div><span className="text-muted-foreground">المبلغ:</span><br />{selectedReq.quotation_amount ? `${Number(selectedReq.quotation_amount).toLocaleString()} ر.س` : "—"}</div>
+                <div><span className="text-muted-foreground">المبلغ:</span><br />{selectedReq.quotation_amount ? `${formatNumber(Number(selectedReq.quotation_amount))} ر.س` : "—"}</div>
                 <div><span className="text-muted-foreground">المقيّم:</span><br />{selectedReq.assigned_valuer_name || "لم يُعيَّن"}</div>
                 <div><span className="text-muted-foreground">تاريخ الإدخال:</span><br />{formatDate(selectedReq.created_at)}</div>
               </div>

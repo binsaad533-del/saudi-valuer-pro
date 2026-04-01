@@ -66,7 +66,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
 
       if (simResult?.status === "paid") {
         setPaymentResult("success");
-        toast({ title: "✅ تم الدفع بنجاح", description: `تم دفع ${amount.toLocaleString()} ر.س - ${stageLabel}` });
+        toast({ title: "✅ تم الدفع بنجاح", description: `تم دفع ${formatNumber(amount)} ر.س - ${stageLabel}` });
         setTimeout(() => onPaymentComplete(), 1500);
       } else if (simResult?.status === "failed") {
         setPaymentResult("failed");
@@ -91,7 +91,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
           <h3 className="text-lg font-bold text-foreground">تم الدفع بنجاح</h3>
-          <p className="text-sm text-muted-foreground">{stageLabel} - {amount.toLocaleString()} ر.س</p>
+          <p className="text-sm text-muted-foreground">{stageLabel} - {formatNumber(amount)} ر.س</p>
           <Badge className="bg-green-500/10 text-green-600">تم التأكيد</Badge>
         </CardContent>
       </Card>
@@ -111,7 +111,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
         <div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/10">
           <p className="text-xs text-muted-foreground mb-1">المبلغ المطلوب</p>
           <p className="text-3xl font-bold text-primary" dir="ltr">
-            {Number(amount).toLocaleString()} <span className="text-sm">ر.س</span>
+            {formatNumber(Number(amount))} <span className="text-sm">ر.س</span>
           </p>
         </div>
 
@@ -153,7 +153,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
           ) : (
             <Shield className="w-5 h-5 ml-2" />
           )}
-          ادفع الآن - {Number(amount).toLocaleString()} ر.س
+          ادفع الآن - {formatNumber(Number(amount))} ر.س
         </Button>
 
         {/* Retry if failed */}

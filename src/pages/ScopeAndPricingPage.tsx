@@ -1484,7 +1484,7 @@ export default function ScopeAndPricingPage() {
                             className="text-xs gap-1.5"
                             disabled={!adjustedPrice.trim() || !adjustmentReason.trim()}
                             onClick={() => {
-                              toast.success(`تم تعديل السعر إلى ${Number(adjustedPrice).toLocaleString()} ر.س — بانتظار موافقة الإدارة`);
+                              toast.success(`تم تعديل السعر إلى ${formatNumber(Number(adjustedPrice))} ر.س — بانتظار موافقة الإدارة`);
                               setManagerDecision("accepted");
                             }}
                           >

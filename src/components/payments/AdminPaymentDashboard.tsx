@@ -94,7 +94,7 @@ export default function AdminPaymentDashboard() {
           { label: "مدفوعة", value: stats.paid, icon: CheckCircle, color: "text-green-500" },
           { label: "معلقة", value: stats.pending, icon: Clock, color: "text-amber-500" },
           { label: "فاشلة", value: stats.failed, icon: XCircle, color: "text-destructive" },
-          { label: "إجمالي المحصل", value: `${stats.totalAmount.toLocaleString()} ر.س`, icon: Shield, color: "text-primary" },
+          { label: "إجمالي المحصل", value: `${formatNumber(stats.totalAmount)} ر.س`, icon: Shield, color: "text-primary" },
         ].map((s) => (
           <Card key={s.label} className="shadow-card">
             <CardContent className="p-4 flex items-center justify-between">
@@ -127,7 +127,7 @@ export default function AdminPaymentDashboard() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <CreditCard className="w-4 h-4 text-primary" />
-                          <span className="font-medium text-sm" dir="ltr">{Number(pay.amount).toLocaleString()} {pay.currency}</span>
+                          <span className="font-medium text-sm" dir="ltr">{formatNumber(Number(pay.amount))} {pay.currency}</span>
                           {pay.is_mock && <Badge variant="secondary" className="text-[10px] h-4">تجريبي</Badge>}
                         </div>
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
@@ -205,7 +205,7 @@ export default function AdminPaymentDashboard() {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <p className="text-xs text-muted-foreground">المبلغ</p>
-                  <p className="font-bold" dir="ltr">{Number(selectedPayment.amount).toLocaleString()} {selectedPayment.currency}</p>
+                  <p className="font-bold" dir="ltr">{formatNumber(Number(selectedPayment.amount))} {selectedPayment.currency}</p>
                 </div>
                 <div className="p-3 bg-muted/50 rounded-lg">
                   <p className="text-xs text-muted-foreground">الحالة الحالية</p>

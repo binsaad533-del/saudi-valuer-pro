@@ -132,8 +132,8 @@ export default function ValuationDetailPage() {
               <Info label="المدينة" value={d.property.city} />
               <Info label="الحي" value={d.property.district} />
               <Info label="العنوان" value={d.property.address} full />
-              <Info label="مساحة الأرض" value={`${d.property.landArea.toLocaleString()} م²`} />
-              <Info label="مساحة البناء" value={`${d.property.buildingArea.toLocaleString()} م²`} />
+              <Info label="مساحة الأرض" value={`${formatNumber(d.property.landArea)} م²`} />
+              <Info label="مساحة البناء" value={`${formatNumber(d.property.buildingArea)} م²`} />
               <Info label="عدد الأدوار" value={String(d.property.floors)} />
               <Info label="سنة البناء" value={String(d.property.yearBuilt)} />
               <div className="col-span-2 flex items-center gap-2 text-muted-foreground">
@@ -161,13 +161,13 @@ export default function ValuationDetailPage() {
                 <div>
                   <p className="text-xs text-muted-foreground">القيمة التقديرية</p>
                   <p className="text-2xl font-bold text-primary">
-                    {d.valuation.estimatedValue.toLocaleString()} <span className="text-sm font-normal">{d.valuation.currency}</span>
+                    {formatNumber(d.valuation.estimatedValue)} <span className="text-sm font-normal">{d.valuation.currency}</span>
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">سعر المتر</p>
                   <p className="text-lg font-semibold text-foreground">
-                    {d.valuation.pricePerSqm.toLocaleString()} <span className="text-sm font-normal">{d.valuation.currency}/م²</span>
+                    {formatNumber(d.valuation.pricePerSqm)} <span className="text-sm font-normal">{d.valuation.currency}/م²</span>
                   </p>
                 </div>
               </div>

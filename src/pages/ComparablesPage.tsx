@@ -70,9 +70,9 @@ export default function ComparablesPage() {
                         {c.city} - {c.district}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-sm font-inter" dir="ltr">{c.area.toLocaleString()}</td>
-                    <td className="px-5 py-3.5 text-sm font-medium font-inter" dir="ltr">{c.price.toLocaleString()}</td>
-                    <td className="px-5 py-3.5 text-sm font-inter" dir="ltr">{c.pricePerM.toLocaleString()}</td>
+                    <td className="px-5 py-3.5 text-sm font-inter" dir="ltr">{formatNumber(c.area)}</td>
+                    <td className="px-5 py-3.5 text-sm font-medium font-inter" dir="ltr">{formatNumber(c.price)}</td>
+                    <td className="px-5 py-3.5 text-sm font-inter" dir="ltr">{formatNumber(c.pricePerM)}</td>
                     <td className="px-5 py-3.5 text-sm text-muted-foreground">{c.date}</td>
                     <td className="px-5 py-3.5">
                       <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium

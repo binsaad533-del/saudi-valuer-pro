@@ -333,7 +333,7 @@ export default function ValuationProduction() {
                                 </div>
                               </TableCell>
                               <TableCell className="font-mono font-medium text-sm" dir="ltr">
-                                {typeof s.result === "number" ? s.result.toLocaleString() : s.result} {s.unit}
+                                {typeof s.result === "number" ? formatNumber(s.result) : s.result} {s.unit}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -355,7 +355,7 @@ export default function ValuationProduction() {
                             {m.is_primary && <Badge variant="default" className="text-[10px] h-4">رئيسي</Badge>}
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="font-mono text-sm" dir="ltr">{Number(m.concluded_value).toLocaleString()} SAR</span>
+                            <span className="font-mono text-sm" dir="ltr">{formatNumber(Number(m.concluded_value))} SAR</span>
                             <span className="text-xs text-muted-foreground">الوزن: {(Number(m.weight_in_reconciliation) * 100).toFixed(0)}%</span>
                           </div>
                         </div>
@@ -382,7 +382,7 @@ export default function ValuationProduction() {
                                   <TableCell className="font-mono text-xs">{c.step_number}</TableCell>
                                   <TableCell className="text-sm">{c.label_ar}</TableCell>
                                   <TableCell className="font-mono text-xs text-muted-foreground" dir="ltr">{c.formula}</TableCell>
-                                  <TableCell className="font-mono font-medium" dir="ltr">{Number(c.result_value).toLocaleString()} {c.result_unit}</TableCell>
+                                  <TableCell className="font-mono font-medium" dir="ltr">{formatNumber(Number(c.result_value))} {c.result_unit}</TableCell>
                                 </TableRow>
                               ))}
                             </TableBody>
@@ -451,11 +451,11 @@ export default function ValuationProduction() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-center p-4 bg-primary/5 rounded-lg">
-                  <p className="text-3xl font-bold text-primary" dir="ltr">{Number(recon.final_value).toLocaleString()} {recon.currency}</p>
+                  <p className="text-3xl font-bold text-primary" dir="ltr">{formatNumber(Number(recon.final_value))} {recon.currency}</p>
                   <p className="text-sm text-muted-foreground mt-1">{recon.final_value_text_ar}</p>
                   {recon.value_range_low && recon.value_range_high && (
                     <p className="text-xs text-muted-foreground mt-2" dir="ltr">
-                      {Number(recon.value_range_low).toLocaleString()} — {Number(recon.value_range_high).toLocaleString()} {recon.currency}
+                      {formatNumber(Number(recon.value_range_low))} — {formatNumber(Number(recon.value_range_high))} {recon.currency}
                     </p>
                   )}
                 </div>
@@ -491,7 +491,7 @@ export default function ValuationProduction() {
                         {m.is_primary && <Badge variant="default" className="text-[10px] h-4">رئيسي</Badge>}
                       </div>
                       {Number(m.concluded_value) > 0 && (
-                        <span className="font-mono text-sm" dir="ltr">{Number(m.concluded_value).toLocaleString()} SAR</span>
+                        <span className="font-mono text-sm" dir="ltr">{formatNumber(Number(m.concluded_value))} SAR</span>
                       )}
                     </div>
                     {m.reason_for_use_ar && m.is_used && <p className="text-xs text-muted-foreground mt-1">{m.reason_for_use_ar}</p>}
