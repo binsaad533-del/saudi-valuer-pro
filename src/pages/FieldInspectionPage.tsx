@@ -2872,7 +2872,8 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
                 </p>
                 <Button
                   className="w-full h-12 text-base gap-2"
-                  onClick={() => {
+                  disabled={submitting}
+                  onClick={async () => {
                     const approvalName = formData.approval_inspector_name || formData.inspector_name;
                     if (!approvalName) {
                       toast.error("يرجى إدخال اسم المعاين في قسم الاعتماد أولاً");
@@ -2880,10 +2881,10 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
                     }
                     updateField("approval_inspector_name", approvalName);
                     updateField("approval_date", new Date().toISOString().split("T")[0]);
-                    toast.success("🎉 تم إرسال المعاينة بنجاح — ستُضاف لقائمة المقيّم");
+                    await onSubmit();
                   }}
                 >
-                  <Send className="w-5 h-5" />
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   إرسال المعاينة
                 </Button>
               </div>
