@@ -151,7 +151,7 @@ export default function AIDocumentProcessingPage() {
         return { category: "technical_report", label: "تقرير تقييم سابق", relevance: "high", extractedInfo: "تقرير تقييم بتاريخ 1444/09/20 — القيمة السوقية: 2,350,000 ر.س" };
       // عقود إيجار
       if (n.includes("عقد") || n.includes("إيجار") || n.includes("contract") || n.includes("lease") || n.includes("rent") || n.includes("اتفاق"))
-        return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "عقد إيجار سنوي — القيمة: 85,000 ر.س — المستأجر: شركة النور" };
+        return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "إيجار سنوي: 85,000 ر.س — المستأجر: شركة الأفق — ثقة 88%" };
       // فواتير
       if (n.includes("فاتور") || n.includes("invoice") || n.includes("سند") || n.includes("إيصال") || n.includes("receipt"))
         return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة صيانة — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
