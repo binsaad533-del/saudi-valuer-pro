@@ -765,12 +765,48 @@ function SectionVerification({ formData, updateField, sectionPhotos, onAddPhoto,
 }
 
 function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
+  const facades = [
+    { key: "north", label: "الشمال", icon: "⬆️" },
+    { key: "south", label: "الجنوب", icon: "⬇️" },
+    { key: "east", label: "الشرق", icon: "➡️" },
+    { key: "west", label: "الغرب", icon: "⬅️" },
+  ];
+
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={4} title="المساحات والأبعاد" icon={Ruler} subtitle="القياسات والمساحات الفعلية" />
+        <SectionHeader num={4} title="الحدود والمساحة" icon={Ruler} subtitle="المساحة الإجمالية وأطوال الواجهات" />
       </CardHeader>
       <CardContent className="space-y-4">
+        <FieldGroup label="المساحة الإجمالية (م²)" required>
+          <Input type="number" value={formData.total_area} onChange={(e: any) => updateField("total_area", e.target.value)} placeholder="مثال: 625" />
+        </FieldGroup>
+
+        <Separator />
+        <p className="text-xs font-bold text-muted-foreground">الواجهات والحدود</p>
+
+        {facades.map(f => {
+          const lengthKey = `front_${f.key}_length` as keyof typeof formData;
+          const descKey = `front_${f.key}_desc` as keyof typeof formData;
+          return (
+            <div key={f.key} className="border rounded-lg p-3 space-y-2">
+              <p className="text-sm font-medium flex items-center gap-1.5">{f.icon} {f.label}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-xs text-muted-foreground">الطول (م)</Label>
+                  <Input type="number" value={String(formData[lengthKey] || "")} onChange={(e: any) => updateField(lengthKey, e.target.value)} placeholder="0" className="mt-1" />
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">يطل على</Label>
+                  <Input value={String(formData[descKey] || "")} onChange={(e: any) => updateField(descKey, e.target.value)} placeholder="شارع 15م / جار / ممر" className="mt-1" />
+                </div>
+              </div>
+            </div>
+          );
+        })}
+
+        <Separator />
+
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="مساحة الأرض (م²)">
             <Input type="number" value={formData.land_area} onChange={(e: any) => updateField("land_area", e.target.value)} placeholder="0" />
@@ -782,14 +818,15 @@ function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, o
         <FieldGroup label="عدد الأدوار">
           <Input type="number" value={formData.num_floors} onChange={(e: any) => updateField("num_floors", e.target.value)} placeholder="0" />
         </FieldGroup>
-        <FieldGroup label="تفاصيل إضافية">
+        <FieldGroup label="ملاحظات إضافية">
           <Textarea value={formData.dimensions_notes} onChange={(e: any) => updateField("dimensions_notes", e.target.value)} placeholder="عدد الوحدات، المواقف، الملاحق، السرداب..." rows={3} />
         </FieldGroup>
+
         <SectionPhotoUpload section="dimensions" label="صور القياسات والمخططات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
         <AiSuggestionBox
           sectionKey="dimensions"
-          promptHint="تحليل المساحات والأبعاد"
-          context={{ land_area: formData.land_area, building_area: formData.building_area, num_floors: formData.num_floors }}
+          promptHint="تحليل الحدود والمساحات"
+          context={{ total_area: formData.total_area, land_area: formData.land_area, building_area: formData.building_area, num_floors: formData.num_floors, front_north_length: formData.front_north_length, front_south_length: formData.front_south_length, front_east_length: formData.front_east_length, front_west_length: formData.front_west_length }}
         />
       </CardContent>
     </Card>
