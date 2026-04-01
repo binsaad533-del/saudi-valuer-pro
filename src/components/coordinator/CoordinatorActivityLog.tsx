@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Loader2, History, Filter } from "lucide-react";
+import { formatDateTime } from "@/lib/utils";
+
 
 const ACTION_LABELS: Record<string, string> = {
   create: "إنشاء",
@@ -140,7 +142,7 @@ export default function CoordinatorActivityLog() {
                         {ACTION_LABELS[log.action] || log.action}
                       </Badge>
                       <span className="text-[10px] text-muted-foreground">
-                        {new Date(log.created_at).toLocaleString("ar-SA")}
+                        {formatDateTime(log.created_at)}
                       </span>
                     </div>
                   </div>

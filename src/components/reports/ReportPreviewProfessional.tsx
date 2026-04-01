@@ -6,6 +6,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { Separator } from "@/components/ui/separator";
 import jsaasLogo from "@/assets/jsaas-logo.png";
 import OfficialStamp from "./OfficialStamp";
+import { formatDate, formatNumber } from "@/lib/utils";
+
 
 interface ReportPreviewProfessionalProps {
   report: Report;
@@ -33,7 +35,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
         </div>
         <div className="text-left space-y-1">
           <p className="text-sm font-semibold">{report.reportNumber}</p>
-          <p className="text-xs text-muted-foreground">{new Date(report.createdAt).toLocaleDateString("ar-SA")}</p>
+          <p className="text-xs text-muted-foreground">{formatDate(report.createdAt)}</p>
           <Badge className={getStatusColor(report.status)}>{getStatusLabel(report.status)}</Badge>
         </div>
       </div>
@@ -97,9 +99,9 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
               <tr key={i} className="border-b">
                 <td className="p-2 border">{i + 1}</td>
                 <td className="p-2 border">{c.description}</td>
-                <td className="p-2 border">{c.value.toLocaleString("ar-SA")}</td>
+                <td className="p-2 border">{formatNumber(c.value)}</td>
                 <td className="p-2 border">{c.source}</td>
-                <td className="p-2 border">{new Date(c.date).toLocaleDateString("ar-SA")}</td>
+                <td className="p-2 border">{formatDate(c.date)}</td>
               </tr>
             ))}
           </tbody>
@@ -110,7 +112,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
       <div className="mx-6 mt-6 p-6 bg-primary/5 border-2 border-primary rounded-lg text-center">
         <p className="text-sm text-muted-foreground mb-1">القيمة التقديرية النهائية</p>
         <p className="text-3xl font-bold text-primary">
-          {report.estimatedValue.toLocaleString("ar-SA")} <span className="text-lg">ر.س</span>
+          {formatNumber(report.estimatedValue)} <span className="text-lg">ر.س</span>
         </p>
       </div>
 
@@ -134,7 +136,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
             <p>{report.evaluatorCredentials.asa}</p>
           </div>
           <p className="text-xs mt-2">
-            التاريخ: {new Date(report.issuedAt || report.createdAt).toLocaleDateString("ar-SA")}
+            التاريخ: {formatDate(report.issuedAt || report.createdAt)}
           </p>
         </div>
 

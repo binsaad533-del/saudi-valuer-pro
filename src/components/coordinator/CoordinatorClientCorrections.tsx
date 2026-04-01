@@ -12,6 +12,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion, MessageSquare, Send, History, User } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDateTime } from "@/lib/utils";
+
 
 interface Props {
   requests: any[];
@@ -315,7 +317,7 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
                           </p>
                         )}
                         <span className="text-[10px] text-muted-foreground mt-1 block">
-                          {new Date(log.created_at).toLocaleString("ar-SA")}
+                          {formatDateTime(log.created_at)}
                         </span>
                       </div>
                     </div>

@@ -1,6 +1,8 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { invoices } from "@/data/cfoMockData";
 import { useMemo } from "react";
+import { formatNumber } from "@/lib/utils";
+
 
 const STATUS_COLORS: Record<string, string> = {
   paid: "hsl(var(--success))",
@@ -52,7 +54,7 @@ export default function CollectionStatus() {
                 ))}
               </Pie>
               <Tooltip
-                formatter={(value: number) => `${value.toLocaleString("ar-SA")} ر.س`}
+                formatter={(value: number) => `${formatNumber(value)} ر.س`}
                 contentStyle={{ borderRadius: 8, direction: "rtl" }}
               />
             </PieChart>
@@ -66,7 +68,7 @@ export default function CollectionStatus() {
                 <span className="text-sm text-foreground">{d.label}</span>
               </div>
               <div className="text-left">
-                <span className="text-sm font-semibold text-foreground">{d.amount.toLocaleString("ar-SA")} ر.س</span>
+                <span className="text-sm font-semibold text-foreground">{formatNumber(d.amount)} ر.س</span>
                 <span className="text-xs text-muted-foreground mr-2">({d.percentage}%)</span>
               </div>
             </div>

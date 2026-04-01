@@ -1,5 +1,7 @@
 import { DollarSign, CreditCard, Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
+import { formatNumber } from "@/lib/utils";
+
 
 interface SummaryCard {
   title: string;
@@ -42,7 +44,7 @@ export default function FinancialSummaryCards() {
               <div className="flex flex-col">
                 <span className="text-sm text-muted-foreground">{card.title}</span>
                 <span className="text-2xl font-bold text-foreground mt-1">
-                  {card.value.toLocaleString("ar-SA")} ر.س
+                  {formatNumber(card.value)} ر.س
                 </span>
                 <span className={`text-xs mt-1 ${card.trendPositive ? "text-success" : "text-destructive"}`}>
                   {card.trend} عن الشهر السابق

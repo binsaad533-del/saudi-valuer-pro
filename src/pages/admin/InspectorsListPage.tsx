@@ -16,6 +16,8 @@ import {
   ArrowUpDown, Award, TrendingUp, Users, CheckCircle2, Clock,
 } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
+import { formatDate } from "@/lib/utils";
+
 
 interface InspectorRow {
   id: string;
@@ -315,7 +317,7 @@ export default function InspectorsListPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-muted-foreground">
-                        {insp.lastActivity ? new Date(insp.lastActivity).toLocaleDateString("ar-SA") : "—"}
+                        {insp.lastActivity ? formatDate(insp.lastActivity) : "—"}
                       </TableCell>
                       <TableCell><CategoryBadge category={insp.inspector_category} /></TableCell>
                       <TableCell>

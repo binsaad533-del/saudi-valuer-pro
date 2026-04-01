@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { Report, ReportStatus } from "@/types/report";
+import { formatDate, formatNumber } from "@/lib/utils";
+
 
 type VerifyStatus = "valid" | "superseded" | "cancelled" | "not_found";
 
@@ -124,7 +126,7 @@ export default function VerifyReport() {
                 <div className="space-y-3 text-sm">
                   <div className="grid grid-cols-2 gap-3">
                     <InfoRow icon={<FileText className="w-4 h-4" />} label="رقم التقرير" value={result.report.reportNumber} />
-                    <InfoRow icon={<Clock className="w-4 h-4" />} label="تاريخ الإصدار" value={result.report.issuedAt ? new Date(result.report.issuedAt).toLocaleDateString("ar-SA") : "لم يُصدر بعد"} />
+                    <InfoRow icon={<Clock className="w-4 h-4" />} label="تاريخ الإصدار" value={result.report.issuedAt ? formatDate(result.report.issuedAt) : "لم يُصدر بعد"} />
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -141,7 +143,7 @@ export default function VerifyReport() {
                     <>
                       <div className="p-3 rounded-lg bg-background/60 border text-center">
                         <p className="text-xs text-muted-foreground mb-1">القيمة التقديرية</p>
-                        <p className="text-xl font-bold">{result.report.estimatedValue.toLocaleString("ar-SA")} ر.س</p>
+                        <p className="text-xl font-bold">{formatNumber(result.report.estimatedValue)} ر.س</p>
                       </div>
 
                       <div className="p-3 rounded-lg bg-background/60 border">

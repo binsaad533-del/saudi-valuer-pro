@@ -16,6 +16,8 @@ import {
 import { StatusBadge } from "@/components/workflow/StatusComponents";
 import { RequestTracker } from "@/components/client/RequestTracker";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/utils";
+
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -115,7 +117,7 @@ export default function ClientDashboard() {
     .map((r, i) => ({
       id: r.id,
       title: r.property_description_ar || `تقرير تقييم #${i + 1}`,
-      date: new Date(r.updated_at || r.created_at).toLocaleDateString("ar-SA"),
+      date: formatDate(r.updated_at || r.created_at),
       ref: r.reference_number || `RPT-${String(i + 1).padStart(4, "0")}`,
     }));
 
@@ -239,7 +241,7 @@ export default function ClientDashboard() {
                               <span className="font-mono" dir="ltr">{req.reference_number}</span>
                             )}
                             {req.property_city_ar && <span>{req.property_city_ar}</span>}
-                            <span>{new Date(req.created_at).toLocaleDateString("ar-SA")}</span>
+                            <span>{formatDate(req.created_at)}</span>
                           </div>
                         </div>
                       </div>

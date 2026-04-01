@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { formatTime } from "@/lib/utils";
+
 
 // ── Steps ──
 const STEPS = [
@@ -908,7 +910,7 @@ export default function NewValuation() {
                     {activityLog.map((entry, i) => (
                       <div key={i} className="flex items-center justify-between text-xs">
                         <span className="text-muted-foreground">{entry.action}</span>
-                        <span className="text-muted-foreground/60">{entry.timestamp.toLocaleTimeString("ar-SA")}</span>
+                        <span className="text-muted-foreground/60">{formatTime(entry.timestamp)}</span>
                       </div>
                     ))}
                   </div>

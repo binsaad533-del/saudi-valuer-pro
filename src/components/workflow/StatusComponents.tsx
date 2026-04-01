@@ -18,6 +18,8 @@ import {
 import { ChevronLeft, ArrowRight, Lock } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { formatDateTime } from "@/lib/utils";
+
 
 interface StatusBadgeProps {
   status: string;
@@ -181,7 +183,7 @@ export function StatusTimeline({ history }: StatusTimelineProps) {
               <StatusBadge status={entry.to_status} />
             </div>
             <div className="text-[10px] text-muted-foreground mt-0.5">
-              {new Date(entry.created_at).toLocaleString("ar-SA")}
+              {formatDateTime(entry.created_at)}
               {entry.reason && <span className="mr-2">• {entry.reason}</span>}
             </div>
           </div>

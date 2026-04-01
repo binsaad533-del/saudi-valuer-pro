@@ -30,6 +30,8 @@ import {
   FileText,
 } from "lucide-react";
 import {
+import { formatDate } from "@/lib/utils";
+
   createNewReportVersion,
   regenerateReportPDF,
   createRevaluation,
@@ -320,7 +322,7 @@ export default function ReportLifecyclePanel({ assignment, reports, onRefresh }:
                       </Badge>
                     </div>
                     <p className="text-muted-foreground mt-0.5">
-                      {report.created_at ? new Date(report.created_at).toLocaleDateString("ar-SA") : ""}
+                      {report.created_at ? formatDate(report.created_at) : ""}
                     </p>
                   </div>
                 );

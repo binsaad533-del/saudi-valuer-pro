@@ -15,6 +15,8 @@ import { exportReportToPDF, downloadPdfBlob } from "@/services/pdfExportService"
 import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
+import { formatDate, formatNumber } from "@/lib/utils";
+
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
   real_estate: "عقار",
@@ -127,10 +129,10 @@ export default function ReportsListPage() {
                   <TableCell>{r.clientName}</TableCell>
                   <TableCell>{ASSET_TYPE_LABELS[r.assetType] || r.assetType}</TableCell>
                   <TableCell className="font-medium">
-                    {r.estimatedValue.toLocaleString("ar-SA")} ر.س
+                    {formatNumber(r.estimatedValue)} ر.س
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {new Date(r.createdAt).toLocaleDateString("ar-SA")}
+                    {formatDate(r.createdAt)}
                   </TableCell>
                   <TableCell>
                     <Badge className={getStatusColor(r.status)}>{getStatusLabel(r.status)}</Badge>

@@ -20,6 +20,8 @@ import { Label } from "@/components/ui/label";
 import { SectionHeader, FieldGroup, ExpandableSection } from "./helpers";
 import type { FormData, PhotoItem, ChecklistItem } from "./types";
 import { toast } from "sonner";
+import { formatNumber } from "@/lib/utils";
+
 
 export default function SectionLayoutAreas({ formData, updateField }: any) {
   const floorAreas = formData.floor_areas ? formData.floor_areas.split(",") : [];
@@ -89,7 +91,7 @@ export default function SectionLayoutAreas({ formData, updateField }: any) {
                   {floorAreas.reduce((sum: number, a: string) => sum + (parseFloat(a) || 0), 0).toLocaleString("ar-SA")} م²
                 </p>
                 {formData.total_building_area && Math.abs(floorAreas.reduce((sum: number, a: string) => sum + (parseFloat(a) || 0), 0) - parseFloat(formData.total_building_area)) > 1 && (
-                  <p className="text-xs text-destructive mt-1">⚠️ يختلف عن المساحة الكلية المدخلة ({parseFloat(formData.total_building_area).toLocaleString("ar-SA")} م²)</p>
+                  <p className="text-xs text-destructive mt-1">⚠️ يختلف عن المساحة الكلية المدخلة ({formatNumber(parseFloat(formData.total_building_area))} م²)</p>
                 )}
               </div>
             )}

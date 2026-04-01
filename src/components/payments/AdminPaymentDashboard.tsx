@@ -9,6 +9,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
+import { formatDate, formatDateTime } from "@/lib/utils";
+
   CreditCard, CheckCircle, XCircle, Clock, Loader2, Eye, Shield,
   AlertTriangle, FileText,
 } from "lucide-react";
@@ -133,7 +135,7 @@ export default function AdminPaymentDashboard() {
                           <span>المرحلة: {pay.payment_stage === "first" ? "أولى" : pay.payment_stage === "final" ? "نهائية" : "كاملة"}</span>
                           <span>الوسيلة: {pay.payment_method || "-"}</span>
                           <span>البوابة: {pay.gateway_name}</span>
-                          <span>{new Date(pay.created_at).toLocaleDateString("ar-SA")}</span>
+                          <span>{formatDate(pay.created_at)}</span>
                           {pay.transaction_id && <span className="font-mono text-[10px]" dir="ltr">{pay.transaction_id.slice(0, 20)}...</span>}
                         </div>
                       </div>
@@ -176,7 +178,7 @@ export default function AdminPaymentDashboard() {
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      <span>{new Date(log.created_at).toLocaleString("ar-SA")}</span>
+                      <span>{formatDateTime(log.created_at)}</span>
                       {log.processing_result && <span className="mr-3">{log.processing_result}</span>}
                     </div>
                   </div>

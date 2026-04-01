@@ -8,6 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { REPORT_SECTIONS } from "@/lib/report-types";
 import {
+import { formatDate } from "@/lib/utils";
+
   MessageSquareText, Send, CheckCircle, Eye,
   Loader2, AlertTriangle, XCircle, History,
   Inbox, Settings, ClipboardCheck, PackageCheck,
@@ -262,7 +264,7 @@ export default function ClientReportReview({ reportId, requestId }: Props) {
                     </div>
                   )}
                   <p className="text-[10px] text-muted-foreground">
-                    {new Date(comment.created_at).toLocaleDateString("ar-SA")}
+                    {formatDate(comment.created_at)}
                   </p>
                 </div>
               );

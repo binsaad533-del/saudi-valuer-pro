@@ -1,5 +1,7 @@
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { monthlyRevenue } from "@/data/cfoMockData";
+import { formatNumber } from "@/lib/utils";
+
 
 export default function RevenueChart() {
   return (
@@ -15,7 +17,7 @@ export default function RevenueChart() {
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
             />
             <Tooltip
-              formatter={(value: number) => [`${value.toLocaleString("ar-SA")} ر.س`, "الإيرادات"]}
+              formatter={(value: number) => [`${formatNumber(value)} ر.س`, "الإيرادات"]}
               contentStyle={{ borderRadius: 8, border: "1px solid hsl(var(--border))", direction: "rtl" }}
             />
             <Line
