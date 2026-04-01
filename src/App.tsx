@@ -46,6 +46,9 @@ import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 
+// Field Inspection (standalone)
+import FieldInspectionPage from "@/pages/FieldInspectionPage";
+
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
@@ -137,6 +140,9 @@ const App = () => (
           {/* Public Verification */}
           <Route path="/verify" element={<VerifyReport />} />
           <Route path="/verify/:token" element={<VerifyReport />} />
+
+          {/* Field Inspection (standalone) */}
+          <Route path="/field-inspection" element={<FieldInspectionPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
