@@ -1090,7 +1090,13 @@ export default function AIReportGenerationPage() {
                   <Button className="w-full gap-1.5 text-xs bg-primary hover:bg-primary/90" size="sm" onClick={() => { toast.success("تم اعتماد المسودة وإرسالها للمراجعة"); }}>
                     <Send className="w-3.5 h-3.5" /> اعتماد المسودة وإرسال للمراجعة
                   </Button>
-                  <Button variant="outline" className="w-full gap-1.5 text-xs" size="sm" onClick={() => setStep(0)}>
+                  <Button variant="outline" className="w-full gap-1.5 text-xs" size="sm" onClick={() => { toast.info("يمكنك إضافة ملاحظاتك على الأقسام أعلاه"); }}>
+                    <Edit3 className="w-3.5 h-3.5" /> طلب تعديلات إضافية
+                  </Button>
+                  <Button className="w-full gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white" size="sm" onClick={() => { toast.success("جاري تصدير التقرير بصيغة PDF..."); navigate("/report-generator?assignment_id=" + (aggregatedData?.assignment?.id || "")); }}>
+                    <Download className="w-3.5 h-3.5" /> تصدير PDF
+                  </Button>
+                  <Button variant="ghost" className="w-full gap-1.5 text-xs text-muted-foreground" size="sm" onClick={() => setStep(0)}>
                     <ArrowRight className="w-3.5 h-3.5" /> رجوع للبيانات
                   </Button>
                 </div>
