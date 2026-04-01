@@ -84,7 +84,7 @@ export default function SectionValueFactors({ formData, updateField }: any) {
               { id: "legal_issues", label: "إشكاليات قانونية" },
               { id: "harmful_neighbor", label: "مجاور ضار" },
             ].map((factor) => {
-              const isSelected = factor.id in formData.negative_factors;
+              const isSelected = factor.id in negativeFactors;
               return (
                 <div key={factor.id} className="rounded-lg border border-border bg-background p-2.5 space-y-2">
                   <label className="flex items-center gap-2 cursor-pointer">
