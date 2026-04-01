@@ -1621,11 +1621,10 @@ function SectionInterior({ formData, updateField, sectionPhotos, onAddPhoto, onR
             </Select>
           </FieldGroup>
         </div>
+        </ExpandableSection>
 
-        <Separator />
-
-        {/* المطبخ */}
-        <p className="text-xs font-bold text-muted-foreground">🍳 المطبخ</p>
+        {/* المطبخ والحمامات */}
+        <ExpandableSection icon="🍳" title="المطبخ ودورات المياه">
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="نوع المطبخ">
             <Select value={formData.interior_kitchen_type} onValueChange={(v: string) => updateField("interior_kitchen_type", v)}>
