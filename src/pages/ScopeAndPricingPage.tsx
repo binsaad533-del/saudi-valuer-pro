@@ -204,17 +204,17 @@ const MOCK_SCOPE: ScopeData = {
 };
 
 const MOCK_PRICING: PricingData = {
-  basePrice: 4500,
+  basePrice: 3500,
   cityMultiplier: 1.15,
-  adjustedBase: 5175,
+  adjustedBase: 4025,
   sizeCategory: "متوسط (500-1000 م²)",
   breakdown: {
-    complexityAdjustment: 518,
+    complexityAdjustment: 403,
     complexityFactor: 1.1,
-    complexityReason: "فيلا سكنية بمواصفات قياسية — تعقيد منخفض إلى متوسط",
+    complexityReason: "منهجيتان مطلوبتان (مقارنة سوقية + دخل) — تعقيد متوسط",
     urgencyAdjustment: 0,
     urgencyFactor: 1.0,
-    rentalAnalysisSurcharge: 0,
+    rentalAnalysisSurcharge: 500,
     portfolioDiscount: 0,
     additionalServices: [
       { name: "تصوير فوتوغرافي احترافي", price: 350 },
@@ -222,8 +222,8 @@ const MOCK_PRICING: PricingData = {
     ],
     additionalTotal: 550,
   },
-  totalPrice: 6243,
-  justification: "تم احتساب التسعير بناءً على السعر الأساسي للعقارات السكنية في الرياض مع مراعاة المساحة ودرجة التعقيد",
+  totalPrice: 5478,
+  justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) مع معامل الموقع الجغرافي للرياض (×1.15) ودرجة التعقيد لمنهجيتين مطلوبتين",
 };
 
 export default function ScopeAndPricingPage() {
