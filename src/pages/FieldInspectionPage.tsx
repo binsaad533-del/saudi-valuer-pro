@@ -98,6 +98,19 @@ interface FormData {
   valuer_name: string;
   inspection_time: string;
   detailed_address: string;
+  // Section 2: الموقع والمحيط
+  district_type: string;
+  district_level: string;
+  nearby_mosque: string;
+  nearby_mosque_distance: string;
+  nearby_school: string;
+  nearby_school_distance: string;
+  nearby_hospital: string;
+  nearby_hospital_distance: string;
+  nearby_mall: string;
+  nearby_mall_distance: string;
+  nearby_highway: string;
+  nearby_highway_distance: string;
   gps_lat: number | null;
   gps_lng: number | null;
   access_ease: string;
