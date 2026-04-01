@@ -5,20 +5,45 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Edit3, Loader2, Search, Save } from "lucide-react";
+import { Edit3, Loader2, Search, Save, AlertTriangle, FileX, MapPinOff, FileQuestion } from "lucide-react";
 
 interface Props {
   requests: any[];
   onRefresh: () => void;
 }
 
+type IssueType = "missing_data" | "wrong_address" | "missing_docs";
+
+const ISSUE_LABELS: Record<IssueType, { label: string; icon: typeof AlertTriangle; color: string }> = {
+  missing_data: { label: "بيانات ناقصة", icon: FileX, color: "bg-warning/10 text-warning" },
+  wrong_address: { label: "عنوان خاطئ", icon: MapPinOff, color: "bg-destructive/10 text-destructive" },
+  missing_docs: { label: "مستندات مفقودة", icon: FileQuestion, color: "bg-primary/10 text-primary" },
+};
+
+function detectIssues(req: any): IssueType[] {
+  const issues: IssueType[] = [];
+  // Missing data
+  if (!req.property_type || !req.purpose || !req.land_area) {
+    issues.push("missing_data");
+  }
+  // Wrong/missing address
+  if (!req.property_city_ar || !req.property_district_ar) {
+    issues.push("wrong_address");
+  }
+  // Missing docs (status indicates awaiting info)
+  if (req.status === "awaiting_client_info" || req.status === "client_comments") {
+    issues.push("missing_docs");
+  }
+  return issues;
+}
+
 export default function CoordinatorClientCorrections({ requests, onRefresh }: Props) {
   const [search, setSearch] = useState("");
+  const [issueFilter, setIssueFilter] = useState<"all" | IssueType>("all");
   const [editDialog, setEditDialog] = useState(false);
   const [selectedReq, setSelectedReq] = useState<any>(null);
   const [saving, setSaving] = useState(false);
@@ -31,15 +56,25 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
     correctionNote: "",
   });
 
-  const editableRequests = requests.filter(r =>
-    !["completed", "closed", "report_issued"].includes(r.status)
-  );
+  // Only show requests with detected issues (not completed)
+  const requestsWithIssues = requests
+    .filter(r => !["completed", "closed", "report_issued"].includes(r.status))
+    .map(r => ({ ...r, _issues: detectIssues(r) }))
+    .filter(r => r._issues.length > 0);
 
-  const filtered = editableRequests.filter(r =>
-    !search ||
-    (r.property_description_ar || "").includes(search) ||
-    (r.reference_number || "").includes(search)
-  );
+  const filtered = requestsWithIssues.filter(r => {
+    const matchSearch = !search ||
+      (r.property_description_ar || "").includes(search) ||
+      (r.reference_number || "").includes(search);
+    const matchIssue = issueFilter === "all" || r._issues.includes(issueFilter);
+    return matchSearch && matchIssue;
+  });
+
+  const issueCounts = {
+    missing_data: requestsWithIssues.filter(r => r._issues.includes("missing_data")).length,
+    wrong_address: requestsWithIssues.filter(r => r._issues.includes("wrong_address")).length,
+    missing_docs: requestsWithIssues.filter(r => r._issues.includes("missing_docs")).length,
+  };
 
   const openEdit = (req: any) => {
     setSelectedReq(req);
@@ -71,7 +106,6 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
 
       if (error) throw error;
 
-      // Log correction
       await supabase.from("request_messages" as any).insert({
         request_id: selectedReq.id,
         sender_type: "system" as any,
@@ -93,16 +127,44 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
       <Card className="shadow-card">
         <CardHeader className="pb-3">
           <CardTitle className="text-base flex items-center gap-2">
-            <Edit3 className="w-4 h-4 text-warning" />
-            تصحيح أخطاء بيانات العملاء
+            <AlertTriangle className="w-4 h-4 text-warning" />
+            تصحيح إجراءات العملاء
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            يمكنك تعديل بيانات الطلب لتصحيح الأخطاء الإدخالية مع توثيق سبب التعديل
+            الطلبات التي تحتوي على أخطاء أو بيانات ناقصة تحتاج تدخل المنسق
           </p>
+
+          {/* Issue Summary Chips */}
+          <div className="flex items-center gap-2 mt-3 flex-wrap">
+            <Button
+              size="sm"
+              variant={issueFilter === "all" ? "default" : "outline"}
+              className="h-7 text-xs"
+              onClick={() => setIssueFilter("all")}
+            >
+              الكل ({requestsWithIssues.length})
+            </Button>
+            {(Object.entries(ISSUE_LABELS) as [IssueType, typeof ISSUE_LABELS[IssueType]][]).map(([key, val]) => {
+              const Icon = val.icon;
+              return (
+                <Button
+                  key={key}
+                  size="sm"
+                  variant={issueFilter === key ? "default" : "outline"}
+                  className="h-7 text-xs gap-1"
+                  onClick={() => setIssueFilter(key)}
+                >
+                  <Icon className="w-3 h-3" />
+                  {val.label} ({issueCounts[key]})
+                </Button>
+              );
+            })}
+          </div>
+
           <div className="relative mt-3">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              placeholder="بحث في الطلبات القابلة للتصحيح..."
+              placeholder="بحث بالرقم المرجعي أو الوصف..."
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="pr-9 text-sm"
@@ -118,23 +180,36 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
                   <TableHead className="text-right">الوصف</TableHead>
                   <TableHead className="text-right">المدينة</TableHead>
                   <TableHead className="text-right">المساحة</TableHead>
+                  <TableHead className="text-right">نوع المشكلة</TableHead>
                   <TableHead className="text-right">إجراء</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-sm">
-                      لا توجد طلبات قابلة للتصحيح
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground text-sm">
+                      لا توجد طلبات تحتاج تصحيح 🎉
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filtered.slice(0, 20).map(req => (
+                  filtered.slice(0, 30).map(req => (
                     <TableRow key={req.id}>
                       <TableCell className="font-mono text-xs" dir="ltr">{req.reference_number || "—"}</TableCell>
                       <TableCell className="text-sm max-w-[180px] truncate">{req.property_description_ar || "—"}</TableCell>
-                      <TableCell className="text-sm">{req.property_city_ar || "—"}</TableCell>
-                      <TableCell className="text-sm">{req.land_area ? `${req.land_area} م²` : "—"}</TableCell>
+                      <TableCell className="text-sm">{req.property_city_ar || <span className="text-destructive">—</span>}</TableCell>
+                      <TableCell className="text-sm">{req.land_area ? `${req.land_area} م²` : <span className="text-destructive">—</span>}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {req._issues.map((issue: IssueType) => {
+                            const info = ISSUE_LABELS[issue];
+                            return (
+                              <Badge key={issue} className={`${info.color} text-[10px]`}>
+                                {info.label}
+                              </Badge>
+                            );
+                          })}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Button size="sm" variant="outline" onClick={() => openEdit(req)}>
                           <Edit3 className="w-3 h-3 ml-1" />تصحيح
@@ -154,6 +229,16 @@ export default function CoordinatorClientCorrections({ requests, onRefresh }: Pr
           <DialogHeader>
             <DialogTitle>تصحيح بيانات الطلب</DialogTitle>
           </DialogHeader>
+          {selectedReq && (
+            <div className="mb-2">
+              <div className="flex flex-wrap gap-1">
+                {selectedReq._issues?.map((issue: IssueType) => {
+                  const info = ISSUE_LABELS[issue];
+                  return <Badge key={issue} className={`${info.color} text-[10px]`}>{info.label}</Badge>;
+                })}
+              </div>
+            </div>
+          )}
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
