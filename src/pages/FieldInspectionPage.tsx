@@ -176,6 +176,8 @@ const defaultFormData: FormData = {
   gps_lat: null,
   gps_lng: null,
   access_ease: "",
+  surrounding_positives: "",
+  surrounding_negatives: "",
   matches_documents: "",
   asset_description: "",
   current_use: "",
