@@ -17,6 +17,8 @@ import {
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
   FileCheck, UserCheck,
 } from "lucide-react";
+import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
+import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 
 /* ═══════ Constants ═══════ */
 
@@ -199,12 +201,16 @@ export default function FieldInspectionPage() {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>(defaultFormData);
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
+  const [sectionPhotos, setSectionPhotos] = useState<SectionPhoto[]>([]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>(
     DEFAULT_CHECKLIST.map(c => ({ ...c, is_checked: false }))
   );
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const addSectionPhoto = (photo: SectionPhoto) => setSectionPhotos(prev => [...prev, photo]);
+  const removeSectionPhoto = (photo: SectionPhoto) => setSectionPhotos(prev => prev.filter(p => p !== photo));
 
   const updateField = <K extends keyof FormData>(key: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [key]: value }));
@@ -378,14 +384,14 @@ export default function FieldInspectionPage() {
       {/* Step content */}
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
         {step === 0 && <SectionGeneral formData={formData} updateField={updateField} />}
-        {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} />}
-        {step === 2 && <SectionVerification formData={formData} updateField={updateField} />}
-        {step === 3 && <SectionDimensions formData={formData} updateField={updateField} />}
-        {step === 4 && <SectionCondition formData={formData} updateField={updateField} />}
-        {step === 5 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} />}
+        {step === 1 && <SectionLocation formData={formData} updateField={updateField} gpsLoading={gpsLoading} gpsError={gpsError} onCaptureGPS={captureGPS} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 2 && <SectionVerification formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 3 && <SectionDimensions formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 4 && <SectionCondition formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
+        {step === 5 && <SectionUtilities formData={formData} updateField={updateField} checklist={checklist} setChecklist={setChecklist} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 6 && <SectionValueFactors formData={formData} updateField={updateField} />}
         {step === 7 && <SectionDocumentation photos={photos} onCapture={handlePhotoCapture} onRemove={removePhoto} requiredPhotoDone={requiredPhotoDone} requiredPhotoTotal={requiredPhotoTotal} />}
-        {step === 8 && <SectionRisks formData={formData} updateField={updateField} />}
+        {step === 8 && <SectionRisks formData={formData} updateField={updateField} sectionPhotos={sectionPhotos} onAddPhoto={addSectionPhoto} onRemovePhoto={removeSectionPhoto} />}
         {step === 9 && <SectionFinalCheck formData={formData} updateField={updateField} sectionComplete={sectionComplete} photos={photos} checkedRequired={checkedRequired} totalRequired={totalRequired} />}
         {step === 10 && <SectionApproval formData={formData} updateField={updateField} canSubmit={canSubmit()} submitting={submitting} onSubmit={handleSubmit} />}
       </div>
@@ -458,7 +464,7 @@ function SectionGeneral({ formData, updateField }: { formData: FormData; updateF
   );
 }
 
-function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptureGPS }: any) {
+function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptureGPS, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -506,12 +512,13 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
             ))}
           </RadioGroup>
         </FieldGroup>
+        <SectionPhotoUpload section="location" label="صور الموقع والمحيط" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
       </CardContent>
     </Card>
   );
 }
 
-function SectionVerification({ formData, updateField }: any) {
+function SectionVerification({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -544,12 +551,18 @@ function SectionVerification({ formData, updateField }: any) {
         <FieldGroup label="الاستخدام الأعلى والأفضل (إن أمكن)">
           <Input value={formData.highest_best_use} onChange={(e: any) => updateField("highest_best_use", e.target.value)} placeholder="مثال: تجاري - موقع مناسب لمحلات" />
         </FieldGroup>
+        <SectionPhotoUpload section="verification" label="صور التحقق من الأصل" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="verification"
+          promptHint="تحقق من مطابقة الأصل للمستندات"
+          context={{ matches_documents: formData.matches_documents, asset_description: formData.asset_description, current_use: formData.current_use }}
+        />
       </CardContent>
     </Card>
   );
 }
 
-function SectionDimensions({ formData, updateField }: any) {
+function SectionDimensions({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -570,12 +583,18 @@ function SectionDimensions({ formData, updateField }: any) {
         <FieldGroup label="تفاصيل إضافية">
           <Textarea value={formData.dimensions_notes} onChange={(e: any) => updateField("dimensions_notes", e.target.value)} placeholder="عدد الوحدات، المواقف، الملاحق، السرداب..." rows={3} />
         </FieldGroup>
+        <SectionPhotoUpload section="dimensions" label="صور القياسات والمخططات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="dimensions"
+          promptHint="تحليل المساحات والأبعاد"
+          context={{ land_area: formData.land_area, building_area: formData.building_area, num_floors: formData.num_floors }}
+        />
       </CardContent>
     </Card>
   );
 }
 
-function SectionCondition({ formData, updateField }: any) {
+function SectionCondition({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -615,12 +634,18 @@ function SectionCondition({ formData, updateField }: any) {
         <FieldGroup label="ملاحظات الحالة">
           <Textarea value={formData.condition_notes} onChange={(e: any) => updateField("condition_notes", e.target.value)} placeholder="تفاصيل عن الحالة الإنشائية، التشطيبات، العيوب..." rows={3} />
         </FieldGroup>
+        <SectionPhotoUpload section="condition" label="صور حالة الأصل والعيوب" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="condition"
+          promptHint="تقييم حالة الأصل"
+          context={{ overall_condition: formData.overall_condition, asset_age: formData.asset_age, finishing_level: formData.finishing_level, condition_notes: formData.condition_notes }}
+        />
       </CardContent>
     </Card>
   );
 }
 
-function SectionUtilities({ formData, updateField, checklist, setChecklist }: any) {
+function SectionUtilities({ formData, updateField, checklist, setChecklist, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   const categoryLabels: Record<string, string> = {
     structure: "الهيكل الإنشائي",
     utilities: "المرافق والخدمات",
@@ -692,6 +717,7 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist }: an
           ))}
         </CardContent>
       </Card>
+      <SectionPhotoUpload section="utilities" label="صور المرافق والخدمات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
     </div>
   );
 }
@@ -715,6 +741,11 @@ function SectionValueFactors({ formData, updateField }: any) {
         <FieldGroup label="عوامل تنظيمية أو نظامية">
           <Textarea value={formData.regulatory_factors} onChange={(e: any) => updateField("regulatory_factors", e.target.value)} placeholder="قيود بناء، نزع ملكية، تغيير استخدام..." rows={2} />
         </FieldGroup>
+        <AiSuggestionBox
+          sectionKey="value_factors"
+          promptHint="تحليل العوامل المؤثرة على القيمة"
+          context={{ positive_factors: formData.positive_factors, negative_factors: formData.negative_factors }}
+        />
       </CardContent>
     </Card>
   );
@@ -786,7 +817,7 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove }: any) {
   );
 }
 
-function SectionRisks({ formData, updateField }: any) {
+function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -808,6 +839,12 @@ function SectionRisks({ formData, updateField }: any) {
             <Textarea value={formData.risk_details} onChange={(e: any) => updateField("risk_details", e.target.value)} placeholder="وصف تفصيلي للمخاطر المحددة..." rows={4} className="border-destructive/30" />
           </FieldGroup>
         )}
+        <SectionPhotoUpload section="risks" label="صور المخاطر المكتشفة" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+        <AiSuggestionBox
+          sectionKey="risks"
+          promptHint="تحليل المخاطر"
+          context={{ has_risks: formData.has_risks, risk_details: formData.risk_details }}
+        />
       </CardContent>
     </Card>
   );
