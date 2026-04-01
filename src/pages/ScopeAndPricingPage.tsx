@@ -17,6 +17,7 @@ interface DisciplineAnalysis {
   discipline: "real_estate" | "machinery" | "mixed";
   disciplineLabel: string;
   confidence: number;
+  reason: string;
   signals: string[];
   subTypes?: string[];
 }
@@ -249,7 +250,14 @@ export default function ScopeAndPricingPage() {
                 </div>
               </div>
 
-              {/* Signals */}
+              {/* Reason */}
+              {scope.disciplineAnalysis.reason && (
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                  <FileText className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-foreground leading-relaxed">{scope.disciplineAnalysis.reason}</p>
+                </div>
+              )}
+
               {scope.disciplineAnalysis.signals.length > 0 && (
                 <div>
                   <p className="text-[10px] font-medium text-muted-foreground mb-1.5">إشارات التصنيف المكتشفة</p>
