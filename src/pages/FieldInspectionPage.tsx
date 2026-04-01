@@ -330,7 +330,6 @@ export default function FieldInspectionPage() {
         <div className="relative px-2 pb-3">
           <div className="flex items-start overflow-x-auto gap-0 pb-1 scrollbar-hide">
             {STEPS.map((s, i) => {
-              const Icon = s.icon;
               const isActive = i === step;
               const isDone = sectionComplete[i] && !isActive;
               return (
