@@ -218,6 +218,7 @@ export default function AIReportGenerationPage() {
   const handleGenerateDraft = useCallback(async () => {
     setIsGenerating(true);
     setStep(1);
+    setStepErrors(prev => ({ ...prev, 1: null }));
 
     try {
       const { data, error } = await supabase.functions.invoke("generate-report", {
