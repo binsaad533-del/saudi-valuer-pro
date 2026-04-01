@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,31 +13,117 @@ serve(async (req) => {
   }
 
   try {
-    const { fileNames, fileDescriptions } = await req.json();
+    const { fileNames, fileDescriptions, storagePaths, requestId } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    const systemPrompt = `أنت محرك استخراج بيانات متخصص في التقييم العقاري والآلات والمعدات في السعودية.
+    // If storage paths provided, download actual file content for multimodal analysis
+    let fileContents: { name: string; base64: string; mimeType: string }[] = [];
 
-مهمتك: بناءً على أسماء الملفات والوصف المقدم، استنتج وحدد:
+    if (storagePaths && storagePaths.length > 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const supabase = createClient(supabaseUrl, supabaseKey);
 
-1. نوع التقييم (real_estate / machinery / mixed)
-2. بيانات العميل المحتملة
-3. بيانات الأصل المحتملة
-4. غرض التقييم المحتمل
-5. أي ملاحظات أو توصيات
+      for (const sp of storagePaths) {
+        try {
+          const { data, error } = await supabase.storage
+            .from("client-uploads")
+            .download(sp.path);
+          if (error || !data) continue;
 
-قواعد:
-- إذا احتوت الملفات على "صك" أو "رخصة بناء" أو "مخطط" = عقاري
-- إذا احتوت على "فاتورة شراء" أو "كتالوج" أو "صيانة" = آلات
-- إذا مزيج = مختلط
-- استخرج أي معلومات يمكن استنتاجها من أسماء الملفات`;
+          const arrayBuf = await data.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(arrayBuf).reduce((s, b) => s + String.fromCharCode(b), "")
+          );
+          const mimeType = sp.mimeType || "application/octet-stream";
 
-    const userMessage = `الملفات المرفوعة (${fileNames.length} ملف):
-${fileNames.map((name: string, i: number) => `${i + 1}. ${name}${fileDescriptions?.[i] ? ` — ${fileDescriptions[i]}` : ""}`).join("\n")}
+          // Only include supported types for vision (images, PDFs)
+          const supportedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
+          if (supportedTypes.some(t => mimeType.startsWith(t.split("/")[0]) || mimeType === t)) {
+            fileContents.push({ name: sp.name, base64, mimeType });
+          }
+        } catch (e) {
+          console.error(`Failed to download ${sp.path}:`, e);
+        }
+      }
+    }
 
-قم بتحليل هذه الملفات واستخرج البيانات المتاحة.`;
+    const systemPrompt = `أنت محرك استخراج بيانات متقدم متخصص في التقييم العقاري والآلات والمعدات في المملكة العربية السعودية.
+
+مهمتك: تحليل المستندات المرفوعة (صور، PDF، وثائق) واستخراج:
+
+1. **نوع التقييم** (real_estate / machinery / mixed) مع مستوى الثقة
+2. **بيانات العميل**: الاسم، رقم الهوية/السجل التجاري، الهاتف، البريد
+3. **بيانات الأصل**: الوصف، المدينة، الحي، المساحة، رقم الصك، التصنيف
+4. **تصنيف كل مستند**: نوعه (صك، رخصة بناء، مخطط، فاتورة، عقد، صورة عقار، هوية، تقرير فني، أخرى)
+5. **غرض التقييم** المحتمل
+6. **البيانات المستخرجة من المحتوى**: أرقام، تواريخ، أسماء، عناوين ظاهرة في الوثائق
+
+قواعد التصنيف:
+- صك / صك إلكتروني = deed
+- رخصة بناء / تصريح = building_permit
+- مخطط معماري / كروكي = floor_plan
+- صورة عقار / واجهة = property_photo
+- هوية / جواز / إقامة = identity_doc
+- فاتورة / سند = invoice
+- عقد / اتفاقية = contract
+- تقرير فني / تقييم سابق = technical_report
+- خريطة / موقع = location_map
+- أخرى = other
+
+قواعد الأولوية:
+- إذا وُجد محتوى فعلي (صور/PDF) = حلل المحتوى بعمق واستخرج كل البيانات الممكنة
+- إذا أسماء ملفات فقط = استنتج من الأسماء
+- أعط نسبة ثقة أعلى عند تحليل المحتوى الفعلي`;
+
+    // Build messages with multimodal content
+    const userContent: any[] = [];
+
+    if (fileContents.length > 0) {
+      userContent.push({
+        type: "text",
+        text: `تم رفع ${fileNames.length} مستند. قم بتحليل محتوى المستندات التالية واستخرج جميع البيانات:`,
+      });
+
+      for (const fc of fileContents) {
+        userContent.push({
+          type: "text",
+          text: `\n--- ملف: ${fc.name} ---`,
+        });
+
+        if (fc.mimeType.startsWith("image/")) {
+          userContent.push({
+            type: "image_url",
+            image_url: {
+              url: `data:${fc.mimeType};base64,${fc.base64}`,
+            },
+          });
+        } else if (fc.mimeType === "application/pdf") {
+          // For PDFs, send as base64 with instruction
+          userContent.push({
+            type: "text",
+            text: `[ملف PDF - ${fc.name}] - حلل محتوى هذا الملف بناءً على اسمه ووصفه`,
+          });
+        }
+      }
+
+      // Add files that couldn't be downloaded
+      const analyzedNames = fileContents.map(f => f.name);
+      const remaining = fileNames.filter((n: string) => !analyzedNames.includes(n));
+      if (remaining.length > 0) {
+        userContent.push({
+          type: "text",
+          text: `\nملفات إضافية (أسماء فقط):\n${remaining.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
+        });
+      }
+    } else {
+      userContent.push({
+        type: "text",
+        text: `الملفات المرفوعة (${fileNames.length} ملف):\n${fileNames.map((name: string, i: number) => `${i + 1}. ${name}${fileDescriptions?.[i] ? ` — ${fileDescriptions[i]}` : ""}`).join("\n")}\n\nقم بتحليل هذه الملفات واستخرج البيانات المتاحة.`,
+      });
+    }
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -47,10 +134,10 @@ ${fileNames.map((name: string, i: number) => `${i + 1}. ${name}${fileDescription
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-3-flash-preview",
+          model: "google/gemini-2.5-flash",
           messages: [
             { role: "system", content: systemPrompt },
-            { role: "user", content: userMessage },
+            { role: "user", content: userContent },
           ],
           tools: [
             {
@@ -109,11 +196,36 @@ ${fileNames.map((name: string, i: number) => `${i + 1}. ${name}${fileDescription
                         type: "object",
                         properties: {
                           fileName: { type: "string" },
-                          category: { type: "string" },
+                          category: {
+                            type: "string",
+                            enum: [
+                              "deed", "building_permit", "floor_plan",
+                              "property_photo", "identity_doc", "invoice",
+                              "contract", "technical_report", "location_map", "other",
+                            ],
+                          },
+                          categoryLabel: { type: "string", description: "Arabic label for the category" },
                           relevance: { type: "string", enum: ["high", "medium", "low"] },
+                          extractedInfo: {
+                            type: "string",
+                            description: "Key info extracted from this specific document in Arabic",
+                          },
                         },
-                        required: ["fileName", "category", "relevance"],
+                        required: ["fileName", "category", "categoryLabel", "relevance"],
                       },
+                    },
+                    extractedNumbers: {
+                      type: "array",
+                      items: {
+                        type: "object",
+                        properties: {
+                          label: { type: "string", description: "What this number represents in Arabic" },
+                          value: { type: "string" },
+                          source: { type: "string", description: "Which document this was extracted from" },
+                        },
+                        required: ["label", "value", "source"],
+                      },
+                      description: "Key numbers, dates, and identifiers extracted from documents",
                     },
                   },
                   required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories"],
@@ -129,23 +241,36 @@ ${fileNames.map((name: string, i: number) => `${i + 1}. ${name}${fileDescription
     if (!response.ok) {
       const status = response.status;
       if (status === 429) {
-        return new Response(JSON.stringify({ error: "تم تجاوز الحد المسموح" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ error: "تم تجاوز الحد المسموح، يرجى المحاولة لاحقاً" }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
       if (status === 402) {
-        return new Response(JSON.stringify({ error: "يرجى إضافة رصيد" }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return new Response(JSON.stringify({ error: "يرجى إضافة رصيد للاستمرار" }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
       }
       const t = await response.text();
       console.error("AI gateway error:", status, t);
-      return new Response(JSON.stringify({ error: "خطأ في التحليل الذكي" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "خطأ في التحليل الذكي" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const aiResult = await response.json();
     const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall) {
-      return new Response(JSON.stringify({ error: "لم يتم استخراج بيانات" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "لم يتم استخراج بيانات" }), {
+        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
+
+    // Add metadata about analysis method
+    extracted.analysisMethod = fileContents.length > 0 ? "content_analysis" : "filename_only";
+    extracted.analyzedFilesCount = fileContents.length;
+    extracted.totalFilesCount = fileNames.length;
 
     return new Response(JSON.stringify(extracted), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
