@@ -2505,12 +2505,45 @@ function SectionNotesRecommendations({ formData, updateField }: any) {
           />
         </div>
 
+        <Separator />
+
+        <FieldGroup label="📋 توصية المعاين النهائية" required>
+          <RadioGroup value={formData.inspector_verdict} onValueChange={(v: string) => updateField("inspector_verdict", v)} className="space-y-2">
+            {[
+              { value: "complete", label: "✅ ملف مكتمل", desc: "جميع البيانات والصور مكتملة وجاهزة للتقييم", style: "border-green-500 bg-green-50 dark:bg-green-900/20" },
+              { value: "needs_revisit", label: "🔄 يحتاج زيارة إضافية", desc: "بعض العناصر تحتاج معاينة تكميلية", style: "border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20" },
+              { value: "has_issues", label: "⚠️ توجد إشكاليات", desc: "إشكاليات تمنع أو تؤثر على إتمام التقييم", style: "border-destructive bg-destructive/5" },
+            ].map((opt) => (
+              <label key={opt.value} className={`flex items-start gap-3 p-3 rounded-lg border-2 cursor-pointer transition-colors ${formData.inspector_verdict === opt.value ? opt.style + " font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="mt-0.5" />
+                <div>
+                  <div className="text-sm">{opt.label}</div>
+                  <div className="text-[11px] text-muted-foreground">{opt.desc}</div>
+                </div>
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        {(formData.inspector_verdict === "needs_revisit" || formData.inspector_verdict === "has_issues") && (
+          <FieldGroup label={formData.inspector_verdict === "needs_revisit" ? "🔄 سبب الزيارة الإضافية" : "⚠️ تفاصيل الإشكاليات"} required>
+            <Textarea
+              value={formData.inspector_verdict_notes}
+              onChange={(e: any) => updateField("inspector_verdict_notes", e.target.value)}
+              placeholder={formData.inspector_verdict === "needs_revisit" ? "ما العناصر التي تحتاج معاينة إضافية؟..." : "ما الإشكاليات المكتشفة وتأثيرها؟..."}
+              rows={3}
+              className={formData.inspector_verdict === "has_issues" ? "border-destructive/30" : "border-yellow-300"}
+            />
+          </FieldGroup>
+        )}
+
         <AiSuggestionBox
           sectionKey="notes_recommendations"
           promptHint="اقتراح ملاحظات وتوصيات بناءً على بيانات المعاينة"
           context={{
             inspector_observations: formData.inspector_observations,
             inspector_recommendations: formData.inspector_recommendations,
+            inspector_verdict: formData.inspector_verdict,
             overall_condition: formData.overall_condition,
             has_risks: formData.has_risks,
           }}
