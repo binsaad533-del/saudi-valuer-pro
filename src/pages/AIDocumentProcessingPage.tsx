@@ -82,10 +82,12 @@ export default function AIDocumentProcessingPage() {
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractionPhase, setExtractionPhase] = useState("");
+  const [extractionProgress, setExtractionProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [showClientData, setShowClientData] = useState(true);
   const [showAssetData, setShowAssetData] = useState(true);
   const [showExtractedNums, setShowExtractedNums] = useState(true);
+  const [useMock, setUseMock] = useState(false);
 
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -121,6 +123,79 @@ export default function AIDocumentProcessingPage() {
     ));
   }, []);
 
+  const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+  const generateMockResult = (files: UploadedFile[]): ExtractedData => {
+    const guessCategory = (name: string) => {
+      const n = name.toLowerCase();
+      if (n.includes("صك") || n.includes("deed")) return { category: "deed", label: "صك ملكية" };
+      if (n.includes("رخص") || n.includes("permit")) return { category: "building_permit", label: "رخصة بناء" };
+      if (n.includes("مخطط") || n.includes("plan")) return { category: "floor_plan", label: "مخطط معماري" };
+      if (n.includes("هوي") || n.includes("id")) return { category: "identity_doc", label: "وثيقة هوية" };
+      if (n.includes("فاتور") || n.includes("invoice")) return { category: "invoice", label: "فاتورة / سند" };
+      if (n.includes("عقد") || n.includes("contract")) return { category: "contract", label: "عقد / اتفاقية" };
+      if (/\.(jpg|jpeg|png|webp)$/i.test(n)) return { category: "property_photo", label: "صورة عقار" };
+      if (n.includes("map") || n.includes("خريط")) return { category: "location_map", label: "خريطة موقع" };
+      return { category: "other", label: "أخرى" };
+    };
+
+    return {
+      discipline: "real_estate",
+      discipline_label: "تقييم عقاري",
+      confidence: 87,
+      client: {
+        clientName: "أحمد بن عبدالله المالكي",
+        idNumber: "1088456723",
+        phone: "0551234567",
+        email: "ahmed.maliki@email.com",
+      },
+      asset: {
+        description: "فيلا سكنية دورين مع ملحق",
+        city: "الرياض",
+        district: "حي النرجس",
+        area: "625",
+        deedNumber: "310298765",
+        classification: "سكني",
+      },
+      suggestedPurpose: "تمويل عقاري — بنك الراجحي",
+      notes: [
+        "تم التعرف على صك إلكتروني يحتوي على بيانات الملكية",
+        "المساحة المذكورة في الصك تتطابق مع المخطط المعماري",
+        "يُنصح بالتحقق من تاريخ رخصة البناء",
+        "⚠️ هذه بيانات تجريبية (Mock) للعرض التوضيحي",
+      ],
+      documentCategories: files.map(f => {
+        const cat = guessCategory(f.name);
+        return {
+          fileName: f.name,
+          category: cat.category,
+          categoryLabel: cat.label,
+          relevance: cat.category === "other" ? "low" : cat.category === "deed" ? "high" : "medium",
+          extractedInfo: cat.category === "deed" ? "رقم الصك: 310298765 — المساحة: 625 م²" :
+            cat.category === "identity_doc" ? "رقم الهوية: 1088456723" :
+            cat.category === "property_photo" ? "واجهة رئيسية — حالة جيدة" : undefined,
+        };
+      }),
+      extractedNumbers: [
+        { label: "رقم الصك", value: "310298765", source: files[0]?.name || "صك" },
+        { label: "مساحة الأرض", value: "625 م²", source: files[0]?.name || "صك" },
+        { label: "رقم الهوية", value: "1088456723", source: "وثيقة هوية" },
+        { label: "تاريخ الإصدار", value: "1445/03/15 هـ", source: files[0]?.name || "صك" },
+      ],
+      analysisMethod: "mock_simulation",
+      analyzedFilesCount: files.length,
+      totalFilesCount: files.length,
+    };
+  };
+
+  const phases = [
+    { label: "رفع الملفات للتخزين...", target: 20 },
+    { label: "قراءة محتوى المستندات...", target: 40 },
+    { label: "تحليل النصوص والصور...", target: 60 },
+    { label: "استخراج البيانات الهيكلية...", target: 80 },
+    { label: "تصنيف المستندات وتوليد التقرير...", target: 95 },
+  ];
+
   const runExtraction = useCallback(async () => {
     if (uploadedFiles.length === 0) {
       toast.error("يجب رفع ملف واحد على الأقل");
@@ -129,53 +204,97 @@ export default function AIDocumentProcessingPage() {
 
     setExtracting(true);
     setExtracted(null);
+    setExtractionProgress(0);
 
     try {
-      setExtractionPhase("رفع الملفات للتخزين...");
-      const tempId = `ai_${Date.now()}`;
-      const storagePaths: { path: string; name: string; mimeType: string }[] = [];
-
-      for (let idx = 0; idx < uploadedFiles.length; idx++) {
-        const uf = uploadedFiles[idx];
-        setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploading" as FileStatus } : f));
-        const filePath = `${tempId}/${Date.now()}_${uf.name}`;
-        const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
-        if (!uploadErr) {
-          storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.file.type });
-          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploaded" as FileStatus, storagePath: filePath } : f));
-        } else {
-          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "error" as FileStatus, errorMsg: uploadErr.message } : f));
+      if (useMock) {
+        // Mock simulation with animated progress
+        for (const phase of phases) {
+          setExtractionPhase(phase.label);
+          const steps = 5;
+          const startProg = phase.target - 20;
+          for (let s = 0; s < steps; s++) {
+            await delay(300 + Math.random() * 200);
+            setExtractionProgress(Math.min(startProg + ((phase.target - startProg) * (s + 1)) / steps, phase.target));
+          }
         }
+
+        setExtractionProgress(100);
+        setExtractionPhase("اكتمل التحليل!");
+        await delay(400);
+
+        const result = generateMockResult(uploadedFiles);
+        setExtracted(result);
+
+        if (result.documentCategories) {
+          setUploadedFiles(prev => prev.map(f => {
+            const cat = result.documentCategories.find(dc => dc.fileName === f.name);
+            return cat ? {
+              ...f, status: "uploaded" as FileStatus,
+              category: cat.category,
+              categoryLabel: cat.categoryLabel || DOC_CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
+              relevance: cat.relevance,
+              extractedInfo: cat.extractedInfo,
+            } : { ...f, status: "uploaded" as FileStatus };
+          }));
+        }
+
+        toast.success(`تم تحليل ${result.analyzedFilesCount} مستند بنجاح (وضع تجريبي)`);
+      } else {
+        // Real extraction
+        setExtractionPhase(phases[0].label);
+        setExtractionProgress(5);
+        const tempId = `ai_${Date.now()}`;
+        const storagePaths: { path: string; name: string; mimeType: string }[] = [];
+
+        for (let idx = 0; idx < uploadedFiles.length; idx++) {
+          const uf = uploadedFiles[idx];
+          setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploading" as FileStatus } : f));
+          const filePath = `${tempId}/${Date.now()}_${uf.name}`;
+          const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+          if (!uploadErr) {
+            storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.file.type });
+            setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "uploaded" as FileStatus, storagePath: filePath } : f));
+          } else {
+            setUploadedFiles(prev => prev.map((f, i) => i === idx ? { ...f, status: "error" as FileStatus, errorMsg: uploadErr.message } : f));
+          }
+          setExtractionProgress(5 + ((idx + 1) / uploadedFiles.length) * 20);
+        }
+
+        setExtractionPhase(phases[2].label);
+        setExtractionProgress(40);
+
+        const { data, error } = await supabase.functions.invoke("extract-documents", {
+          body: {
+            fileNames: uploadedFiles.map(f => f.name),
+            fileDescriptions: [],
+            storagePaths,
+          },
+        });
+
+        setExtractionProgress(90);
+
+        if (error) throw error;
+
+        const result = data as ExtractedData;
+        setExtractionProgress(100);
+        setExtracted(result);
+
+        if (result.documentCategories) {
+          setUploadedFiles(prev => prev.map(f => {
+            const cat = result.documentCategories.find(dc => dc.fileName === f.name);
+            return cat ? {
+              ...f,
+              category: cat.category,
+              categoryLabel: cat.categoryLabel || DOC_CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
+              relevance: cat.relevance,
+              extractedInfo: cat.extractedInfo,
+            } : f;
+          }));
+        }
+
+        toast.success(`تم تحليل ${result.analyzedFilesCount || uploadedFiles.length} مستند بنجاح`);
       }
-
-      setExtractionPhase("تحليل محتوى المستندات بالذكاء الاصطناعي...");
-      const { data, error } = await supabase.functions.invoke("extract-documents", {
-        body: {
-          fileNames: uploadedFiles.map(f => f.name),
-          fileDescriptions: [],
-          storagePaths,
-        },
-      });
-
-      if (error) throw error;
-
-      const result = data as ExtractedData;
-      setExtracted(result);
-
-      if (result.documentCategories) {
-        setUploadedFiles(prev => prev.map(f => {
-          const cat = result.documentCategories.find(dc => dc.fileName === f.name);
-          return cat ? {
-            ...f,
-            category: cat.category,
-            categoryLabel: cat.categoryLabel || DOC_CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
-            relevance: cat.relevance,
-            extractedInfo: cat.extractedInfo,
-          } : f;
-        }));
-      }
-
-      toast.success(`تم تحليل ${result.analyzedFilesCount || uploadedFiles.length} مستند بنجاح`);
     } catch (err: any) {
       if (err?.message?.includes("429") || err?.status === 429) {
         toast.error("تم تجاوز الحد المسموح، يرجى المحاولة لاحقاً");
@@ -187,8 +306,9 @@ export default function AIDocumentProcessingPage() {
     } finally {
       setExtracting(false);
       setExtractionPhase("");
+      setExtractionProgress(0);
     }
-  }, [uploadedFiles]);
+  }, [uploadedFiles, useMock]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -290,16 +410,23 @@ export default function AIDocumentProcessingPage() {
                   })}
                 </div>
 
+                {/* Mock toggle */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input type="checkbox" checked={useMock} onChange={(e) => setUseMock(e.target.checked)}
+                    className="rounded border-border accent-primary w-3.5 h-3.5" />
+                  <span className="text-[11px] text-muted-foreground">وضع تجريبي (Mock)</span>
+                </label>
+
                 {/* Analyze button */}
                 <button
                   onClick={runExtraction}
                   disabled={extracting}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50"
                 >
                   {extracting ? (
                     <><Loader2 className="w-4 h-4 animate-spin" /><span className="text-xs">{extractionPhase}</span></>
                   ) : (
-                    <><Brain className="w-4 h-4" />تحليل بالذكاء الاصطناعي</>
+                    <><Brain className="w-4 h-4" />{useMock ? "تحليل تجريبي" : "تحليل بالذكاء الاصطناعي"}</>
                   )}
                 </button>
               </div>
@@ -317,11 +444,30 @@ export default function AIDocumentProcessingPage() {
             )}
 
             {extracting && (
-              <div className="bg-card rounded-lg border border-border p-12 text-center">
-                <Loader2 className="w-12 h-12 mx-auto mb-4 text-primary animate-spin" />
-                <h3 className="text-lg font-semibold text-foreground mb-1">جارٍ التحليل...</h3>
-                <p className="text-sm text-muted-foreground">{extractionPhase}</p>
-                <Progress value={extractionPhase.includes("رفع") ? 30 : 70} className="h-1.5 mt-4 max-w-xs mx-auto" />
+              <div className="bg-card rounded-lg border border-border p-8 space-y-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">جارٍ التحليل...</h3>
+                    <p className="text-xs text-muted-foreground">{extractionPhase}</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">التقدم</span>
+                    <span className="font-medium text-foreground">{Math.round(extractionProgress)}%</span>
+                  </div>
+                  <Progress value={extractionProgress} className="h-2" />
+                  <div className="flex justify-between text-[10px] text-muted-foreground/60">
+                    {phases.map((p, i) => (
+                      <span key={i} className={extractionProgress >= p.target ? "text-primary font-medium" : ""}>
+                        {i + 1}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             )}
 
