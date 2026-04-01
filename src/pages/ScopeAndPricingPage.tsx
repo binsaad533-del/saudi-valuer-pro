@@ -11,7 +11,7 @@ import {
   AlertTriangle, ArrowRight, Loader2, Building2, MapPin, RefreshCw,
   Edit3, ChevronDown, ChevronUp, Calculator, Shield, Clock, Star,
   Wrench, Layers, Home, Target, Landmark, Scale, Gavel,
-  Briefcase, TrendingUp, RotateCcw, HeartPulse,
+  Briefcase, TrendingUp, RotateCcw, HeartPulse, Send, UserCheck, Users,
 } from "lucide-react";
 
 interface PurposeOption {
