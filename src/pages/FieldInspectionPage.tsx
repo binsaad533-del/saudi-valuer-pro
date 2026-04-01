@@ -519,6 +519,47 @@ export default function FieldInspectionPage() {
     setPhotos(prev => prev.filter(p => p !== photo));
   };
 
+  const updatePhotoDescription = (photo: PhotoItem, description: string) => {
+    setPhotos(prev => prev.map(p => p === photo ? { ...p, description } : p));
+  };
+
+  const suggestCategoryFromDescription = (desc: string): string | null => {
+    const d = desc.toLowerCase();
+    const keywords: Record<string, string[]> = {
+      exterior_front: ["واجهة أمام", "المدخل", "الباب الرئيسي", "front"],
+      exterior_back: ["واجهة خلف", "خلفي", "back"],
+      exterior_left: ["يسرى", "يسار", "left"],
+      exterior_right: ["يمنى", "يمين", "right"],
+      street_view: ["شارع", "طريق", "street"],
+      surroundings: ["محيط", "جيران", "حي", "surrounding"],
+      interior_living: ["صالة", "معيشة", "مجلس", "living"],
+      interior_kitchen: ["مطبخ", "kitchen"],
+      interior_bathroom: ["حمام", "دورة مياه", "bathroom"],
+      interior_bedroom: ["غرفة نوم", "bedroom"],
+      site_plan: ["مخطط", "كروكي", "plan", "رسم"],
+      floor_plan: ["دور", "طابق", "floor"],
+      deed_photo: ["صك", "deed", "وثيقة", "عقد"],
+      problem_cracks: ["تشقق", "شرخ", "crack", "كسر"],
+      problem_moisture: ["رطوبة", "تسرب", "moisture", "water leak"],
+      problem_other: ["مشكلة", "عيب", "تلف", "damage"],
+    };
+    for (const [cat, words] of Object.entries(keywords)) {
+      if (words.some(w => d.includes(w))) return cat;
+    }
+    return null;
+  };
+
+  const handlePhotoDescriptionChange = (photo: PhotoItem, description: string) => {
+    updatePhotoDescription(photo, description);
+    const suggested = suggestCategoryFromDescription(description);
+    if (suggested && suggested !== photo.category) {
+      // Auto-move to suggested category
+      setPhotos(prev => prev.map(p => p === photo ? { ...p, description, category: suggested } : p));
+      const catLabel = PHOTO_CATEGORIES.find(c => c.key === suggested)?.label || suggested;
+      toast.info(`📂 تم نقل الصورة تلقائياً إلى: ${catLabel}`);
+    }
+  };
+
   const requiredPhotoDone = PHOTO_CATEGORIES.filter(c => c.required).filter(c => photos.some(p => p.category === c.key)).length;
   const requiredPhotoTotal = PHOTO_CATEGORIES.filter(c => c.required).length;
   const checkedRequired = checklist.filter(c => c.is_required && c.is_checked).length;
