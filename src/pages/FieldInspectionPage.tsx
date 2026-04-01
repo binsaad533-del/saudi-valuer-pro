@@ -2051,7 +2051,82 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
   );
 }
 
-function SectionValueFactors({ formData, updateField }: any) {
+function SectionLayoutAreas({ formData, updateField }: any) {
+  const numFloors = formData.num_floors ? parseInt(formData.num_floors) : 0;
+  const floorAreas = formData.floor_areas ? formData.floor_areas.split(",") : [];
+
+  const updateFloorArea = (index: number, value: string) => {
+    const areas = formData.floor_areas ? formData.floor_areas.split(",") : [];
+    while (areas.length <= index) areas.push("");
+    areas[index] = value;
+    updateField("floor_areas", areas.join(","));
+  };
+
+  const floorLabels = (i: number) => {
+    if (i === 0) return "البدروم / القبو";
+    if (i === 1) return "الدور الأرضي";
+    if (i === 2) return "الدور الأول";
+    if (i === 3) return "الدور الثاني";
+    if (i === 4) return "الدور الثالث";
+    return `الدور ${i - 1}`;
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={9} title="المخطط والمساحات" icon={LayoutGrid} subtitle="تفصيل المساحات لكل دور" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="مساحة البناء الكلية (م²)" required>
+            <Input type="number" value={formData.total_building_area} onChange={(e: any) => updateField("total_building_area", e.target.value)} placeholder="مثال: 450" />
+          </FieldGroup>
+          <FieldGroup label="عدد الأدوار (للتفصيل)">
+            <Input type="number" min={1} max={10} value={formData.floor_count_detail} onChange={(e: any) => updateField("floor_count_detail", e.target.value)} placeholder="مثال: 3" />
+          </FieldGroup>
+        </div>
+
+        {formData.floor_count_detail && parseInt(formData.floor_count_detail) > 0 && (
+          <>
+            <Separator />
+            <p className="text-xs font-bold text-muted-foreground">📐 مساحة كل دور (م²)</p>
+            <div className="space-y-2">
+              {Array.from({ length: Math.min(parseInt(formData.floor_count_detail), 10) }).map((_, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground w-28 shrink-0">{floorLabels(i)}</span>
+                  <Input
+                    type="number"
+                    value={floorAreas[i] || ""}
+                    onChange={(e: any) => updateFloorArea(i, e.target.value)}
+                    placeholder="م²"
+                    className="flex-1"
+                  />
+                </div>
+              ))}
+            </div>
+            {floorAreas.filter((a: string) => a && parseFloat(a) > 0).length > 0 && (
+              <div className="bg-muted/50 rounded-lg p-3 text-center">
+                <p className="text-xs text-muted-foreground">إجمالي مساحات الأدوار</p>
+                <p className="text-lg font-bold text-primary">
+                  {floorAreas.reduce((sum: number, a: string) => sum + (parseFloat(a) || 0), 0).toLocaleString("ar-SA")} م²
+                </p>
+                {formData.total_building_area && Math.abs(floorAreas.reduce((sum: number, a: string) => sum + (parseFloat(a) || 0), 0) - parseFloat(formData.total_building_area)) > 1 && (
+                  <p className="text-xs text-destructive mt-1">⚠️ يختلف عن المساحة الكلية المدخلة ({parseFloat(formData.total_building_area).toLocaleString("ar-SA")} م²)</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        <FieldGroup label="ملاحظات المخطط">
+          <Textarea value={formData.layout_notes} onChange={(e: any) => updateField("layout_notes", e.target.value)} placeholder="ملاحظات عن توزيع المساحات، الملاحق، السطح..." rows={2} />
+        </FieldGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+
   return (
     <Card>
       <CardHeader className="pb-3">
