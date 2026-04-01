@@ -1776,6 +1776,20 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
         </CardContent>
       </Card>
       <SectionPhotoUpload section="utilities" label="صور المرافق والخدمات" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
+
+      <AiSuggestionBox
+        sectionKey="utilities"
+        promptHint="تحليل حالة المرافق والخدمات المتوفرة"
+        context={{
+          electricity: formData.electricity,
+          water: formData.water,
+          sewage: formData.sewage,
+          roads_paved: formData.roads_paved,
+          utilities_notes: formData.utilities_notes,
+          checklist_done: checklist.filter((c: any) => c.is_checked).length,
+          checklist_total: checklist.length,
+        }}
+      />
     </div>
   );
 }
