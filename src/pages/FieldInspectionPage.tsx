@@ -121,6 +121,15 @@ interface FormData {
   asset_description: string;
   current_use: string;
   highest_best_use: string;
+  total_area: string;
+  front_north_length: string;
+  front_north_desc: string;
+  front_south_length: string;
+  front_south_desc: string;
+  front_east_length: string;
+  front_east_desc: string;
+  front_west_length: string;
+  front_west_desc: string;
   land_area: string;
   building_area: string;
   num_floors: string;
