@@ -196,6 +196,7 @@ interface FormData {
   interior_halls_count: string;
   interior_bathrooms_count_num: string;
   interior_kitchens_count: string;
+  interior_overall_finishing: string;
   interior_notes: string;
   overall_condition: string;
   asset_age: string;
