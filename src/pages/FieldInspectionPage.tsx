@@ -373,6 +373,7 @@ export default function FieldInspectionPage() {
               );
             })}
           </div>
+        </div>
       </div>
 
       {/* Step content */}
