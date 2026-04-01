@@ -513,6 +513,7 @@ export default function FieldInspectionPage() {
     !!(formData.interior_floors_type),
     !!(formData.overall_condition),
     true,
+    !!(formData.total_building_area),
     true,
     requiredPhotoDone === requiredPhotoTotal,
     !!(formData.has_risks),
