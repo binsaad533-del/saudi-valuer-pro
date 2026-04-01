@@ -763,6 +763,8 @@ export default function AIReportGenerationPage() {
               const isExpanded = expandedSection === key;
               const isEditing = editingSection === key;
 
+              const SectionIcon = SECTION_ICONS[key] || FileText;
+
               return (
                 <Card key={key} className="transition-all">
                   <div
@@ -770,7 +772,9 @@ export default function AIReportGenerationPage() {
                     onClick={() => setExpandedSection(isExpanded ? null : key)}
                   >
                     <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <SectionIcon className="w-3.5 h-3.5 text-primary" />
+                      </div>
                       <span className="font-medium text-sm">{sec.title_ar || key}</span>
                     </div>
                     <div className="flex items-center gap-2">
