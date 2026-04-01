@@ -205,8 +205,10 @@ export default function AIReportGenerationPage() {
       setAggregatedData(data);
       toast.success("تم جمع جميع البيانات المرتبطة بالطلب");
     } catch (err: any) {
-      setDataError(err.message || "خطأ في جمع البيانات");
-      toast.error(err.message || "خطأ في جمع البيانات");
+      const msg = err.message || "خطأ في جمع البيانات";
+      setDataError(msg);
+      setStepErrors(prev => ({ ...prev, 0: msg }));
+      toast.error(msg);
     } finally {
       setIsLoadingData(false);
     }
