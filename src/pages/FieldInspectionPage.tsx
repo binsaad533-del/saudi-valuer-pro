@@ -245,6 +245,8 @@ interface FormData {
   positive_factors_other: string;
   negative_factors: Record<string, string>;
   negative_factors_other: string;
+  environmental_factors: string;
+  regulatory_factors: string;
   inspector_observations: string;
   inspector_recommendations: string;
   additional_notes: string;
