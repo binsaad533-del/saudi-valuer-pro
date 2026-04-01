@@ -209,6 +209,7 @@ export default function ScopeAndPricingPage() {
                   { label: "أساس القيمة", value: scope.valuationBasis, icon: Star },
                   { label: "نوع المعاينة", value: scope.inspectionType, icon: Building2 },
                   { label: "المنهجية الرئيسية", value: scope.primaryApproach, icon: Calculator },
+                  { label: "المنهجية الثانوية", value: scope.secondaryApproach || "—", icon: Calculator },
                   { label: "المدة المتوقعة", value: `${scope.estimatedDays} أيام عمل`, icon: Clock },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/20 border border-border/30">
@@ -222,6 +223,19 @@ export default function ScopeAndPricingPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Approach Justification */}
+              {scope.approachJustification && (
+                <div className="px-4 pb-2">
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">تبرير اختيار المنهجيات</p>
+                      <p className="text-xs text-foreground leading-relaxed">{scope.approachJustification}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Approaches */}
               <div className="p-4">
