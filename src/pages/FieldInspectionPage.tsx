@@ -1866,7 +1866,7 @@ function SectionFinalCheck({ formData, updateField, sectionComplete, photos, che
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={11} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
+        <SectionHeader num={12} title="التحقق النهائي" icon={FileCheck} subtitle="مراجعة اكتمال جميع البيانات" />
       </CardHeader>
       <CardContent className="space-y-3">
         {reviewItems.map((item, i) => (
