@@ -1205,16 +1205,17 @@ export default function AIReportGenerationPage() {
               const isEditing = editingSection === key;
 
               const SectionIcon = SECTION_ICONS[key] || FileText;
+              const sColor = SECTION_COLORS[key] || DEFAULT_SECTION_COLOR;
 
               return (
-                <Card key={key} className="transition-all">
+                <Card key={key} className={`transition-all ${isExpanded ? `border-l-2 ${sColor.accent}` : ""}`}>
                   <div
                     className="flex items-center justify-between p-4 cursor-pointer hover:bg-muted/30 transition-colors"
                     onClick={() => setExpandedSection(isExpanded ? null : key)}
                   >
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                        <SectionIcon className="w-3.5 h-3.5 text-primary" />
+                      <div className={`w-7 h-7 rounded-lg ${sColor.bg} flex items-center justify-center shrink-0`}>
+                        <SectionIcon className={`w-3.5 h-3.5 ${sColor.text}`} />
                       </div>
                       <span className="font-medium text-sm">{sec.title_ar || key}</span>
                     </div>
