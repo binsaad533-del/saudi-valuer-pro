@@ -1112,7 +1112,7 @@ export default function AIReportGenerationPage() {
             </div>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col-reverse lg:flex-row gap-4">
             {/* ─── Main Content ─── */}
             <div className="flex-1 min-w-0 space-y-4">
 
@@ -1322,7 +1322,7 @@ export default function AIReportGenerationPage() {
             </div>
 
             {/* ─── Sticky Sidebar: Report Summary ─── */}
-            <div className="hidden lg:block w-72 shrink-0">
+            <div className="w-full lg:w-72 shrink-0">
               <div className="sticky top-4 space-y-3">
                 {/* Final Value */}
                 <Card className="border-primary/30 bg-primary/5">
