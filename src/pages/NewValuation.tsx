@@ -2,21 +2,14 @@ import { useState, useMemo, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Upload,
-  FileText,
-  CheckCircle2,
-  AlertTriangle,
-  AlertCircle,
-  Eye,
-  Send,
-  Loader2,
-  Sparkles,
-  X,
-  FolderUp,
-  Brain,
+  ChevronLeft, ChevronRight, Upload, FileText, CheckCircle2,
+  AlertTriangle, AlertCircle, Eye, Send, Loader2, Sparkles, X,
+  FolderUp, Brain, FileSearch, Tag, Hash, Calendar, MapPin,
+  Building2, User, Phone, Mail, Ruler, FileCheck, ShieldCheck,
+  Image as ImageIcon, FileSpreadsheet, File,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -24,7 +17,7 @@ import { toast } from "sonner";
 // ── Steps ──
 const STEPS = [
   { id: 1, label: "رفع الوثائق" },
-  { id: 2, label: "البيانات المستخرجة" },
+  { id: 2, label: "تصنيف ومراجعة" },
   { id: 3, label: "عرض التقييم" },
   { id: 4, label: "المراجعة والإرسال" },
 ] as const;
@@ -44,13 +37,35 @@ const VALUE_BASES = [
   "قيمة الاستخدام الحالي (Existing Use Value)",
 ];
 
+const DOC_CATEGORIES = [
+  { value: "deed", label: "صك ملكية", icon: FileCheck },
+  { value: "building_permit", label: "رخصة بناء", icon: ShieldCheck },
+  { value: "floor_plan", label: "مخطط معماري", icon: Ruler },
+  { value: "property_photo", label: "صورة عقار", icon: ImageIcon },
+  { value: "identity_doc", label: "وثيقة هوية", icon: User },
+  { value: "invoice", label: "فاتورة / سند", icon: FileSpreadsheet },
+  { value: "contract", label: "عقد / اتفاقية", icon: FileText },
+  { value: "technical_report", label: "تقرير فني", icon: FileSearch },
+  { value: "location_map", label: "خريطة موقع", icon: MapPin },
+  { value: "other", label: "أخرى", icon: File },
+];
+
 // ── Types ──
 interface UploadedFile {
   file: File;
   name: string;
   size: number;
   category?: string;
+  categoryLabel?: string;
   relevance?: string;
+  extractedInfo?: string;
+  storagePath?: string;
+}
+
+interface ExtractedNumber {
+  label: string;
+  value: string;
+  source: string;
 }
 
 interface ExtractedData {
@@ -76,7 +91,11 @@ interface ExtractedData {
   };
   suggestedPurpose?: string;
   notes: string[];
-  documentCategories: { fileName: string; category: string; relevance: string }[];
+  documentCategories: { fileName: string; category: string; categoryLabel?: string; relevance: string; extractedInfo?: string }[];
+  extractedNumbers?: ExtractedNumber[];
+  analysisMethod?: string;
+  analyzedFilesCount?: number;
+  totalFilesCount?: number;
 }
 
 interface ActivityEntry {
@@ -91,6 +110,7 @@ export default function NewValuation() {
   const [currentStep, setCurrentStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const [extractionPhase, setExtractionPhase] = useState("");
   const [activityLog, setActivityLog] = useState<ActivityEntry[]>([]);
 
   // Step 1: uploaded files
@@ -134,7 +154,24 @@ export default function NewValuation() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  // ── AI Extraction ──
+  const getFileIcon = (fileName: string) => {
+    const ext = fileName.split(".").pop()?.toLowerCase();
+    if (["jpg", "jpeg", "png", "webp", "gif", "tif", "tiff"].includes(ext || "")) return ImageIcon;
+    if (ext === "pdf") return FileText;
+    if (["doc", "docx"].includes(ext || "")) return FileText;
+    if (["xls", "xlsx"].includes(ext || "")) return FileSpreadsheet;
+    return File;
+  };
+
+  // ── Update file category manually ──
+  const updateFileCategory = useCallback((index: number, category: string) => {
+    const catInfo = DOC_CATEGORIES.find(c => c.value === category);
+    setUploadedFiles(prev => prev.map((f, i) =>
+      i === index ? { ...f, category, categoryLabel: catInfo?.label || category } : f
+    ));
+  }, []);
+
+  // ── AI Extraction with content analysis ──
   const runExtraction = useCallback(async () => {
     if (uploadedFiles.length === 0) {
       toast.error("يجب رفع ملف واحد على الأقل");
@@ -145,10 +182,27 @@ export default function NewValuation() {
     logActivity(1, "بدء التحليل الذكي للوثائق");
 
     try {
+      // Phase 1: Upload files to storage for content analysis
+      setExtractionPhase("رفع الملفات...");
+      const tempId = `temp_${Date.now()}`;
+      const storagePaths: { path: string; name: string; mimeType: string }[] = [];
+
+      for (const uf of uploadedFiles) {
+        const filePath = `${tempId}/${Date.now()}_${uf.name}`;
+        const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+        if (!uploadErr) {
+          storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.file.type });
+          uf.storagePath = filePath;
+        }
+      }
+
+      // Phase 2: AI Analysis
+      setExtractionPhase("تحليل المحتوى بالذكاء الاصطناعي...");
       const { data, error } = await supabase.functions.invoke("extract-documents", {
         body: {
           fileNames: uploadedFiles.map(f => f.name),
           fileDescriptions: uploadedFiles.map(f => f.category || ""),
+          storagePaths,
         },
       });
 
@@ -181,19 +235,35 @@ export default function NewValuation() {
       if (result.documentCategories) {
         setUploadedFiles(prev => prev.map(f => {
           const cat = result.documentCategories.find(dc => dc.fileName === f.name);
-          return cat ? { ...f, category: cat.category, relevance: cat.relevance } : f;
+          return cat ? {
+            ...f,
+            category: cat.category,
+            categoryLabel: cat.categoryLabel || DOC_CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
+            relevance: cat.relevance,
+            extractedInfo: cat.extractedInfo,
+          } : f;
         }));
       }
 
       setCompletedSteps(prev => new Set(prev).add(1));
       setCurrentStep(2);
-      logActivity(1, `تم التحليل — نوع التقييم: ${result.discipline_label} (ثقة ${result.confidence}%)`);
+      const methodLabel = result.analysisMethod === "content_analysis"
+        ? `تحليل محتوى ${result.analyzedFilesCount} ملف`
+        : "تحليل أسماء الملفات";
+      logActivity(1, `تم التحليل — ${result.discipline_label} (ثقة ${result.confidence}%) — ${methodLabel}`);
       toast.success("تم تحليل الوثائق بنجاح");
     } catch (err: any) {
       console.error("Extraction error:", err);
-      toast.error(err?.message || "حدث خطأ أثناء تحليل الوثائق");
+      if (err?.message?.includes("429") || err?.status === 429) {
+        toast.error("تم تجاوز الحد المسموح، يرجى المحاولة لاحقاً");
+      } else if (err?.message?.includes("402") || err?.status === 402) {
+        toast.error("يرجى إضافة رصيد للاستمرار");
+      } else {
+        toast.error(err?.message || "حدث خطأ أثناء تحليل الوثائق");
+      }
     } finally {
       setExtracting(false);
+      setExtractionPhase("");
     }
   }, [uploadedFiles, logActivity]);
 
@@ -210,6 +280,7 @@ export default function NewValuation() {
       case 2:
         if (!clientFields.clientName?.trim()) errors.push("اسم العميل مطلوب");
         if (!assetFields.description?.trim()) warnings.push("وصف الأصل غير مكتمل");
+        if (uploadedFiles.some(f => !f.category)) warnings.push("بعض الملفات لم تُصنَّف بعد");
         break;
       case 3:
         if (!purpose) errors.push("يجب تحديد غرض التقييم");
@@ -269,7 +340,6 @@ export default function NewValuation() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { toast.error("يجب تسجيل الدخول أولاً"); setSubmitting(false); return; }
 
-      // 1. Create valuation request
       const { data: reqData, error: reqErr } = await supabase
         .from("valuation_requests")
         .insert({
@@ -284,29 +354,34 @@ export default function NewValuation() {
           client_phone: clientFields.phone || "",
           client_email: clientFields.email || "",
           intended_user_ar: clientFields.clientName || "",
-          asset_data: { ...assetFields, ai_extracted: true, ai_confidence: extracted?.confidence } as any,
+          asset_data: {
+            ...assetFields,
+            ai_extracted: true,
+            ai_confidence: extracted?.confidence,
+            analysis_method: extracted?.analysisMethod,
+            extracted_numbers: extracted?.extractedNumbers,
+          } as any,
         })
         .select("id")
         .single();
 
       if (reqErr) throw reqErr;
-
       logActivity(4, "تم إرسال الطلب");
 
-      // 2. Upload files to storage
+      // Move temp files to request folder or re-upload
       if (reqData?.id) {
         for (const uf of uploadedFiles) {
-          const filePath = `${reqData.id}/${Date.now()}_${uf.name}`;
-          await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+          if (!uf.storagePath) {
+            const filePath = `${reqData.id}/${Date.now()}_${uf.name}`;
+            await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+          }
         }
-        logActivity(4, `تم رفع ${uploadedFiles.length} ملف`);
+        logActivity(4, `تم ربط ${uploadedFiles.length} ملف`);
       }
 
-      // 3. Trigger automation pipeline
       logActivity(4, "بدء سير العمل التلقائي بالذكاء الاصطناعي...");
       toast.success("تم إنشاء ملف التقييم — سير العمل التلقائي بدأ");
 
-      // Fire automation in background (don't block UI)
       if (reqData?.id) {
         supabase.functions.invoke("workflow-orchestrator", {
           body: { request_id: reqData.id },
@@ -323,8 +398,11 @@ export default function NewValuation() {
 
   const allStepValidations = useMemo(() => STEPS.map(s => ({ step: s, validation: validateStep(s.id) })), [validateStep]);
 
-  // ── Drag & drop ──
   const [dragOver, setDragOver] = useState(false);
+
+  // Stats for step 2
+  const classifiedCount = uploadedFiles.filter(f => f.category).length;
+  const highRelevanceCount = uploadedFiles.filter(f => f.relevance === "high").length;
 
   return (
     <div className="min-h-screen">
@@ -382,6 +460,9 @@ export default function NewValuation() {
             <div className="flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full bg-accent border border-accent text-accent-foreground">
               <Sparkles className="w-3 h-3" />
               <span>{extracted.discipline_label} — ثقة {extracted.confidence}%</span>
+              {extracted.analysisMethod === "content_analysis" && (
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 mr-1">تحليل محتوى</Badge>
+              )}
             </div>
           )}
         </div>
@@ -394,7 +475,7 @@ export default function NewValuation() {
             <div className="space-y-6">
               <div>
                 <h3 className="font-semibold text-foreground mb-1">رفع الوثائق</h3>
-                <p className="text-sm text-muted-foreground mb-5">ارفع جميع المستندات المتوفرة دفعة واحدة (صكوك، رخص، صور، فواتير، تقارير...)</p>
+                <p className="text-sm text-muted-foreground mb-5">ارفع جميع المستندات المتوفرة دفعة واحدة — سيتم تحليل المحتوى الفعلي للملفات</p>
               </div>
 
               {/* Drop zone */}
@@ -411,12 +492,12 @@ export default function NewValuation() {
                   type="file"
                   multiple
                   className="hidden"
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.tif,.tiff"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.tif,.tiff,.webp"
                   onChange={(e) => handleFilesSelected(e.target.files)}
                 />
                 <FolderUp className={`w-12 h-12 mx-auto mb-3 ${dragOver ? "text-primary" : "text-muted-foreground"}`} />
                 <p className="text-sm font-medium text-foreground mb-1">اسحب الملفات هنا أو اضغط للاختيار</p>
-                <p className="text-xs text-muted-foreground">PDF, صور, Word, Excel — بدون حد لعدد الملفات</p>
+                <p className="text-xs text-muted-foreground">PDF, صور, Word, Excel — يتم تحليل محتوى الملفات بالذكاء الاصطناعي</p>
               </div>
 
               {/* File list */}
@@ -427,20 +508,30 @@ export default function NewValuation() {
                     <button onClick={() => fileInputRef.current?.click()} className="text-xs text-primary hover:underline">+ إضافة المزيد</button>
                   </div>
                   <div className="space-y-1.5 max-h-60 overflow-y-auto">
-                    {uploadedFiles.map((f, i) => (
-                      <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm text-foreground truncate">{f.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{formatFileSize(f.size)}</p>
+                    {uploadedFiles.map((f, i) => {
+                      const Icon = getFileIcon(f.name);
+                      return (
+                        <div key={i} className="flex items-center justify-between p-3 rounded-lg border border-border bg-muted/20">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <div className="min-w-0">
+                              <p className="text-sm text-foreground truncate">{f.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{formatFileSize(f.size)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {f.category && (
+                              <Badge variant="secondary" className="text-[10px]">
+                                {f.categoryLabel || f.category}
+                              </Badge>
+                            )}
+                            <button onClick={() => removeFile(i)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
                           </div>
                         </div>
-                        <button onClick={() => removeFile(i)} className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -453,24 +544,40 @@ export default function NewValuation() {
                   className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   {extracting ? (
-                    <><Loader2 className="w-4 h-4 animate-spin" />جارٍ تحليل الوثائق بالذكاء الاصطناعي...</>
+                    <><Loader2 className="w-4 h-4 animate-spin" />{extractionPhase || "جارٍ تحليل الوثائق بالذكاء الاصطناعي..."}</>
                   ) : (
-                    <><Brain className="w-4 h-4" />تحليل الوثائق بالذكاء الاصطناعي</>
+                    <><Brain className="w-4 h-4" />تحليل المحتوى بالذكاء الاصطناعي</>
                   )}
                 </button>
               )}
             </div>
           )}
 
-          {/* ─── Step 2: Extracted Data (editable) ─── */}
+          {/* ─── Step 2: Classification & Review ─── */}
           {currentStep === 2 && extracted && (
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Sparkles className="w-5 h-5 text-primary" />
-                  <h3 className="font-semibold text-foreground">البيانات المستخرجة</h3>
+                  <FileSearch className="w-5 h-5 text-primary" />
+                  <h3 className="font-semibold text-foreground">تصنيف المستندات والبيانات المستخرجة</h3>
                 </div>
-                <p className="text-sm text-muted-foreground mb-5">تم استخراج البيانات التالية تلقائياً — يمكنك التعديل أو الإكمال</p>
+                <p className="text-sm text-muted-foreground mb-2">
+                  تم تحليل {extracted.analyzedFilesCount || 0} ملف بالمحتوى الفعلي — راجع التصنيف والبيانات المستخرجة
+                </p>
+                {/* Analysis method badge */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant={extracted.analysisMethod === "content_analysis" ? "default" : "secondary"} className="text-[10px]">
+                    {extracted.analysisMethod === "content_analysis" ? "🔍 تحليل محتوى فعلي" : "📝 تحليل أسماء الملفات"}
+                  </Badge>
+                  <Badge variant="outline" className="text-[10px]">
+                    {classifiedCount}/{uploadedFiles.length} مُصنَّف
+                  </Badge>
+                  {highRelevanceCount > 0 && (
+                    <Badge variant="outline" className="text-[10px] border-success/30 text-success">
+                      {highRelevanceCount} مستند مهم
+                    </Badge>
+                  )}
+                </div>
               </div>
 
               {/* AI Notes */}
@@ -486,18 +593,113 @@ export default function NewValuation() {
                 </div>
               )}
 
+              {/* Document Classification Table */}
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
+                  <Tag className="w-4 h-4 text-primary" />
+                  تصنيف المستندات
+                </h4>
+                <div className="space-y-2">
+                  {uploadedFiles.map((f, i) => {
+                    const Icon = getFileIcon(f.name);
+                    const catInfo = DOC_CATEGORIES.find(c => c.value === f.category);
+                    const CatIcon = catInfo?.icon || File;
+                    return (
+                      <div key={i} className={`rounded-lg border p-3 transition-colors ${
+                        f.relevance === "high" ? "border-success/30 bg-success/5" :
+                        f.relevance === "medium" ? "border-warning/30 bg-warning/5" :
+                        "border-border bg-muted/10"
+                      }`}>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-start gap-3 min-w-0 flex-1">
+                            <Icon className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" />
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{formatFileSize(f.size)}</p>
+                              {f.extractedInfo && (
+                                <p className="text-xs text-muted-foreground mt-1 bg-muted/40 rounded px-2 py-1">
+                                  💡 {f.extractedInfo}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {/* Relevance badge */}
+                            <Badge variant="outline" className={`text-[9px] px-1.5 ${
+                              f.relevance === "high" ? "border-success/50 text-success" :
+                              f.relevance === "medium" ? "border-warning/50 text-warning" :
+                              "text-muted-foreground"
+                            }`}>
+                              {f.relevance === "high" ? "مهم" : f.relevance === "medium" ? "متوسط" : "منخفض"}
+                            </Badge>
+                            {/* Category select */}
+                            <Select value={f.category || ""} onValueChange={(val) => updateFileCategory(i, val)}>
+                              <SelectTrigger className="h-7 text-[11px] w-32 border-border">
+                                <SelectValue placeholder="التصنيف">
+                                  {catInfo ? (
+                                    <span className="flex items-center gap-1">
+                                      <CatIcon className="w-3 h-3" />
+                                      {catInfo.label}
+                                    </span>
+                                  ) : "تصنيف..."}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent>
+                                {DOC_CATEGORIES.map(cat => (
+                                  <SelectItem key={cat.value} value={cat.value} className="text-xs">
+                                    <span className="flex items-center gap-2">
+                                      <cat.icon className="w-3.5 h-3.5" />
+                                      {cat.label}
+                                    </span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Extracted Numbers */}
+              {extracted.extractedNumbers && extracted.extractedNumbers.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
+                    <Hash className="w-4 h-4 text-primary" />
+                    بيانات مستخرجة من المحتوى
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {extracted.extractedNumbers.map((en, i) => (
+                      <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-muted-foreground">{en.label}</p>
+                          <p className="text-sm font-semibold text-foreground">{en.value}</p>
+                          <p className="text-[10px] text-muted-foreground/60">من: {en.source}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Client data */}
               <div>
-                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">بيانات العميل</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  بيانات العميل
+                </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {[
-                    { key: "clientName", label: "اسم العميل / الجهة", required: true },
-                    { key: "idNumber", label: "رقم الهوية / السجل التجاري", required: false },
-                    { key: "phone", label: "رقم الجوال", required: false },
-                    { key: "email", label: "البريد الإلكتروني", required: false },
+                    { key: "clientName", label: "اسم العميل / الجهة", required: true, icon: User },
+                    { key: "idNumber", label: "رقم الهوية / السجل التجاري", required: false, icon: Hash },
+                    { key: "phone", label: "رقم الجوال", required: false, icon: Phone },
+                    { key: "email", label: "البريد الإلكتروني", required: false, icon: Mail },
                   ].map(f => (
                     <div key={f.key}>
-                      <label className="block text-sm font-medium text-foreground mb-1.5">
+                      <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
+                        <f.icon className="w-3.5 h-3.5 text-muted-foreground" />
                         {f.label} {f.required && <span className="text-destructive">*</span>}
                       </label>
                       <input
@@ -515,7 +717,10 @@ export default function NewValuation() {
 
               {/* Asset data */}
               <div>
-                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">بيانات الأصل</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-primary" />
+                  بيانات الأصل
+                </h4>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">وصف الأصل</label>
@@ -528,17 +733,20 @@ export default function NewValuation() {
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { key: "city", label: "المدينة" },
-                      { key: "district", label: "الحي / الموقع" },
-                      { key: "area", label: "المساحة (م²)" },
-                      { key: "deedNumber", label: "رقم الصك" },
-                      { key: "classification", label: "التصنيف" },
-                      { key: "machineName", label: "اسم المعدة" },
-                      { key: "manufacturer", label: "الشركة المصنعة" },
-                      { key: "model", label: "الموديل" },
+                      { key: "city", label: "المدينة", icon: MapPin },
+                      { key: "district", label: "الحي / الموقع", icon: MapPin },
+                      { key: "area", label: "المساحة (م²)", icon: Ruler },
+                      { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
+                      { key: "classification", label: "التصنيف", icon: Tag },
+                      { key: "machineName", label: "اسم المعدة", icon: Building2 },
+                      { key: "manufacturer", label: "الشركة المصنعة", icon: Building2 },
+                      { key: "model", label: "الموديل", icon: Tag },
                     ].map(f => (
                       <div key={f.key}>
-                        <label className="block text-sm font-medium text-foreground mb-1.5">{f.label}</label>
+                        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
+                          <f.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                          {f.label}
+                        </label>
                         <input
                           type="text"
                           value={assetFields[f.key] || ""}
@@ -550,27 +758,6 @@ export default function NewValuation() {
                   </div>
                 </div>
               </div>
-
-              {/* Document categories from AI */}
-              {extracted.documentCategories.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2">تصنيف الوثائق</h4>
-                  <div className="space-y-1.5">
-                    {extracted.documentCategories.map((dc, i) => (
-                      <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-muted/30 text-sm">
-                        <span className="text-foreground">{dc.fileName}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground text-xs">{dc.category}</span>
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded
-                            ${dc.relevance === "high" ? "bg-success/10 text-success" : dc.relevance === "medium" ? "bg-warning/10 text-warning" : "bg-muted text-muted-foreground"}`}>
-                            {dc.relevance === "high" ? "مهم" : dc.relevance === "medium" ? "متوسط" : "منخفض"}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -592,7 +779,7 @@ export default function NewValuation() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between"><span className="text-muted-foreground">نوع التقييم</span><span className="font-medium text-foreground flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" />{extracted?.discipline_label || "-"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{clientFields.clientName || "-"}</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">الوثائق</span><span className="font-medium text-foreground">{uploadedFiles.length} ملف</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">الوثائق</span><span className="font-medium text-foreground">{uploadedFiles.length} ملف ({classifiedCount} مُصنَّف)</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetFields.description || "-"}</span></div>
                   </div>
                 </div>
@@ -655,9 +842,10 @@ export default function NewValuation() {
                 {[
                   { label: "نوع التقييم (ذكاء اصطناعي)", value: extracted?.discipline_label || "-" },
                   { label: "مستوى الثقة", value: `${extracted?.confidence || 0}%` },
+                  { label: "طريقة التحليل", value: extracted?.analysisMethod === "content_analysis" ? "تحليل محتوى فعلي" : "تحليل أسماء الملفات" },
                   { label: "العميل", value: clientFields.clientName || "-" },
                   { label: "رقم الهوية", value: clientFields.idNumber || "-" },
-                  { label: "عدد الوثائق", value: `${uploadedFiles.length} ملف` },
+                  { label: "عدد الوثائق", value: `${uploadedFiles.length} ملف (${classifiedCount} مُصنَّف)` },
                   { label: "وصف الأصل", value: assetFields.description || "-" },
                   { label: "غرض التقييم", value: purpose || "-" },
                   { label: "أساس القيمة", value: valueBasis },
@@ -669,6 +857,31 @@ export default function NewValuation() {
                   </div>
                 ))}
               </div>
+
+              {/* Document summary */}
+              {uploadedFiles.some(f => f.category) && (
+                <div className="p-4 rounded-lg bg-muted/30 border border-border">
+                  <h4 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <Tag className="w-4 h-4" />
+                    ملخص المستندات
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(
+                      uploadedFiles.reduce((acc, f) => {
+                        if (f.category) {
+                          const label = f.categoryLabel || DOC_CATEGORIES.find(c => c.value === f.category)?.label || f.category;
+                          acc[label] = (acc[label] || 0) + 1;
+                        }
+                        return acc;
+                      }, {} as Record<string, number>)
+                    ).map(([label, count]) => (
+                      <Badge key={label} variant="secondary" className="text-xs">
+                        {label}: {count}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {allStepValidations.some(sv => sv.validation.warnings.length > 0) && (
                 <div className="p-4 rounded-lg bg-warning/10 border border-warning/30 space-y-2">
@@ -718,7 +931,6 @@ export default function NewValuation() {
               {submitting ? <><Loader2 className="w-4 h-4 animate-spin" />جارٍ الإنشاء...</> : <><Send className="w-4 h-4" />إنشاء ملف التقييم</>}
             </button>
           ) : currentStep === 1 ? (
-            // Step 1 needs AI analysis first
             uploadedFiles.length > 0 && extracted ? (
               <button onClick={goNext} className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-medium gradient-primary text-primary-foreground hover:opacity-90 transition-all">
                 التالي<ChevronLeft className="w-4 h-4" />
