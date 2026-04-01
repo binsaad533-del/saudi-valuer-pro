@@ -114,6 +114,8 @@ interface FormData {
   gps_lat: number | null;
   gps_lng: number | null;
   access_ease: string;
+  surrounding_positives: string;
+  surrounding_negatives: string;
   matches_documents: string;
   asset_description: string;
   current_use: string;
@@ -174,6 +176,8 @@ const defaultFormData: FormData = {
   gps_lat: null,
   gps_lng: null,
   access_ease: "",
+  surrounding_positives: "",
+  surrounding_negatives: "",
   matches_documents: "",
   asset_description: "",
   current_use: "",
@@ -648,6 +652,15 @@ function SectionLocation({ formData, updateField, gpsLoading, gpsError, onCaptur
               </label>
             ))}
           </RadioGroup>
+        </FieldGroup>
+
+        <Separator />
+
+        <FieldGroup label="✅ إيجابيات المحيط">
+          <Textarea value={formData.surrounding_positives} onChange={(e: any) => updateField("surrounding_positives", e.target.value)} placeholder="مثال: قرب من مدارس ومساجد، شوارع مسفلتة، إنارة جيدة، حدائق..." rows={3} />
+        </FieldGroup>
+        <FieldGroup label="⚠️ سلبيات المحيط">
+          <Textarea value={formData.surrounding_negatives} onChange={(e: any) => updateField("surrounding_negatives", e.target.value)} placeholder="مثال: ضوضاء، ازدحام مروري، قرب من محطة كهرباء، أرض فضاء مهملة..." rows={3} />
         </FieldGroup>
 
         <SectionPhotoUpload section="location" label="صور الموقع والمحيط" photos={sectionPhotos} onAdd={onAddPhoto} onRemove={onRemovePhoto} />
