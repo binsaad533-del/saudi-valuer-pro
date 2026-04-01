@@ -194,12 +194,13 @@ export default function AIDocumentProcessingPage() {
       );
     }
     if (cats.has("building_permit")) {
-      const src = files[categorized.findIndex(c => c.category === "building_permit")]?.name || "رخصة بناء";
+      const permitSrc = files[categorized.findIndex(c => c.category === "building_permit")]?.name || "رخصة بناء";
       numbers.push(
-        { label: "رقم الرخصة", value: "44/2891", source: src },
-        { label: "تاريخ الرخصة", value: "1443/06/12 هـ", source: src },
-        { label: "عدد الأدوار المرخصة", value: "دورين + ملحق علوي", source: src },
-        { label: "نسبة البناء المسموحة", value: "60%", source: src },
+        { label: "رقم الرخصة", value: "RB-2024-789", source: permitSrc },
+        { label: "مساحة البناء المرخصة", value: "320 م²", source: permitSrc },
+        { label: "عدد الطوابق", value: "طابقين", source: permitSrc },
+        { label: "تاريخ الرخصة", value: "1445/02/10 هـ", source: permitSrc },
+        { label: "نسبة ثقة الاستخراج", value: "91%", source: permitSrc },
       );
     }
     if (cats.has("floor_plan")) {
