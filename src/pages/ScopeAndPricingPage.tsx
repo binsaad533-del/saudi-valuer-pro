@@ -18,13 +18,17 @@ interface ScopeData {
   valuationBasis: string;
   approaches: string[];
   primaryApproach: string;
+  secondaryApproach?: string;
+  approachJustification?: string;
   inspectionType: string;
+  inspectionRequirements?: string[];
   deliverables: string[];
   estimatedDays: number;
   assumptions: string[];
   limitations: string[];
   requiredDocuments?: string[];
   specialConsiderations?: string[];
+  complianceNotes?: string[];
 }
 
 interface PricingBreakdown {
@@ -205,6 +209,7 @@ export default function ScopeAndPricingPage() {
                   { label: "أساس القيمة", value: scope.valuationBasis, icon: Star },
                   { label: "نوع المعاينة", value: scope.inspectionType, icon: Building2 },
                   { label: "المنهجية الرئيسية", value: scope.primaryApproach, icon: Calculator },
+                  { label: "المنهجية الثانوية", value: scope.secondaryApproach || "—", icon: Calculator },
                   { label: "المدة المتوقعة", value: `${scope.estimatedDays} أيام عمل`, icon: Clock },
                 ].map((item) => (
                   <div key={item.label} className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/20 border border-border/30">
@@ -218,6 +223,19 @@ export default function ScopeAndPricingPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Approach Justification */}
+              {scope.approachJustification && (
+                <div className="px-4 pb-2">
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/10">
+                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground mb-0.5">تبرير اختيار المنهجيات</p>
+                      <p className="text-xs text-foreground leading-relaxed">{scope.approachJustification}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Approaches */}
               <div className="p-4">
@@ -292,7 +310,33 @@ export default function ScopeAndPricingPage() {
                 </div>
               )}
 
-              {/* Editor */}
+              {/* Inspection Requirements */}
+              {scope.inspectionRequirements && scope.inspectionRequirements.length > 0 && (
+                <div className="p-4">
+                  <h4 className="text-xs font-bold text-foreground mb-2">متطلبات المعاينة</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {scope.inspectionRequirements.map((r, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs text-foreground">
+                        <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Compliance Notes */}
+              {scope.complianceNotes && scope.complianceNotes.length > 0 && (
+                <div className="p-4">
+                  <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات الامتثال</h4>
+                  {scope.complianceNotes.map((c, i) => (
+                    <div key={i} className="flex items-start gap-2 text-xs text-foreground py-1">
+                      <Shield className="w-3 h-3 text-primary shrink-0 mt-0.5" /> {c}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {editingScope && (
                 <div className="p-4 bg-muted/10">
                   <h4 className="text-xs font-bold text-foreground mb-2">ملاحظات تعديل النطاق</h4>
