@@ -295,7 +295,7 @@ export default function ClientsManagement() {
     else { setSortField(field); setSortAsc(false); }
   };
 
-  const formatCurrency = (v: number) => v.toLocaleString("ar-SA", { style: "currency", currency: "SAR", maximumFractionDigits: 0 });
+  const formatCurrency = (v: number) => formatNumber(v) + " ر.س";
 
   const CategoryBadge = ({ category, manual }: { category: string; manual?: boolean }) => {
     const cfg = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.regular;
