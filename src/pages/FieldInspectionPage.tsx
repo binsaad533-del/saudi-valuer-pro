@@ -344,6 +344,7 @@ const defaultFormData: FormData = {
   asset_age: "",
   finishing_level: "",
   condition_notes: "",
+  maintenance_rating: "",
   electricity_status: "",
   electricity_condition: "",
   water_source: "",
