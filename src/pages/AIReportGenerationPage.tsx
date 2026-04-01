@@ -152,6 +152,7 @@ export default function AIReportGenerationPage() {
 
   const [step, setStep] = useState<PipelineStep>(0);
   const [requestId, setRequestId] = useState(initialRequestId);
+  const [stepErrors, setStepErrors] = useState<Record<number, string | null>>({});
 
   // Data collection state
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -169,6 +170,19 @@ export default function AIReportGenerationPage() {
   const [reviewOutput, setReviewOutput] = useState("");
   const reviewRef = useRef("");
   const [isReviewing, setIsReviewing] = useState(false);
+
+  // Helper to determine step status
+  const getStepStatus = (idx: number): "idle" | "loading" | "done" | "error" => {
+    if (stepErrors[idx]) return "error";
+    if (idx < step) return "done";
+    if (idx === step) {
+      if (idx === 0 && isLoadingData) return "loading";
+      if (idx === 1 && isGenerating) return "loading";
+      if (idx === 3 && isReviewing) return "loading";
+      return "idle";
+    }
+    return "idle";
+  };
 
   /* ─── Step 0: Collect Data ─── */
   const handleCollectData = useCallback(async () => {
