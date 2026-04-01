@@ -21,6 +21,7 @@ import {
   Sparkles,
   LogOut,
   Brain,
+  Calculator,
 } from "lucide-react";
 const logo = "/favicon.png";
 
