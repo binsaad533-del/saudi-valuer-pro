@@ -1302,6 +1302,91 @@ export default function ScopeAndPricingPage() {
             )}
           </div>
         )}
+        {/* Manager Review Section */}
+        {scope && pricing && !loading && (
+          <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            <div className="p-4 border-b border-border bg-gradient-to-l from-primary/5 to-transparent">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <UserCheck className="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">مراجعة المدير</h3>
+                    <p className="text-[10px] text-muted-foreground">إرسال نطاق العمل والتسعير المقترح للمدير والإدارة للاعتماد</p>
+                  </div>
+                </div>
+                {sentToManager && (
+                  <Badge className="text-[9px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    تم الإرسال
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {sentToManager ? (
+              <div className="p-5 space-y-4">
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                  <Send className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-foreground">تم إرسال الطلب بنجاح</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">تم إرسال نطاق العمل والتسعير المقترح إلى المدير (أواب) والإدارة للمراجعة والاعتماد</p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-[10px] text-muted-foreground font-semibold">تم الإرسال إلى:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border/50">
+                      <UserCheck className="w-3 h-3 text-primary" />
+                      <span className="text-[10px] font-medium text-foreground">أواب المالكي — المدير العام</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-muted/30 border border-border/50">
+                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-[10px] font-medium text-foreground">الإدارة المالية</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/30">
+                    <p className="text-[9px] text-muted-foreground">الإجمالي المقترح</p>
+                    <p className="text-xs font-bold text-primary">{formatCurrency(pricing.totalPrice)}</p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/30">
+                    <p className="text-[9px] text-muted-foreground">المدة المقدرة</p>
+                    <p className="text-xs font-bold text-foreground">{scope.estimatedDays} أيام</p>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-muted/20 border border-border/30">
+                    <p className="text-[9px] text-muted-foreground">حالة الاعتماد</p>
+                    <p className="text-xs font-bold text-yellow-600 dark:text-yellow-400">بانتظار المراجعة</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 space-y-3">
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/20 border border-border/30">
+                  <Shield className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    سيتم إرسال ملخص شامل يتضمن: نطاق العمل، المنهجية المقترحة، التسعير التفصيلي ({formatCurrency(pricing.totalPrice)} شامل الضريبة)، والافتراضات والشروط المقيدة — إلى المدير (أواب) وإدارة الشركة للمراجعة والاعتماد النهائي.
+                  </p>
+                </div>
+                <Button
+                  className="w-full gap-2 py-5 rounded-xl"
+                  size="lg"
+                  onClick={() => {
+                    setSentToManager(true);
+                    toast.success("تم إرسال الطلب والتسعير المقترح للمدير (أواب) والإدارة للاعتماد");
+                  }}
+                >
+                  <Send className="w-5 h-5" />
+                  إرسال للمدير والإدارة
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
