@@ -60,6 +60,7 @@ const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+    <LanguageProvider>
     <TooltipProvider>
       <Toaster />
       <Sonner />
