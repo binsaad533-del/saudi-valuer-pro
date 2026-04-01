@@ -287,7 +287,7 @@ export default function ScopeAndPricingPage() {
   };
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat("ar-SA").format(Math.round(amount)) + " ر.س";
+    formatNumber(Math.round(amount)) + " ر.س";
 
   if (!extractedData) {
     return (

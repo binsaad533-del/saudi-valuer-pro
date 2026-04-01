@@ -335,7 +335,7 @@ export default function RequestDetails() {
                     {request.payment_structure === "partial" && (
                       <div className="mt-2 text-xs text-muted-foreground space-y-1">
                         <p>الدفعة الأولى: {formatNumber(Number(request.first_payment_amount))} ر.س</p>
-                        <p>الدفعة النهائية: {(request.total_fees - request.first_payment_amount).toLocaleString()} ر.س</p>
+                        <p>الدفعة النهائية: {formatNumber(request.total_fees - request.first_payment_amount)} ر.س</p>
                       </div>
                     )}
                   </div>

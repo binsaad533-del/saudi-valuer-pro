@@ -1177,7 +1177,7 @@ export default function AIReportGenerationPage() {
                   <div>
                     <p className="text-xs text-muted-foreground">القيمة النهائية المستنتجة</p>
                     <p className="text-2xl font-bold text-primary mt-1">
-                      {reportDraft.final_value.amount?.toLocaleString()} {reportDraft.final_value.currency || "ر.س"}
+                      {formatNumber(reportDraft.final_value.amount ?? 0)} {reportDraft.final_value.currency || "ر.س"}
                     </p>
                     {reportDraft.final_value.text_ar && (
                       <p className="text-xs text-muted-foreground mt-1">{reportDraft.final_value.text_ar}</p>

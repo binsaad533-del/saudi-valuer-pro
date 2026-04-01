@@ -448,8 +448,8 @@ export default function ClientRequests() {
                 />
                 {pricingForm.quotationAmount && (
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>الدفعة الأولى: {(parseFloat(pricingForm.quotationAmount) * parseFloat(pricingForm.firstPaymentPercentage) / 100).toLocaleString()} ر.س</span>
-                    <span>الدفعة النهائية: {(parseFloat(pricingForm.quotationAmount) * (1 - parseFloat(pricingForm.firstPaymentPercentage) / 100)).toLocaleString()} ر.س</span>
+                    <span>الدفعة الأولى: {formatNumber(parseFloat(pricingForm.quotationAmount) * parseFloat(pricingForm.firstPaymentPercentage) / 100)} ر.س</span>
+                    <span>الدفعة النهائية: {formatNumber(parseFloat(pricingForm.quotationAmount) * (1 - parseFloat(pricingForm.firstPaymentPercentage) / 100))} ر.س</span>
                   </div>
                 )}
               </div>

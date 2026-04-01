@@ -98,7 +98,7 @@ export default function ValuationProduction() {
       setEngineResult(result);
       toast({
         title: "✅ اكتمل محرك التقييم",
-        description: `القيمة النهائية: ${result.final_value?.toLocaleString()} ر.س`,
+        description: `القيمة النهائية: ${formatNumber(result.final_value ?? 0)} ر.س`,
       });
       await loadData();
     } catch (err: any) {
@@ -253,7 +253,7 @@ export default function ValuationProduction() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-lg bg-primary/5 text-center">
                     <p className="text-sm text-muted-foreground">القيمة النهائية</p>
-                    <p className="text-2xl font-bold text-primary" dir="ltr">{engineResult.final_value?.toLocaleString()} SAR</p>
+                    <p className="text-2xl font-bold text-primary" dir="ltr">{formatNumber(engineResult.final_value ?? 0)} SAR</p>
                     <p className="text-xs text-muted-foreground mt-1">{engineResult.final_value_text_ar}</p>
                   </div>
                   <div className="p-4 rounded-lg bg-muted/50 text-center">
