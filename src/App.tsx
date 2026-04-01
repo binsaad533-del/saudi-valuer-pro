@@ -141,6 +141,9 @@ const App = () => (
           <Route path="/verify" element={<VerifyReport />} />
           <Route path="/verify/:token" element={<VerifyReport />} />
 
+          {/* Field Inspection (standalone) */}
+          <Route path="/field-inspection" element={<FieldInspectionPage />} />
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
