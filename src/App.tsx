@@ -49,6 +49,7 @@ import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
 import CFODashboardPage from "@/pages/CFODashboardPage";
+import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -94,6 +95,7 @@ const App = () => (
             <Route path="/inspectors" element={<InspectorsListPage />} />
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
+            <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
