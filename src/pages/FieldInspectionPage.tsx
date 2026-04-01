@@ -2052,7 +2052,6 @@ function SectionUtilities({ formData, updateField, checklist, setChecklist, sect
 }
 
 function SectionLayoutAreas({ formData, updateField }: any) {
-  const numFloors = formData.num_floors ? parseInt(formData.num_floors) : 0;
   const floorAreas = formData.floor_areas ? formData.floor_areas.split(",") : [];
 
   const updateFloorArea = (index: number, value: string) => {
