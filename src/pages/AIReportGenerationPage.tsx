@@ -515,6 +515,17 @@ export default function AIReportGenerationPage() {
                   {isLoadingData ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                   جمع البيانات
                 </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setRequestId("mock-demo-001");
+                    setAggregatedData(MOCK_AGGREGATED_DATA);
+                    toast.success("تم تحميل البيانات التجريبية");
+                  }}
+                  className="gap-2 text-xs"
+                >
+                  <Database className="w-4 h-4" /> بيانات تجريبية
+                </Button>
               </div>
 
               {dataError && (
