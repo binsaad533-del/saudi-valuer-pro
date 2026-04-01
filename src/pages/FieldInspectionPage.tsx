@@ -57,13 +57,14 @@ const STEPS = [
   { key: "location", label: "بيانات الموقع", icon: MapPin, num: 2 },
   { key: "verification", label: "التحقق من الأصل", icon: Building2, num: 3 },
   { key: "dimensions", label: "المساحات", icon: Ruler, num: 4 },
-  { key: "condition", label: "حالة الأصل", icon: Wrench, num: 5 },
-  { key: "utilities", label: "المرافق", icon: Zap, num: 6 },
-  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 7 },
-  { key: "documentation", label: "التوثيق", icon: Camera, num: 8 },
-  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 9 },
-  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 10 },
-  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 11 },
+  { key: "exterior", label: "المبنى - الخارج", icon: Home, num: 5 },
+  { key: "condition", label: "حالة الأصل", icon: Wrench, num: 6 },
+  { key: "utilities", label: "المرافق", icon: Zap, num: 7 },
+  { key: "value_factors", label: "العوامل المؤثرة", icon: TrendingUp, num: 8 },
+  { key: "documentation", label: "التوثيق", icon: Camera, num: 9 },
+  { key: "risks", label: "المخاطر", icon: ShieldAlert, num: 10 },
+  { key: "final_check", label: "التحقق النهائي", icon: FileCheck, num: 11 },
+  { key: "approval", label: "الاعتماد", icon: UserCheck, num: 12 },
 ];
 
 /* ═══════ Types ═══════ */
