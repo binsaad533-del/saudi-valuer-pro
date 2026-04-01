@@ -396,6 +396,7 @@ export default function FieldInspectionPage() {
     !!(formData.city && formData.gps_lat),
     !!(formData.matches_documents && formData.asset_description),
     !!(formData.land_area || formData.building_area),
+    !!(formData.exterior_facade_material),
     !!(formData.overall_condition),
     true,
     true,
