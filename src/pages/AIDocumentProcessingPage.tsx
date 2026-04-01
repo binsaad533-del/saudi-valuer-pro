@@ -90,7 +90,7 @@ export default function AIDocumentProcessingPage() {
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
     const newFiles: UploadedFile[] = Array.from(files).map(f => ({
-      file: f, name: f.name, size: f.size,
+      file: f, name: f.name, size: f.size, status: "pending" as FileStatus,
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
   }, []);
