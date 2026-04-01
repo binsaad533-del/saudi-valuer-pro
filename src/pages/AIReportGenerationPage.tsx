@@ -880,12 +880,56 @@ export default function AIReportGenerationPage() {
                             </div>
                           ))}
 
+                          {/* Confidence indicator */}
+                          {sectionConfidence[key] && (
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className="text-muted-foreground">نسبة الثقة:</span>
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-24 h-1.5 rounded-full bg-muted overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${
+                                      sectionConfidence[key] >= 80 ? "bg-primary" : sectionConfidence[key] >= 60 ? "bg-yellow-500" : "bg-destructive"
+                                    }`}
+                                    style={{ width: `${sectionConfidence[key]}%` }}
+                                  />
+                                </div>
+                                <span className={`font-bold ${
+                                  sectionConfidence[key] >= 80 ? "text-primary" : sectionConfidence[key] >= 60 ? "text-yellow-600" : "text-destructive"
+                                }`}>
+                                  {sectionConfidence[key]}%
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
                           <div className="flex gap-2 justify-end">
-                            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => handleCopy(sec.content_ar || "")}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs"
+                              onClick={() => handleCopy(sec.content_ar || "")}
+                            >
                               <Copy className="w-3 h-3" /> نسخ
                             </Button>
-                            <Button variant="ghost" size="sm" className="gap-1 text-xs" onClick={() => { setEditingSection(key); setEditBuffer(sec.content_ar || ""); }}>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs"
+                              onClick={() => { setEditingSection(key); setEditBuffer(sec.content_ar || ""); }}
+                            >
                               <Edit3 className="w-3 h-3" /> تعديل
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="gap-1 text-xs text-primary"
+                              disabled={regeneratingSection === key}
+                              onClick={() => handleRegenerateSection(key)}
+                            >
+                              {regeneratingSection === key
+                                ? <Loader2 className="w-3 h-3 animate-spin" />
+                                : <RefreshCw className="w-3 h-3" />}
+                              إعادة توليد
                             </Button>
                           </div>
                         </>
