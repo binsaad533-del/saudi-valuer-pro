@@ -7,7 +7,7 @@ import {
   Brain, FileText, FolderUp, Loader2, X, Sparkles, Tag, Hash,
   FileSearch, File, FileCheck, ShieldCheck, Ruler, User, MapPin,
   Building2, Phone, Mail, Image as ImageIcon, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Copy, Download,
+  CheckCircle2, AlertTriangle, ChevronDown, ChevronUp, Copy, Upload,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
