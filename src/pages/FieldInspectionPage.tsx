@@ -164,6 +164,9 @@ interface FormData {
   exterior_fence_condition: string;
   exterior_parking: string;
   exterior_parking_count: string;
+  exterior_parking_condition: string;
+  exterior_main_entrance_type: string;
+  exterior_main_entrance_condition: string;
   exterior_landscaping: string;
   exterior_entrance_count: string;
   exterior_notes: string;
