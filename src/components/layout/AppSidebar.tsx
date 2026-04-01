@@ -20,6 +20,7 @@ import {
   MapPin,
   Sparkles,
   LogOut,
+  Brain,
 } from "lucide-react";
 const logo = "/favicon.png";
 
@@ -65,6 +66,13 @@ const navSections: NavSection[] = [
       { label: "طلبات العملاء", icon: ClipboardCheck, path: "/client-requests", roles: ["owner", "admin_coordinator"] },
       { label: "المعاينات", icon: MapPin, path: "/inspectors", roles: ["owner", "admin_coordinator"] },
       { label: "العملاء", icon: Users, path: "/clients-management", roles: ["owner", "admin_coordinator"] },
+    ],
+    roles: ["owner", "admin_coordinator"],
+  },
+  {
+    title: "الذكاء",
+    items: [
+      { label: "استخراج المستندات", icon: Brain, path: "/ai-document-processing", roles: ["owner", "admin_coordinator"] },
     ],
     roles: ["owner", "admin_coordinator"],
   },
