@@ -739,61 +739,140 @@ export default function AIDocumentProcessingPage() {
                 {extracted && (() => {
                   const nums = extracted.extractedNumbers || [];
                   const getNum = (label: string) => nums.find(n => n.label === label);
-                  const isLowConfidence = (source: string) => {
+                  
+                  // Get confidence level for a source document
+                  const getConfLevel = (source: string): "high" | "medium" | "low" | null => {
                     const conf = nums.find(n => n.label.includes("ثقة") && n.source === source);
-                    return conf ? parseInt(conf.value) < 80 : false;
+                    if (!conf) return null;
+                    const val = parseInt(conf.value);
+                    if (val >= 85) return "high";
+                    if (val >= 70) return "medium";
+                    return "low";
                   };
 
-                  const fieldCard = (label: string, value: string | undefined, icon: React.ElementType, lowConf?: boolean) => {
+                  const confStyles = {
+                    high: {
+                      bg: "bg-emerald-50 dark:bg-emerald-950/20",
+                      border: "border-emerald-200 dark:border-emerald-800",
+                      icon: "text-emerald-600 dark:text-emerald-400",
+                      text: "text-emerald-700 dark:text-emerald-300",
+                      badge: "border-emerald-300 text-emerald-600 dark:text-emerald-400",
+                      label: "مؤكد",
+                    },
+                    medium: {
+                      bg: "bg-yellow-50 dark:bg-yellow-950/20",
+                      border: "border-yellow-200 dark:border-yellow-700",
+                      icon: "text-yellow-600 dark:text-yellow-400",
+                      text: "text-yellow-700 dark:text-yellow-300",
+                      badge: "border-yellow-400 text-yellow-600 dark:text-yellow-400",
+                      label: "يحتاج تأكيد",
+                    },
+                    low: {
+                      bg: "bg-red-50 dark:bg-red-950/20",
+                      border: "border-red-200 dark:border-red-800",
+                      icon: "text-red-600 dark:text-red-400",
+                      text: "text-red-700 dark:text-red-300",
+                      badge: "border-red-300 text-red-600 dark:text-red-400",
+                      label: "غير موثوق",
+                    },
+                  };
+
+                  const fieldCard = (label: string, value: string | undefined, icon: React.ElementType, conf?: "high" | "medium" | "low" | null) => {
                     if (!value) return null;
                     const Icon = icon;
+                    const style = conf && conf !== "high" ? confStyles[conf] : null;
                     return (
-                      <div className={`flex items-center gap-2 p-2.5 rounded-lg border group transition-colors ${
-                        lowConf
-                          ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-300 dark:border-yellow-700"
-                          : "bg-muted/30 border-border/50"
+                      <div dir="rtl" className={`flex items-center gap-3 p-2.5 rounded-lg border group transition-colors ${
+                        style ? `${style.bg} ${style.border}` : "bg-muted/30 border-border/50"
                       }`}>
-                        <Icon className={`w-3.5 h-3.5 shrink-0 ${lowConf ? "text-yellow-600 dark:text-yellow-400" : "text-muted-foreground"}`} />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-muted-foreground">{label}</p>
-                          <p className={`text-xs font-medium ${lowConf ? "text-yellow-700 dark:text-yellow-300" : "text-foreground"}`}>{value}</p>
+                        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
+                          style ? style.bg : "bg-primary/10"
+                        }`}>
+                          <Icon className={`w-3.5 h-3.5 ${style ? style.icon : "text-primary"}`} />
                         </div>
-                        {lowConf && (
-                          <Badge variant="outline" className="text-[8px] h-4 px-1 border-yellow-400 text-yellow-600 dark:text-yellow-400 shrink-0">
-                            <AlertTriangle className="w-2 h-2 ml-0.5" />
-                            غير مؤكد
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[10px] text-muted-foreground leading-relaxed">{label}</p>
+                          <p className={`text-xs font-semibold leading-relaxed ${style ? style.text : "text-foreground"}`}>{value}</p>
+                        </div>
+                        {style && (
+                          <Badge variant="outline" className={`text-[8px] h-4 px-1.5 shrink-0 ${style.badge}`}>
+                            {conf === "low" ? <AlertTriangle className="w-2 h-2 ml-1" /> : <AlertTriangle className="w-2 h-2 ml-1" />}
+                            {style.label}
                           </Badge>
                         )}
+                        {conf === "high" && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        )}
                         <button onClick={() => copyToClipboard(value)}
-                          className="p-0.5 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground shrink-0">
-                          <Copy className="w-2.5 h-2.5" />
+                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground shrink-0">
+                          <Copy className="w-3 h-3" />
                         </button>
                       </div>
                     );
                   };
 
-                  const planLowConf = isLowConfidence(nums.find(n => n.label === "غرف النوم")?.source || "");
-                  const _contractLowConf = isLowConfidence(nums.find(n => n.label === "قيمة الإيجار السنوي")?.source || "");
+                  const deedConf = getConfLevel(nums.find(n => n.source?.includes("صك"))?.source || "");
+                  const permitConf = getConfLevel(nums.find(n => n.source?.includes("رخصة"))?.source || "");
+                  const planConf = getConfLevel(nums.find(n => n.source?.includes("مخطط"))?.source || "");
+                  const contractConf = getConfLevel(nums.find(n => n.source?.includes("إيجار") || n.source?.includes("عقد"))?.source || "");
 
                   const hasPropertyInfo = extracted.asset?.description || extracted.asset?.city || extracted.asset?.area;
                   const hasOwnership = extracted.client?.clientName || extracted.asset?.deedNumber;
                   const hasBuildingInfo = getNum("مساحة البناء المرخصة") || getNum("عدد الطوابق") || getNum("غرف النوم");
                   const hasRentalInfo = getNum("قيمة الإيجار السنوي");
 
+                  // Confidence summary
+                  const allConfs = [deedConf, permitConf, planConf, contractConf].filter(Boolean) as ("high" | "medium" | "low")[];
+                  const highCount = allConfs.filter(c => c === "high").length;
+                  const medCount = allConfs.filter(c => c === "medium").length;
+                  const lowCount = allConfs.filter(c => c === "low").length;
+
                   return (
-                    <div className="space-y-3">
-                      <div className="bg-card rounded-lg border border-border overflow-hidden">
-                        <div className="p-4 border-b border-border bg-muted/20">
+                    <div className="space-y-3" dir="rtl">
+                      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+                        {/* Header */}
+                        <div className="p-4 border-b border-border bg-gradient-to-l from-primary/5 to-transparent">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <Sparkles className="w-4 h-4 text-primary" />
-                              <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Sparkles className="w-4 h-4 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
+                                <p className="text-[11px] text-muted-foreground">تم تجميع البيانات من {extracted.totalFilesCount} مستند</p>
+                              </div>
                             </div>
                             <Badge variant="outline" className="text-[10px]">
                               {nums.length + Object.values(extracted.client || {}).filter(Boolean).length + Object.values(extracted.asset || {}).filter(Boolean).length} حقل
                             </Badge>
                           </div>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">تم تجميع جميع البيانات من {extracted.totalFilesCount} مستند في نموذج موحد</p>
+
+                          {/* Confidence Summary Bar */}
+                          {allConfs.length > 0 && (
+                            <div className="flex items-center gap-3 mt-3 p-2 rounded-lg bg-muted/30 border border-border/50">
+                              <span className="text-[10px] text-muted-foreground shrink-0">مستوى الثقة:</span>
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {highCount > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                    {highCount} عالي
+                                  </span>
+                                )}
+                                {medCount > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-yellow-600 dark:text-yellow-400 font-medium">
+                                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
+                                    {medCount} متوسط
+                                  </span>
+                                )}
+                                {lowCount > 0 && (
+                                  <span className="flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 font-medium">
+                                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                                    {lowCount} منخفض
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="divide-y divide-border">
@@ -801,16 +880,18 @@ export default function AIDocumentProcessingPage() {
                           {hasPropertyInfo && (
                             <div className="p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Building2 className="w-4 h-4 text-primary" />
-                                <h4 className="text-xs font-semibold text-foreground">معلومات العقار</h4>
+                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                                  <Building2 className="w-3.5 h-3.5 text-primary" />
+                                </div>
+                                <h4 className="text-xs font-bold text-foreground">معلومات العقار</h4>
                                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0">النوع والموقع والمساحة</Badge>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("نوع العقار", extracted.asset?.description, Home)}
-                                {fieldCard("التصنيف", extracted.asset?.classification, Tag)}
-                                {fieldCard("المدينة", extracted.asset?.city, MapPin)}
-                                {fieldCard("الحي", extracted.asset?.district, MapPin)}
-                                {fieldCard("مساحة الأرض (م²)", extracted.asset?.area ? `${extracted.asset.area} م²` : undefined, Ruler)}
+                                {fieldCard("نوع العقار", extracted.asset?.description, Home, deedConf)}
+                                {fieldCard("التصنيف", extracted.asset?.classification, Tag, deedConf)}
+                                {fieldCard("المدينة", extracted.asset?.city, MapPin, deedConf)}
+                                {fieldCard("الحي", extracted.asset?.district, MapPin, deedConf)}
+                                {fieldCard("مساحة الأرض", extracted.asset?.area ? `${extracted.asset.area} م²` : undefined, Ruler, deedConf)}
                               </div>
                             </div>
                           )}
@@ -819,14 +900,16 @@ export default function AIDocumentProcessingPage() {
                           {hasOwnership && (
                             <div className="p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <FileCheck className="w-4 h-4 text-primary" />
-                                <h4 className="text-xs font-semibold text-foreground">معلومات الملكية</h4>
+                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                                  <FileCheck className="w-3.5 h-3.5 text-primary" />
+                                </div>
+                                <h4 className="text-xs font-bold text-foreground">معلومات الملكية</h4>
                                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والهوية</Badge>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("اسم المالك", extracted.client?.clientName, User)}
-                                {fieldCard("رقم الهوية", extracted.client?.idNumber, Hash)}
-                                {fieldCard("رقم الصك", extracted.asset?.deedNumber, FileCheck)}
+                                {fieldCard("اسم المالك", extracted.client?.clientName, User, deedConf)}
+                                {fieldCard("رقم الهوية", extracted.client?.idNumber, Hash, deedConf)}
+                                {fieldCard("رقم الصك", extracted.asset?.deedNumber, FileCheck, deedConf)}
                                 {fieldCard("الجوال", extracted.client?.phone, Phone)}
                                 {fieldCard("البريد الإلكتروني", extracted.client?.email, Mail)}
                               </div>
@@ -837,16 +920,18 @@ export default function AIDocumentProcessingPage() {
                           {hasBuildingInfo && (
                             <div className="p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <Home className="w-4 h-4 text-primary" />
-                                <h4 className="text-xs font-semibold text-foreground">معلومات البناء</h4>
+                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                                  <Home className="w-3.5 h-3.5 text-primary" />
+                                </div>
+                                <h4 className="text-xs font-bold text-foreground">معلومات البناء</h4>
                                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الرخصة والمخطط</Badge>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("مساحة البناء", getNum("مساحة البناء المرخصة")?.value, Ruler)}
-                                {fieldCard("عدد الطوابق", getNum("عدد الطوابق")?.value, Building2)}
-                                {fieldCard("غرف النوم", getNum("غرف النوم")?.value, Home, planLowConf)}
-                                {fieldCard("الصالات", getNum("الصالات")?.value, Home, planLowConf)}
-                                {fieldCard("المطبخ", getNum("المطبخ")?.value, Home, planLowConf)}
+                                {fieldCard("مساحة البناء", getNum("مساحة البناء المرخصة")?.value, Ruler, permitConf)}
+                                {fieldCard("عدد الطوابق", getNum("عدد الطوابق")?.value, Building2, permitConf)}
+                                {fieldCard("غرف النوم", getNum("غرف النوم")?.value, Home, planConf)}
+                                {fieldCard("الصالات", getNum("الصالات")?.value, Home, planConf)}
+                                {fieldCard("المطبخ", getNum("المطبخ")?.value, Home, planConf)}
                               </div>
                             </div>
                           )}
@@ -855,14 +940,16 @@ export default function AIDocumentProcessingPage() {
                           {hasRentalInfo && (
                             <div className="p-4">
                               <div className="flex items-center gap-2 mb-3">
-                                <FileText className="w-4 h-4 text-primary" />
-                                <h4 className="text-xs font-semibold text-foreground">معلومات الإيجار</h4>
+                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+                                  <FileText className="w-3.5 h-3.5 text-primary" />
+                                </div>
+                                <h4 className="text-xs font-bold text-foreground">معلومات الإيجار</h4>
                                 <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من عقد الإيجار</Badge>
                               </div>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("الإيجار السنوي", getNum("قيمة الإيجار السنوي")?.value, Hash)}
-                                {fieldCard("المستأجر", getNum("اسم المستأجر")?.value, User)}
-                                {fieldCard("مدة العقد", getNum("مدة العقد")?.value, FileText)}
+                                {fieldCard("الإيجار السنوي", getNum("قيمة الإيجار السنوي")?.value, Hash, contractConf)}
+                                {fieldCard("المستأجر", getNum("اسم المستأجر")?.value, User, contractConf)}
+                                {fieldCard("مدة العقد", getNum("مدة العقد")?.value, FileText, contractConf)}
                               </div>
                             </div>
                           )}
@@ -871,10 +958,12 @@ export default function AIDocumentProcessingPage() {
                           {extracted.suggestedPurpose && (
                             <div className="p-4">
                               <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
-                                <CheckCircle2 className="w-5 h-5 text-primary shrink-0" />
+                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                  <CheckCircle2 className="w-4 h-4 text-primary" />
+                                </div>
                                 <div>
                                   <p className="text-[10px] text-muted-foreground">غرض التقييم المقترح</p>
-                                  <p className="text-sm font-semibold text-foreground">{extracted.suggestedPurpose}</p>
+                                  <p className="text-sm font-bold text-foreground">{extracted.suggestedPurpose}</p>
                                 </div>
                               </div>
                             </div>
@@ -884,7 +973,7 @@ export default function AIDocumentProcessingPage() {
 
                       {/* زر المتابعة */}
                       <Button
-                        className="w-full gap-2 text-sm py-5"
+                        className="w-full gap-2 text-sm py-5 rounded-xl shadow-sm"
                         size="lg"
                         onClick={() => toast.success("جاري الانتقال لتحديد نطاق العمل...")}
                       >
