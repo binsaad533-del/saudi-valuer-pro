@@ -83,20 +83,20 @@ interface ChecklistItem {
 
 interface FormData {
   // Section 1: بيانات العقار الأساسية
+  request_number: string;
+  inspection_date: string;
+  inspector_name: string;
   asset_type: string;
   deed_number: string;
-  owner_name: string;
-  property_use: string;
-  property_number: string;
-  plan_number: string;
-  // Inspector info (auto/secondary)
-  assignment_ref: string;
-  valuer_name: string;
-  inspector_name: string;
-  inspection_date: string;
-  inspection_time: string;
   city: string;
   district: string;
+  street: string;
+  building_number: string;
+  valuation_purpose: string;
+  // Legacy/secondary
+  assignment_ref: string;
+  valuer_name: string;
+  inspection_time: string;
   detailed_address: string;
   gps_lat: number | null;
   gps_lng: number | null;
@@ -132,19 +132,19 @@ interface FormData {
 }
 
 const defaultFormData: FormData = {
-  asset_type: "real_estate",
-  deed_number: "",
-  owner_name: "",
-  property_use: "",
-  property_number: "",
-  plan_number: "",
-  assignment_ref: "",
-  valuer_name: "",
-  inspector_name: "",
+  request_number: `INS-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9000) + 1000)}`,
   inspection_date: new Date().toISOString().split("T")[0],
-  inspection_time: new Date().toTimeString().slice(0, 5),
+  inspector_name: "",
+  asset_type: "",
+  deed_number: "",
   city: "",
   district: "",
+  street: "",
+  building_number: "",
+  valuation_purpose: "",
+  assignment_ref: "",
+  valuer_name: "",
+  inspection_time: new Date().toTimeString().slice(0, 5),
   detailed_address: "",
   gps_lat: null,
   gps_lng: null,
@@ -438,63 +438,79 @@ function SectionGeneral({ formData, updateField }: { formData: FormData; updateF
   return (
     <Card>
       <CardHeader className="pb-3">
-        <SectionHeader num={1} title="بيانات العقار الأساسية" icon={Building2} subtitle="معلومات العقار والملكية" />
+        <SectionHeader num={1} title="بيانات العقار الأساسية" icon={Building2} subtitle="معلومات العقار والمعاينة" />
       </CardHeader>
       <CardContent className="space-y-4">
-        <FieldGroup label="نوع العقار" required>
-          <RadioGroup value={formData.asset_type} onValueChange={v => updateField("asset_type", v)} className="grid grid-cols-2 gap-2">
-            {[
-              { value: "real_estate", label: "أرض" },
-              { value: "villa", label: "فيلا" },
-              { value: "apartment", label: "شقة" },
-              { value: "commercial", label: "تجاري" },
-              { value: "building", label: "عمارة" },
-              { value: "facility", label: "منشأة" },
-              { value: "machinery", label: "آلات ومعدات" },
-              { value: "other", label: "أخرى" },
-            ].map(opt => (
-              <label key={opt.value} className={`flex items-center gap-2 border rounded-lg p-3 cursor-pointer transition-colors ${formData.asset_type === opt.value ? "border-primary bg-primary/5" : "border-border"}`}>
-                <RadioGroupItem value={opt.value} />
-                <span className="text-sm">{opt.label}</span>
-              </label>
-            ))}
-          </RadioGroup>
-        </FieldGroup>
-        <FieldGroup label="رقم الصك / العقد" required>
-          <Input value={formData.deed_number} onChange={e => updateField("deed_number", e.target.value)} placeholder="أدخل رقم الصك أو العقد" />
-        </FieldGroup>
-        <FieldGroup label="اسم المالك" required>
-          <Input value={formData.owner_name} onChange={e => updateField("owner_name", e.target.value)} placeholder="اسم مالك العقار" />
-        </FieldGroup>
-        <div className="grid grid-cols-2 gap-3">
-          <FieldGroup label="رقم القطعة">
-            <Input value={formData.property_number} onChange={e => updateField("property_number", e.target.value)} placeholder="رقم القطعة" />
-          </FieldGroup>
-          <FieldGroup label="رقم المخطط">
-            <Input value={formData.plan_number} onChange={e => updateField("plan_number", e.target.value)} placeholder="رقم المخطط" />
-          </FieldGroup>
+        {/* رقم الطلب التلقائي */}
+        <div className="bg-muted/50 border rounded-lg p-3 flex items-center justify-between">
+          <span className="text-xs text-muted-foreground">رقم الطلب</span>
+          <Badge variant="secondary" className="font-mono text-sm">{formData.request_number}</Badge>
         </div>
-        <FieldGroup label="الاستخدام المحدد بالصك">
-          <Input value={formData.property_use} onChange={e => updateField("property_use", e.target.value)} placeholder="مثال: سكني، تجاري، زراعي" />
-        </FieldGroup>
-        <Separator />
-        <p className="text-xs text-muted-foreground font-medium">بيانات المعاينة</p>
-        <div className="grid grid-cols-2 gap-3">
-          <FieldGroup label="رقم المهمة">
-            <Input value={formData.assignment_ref} onChange={e => updateField("assignment_ref", e.target.value)} placeholder="رقم المهمة" />
-          </FieldGroup>
-          <FieldGroup label="اسم المعاين" required>
-            <Input value={formData.inspector_name} onChange={e => updateField("inspector_name", e.target.value)} placeholder="اسمك الكامل" />
-          </FieldGroup>
-        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="تاريخ المعاينة" required>
             <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} />
           </FieldGroup>
-          <FieldGroup label="وقت المعاينة">
-            <Input type="time" value={formData.inspection_time} onChange={e => updateField("inspection_time", e.target.value)} />
+          <FieldGroup label="اسم المعاين" required>
+            <Input value={formData.inspector_name} onChange={e => updateField("inspector_name", e.target.value)} placeholder="الاسم الكامل" />
           </FieldGroup>
         </div>
+
+        <FieldGroup label="نوع العقار" required>
+          <RadioGroup value={formData.asset_type} onValueChange={v => updateField("asset_type", v)} className="grid grid-cols-3 gap-2">
+            {[
+              { value: "apartment", label: "شقة" },
+              { value: "villa", label: "فيلا" },
+              { value: "land", label: "أرض" },
+              { value: "commercial", label: "تجاري" },
+              { value: "industrial", label: "صناعي" },
+              { value: "other", label: "أخرى" },
+            ].map(opt => (
+              <label key={opt.value} className={`flex items-center justify-center gap-1.5 border rounded-lg p-2.5 cursor-pointer text-sm transition-colors ${formData.asset_type === opt.value ? "border-primary bg-primary/5 font-medium" : "border-border"}`}>
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                {opt.label}
+              </label>
+            ))}
+          </RadioGroup>
+        </FieldGroup>
+
+        <FieldGroup label="رقم الصك" required>
+          <Input value={formData.deed_number} onChange={e => updateField("deed_number", e.target.value)} placeholder="أدخل رقم الصك" />
+        </FieldGroup>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="المدينة" required>
+            <Input value={formData.city} onChange={e => updateField("city", e.target.value)} placeholder="مثال: الرياض" />
+          </FieldGroup>
+          <FieldGroup label="الحي" required>
+            <Input value={formData.district} onChange={e => updateField("district", e.target.value)} placeholder="مثال: النرجس" />
+          </FieldGroup>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FieldGroup label="الشارع">
+            <Input value={formData.street} onChange={e => updateField("street", e.target.value)} placeholder="اسم أو رقم الشارع" />
+          </FieldGroup>
+          <FieldGroup label="رقم المبنى">
+            <Input value={formData.building_number} onChange={e => updateField("building_number", e.target.value)} placeholder="رقم المبنى" />
+          </FieldGroup>
+        </div>
+
+        <FieldGroup label="الغرض من التقييم" required>
+          <Select value={formData.valuation_purpose} onValueChange={v => updateField("valuation_purpose", v)}>
+            <SelectTrigger><SelectValue placeholder="اختر الغرض من التقييم" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mortgage">رهن عقاري</SelectItem>
+              <SelectItem value="sale">بيع / شراء</SelectItem>
+              <SelectItem value="insurance">تأمين</SelectItem>
+              <SelectItem value="zakat">زكاة</SelectItem>
+              <SelectItem value="financial_reporting">قوائم مالية</SelectItem>
+              <SelectItem value="dispute">نزاع / تقاضي</SelectItem>
+              <SelectItem value="investment">استثمار</SelectItem>
+              <SelectItem value="other">أخرى</SelectItem>
+            </SelectContent>
+          </Select>
+        </FieldGroup>
       </CardContent>
     </Card>
   );
