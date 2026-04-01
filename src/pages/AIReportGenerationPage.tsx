@@ -13,7 +13,7 @@ import ReactMarkdown from "react-markdown";
 import {
   Sparkles, FileText, Wand2, CheckCircle2, Loader2, Copy, RefreshCw,
   Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
-  FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2,
+  FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2, Send,
   Building2, User, MapPin, ClipboardCheck, BarChart3, Scale, XCircle,
   BookOpen, Target, Landmark, Map, TrendingUp, Home, Gavel, Calculator,
   DollarSign, ShieldCheck, Award, Paperclip, type LucideIcon,
@@ -1086,6 +1086,9 @@ export default function AIReportGenerationPage() {
                 <div className="space-y-2">
                   <Button className="w-full gap-1.5 text-xs" size="sm" onClick={handleReviewAll}>
                     <Eye className="w-3.5 h-3.5" /> فحص الجودة والامتثال
+                  </Button>
+                  <Button className="w-full gap-1.5 text-xs bg-primary hover:bg-primary/90" size="sm" onClick={() => { toast.success("تم اعتماد المسودة وإرسالها للمراجعة"); }}>
+                    <Send className="w-3.5 h-3.5" /> اعتماد المسودة وإرسال للمراجعة
                   </Button>
                   <Button variant="outline" className="w-full gap-1.5 text-xs" size="sm" onClick={() => setStep(0)}>
                     <ArrowRight className="w-3.5 h-3.5" /> رجوع للبيانات
