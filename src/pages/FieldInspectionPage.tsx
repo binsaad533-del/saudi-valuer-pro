@@ -224,6 +224,10 @@ interface FormData {
   elevator_count: string;
   utilities_notes: string;
   utilities_confidential_notes: string;
+  total_building_area: string;
+  floor_areas: string;
+  floor_count_detail: string;
+  layout_notes: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
