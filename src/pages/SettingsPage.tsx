@@ -7,22 +7,11 @@ import SystemSettings from "@/components/settings/SystemSettings";
 import BackupSettings from "@/components/settings/BackupSettings";
 import IntegrationSettings from "@/components/settings/IntegrationSettings";
 import { useAuth } from "@/hooks/useAuth";
-
-const ownerTabs = [
-  { value: "company", label: "بيانات الشركة", icon: Building2 },
-  { value: "valuer", label: "بيانات المقيّم", icon: UserCircle },
-  { value: "reports", label: "التقارير", icon: FileText },
-  { value: "system", label: "النظام", icon: Monitor },
-  { value: "backup", label: "النسخ والأمان", icon: Database },
-  { value: "integrations", label: "التكاملات", icon: Plug },
-];
-
-const adminTabs = [
-  { value: "valuer", label: "بياناتي", icon: UserCircle },
-];
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SettingsPage() {
   const { role, loading } = useAuth();
+  const { t } = useLanguage();
 
   if (loading) {
     return (
@@ -33,10 +22,24 @@ export default function SettingsPage() {
   }
 
   const isOwner = role === "owner";
+
+  const ownerTabs = [
+    { value: "company", label: t("companyData"), icon: Building2 },
+    { value: "valuer", label: t("valuerData"), icon: UserCircle },
+    { value: "reports", label: t("reportsSettings"), icon: FileText },
+    { value: "system", label: t("system"), icon: Monitor },
+    { value: "backup", label: t("backupSecurity"), icon: Database },
+    { value: "integrations", label: t("integrations"), icon: Plug },
+  ];
+
+  const adminTabs = [
+    { value: "valuer", label: t("myProfileTitle"), icon: UserCircle },
+  ];
+
   const tabs = isOwner ? ownerTabs : adminTabs;
   const defaultTab = isOwner ? "company" : "valuer";
-  const pageTitle = isOwner ? "الإعدادات" : "بياناتي";
-  const pageDesc = isOwner ? "إدارة إعدادات المنصة والشركة والتقارير" : "تعديل بياناتك الشخصية";
+  const pageTitle = isOwner ? t("settingsTitle") : t("myProfileTitle");
+  const pageDesc = isOwner ? t("settingsDesc") : t("myProfileDesc");
 
   return (
     <div className="space-y-6">
