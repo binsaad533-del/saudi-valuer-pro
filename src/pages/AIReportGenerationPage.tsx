@@ -1024,26 +1024,51 @@ export default function AIReportGenerationPage() {
                       <Layers className="w-3.5 h-3.5" /> تقدّم الأقسام
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="pb-4 space-y-1">
+                  <CardContent className="pb-4 space-y-1.5">
+                    {/* Overall progress bar */}
+                    {(() => {
+                      const completed = sectionEntries.filter(([, s]) => s.content_ar && s.content_ar.length > 20).length;
+                      const pct = sectionCount > 0 ? Math.round((completed / sectionCount) * 100) : 0;
+                      return (
+                        <div className="space-y-1 mb-2">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-muted-foreground">الاكتمال</span>
+                            <span className="font-bold text-primary">{pct}%</span>
+                          </div>
+                          <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                     {sectionEntries.map(([key, sec]) => {
                       const SIcon = SECTION_ICONS[key] || FileText;
                       const isEdited = editedSections.has(key);
                       const hasContent = !!(sec.content_ar && sec.content_ar.length > 20);
+                      const conf = sectionConfidence[key];
                       return (
                         <div
                           key={key}
-                          className={`flex items-center gap-1.5 text-[10px] p-1 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? "bg-primary/10" : ""}`}
+                          className={`flex items-center gap-1.5 text-[10px] p-1.5 rounded cursor-pointer hover:bg-muted/40 transition-colors ${expandedSection === key ? "bg-primary/10" : ""}`}
                           onClick={() => setExpandedSection(expandedSection === key ? null : key)}
                         >
                           <SIcon className={`w-3 h-3 shrink-0 ${hasContent ? "text-primary" : "text-muted-foreground/40"}`} />
                           <span className={`flex-1 truncate ${hasContent ? "text-foreground" : "text-muted-foreground/60"}`}>
                             {sec.title_ar || key}
                           </span>
+                          {conf && (
+                            <span className={`text-[8px] font-mono ${conf >= 80 ? "text-primary" : conf >= 60 ? "text-yellow-600" : "text-destructive"}`}>
+                              {conf}%
+                            </span>
+                          )}
                           {isEdited ? (
                             <Edit3 className="w-2.5 h-2.5 text-amber-500 shrink-0" />
                           ) : hasContent ? (
                             <CheckCircle2 className="w-2.5 h-2.5 text-primary shrink-0" />
-                          ) : null}
+                          ) : (
+                            <AlertCircle className="w-2.5 h-2.5 text-muted-foreground/30 shrink-0" />
+                          )}
                         </div>
                       );
                     })}
@@ -1056,6 +1081,16 @@ export default function AIReportGenerationPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Action Buttons */}
+                <div className="space-y-2">
+                  <Button className="w-full gap-1.5 text-xs" size="sm" onClick={handleReviewAll}>
+                    <Eye className="w-3.5 h-3.5" /> فحص الجودة والامتثال
+                  </Button>
+                  <Button variant="outline" className="w-full gap-1.5 text-xs" size="sm" onClick={() => setStep(0)}>
+                    <ArrowRight className="w-3.5 h-3.5" /> رجوع للبيانات
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
