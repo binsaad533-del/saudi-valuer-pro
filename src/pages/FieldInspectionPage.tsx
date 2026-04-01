@@ -2445,6 +2445,52 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChang
   );
 }
 
+function SectionNotesRecommendations({ formData, updateField }: any) {
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <SectionHeader num={11} title="الملاحظات والتوصيات" icon={ClipboardCheck} subtitle="ملاحظات المعاين وتوصياته للمقيّم" />
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <FieldGroup label="📝 ملاحظات المعاين">
+          <Textarea
+            value={formData.inspector_observations}
+            onChange={(e: any) => updateField("inspector_observations", e.target.value)}
+            placeholder="ملاحظات عامة حول العقار، حالته، ومحيطه..."
+            rows={4}
+          />
+        </FieldGroup>
+        <FieldGroup label="💡 توصيات للمقيّم">
+          <Textarea
+            value={formData.inspector_recommendations}
+            onChange={(e: any) => updateField("inspector_recommendations", e.target.value)}
+            placeholder="توصيات مهنية بناءً على المعاينة (مثل: يُنصح بإجراء فحص إنشائي، التحقق من رخصة البناء...)..."
+            rows={4}
+          />
+        </FieldGroup>
+        <FieldGroup label="📎 ملاحظات إضافية">
+          <Textarea
+            value={formData.additional_notes}
+            onChange={(e: any) => updateField("additional_notes", e.target.value)}
+            placeholder="أي معلومات إضافية لم تُغطَّ في الأقسام السابقة..."
+            rows={3}
+          />
+        </FieldGroup>
+        <AiSuggestionBox
+          sectionKey="notes_recommendations"
+          promptHint="اقتراح ملاحظات وتوصيات بناءً على بيانات المعاينة"
+          context={{
+            inspector_observations: formData.inspector_observations,
+            inspector_recommendations: formData.inspector_recommendations,
+            overall_condition: formData.overall_condition,
+            has_risks: formData.has_risks,
+          }}
+        />
+      </CardContent>
+    </Card>
+  );
+}
+
 function SectionRisks({ formData, updateField, sectionPhotos, onAddPhoto, onRemovePhoto }: any) {
   return (
     <Card>
