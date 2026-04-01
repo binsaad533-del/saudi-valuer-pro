@@ -231,6 +231,7 @@ interface FormData {
   garden_area: string;
   parking_area: string;
   annex_area: string;
+  area_matches_license: string;
   positive_factors: string;
   negative_factors: string;
   environmental_factors: string;
