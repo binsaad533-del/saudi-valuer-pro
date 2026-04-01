@@ -91,8 +91,8 @@ export default function AIDocumentProcessingPage() {
   const [extractionPhase, setExtractionPhase] = useState("");
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
-  const [showClientData, setShowClientData] = useState(true);
-  const [showAssetData, setShowAssetData] = useState(true);
+  const [, setShowClientData] = useState(true);
+  const [, setShowAssetData] = useState(true);
   const [showExtractedNums, setShowExtractedNums] = useState(true);
   const [useMock, setUseMock] = useState(true);
   const [autoAnalyzePending, setAutoAnalyzePending] = useState(true);
