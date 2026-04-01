@@ -406,6 +406,8 @@ const defaultFormData: FormData = {
   negative_factors: {} as Record<string, string>,
   negative_factors_other: "",
   positive_factors_other: "",
+  environmental_factors: "",
+  regulatory_factors: "",
   inspector_observations: "",
   inspector_recommendations: "",
   additional_notes: "",
