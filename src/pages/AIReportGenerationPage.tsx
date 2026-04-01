@@ -328,7 +328,7 @@ export default function AIReportGenerationPage() {
     }
   }, [aggregatedData, reportDraft, requestId]);
 
-
+  const handleReviewAll = useCallback(() => {
     if (!reportDraft?.sections) return;
     setIsReviewing(true);
     setReviewOutput("");
