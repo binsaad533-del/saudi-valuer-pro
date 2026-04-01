@@ -10,9 +10,10 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface QuickAction {
-  label: string;
+  labelKey: string;
   icon: React.ElementType;
   path: string;
   variant: "primary" | "default";
@@ -20,18 +21,19 @@ interface QuickAction {
 }
 
 const actions: QuickAction[] = [
-  { label: "طلب تقييم جديد", icon: FolderPlus, path: "/valuations/new", variant: "primary" },
-  { label: "جميع التقييمات", icon: FileText, path: "/valuations", variant: "default" },
-  { label: "المراجعة والجودة", icon: ClipboardCheck, path: "/review", variant: "default" },
-  { label: "المقارنات السوقية", icon: Building2, path: "/comparables", variant: "default", roles: ["owner"] },
-  { label: "بحث متقدم", icon: Search, path: "/search", variant: "default" },
-  { label: "تصدير التقارير", icon: FileDown, path: "/reports", variant: "default" },
-  { label: "إدارة العملاء", icon: Users, path: "/clients", variant: "default" },
-  { label: "الامتثال", icon: Shield, path: "/compliance", variant: "default" },
+  { labelKey: "newValuation", icon: FolderPlus, path: "/valuations/new", variant: "primary" },
+  { labelKey: "allValuations", icon: FileText, path: "/valuations", variant: "default" },
+  { labelKey: "reviewQuality", icon: ClipboardCheck, path: "/review", variant: "default" },
+  { labelKey: "marketComparables", icon: Building2, path: "/comparables", variant: "default", roles: ["owner"] },
+  { labelKey: "advancedSearch", icon: Search, path: "/search", variant: "default" },
+  { labelKey: "exportReports", icon: FileDown, path: "/reports", variant: "default" },
+  { labelKey: "clientManagement", icon: Users, path: "/clients", variant: "default" },
+  { labelKey: "compliance", icon: Shield, path: "/compliance", variant: "default" },
 ];
 
 export default function QuickActions() {
   const { role } = useAuth();
+  const { t } = useLanguage();
 
   const visibleActions = actions.filter((a) => {
     if (!a.roles) return true;
@@ -42,14 +44,14 @@ export default function QuickActions() {
   return (
     <div className="bg-card rounded-lg border border-border shadow-card animate-fade-in">
       <div className="px-5 py-4 border-b border-border">
-        <h3 className="font-semibold text-foreground">إجراءات سريعة</h3>
+        <h3 className="font-semibold text-foreground">{t("quickActions")}</h3>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4">
         {visibleActions.map((action) => {
           const Icon = action.icon;
           return (
             <Link
-              key={action.path + action.label}
+              key={action.path + action.labelKey}
               to={action.path}
               className={`flex flex-col items-center gap-2 p-4 rounded-lg border transition-all hover:shadow-card
                 ${action.variant === "primary"
@@ -58,7 +60,7 @@ export default function QuickActions() {
                 }`}
             >
               <Icon className="w-5 h-5" />
-              <span className="text-xs font-medium text-center">{action.label}</span>
+              <span className="text-xs font-medium text-center">{t(action.labelKey)}</span>
             </Link>
           );
         })}
