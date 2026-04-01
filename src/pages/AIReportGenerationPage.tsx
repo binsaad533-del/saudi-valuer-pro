@@ -82,7 +82,31 @@ const PIPELINE_STEPS = [
   { key: "export", label: "التصدير", icon: Download, desc: "إنشاء مسودة التقرير" },
 ];
 
-const DATA_CATEGORIES = [
+const SECTION_ICONS: Record<string, LucideIcon> = {
+  cover_page: FileText,
+  table_of_contents: BookOpen,
+  executive_summary: Sparkles,
+  engagement_letter: FileCheck,
+  purpose_and_intended_use: Target,
+  scope_of_work: ClipboardCheck,
+  property_identification: Landmark,
+  property_description: Building2,
+  legal_description: Gavel,
+  location_analysis: Map,
+  market_overview: TrendingUp,
+  highest_and_best_use: Home,
+  valuation_approaches: Layers,
+  sales_comparison_approach: BarChart3,
+  cost_approach: Calculator,
+  income_approach: DollarSign,
+  reconciliation: Scale,
+  assumptions_and_limiting_conditions: AlertCircle,
+  compliance_statement: ShieldCheck,
+  valuer_certification: Award,
+  appendices: Paperclip,
+};
+
+
   { key: "request", label: "بيانات الطلب", icon: FileText },
   { key: "client", label: "بيانات العميل", icon: User },
   { key: "subject", label: "وصف العقار", icon: Building2 },
