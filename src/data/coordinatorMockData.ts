@@ -42,9 +42,9 @@ export const MOCK_REQUESTS: any[] = [
   {
     id: "r3", reference_number: "VAL-003", client_id: "c3",
     property_type: "residential_land", purpose: "sale_purchase",
-    property_city_ar: "الدمام", property_district_ar: "الفيصلية",
-    land_area: 750, building_area: null,
-    property_description_ar: "أرض سكنية بصك إلكتروني — حي الفيصلية — شارع 20م",
+    property_city_ar: "الدمام", property_district_ar: null,
+    land_area: null, building_area: null,
+    property_description_ar: "أرض سكنية بصك إلكتروني — شارع 20م",
     status: "submitted", priority: "normal",
     assigned_valuer_name: null,
     quotation_amount: 3500,
