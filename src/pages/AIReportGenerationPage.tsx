@@ -298,7 +298,37 @@ export default function AIReportGenerationPage() {
     toast.success("تم حفظ التعديل");
   };
 
-  const handleReviewAll = useCallback(() => {
+  /* ─── Regenerate single section ─── */
+  const handleRegenerateSection = useCallback(async (sectionKey: string) => {
+    if (!aggregatedData || !reportDraft) return;
+    setRegeneratingSection(sectionKey);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-report", {
+        body: { request_id: requestId.trim(), mode: "generate_draft", sections: [sectionKey] },
+      });
+      if (error) throw new Error(error.message);
+      if (data?.report_draft?.sections?.[sectionKey]) {
+        const newSec = data.report_draft.sections[sectionKey];
+        setReportDraft(prev => prev ? {
+          ...prev,
+          sections: { ...prev.sections, [sectionKey]: newSec },
+        } : prev);
+        setEditedSections(prev => { const s = new Set(prev); s.delete(sectionKey); return s; });
+        // Estimate confidence from content length ratio
+        const confidence = Math.min(95, Math.max(60, Math.round((newSec.content_ar?.length || 0) / 20)));
+        setSectionConfidence(prev => ({ ...prev, [sectionKey]: confidence }));
+        toast.success(`تم إعادة توليد قسم "${newSec.title_ar || sectionKey}"`);
+      } else {
+        throw new Error("لم يتم توليد القسم");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "خطأ في إعادة التوليد");
+    } finally {
+      setRegeneratingSection(null);
+    }
+  }, [aggregatedData, reportDraft, requestId]);
+
+
     if (!reportDraft?.sections) return;
     setIsReviewing(true);
     setReviewOutput("");
