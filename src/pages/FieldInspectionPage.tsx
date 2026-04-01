@@ -23,16 +23,23 @@ import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 /* ═══════ Constants ═══════ */
 
 const PHOTO_CATEGORIES = [
-  { key: "exterior_front", label: "الواجهة الأمامية", required: true },
-  { key: "exterior_back", label: "الواجهة الخلفية", required: true },
-  { key: "exterior_left", label: "الواجهة اليسرى", required: true },
-  { key: "exterior_right", label: "الواجهة اليمنى", required: true },
-  { key: "street_view", label: "منظر الشارع", required: true },
-  { key: "interior_living", label: "صالة المعيشة", required: false },
-  { key: "interior_kitchen", label: "المطبخ", required: false },
-  { key: "interior_bathroom", label: "دورة المياه", required: false },
-  { key: "interior_bedroom", label: "غرفة النوم", required: false },
-  { key: "surroundings", label: "المحيط العام", required: true },
+  { key: "exterior_front", label: "الواجهة الأمامية", group: "exterior", required: true },
+  { key: "exterior_back", label: "الواجهة الخلفية", group: "exterior", required: true },
+  { key: "exterior_left", label: "الواجهة اليسرى", group: "exterior", required: true },
+  { key: "exterior_right", label: "الواجهة اليمنى", group: "exterior", required: true },
+  { key: "street_view", label: "منظر الشارع", group: "exterior", required: true },
+  { key: "interior_living", label: "صالة المعيشة", group: "interior", required: false },
+  { key: "interior_kitchen", label: "المطبخ", group: "interior", required: false },
+  { key: "interior_bathroom", label: "دورة المياه", group: "interior", required: false },
+  { key: "interior_bedroom", label: "غرفة النوم", group: "interior", required: false },
+  { key: "surroundings", label: "المحيط العام", group: "exterior", required: true },
+  { key: "site_plan", label: "المخطط / الكروكي", group: "plan", required: false },
+  { key: "floor_plan", label: "مخطط الأدوار", group: "plan", required: false },
+  { key: "deed_photo", label: "صورة الصك", group: "plan", required: false },
+  { key: "problem_cracks", label: "تشققات / عيوب", group: "problems", required: false },
+  { key: "problem_moisture", label: "رطوبة / تسربات", group: "problems", required: false },
+  { key: "problem_other", label: "مشاكل أخرى", group: "problems", required: false },
+  { key: "other", label: "صور إضافية", group: "other", required: false },
 ];
 
 const DEFAULT_CHECKLIST = [
@@ -2302,34 +2309,45 @@ function SectionValueFactors({ formData, updateField }: any) {
 }
 
 function SectionDocumentation({ photos, onCapture, onRemove, requiredPhotoDone, requiredPhotoTotal }: any) {
-  const exteriorCats = PHOTO_CATEGORIES.filter(c => c.key.startsWith("exterior") || c.key === "street_view" || c.key === "surroundings");
-  const interiorCats = PHOTO_CATEGORIES.filter(c => c.key.startsWith("interior"));
+  const groups = [
+    { key: "exterior", title: "📸 صور خارجية", icon: "🏢" },
+    { key: "interior", title: "🏠 صور داخلية", icon: "🛋️" },
+    { key: "plan", title: "📐 مخططات ووثائق", icon: "📋" },
+    { key: "problems", title: "⚠️ مشاكل وعيوب", icon: "🔍" },
+    { key: "other", title: "📎 صور إضافية", icon: "📷" },
+  ];
+
+  const totalPhotos = photos.length;
 
   return (
     <div className="space-y-4">
-      <SectionHeader num={11} title="التوثيق المصور" icon={Camera} subtitle={`إجباري — ${requiredPhotoDone}/${requiredPhotoTotal} صور مطلوبة مكتملة`} />
+      <SectionHeader num={11} title="التوثيق المصور" icon={Camera} subtitle={`${totalPhotos} صورة — ${requiredPhotoDone}/${requiredPhotoTotal} إجباري`} />
       {requiredPhotoDone < requiredPhotoTotal && (
         <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 shrink-0" />
-          التوثيق المصور إلزامي — أكمل جميع الصور المطلوبة
+          أكمل جميع الصور المطلوبة ({requiredPhotoTotal - requiredPhotoDone} متبقية)
         </div>
       )}
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">📸 صور خارجية</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {exteriorCats.map((cat) => (
-            <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} />
-          ))}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">🏠 صور داخلية</CardTitle></CardHeader>
-        <CardContent className="space-y-3">
-          {interiorCats.map((cat) => (
-            <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} />
-          ))}
-        </CardContent>
-      </Card>
+      {/* Summary badges */}
+      <div className="flex flex-wrap gap-2">
+        {groups.map(g => {
+          const count = photos.filter((p: PhotoItem) => PHOTO_CATEGORIES.find(c => c.key === p.category)?.group === g.key).length;
+          return count > 0 ? <Badge key={g.key} variant="secondary" className="text-xs">{g.icon} {count}</Badge> : null;
+        })}
+      </div>
+      {groups.map(g => {
+        const cats = PHOTO_CATEGORIES.filter(c => c.group === g.key);
+        return (
+          <Card key={g.key}>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">{g.title}</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              {cats.map((cat) => (
+                <PhotoCategoryRow key={cat.key} cat={cat} photos={photos} onCapture={onCapture} onRemove={onRemove} />
+              ))}
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
