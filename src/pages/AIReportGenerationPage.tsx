@@ -273,6 +273,7 @@ export default function AIReportGenerationPage() {
     setReviewOutput("");
     reviewRef.current = "";
     setStep(3);
+    setStepErrors(prev => ({ ...prev, 3: null }));
 
     const allText = Object.entries(reportDraft.sections)
       .map(([key, sec]) => `## ${sec.title_ar || key}\n${sec.content_ar || ""}`)
