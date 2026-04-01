@@ -145,7 +145,7 @@ export default function AIDocumentProcessingPage() {
         return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: RB-2024-789 — مساحة البناء: 320 م² — طابقين — ثقة 91%" };
       // مخططات معمارية
       if (n.includes("مخطط") || n.includes("plan") || n.includes("كروكي") || n.includes("layout") || n.includes("floor"))
-        return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "مخطط دور أرضي — 4 غرف، صالة، مطبخ — مساحة البناء: 312 م²" };
+        return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "3 غرف نوم + صالة + مطبخ — ثقة 73% ⚠️ يحتاج تأكيد" };
       // تقارير تقييم سابقة
       if (n.includes("تقرير") || n.includes("تقييم") || n.includes("report") || n.includes("valuation") || n.includes("appraisal"))
         return { category: "technical_report", label: "تقرير تقييم سابق", relevance: "high", extractedInfo: "تقرير تقييم بتاريخ 1444/09/20 — القيمة السوقية: 2,350,000 ر.س" };
@@ -204,11 +204,12 @@ export default function AIDocumentProcessingPage() {
       );
     }
     if (cats.has("floor_plan")) {
-      const src = files[categorized.findIndex(c => c.category === "floor_plan")]?.name || "مخطط معماري";
+      const planSrc = files[categorized.findIndex(c => c.category === "floor_plan")]?.name || "مخطط معماري";
       numbers.push(
-        { label: "مساحة البناء", value: "312 م²", source: src },
-        { label: "عدد الغرف", value: "4 غرف نوم", source: src },
-        { label: "عدد دورات المياه", value: "3", source: src },
+        { label: "غرف النوم", value: "3 غرف", source: planSrc },
+        { label: "الصالات", value: "صالة واحدة", source: planSrc },
+        { label: "المطبخ", value: "1 مطبخ", source: planSrc },
+        { label: "نسبة ثقة الاستخراج", value: "73% ⚠️", source: planSrc },
       );
     }
     if (cats.has("technical_report")) {
