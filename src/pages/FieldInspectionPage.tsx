@@ -2454,6 +2454,113 @@ function PhotoCategoryRow({ cat, photos, onCapture, onRemove, onDescriptionChang
 }
 
 function SectionNotesRecommendations({ formData, updateField }: any) {
+  const [techSummary, setTechSummary] = useState<string | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const generateTechSummary = () => {
+    setSummaryLoading(true);
+    setTechSummary(null);
+
+    // Build structured summary from all form data
+    setTimeout(() => {
+      const lines: string[] = [];
+
+      lines.push("══════ ملخص المعاينة الفنية ══════");
+      lines.push(`📅 تاريخ المعاينة: ${formData.inspection_date || "—"}`);
+      lines.push(`👤 المعاين: ${formData.inspector_name || "—"}`);
+      lines.push(`📍 الموقع: ${[formData.city, formData.district, formData.street].filter(Boolean).join("، ") || "—"}`);
+      lines.push(`🏠 نوع الأصل: ${formData.asset_type || "—"}`);
+      lines.push(`📄 رقم الصك: ${formData.deed_number || "—"}`);
+      lines.push("");
+
+      // Areas
+      const landArea = formData.land_area ? `${formData.land_area} م²` : "—";
+      const buildingArea = formData.total_building_area ? `${formData.total_building_area} م²` : "—";
+      lines.push("▬▬ المساحات ▬▬");
+      lines.push(`مساحة الأرض: ${landArea} | مساحة البناء: ${buildingArea}`);
+      if (formData.land_area && formData.total_building_area && parseFloat(formData.land_area) > 0) {
+        const ratio = ((parseFloat(formData.total_building_area) / parseFloat(formData.land_area)) * 100).toFixed(1);
+        lines.push(`نسبة البناء: ${ratio}%`);
+      }
+      if (formData.area_matches_license) lines.push(`تطابق المساحة مع الرخصة: ${formData.area_matches_license === "yes" ? "✅ نعم" : "❌ لا"}`);
+      lines.push("");
+
+      // Condition
+      const conditionLabels: Record<string, string> = { excellent: "ممتازة", good: "جيدة", fair: "متوسطة", poor: "سيئة" };
+      lines.push("▬▬ حالة الأصل ▬▬");
+      lines.push(`الحالة العامة: ${conditionLabels[formData.overall_condition] || formData.overall_condition || "—"}`);
+      if (formData.asset_age) lines.push(`عمر المبنى: ${formData.asset_age} سنة`);
+      if (formData.finishing_level) lines.push(`مستوى التشطيب: ${formData.finishing_level}`);
+      if (formData.maintenance_rating) lines.push(`مستوى الصيانة: ${formData.maintenance_rating}`);
+      lines.push("");
+
+      // Value factors
+      const impactLabels: Record<string, string> = { weak: "ضعيف", medium: "متوسط", strong: "قوي" };
+      const posLabels: Record<string, string> = { view: "إطلالة مميزة", prime_location: "موقع مميز", luxury_finish: "تشطيب راقي", modern: "حديث البناء" };
+      const negLabels: Record<string, string> = { noise: "قرب ضوضاء", legal_issues: "إشكاليات قانونية", harmful_neighbor: "مجاور ضار" };
+
+      const posEntries = Object.entries(formData.positive_factors || {});
+      const negEntries = Object.entries(formData.negative_factors || {});
+
+      if (posEntries.length > 0 || negEntries.length > 0) {
+        lines.push("▬▬ العوامل المؤثرة على القيمة ▬▬");
+        if (posEntries.length > 0) {
+          lines.push("إيجابية:");
+          posEntries.forEach(([k, v]) => lines.push(`  • ${posLabels[k] || k} — تأثير ${impactLabels[v as string] || v}`));
+        }
+        if (negEntries.length > 0) {
+          lines.push("سلبية:");
+          negEntries.forEach(([k, v]) => lines.push(`  • ${negLabels[k] || k} — تأثير ${impactLabels[v as string] || v}`));
+        }
+        if (formData.positive_factors_other) lines.push(`  • أخرى: ${formData.positive_factors_other}`);
+        if (formData.negative_factors_other) lines.push(`  • أخرى: ${formData.negative_factors_other}`);
+        lines.push("");
+      }
+
+      // Risks
+      if (formData.has_risks === "yes") {
+        lines.push("▬▬ المخاطر ▬▬");
+        lines.push(`⚠️ ${formData.risk_details || "توجد مخاطر مسجلة"}`);
+        lines.push("");
+      }
+
+      // Inspector notes & verdict
+      if (formData.inspector_observations) {
+        lines.push("▬▬ ملاحظات المعاين ▬▬");
+        lines.push(formData.inspector_observations);
+        lines.push("");
+      }
+      if (formData.inspector_recommendations) {
+        lines.push("▬▬ التوصيات ▬▬");
+        lines.push(formData.inspector_recommendations);
+        lines.push("");
+      }
+
+      const verdictLabels: Record<string, string> = { complete: "✅ ملف مكتمل وجاهز للتقييم", needs_revisit: "🔄 يحتاج زيارة إضافية", has_issues: "⚠️ توجد إشكاليات" };
+      if (formData.inspector_verdict) {
+        lines.push("▬▬ التوصية النهائية ▬▬");
+        lines.push(verdictLabels[formData.inspector_verdict] || formData.inspector_verdict);
+        if (formData.inspector_verdict_notes) lines.push(formData.inspector_verdict_notes);
+      }
+
+      lines.push("");
+      lines.push(`═══ نهاية الملخص — ${new Date().toLocaleDateString("ar-SA")} ═══`);
+
+      setTechSummary(lines.join("\n"));
+      setSummaryLoading(false);
+    }, 800);
+  };
+
+  const handleCopySummary = () => {
+    if (techSummary) {
+      navigator.clipboard.writeText(techSummary);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      toast.success("✅ تم نسخ الملخص — يمكنك لصقه في التقرير");
+    }
+  };
+
   return (
     <Card>
       <CardHeader className="pb-3">
