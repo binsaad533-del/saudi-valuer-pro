@@ -1081,19 +1081,97 @@ export default function ScopeAndPricingPage() {
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Client Action Buttons */}
         {scope && pricing && !loading && (
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Button className="flex-1 gap-2 py-5 rounded-xl shadow-sm" size="lg"
-              onClick={() => toast.success("تم اعتماد نطاق العمل والتسعير — جاري إنشاء الطلب")}>
-              <CheckCircle2 className="w-4 h-4" />
-              اعتماد نطاق العمل والتسعير
-            </Button>
-            <Button variant="outline" className="gap-2 py-5 rounded-xl" size="lg"
-              onClick={() => navigate("/ai-document-processing")}>
-              <ArrowRight className="w-4 h-4" />
-              العودة للمستندات
-            </Button>
+          <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+            {clientApproved ? (
+              <div className="p-6 flex flex-col items-center gap-3 text-center">
+                <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+                  <CheckCircle2 className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="text-sm font-bold text-foreground">تمت الموافقة بنجاح</h3>
+                <p className="text-xs text-muted-foreground max-w-md">تمت موافقتكم على نطاق العمل والتسعير المقترح. سيتم البدء بإجراءات التقييم وفق المعايير المعتمدة.</p>
+                <Badge className="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-0 gap-1">
+                  <CheckCircle2 className="w-3 h-3" />
+                  معتمد من العميل
+                </Badge>
+              </div>
+            ) : (
+              <>
+                <div className="p-4 border-b border-border bg-muted/10">
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-primary" />
+                    <p className="text-xs font-bold text-foreground">قرار العميل</p>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">يرجى مراجعة نطاق العمل والتسعير أعلاه ثم اتخاذ القرار المناسب</p>
+                </div>
+                <div className="p-4 flex flex-col sm:flex-row gap-3">
+                  <Button
+                    className="flex-1 gap-2 py-5 rounded-xl shadow-sm"
+                    size="lg"
+                    onClick={() => {
+                      setClientApproved(true);
+                      toast.success("تمت الموافقة على نطاق العمل والتسعير — سيتم البدء بالتقييم");
+                    }}
+                  >
+                    <CheckCircle2 className="w-5 h-5" />
+                    موافقة العميل
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex-1 gap-2 py-5 rounded-xl border-yellow-300 dark:border-yellow-700 text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-950/20"
+                    size="lg"
+                    onClick={() => setShowRevisionDialog(true)}
+                  >
+                    <Edit3 className="w-5 h-5" />
+                    طلب تعديل
+                  </Button>
+                </div>
+              </>
+            )}
+
+            {/* Revision Dialog */}
+            {showRevisionDialog && (
+              <div className="p-4 border-t border-border space-y-3">
+                <div className="flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                  <p className="text-xs font-bold text-foreground">ملاحظات التعديل المطلوبة</p>
+                </div>
+                <Textarea
+                  value={revisionNotes}
+                  onChange={(e) => setRevisionNotes(e.target.value)}
+                  placeholder="اكتب ملاحظاتك حول التعديلات المطلوبة على النطاق أو التسعير..."
+                  className="text-xs min-h-[100px] resize-none"
+                  dir="rtl"
+                />
+                <div className="flex gap-2 justify-end">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => {
+                      setShowRevisionDialog(false);
+                      setRevisionNotes("");
+                    }}
+                  >
+                    إلغاء
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="text-xs gap-1.5"
+                    disabled={!revisionNotes.trim()}
+                    onClick={() => {
+                      toast.success("تم إرسال طلب التعديل — سيتم مراجعته من فريق التقييم");
+                      setShowRevisionDialog(false);
+                      setRevisionNotes("");
+                    }}
+                  >
+                    <ArrowRight className="w-3.5 h-3.5" />
+                    إرسال طلب التعديل
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
