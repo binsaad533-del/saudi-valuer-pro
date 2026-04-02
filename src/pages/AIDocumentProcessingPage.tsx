@@ -85,7 +85,7 @@ const DEMO_FILES: UploadedFile[] = [
   { file: {} as any, name: "عقد_إيجار_شركة_الأفق.pdf", size: 1_950_000, status: "uploaded" },
 ];
 
-export default function AIDocumentProcessingPage() {
+export default function AIDocumentProcessingPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(DEMO_FILES);
