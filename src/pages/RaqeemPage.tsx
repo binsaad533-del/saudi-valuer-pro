@@ -40,6 +40,9 @@ const TOOL_LABELS: Record<string, { label: string; icon: string }> = {
   run_valuation: { label: "تشغيل محرك التقييم", icon: "🔢" },
   generate_report: { label: "توليد مسودة التقرير", icon: "📄" },
   check_compliance: { label: "فحص الامتثال والجودة", icon: "✅" },
+  extract_documents: { label: "استخراج بيانات المستندات", icon: "📑" },
+  translate_report: { label: "ترجمة التقرير", icon: "🌐" },
+  check_consistency: { label: "فحص تطابق النسختين", icon: "🔍" },
 };
 
 const SUGGESTED_PROMPTS = [
