@@ -452,15 +452,15 @@ export default function ClientDashboard() {
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">الهاتف</p>
-                  <p className="text-sm font-medium text-foreground" dir="ltr">+966 55 000 0000</p>
+                  <p className="text-xs text-muted-foreground">الهاتف الموحد</p>
+                  <p className="text-sm font-medium text-foreground" dir="ltr">920015029</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
                 <Mail className="w-5 h-5 text-primary shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
-                  <p className="text-sm font-medium text-foreground">info@jsaasvaluation.app</p>
+                  <p className="text-sm font-medium text-foreground">care@jsaas-valuation.com</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
@@ -471,9 +471,9 @@ export default function ClientDashboard() {
                 </div>
               </div>
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-2">
               <a
-                href="https://wa.me/966550000000"
+                href="https://wa.me/966500668089"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
@@ -481,13 +481,21 @@ export default function ClientDashboard() {
                 <MessageCircle className="w-4 h-4" />
                 تواصل عبر واتساب
               </a>
+              <a
+                href="https://www.jsaas-valuation.com/ar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-border hover:bg-muted rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-foreground"
+              >
+                الموقع الرسمي
+              </a>
             </div>
+            <p className="text-[11px] text-muted-foreground/70 mt-3">
+              الرياض - حي الياسمين - طريق الثمامة | سجل تجاري: 1010625839 | ترخيص تقييم: 4114000015
+            </p>
           </CardContent>
         </Card>
 
-        <div className="text-center py-4">
-          <p className="text-xs text-muted-foreground">© 2026 جساس للتقييم — جميع الحقوق محفوظة</p>
-        </div>
       </main>
 
       {/* New Request Dialog */}
