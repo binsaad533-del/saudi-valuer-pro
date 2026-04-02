@@ -60,6 +60,7 @@ import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import MarketDataPage from "@/pages/MarketDataPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
+import UserSettingsPage from "@/pages/UserSettingsPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -130,6 +131,11 @@ const App = () => (
               <MobileInspectionFlow />
             </ProtectedRoute>
           } />
+          <Route path="/inspector/settings" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
+              <UserSettingsPage />
+            </ProtectedRoute>
+          } />
 
           {/* Client Portal */}
           <Route path="/client/register" element={<ClientRegister />} />
@@ -158,6 +164,11 @@ const App = () => (
           <Route path="/client/request/:id" element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <RequestDetails />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/settings" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
+              <UserSettingsPage />
             </ProtectedRoute>
           } />
 

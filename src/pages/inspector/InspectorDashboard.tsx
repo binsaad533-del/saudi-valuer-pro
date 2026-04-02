@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   MapPin, Clock, CheckCircle, Calendar, Loader2, Building2, Play, Eye, LogOut,
-  User, AlertCircle, RefreshCw,
+  User, AlertCircle, RefreshCw, Settings,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -171,6 +171,9 @@ export default function InspectorDashboard() {
                 {profile.availability_status === "available" ? "متاح" : profile.availability_status === "busy" ? "مشغول" : "غير متاح"}
               </Badge>
             )}
+            <Button variant="ghost" size="icon" onClick={() => navigate("/inspector/settings")} title="الإعدادات">
+              <Settings className="w-4 h-4" />
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 ml-1" />
               خروج

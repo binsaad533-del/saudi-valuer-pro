@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import {
   Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
-  Phone, Mail, MessageCircle, FileCheck, Search, BarChart3, ClipboardCheck,
+  Phone, Mail, MessageCircle, FileCheck, Search, BarChart3, ClipboardCheck, Settings,
 } from "lucide-react";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
 import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
@@ -150,6 +150,9 @@ export default function ClientDashboard() {
           <div className="flex items-center gap-2">
             <ClientNotificationsBell userId={userId} />
             <span className="text-sm text-foreground font-medium hidden sm:block">أهلاً، {userName}</span>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/client/settings")} title="الإعدادات">
+              <Settings className="w-4 h-4" />
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 ml-1" /> خروج
             </Button>
