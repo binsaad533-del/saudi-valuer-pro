@@ -31,6 +31,7 @@ export default function SettingsPage() {
     { value: "system", label: t("system"), icon: Monitor },
     { value: "backup", label: t("backupSecurity"), icon: Database },
     { value: "integrations", label: t("integrations"), icon: Plug },
+    { value: "discounts", label: "أكواد الخصم", icon: Ticket },
   ];
 
   const adminTabs = [
