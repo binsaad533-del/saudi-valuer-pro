@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound, Eye, EyeOff, Building2, CreditCard, UserCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
+import AppFooter from "@/components/layout/AppFooter";
 
 type ClientType = "individual" | "company";
 
