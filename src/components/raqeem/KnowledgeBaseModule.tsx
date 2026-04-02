@@ -77,6 +77,26 @@ export default function KnowledgeBaseModule() {
 
   useEffect(() => { fetchDocs(); }, []);
 
+  const extractPdfText = async (knowledgeId: string, filePath: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-pdf-text", {
+        body: { knowledge_id: knowledgeId, file_path: filePath },
+      });
+      if (error) {
+        console.error("Extract error:", error);
+        return false;
+      }
+      if (data?.success) {
+        console.log(`Extracted ${data.content_length} chars for ${knowledgeId}`);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Extract exception:", e);
+      return false;
+    }
+  };
+
   const addDoc = async () => {
     if (!form.title_ar) { toast.error("العنوان مطلوب"); return; }
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,12 +120,12 @@ export default function KnowledgeBaseModule() {
       fileName = file.name;
       fileSize = file.size;
       mimeType = file.type;
-      content = content || `[ملف مرفق: ${file.name}]`;
+      content = content || `[جاري استخراج المحتوى...]`;
     } else if (!content) {
       toast.error("المحتوى مطلوب"); return;
     }
 
-    const { error } = await supabase.from("raqeem_knowledge").insert({
+    const { data: insertData, error } = await supabase.from("raqeem_knowledge").insert({
       ...form,
       content,
       file_name: fileName,
@@ -113,7 +133,7 @@ export default function KnowledgeBaseModule() {
       mime_type: mimeType,
       file_path: filePath,
       uploaded_by: user.id,
-    } as any);
+    } as any).select("id").single();
     if (error) { toast.error("حدث خطأ"); console.error(error); return; }
 
     toast.success("تم إضافة المعرفة بنجاح");
@@ -122,6 +142,18 @@ export default function KnowledgeBaseModule() {
     setFile(null);
     setUploadMode("text");
     fetchDocs();
+
+    // Auto-extract text from file in background
+    if (filePath && insertData?.id) {
+      toast.info("جاري استخراج محتوى الملف تلقائياً...");
+      const success = await extractPdfText(insertData.id, filePath);
+      if (success) {
+        toast.success("تم استخراج محتوى الملف بنجاح ✅");
+        fetchDocs();
+      } else {
+        toast.warning("تعذر استخراج المحتوى تلقائياً — يمكنك إضافته يدوياً");
+      }
+    }
   };
 
   const handleBulkFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
