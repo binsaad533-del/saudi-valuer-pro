@@ -104,6 +104,9 @@ export default function NewRequest() {
   const [clientDiscountApplied, setClientDiscountApplied] = useState<{ code: string; percentage: number } | null>(null);
   const [clientCheckingDiscount, setClientCheckingDiscount] = useState(false);
 
+  // Asset locations
+  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
