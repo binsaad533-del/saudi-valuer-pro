@@ -146,7 +146,8 @@ export default function ClientDashboard() {
             <h2 className="text-sm font-bold text-foreground">بوابة العملاء</h2>
             <p className="text-xs text-muted-foreground">جساس للتقييم</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ClientNotificationsBell userId={userId} />
             <span className="text-sm text-foreground font-medium hidden sm:block">أهلاً، {userName}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 ml-1" /> خروج
