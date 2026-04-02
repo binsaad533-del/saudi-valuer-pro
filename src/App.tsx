@@ -76,6 +76,7 @@ const App = () => (
           {/* Unified Login */}
           <Route path="/login" element={<UnifiedLogin />} />
           <Route path="/client/login" element={<UnifiedLogin />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
           {/* Admin Routes - Protected */}
           <Route element={
