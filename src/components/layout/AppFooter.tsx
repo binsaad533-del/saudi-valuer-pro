@@ -26,7 +26,7 @@ export default function AppFooter() {
             <ul className="space-y-1.5 text-xs text-muted-foreground">
               <li>تقييم العقارات</li>
               <li>تقييم الآلات والمعدات</li>
-              <li>إدارة الأصول</li>
+              
               <li>نزع الملكية والتعويضات</li>
             </ul>
           </div>
