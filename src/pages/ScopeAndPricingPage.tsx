@@ -327,17 +327,19 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
     setDiscountCode("");
   };
 
+  const getSubtotalNum = () => {
+    if (!pricing) return 0;
+    const s = Number(pricing.subtotal);
+    return isNaN(s) ? Number(pricing.totalPrice) / (1 + (Number(pricing.vatRate) || 15) / 100) : s;
+  };
+
   const getDiscountAmount = () => {
     if (!discountApplied || !pricing) return 0;
-    return pricing.subtotal * (discountApplied.percentage / 100);
+    return getSubtotalNum() * (discountApplied.percentage / 100);
   };
 
-  const getFinalSubtotal = () => {
-    if (!pricing) return 0;
-    return pricing.subtotal - getDiscountAmount();
-  };
-
-  const getFinalVat = () => getFinalSubtotal() * ((pricing?.vatRate || 15) / 100);
+  const getFinalSubtotal = () => getSubtotalNum() - getDiscountAmount();
+  const getFinalVat = () => getFinalSubtotal() * ((Number(pricing?.vatRate) || 15) / 100);
   const getFinalTotal = () => getFinalSubtotal() + getFinalVat();
 
   if (!extractedData) {
