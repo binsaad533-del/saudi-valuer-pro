@@ -27,7 +27,7 @@ export default function KPIMetrics() {
               <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-3">
                 <Icon className="w-5 h-5" />
               </div>
-              <span className="text-xl font-bold text-foreground">{kpi.value}</span>
+              <span className="text-xl font-bold text-foreground inline-flex items-center gap-1">{kpi.value} {(kpi as any).hasCurrency && <SAR size={16} />}</span>
               <span className="text-sm text-muted-foreground mt-1">{kpi.label}</span>
               <span className="text-[11px] text-muted-foreground/70 mt-0.5">{kpi.description}</span>
             </motion.div>

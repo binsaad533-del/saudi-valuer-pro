@@ -296,7 +296,7 @@ export default function ClientsManagement() {
     else { setSortField(field); setSortAsc(false); }
   };
 
-  const formatCurrency = (v: number) => formatNumber(v) + " ر.س";
+  const formatCurrencyJSX = (v: number) => <span className="inline-flex items-center gap-1">{formatNumber(v)} <SAR size={12} /></span>;
 
   const CategoryBadge = ({ category, manual }: { category: string; manual?: boolean }) => {
     const cfg = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.regular;
