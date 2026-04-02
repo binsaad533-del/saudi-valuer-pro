@@ -311,14 +311,83 @@ function calcReconciliation(
 }
 
 // ============================================================
+// KNOWLEDGE BASE INTEGRATION
+// ============================================================
+
+let _knowledgeCache: string | null = null;
+
+async function fetchValuationKnowledge(): Promise<string> {
+  if (_knowledgeCache !== null) return _knowledgeCache;
+
+  try {
+    const db = supabaseAdmin();
+    const { data: docs } = await db
+      .from("raqeem_knowledge")
+      .select("title_ar, content, category, priority")
+      .eq("is_active", true)
+      .order("priority", { ascending: false });
+
+    if (!docs || docs.length === 0) {
+      _knowledgeCache = "";
+      return "";
+    }
+
+    // Prioritize methodology, standards, and guidelines
+    const searchTerms = ["تقييم", "معايير", "منهجية", "مقارنة", "تكلفة", "دخل", "ivs", "taqeem"];
+    const scored = docs.map(doc => {
+      const text = `${doc.title_ar || ""} ${doc.content || ""} ${doc.category || ""}`.toLowerCase();
+      let score = doc.priority || 0;
+      for (const term of searchTerms) {
+        if (text.includes(term)) score += 10;
+      }
+      if (["standards", "methodology", "guidelines", "calculations"].includes(doc.category || "")) score += 15;
+      return { ...doc, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const MAX_CHARS = 15000; // Smaller for valuation engine to keep prompts focused
+    let totalChars = 0;
+    const selected: string[] = [];
+
+    for (const doc of scored) {
+      if (doc.score <= 0) break;
+      const chunk = `### ${doc.title_ar}\n${doc.content}`;
+      if (totalChars + chunk.length > MAX_CHARS) {
+        const remaining = MAX_CHARS - totalChars;
+        if (remaining > 200) selected.push(chunk.substring(0, remaining) + "...");
+        break;
+      }
+      selected.push(chunk);
+      totalChars += chunk.length;
+    }
+
+    _knowledgeCache = selected.length > 0
+      ? `\n\n══════ المراجع المهنية ══════\n${selected.join("\n\n---\n\n")}`
+      : "";
+    return _knowledgeCache;
+  } catch (e) {
+    console.error("Knowledge fetch error:", e);
+    _knowledgeCache = "";
+    return "";
+  }
+}
+
+// ============================================================
 // AI FUNCTIONS (limited to reasoning/reporting ONLY)
 // ============================================================
 
 async function callAI(systemPrompt: string, userPrompt: string, tools?: any[], toolChoice?: any) {
+  // Enrich system prompt with knowledge base
+  const knowledge = await fetchValuationKnowledge();
+  const enrichedSystemPrompt = knowledge
+    ? `${systemPrompt}\n\nاستند إلى المراجع المهنية التالية عند التحليل:${knowledge}`
+    : systemPrompt;
+
   const body: any = {
     model: "google/gemini-2.5-flash",
     messages: [
-      { role: "system", content: systemPrompt },
+      { role: "system", content: enrichedSystemPrompt },
       { role: "user", content: userPrompt },
     ],
   };
