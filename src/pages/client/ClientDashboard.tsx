@@ -402,7 +402,7 @@ export default function ClientDashboard() {
             <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
               <p className="text-xs text-muted-foreground leading-relaxed">
                 <span className="font-semibold text-foreground">💡 نصيحة:</span>{" "}
-                إرفاق جميع المستندات من البداية يقلل مدة التقييم بنسبة تصل إلى 40% ويضمن دقة أعلى في النتائج.
+                إرفاق جميع المستندات والصور من البداية يقلل مدة التقييم بنسبة تصل إلى 40% ويضمن دقة أعلى في النتائج.
               </p>
             </div>
           </CardContent>
