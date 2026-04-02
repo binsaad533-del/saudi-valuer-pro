@@ -130,14 +130,20 @@ export default function UserSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 p-4 sm:p-6" dir="rtl">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Settings className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">إعدادات الحساب</h1>
+            <p className="text-sm text-muted-foreground">تعديل المعلومات الشخصية وكلمة المرور</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">إعدادات الحساب</h1>
-          <p className="text-sm text-muted-foreground">تعديل المعلومات الشخصية وكلمة المرور</p>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => navigate(backPath)} className="gap-1">
+          <ArrowRight className="w-4 h-4" />
+          رجوع
+        </Button>
       </div>
 
       {/* Personal Info Card */}
