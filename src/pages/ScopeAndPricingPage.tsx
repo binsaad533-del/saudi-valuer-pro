@@ -253,6 +253,9 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
   const [managerDecision, setManagerDecision] = useState<"pending" | "accepted" | "adjusting">("pending");
   const [adjustedPrice, setAdjustedPrice] = useState("");
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountApplied, setDiscountApplied] = useState<{ code: string; percentage: number } | null>(null);
+  const [checkingDiscount, setCheckingDiscount] = useState(false);
 
   useEffect(() => {
     if (extractedData) {
