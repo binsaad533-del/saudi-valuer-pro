@@ -37,7 +37,7 @@ export default function PaymentsLog() {
       <div className="p-4 flex flex-col sm:flex-row gap-3">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground whitespace-nowrap">من:</span>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" />
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" dir="ltr" />
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground whitespace-nowrap">إلى:</span>
