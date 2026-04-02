@@ -131,6 +131,11 @@ const App = () => (
               <MobileInspectionFlow />
             </ProtectedRoute>
           } />
+          <Route path="/inspector/settings" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
+              <UserSettingsPage />
+            </ProtectedRoute>
+          } />
 
           {/* Client Portal */}
           <Route path="/client/register" element={<ClientRegister />} />
