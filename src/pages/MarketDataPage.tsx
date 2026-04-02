@@ -727,7 +727,7 @@ export default function MarketDataIntegration() {
                   <Input value={newEntry.district_ar} onChange={e => setNewEntry(p => ({ ...p, district_ar: e.target.value }))} placeholder="النرجس" />
                 </div>
                 <div>
-                  <Label>السعر (ر.س) *</Label>
+                  <Label>السعر (<SAR size={10} />) *</Label>
                   <Input type="number" value={newEntry.price || ""} onChange={e => setNewEntry(p => ({ ...p, price: Number(e.target.value) }))} />
                 </div>
                 <div>
