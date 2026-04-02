@@ -89,7 +89,9 @@ export default function KnowledgeBaseModule() {
     let filePath: string | null = null;
 
     if (uploadMode === "file" && file) {
-      const path = `raqeem-knowledge/${Date.now()}_${file.name}`;
+      const ext = file.name.split('.').pop() || 'bin';
+      const safeName = `${crypto.randomUUID()}.${ext}`;
+      const path = `raqeem-knowledge/${safeName}`;
       const { error: uploadError } = await supabase.storage
         .from("attachments")
         .upload(path, file, { contentType: file.type || 'application/octet-stream' });
@@ -151,7 +153,9 @@ export default function KnowledgeBaseModule() {
       const f = bulkFiles[i];
       try {
         // Upload file to storage
-        const path = `raqeem-knowledge/${Date.now()}_${f.name}`;
+        const ext = f.name.split('.').pop() || 'bin';
+        const safeName = `${crypto.randomUUID()}.${ext}`;
+        const path = `raqeem-knowledge/${safeName}`;
         const { error: uploadError } = await supabase.storage
           .from("attachments")
           .upload(path, f, { contentType: f.type || 'application/octet-stream' });
