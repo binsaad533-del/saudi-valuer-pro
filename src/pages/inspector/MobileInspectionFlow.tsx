@@ -654,7 +654,7 @@ function SectionGeneral({ formData, updateField }: { formData: InspectionFormDat
 
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="تاريخ المعاينة" required>
-            <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} />
+            <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} dir="ltr" />
           </FieldGroup>
           <FieldGroup label="وقت المعاينة">
             <Input type="time" value={formData.inspection_time} onChange={e => updateField("inspection_time", e.target.value)} />
