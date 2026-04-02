@@ -35,24 +35,26 @@ export default function PaymentsLog() {
           </Button>
         </div>
       </div>
-      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <label className="text-sm text-muted-foreground block">من</label>
+      <div className="p-4 flex flex-col lg:flex-row lg:items-end gap-3 lg:gap-4 border-b border-border/50">
+        <div className="w-full lg:w-[220px] space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground block">من</label>
           <Input
             type="date"
+            lang="en"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="w-full"
+            className="w-full h-11 text-left [direction:ltr] [unicode-bidi:plaintext] tracking-[0.02em]"
             dir="ltr"
           />
         </div>
-        <div className="space-y-1.5">
-          <label className="text-sm text-muted-foreground block">إلى</label>
+        <div className="w-full lg:w-[220px] space-y-1.5">
+          <label className="text-xs font-medium text-muted-foreground block">إلى</label>
           <Input
             type="date"
+            lang="en"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="w-full"
+            className="w-full h-11 text-left [direction:ltr] [unicode-bidi:plaintext] tracking-[0.02em]"
             dir="ltr"
           />
         </div>
