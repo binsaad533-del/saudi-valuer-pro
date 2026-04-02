@@ -90,7 +90,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
             <tr>
               <th className="p-2 text-right border">#</th>
               <th className="p-2 text-right border">الوصف</th>
-              <th className="p-2 text-right border">القيمة (ر.س)</th>
+              <th className="p-2 text-right border">القيمة (<SAR size={10} />)</th>
               <th className="p-2 text-right border">المصدر</th>
               <th className="p-2 text-right border">التاريخ</th>
             </tr>
