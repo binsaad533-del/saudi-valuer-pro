@@ -263,42 +263,46 @@ export default function ClientDashboard() {
         )}
 
         {activeTab === "reports" && (
-          <Card>
-            <CardContent className="p-0">
-              {readyReports.length === 0 ? (
-                <div className="text-center py-16">
-                  <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground text-sm">لا توجد تقارير جاهزة حالياً</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {readyReports.map((rpt) => (
-                    <div key={rpt.id} className="flex items-center justify-between gap-3 p-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-primary" />
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-0">
+                {readyReports.length === 0 ? (
+                  <div className="text-center py-16">
+                    <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm">لا توجد تقارير جاهزة حالياً</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {readyReports.map((rpt) => (
+                      <div key={rpt.id} className="flex items-center justify-between gap-3 p-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileText className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground truncate">{rpt.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {rpt.ref} · {rpt.date}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground truncate">{rpt.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {rpt.ref} · {rpt.date}
-                          </p>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Download className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {/* Archived Reports from admin */}
+            <ClientArchivedReports userId={userId} />
+          </div>
         )}
 
         {activeTab === "documents" && (
