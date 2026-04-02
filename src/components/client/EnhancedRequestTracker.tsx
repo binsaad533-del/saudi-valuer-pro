@@ -149,7 +149,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
                     : "bg-muted text-muted-foreground border-transparent"
                 }`}
               >
-                {isDone ? "✓" : i + 1}
+                {isDone ? "✓" : <span dir="ltr" style={{ fontFamily: "system-ui" }}>{i + 1}</span>}
               </div>
               {/* Content */}
               <div className="flex-1 min-w-0">
