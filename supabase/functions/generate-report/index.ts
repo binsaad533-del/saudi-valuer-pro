@@ -337,6 +337,14 @@ serve(async (req) => {
           confidence_score: ac.comparable.confidence_score,
           is_verified: ac.comparable.is_verified,
         } : null,
+        sources: (ac.sources || []).map((s: any) => ({
+          source_name_ar: s.source_name_ar,
+          source_name_en: s.source_name_en,
+          source_type: s.source_type,
+          reference_number: s.reference_number,
+          source_date: s.source_date,
+          url: s.url,
+        })),
         adjustments: comparableAdjustments
           .filter((adj) => adj.assignment_comparable_id === ac.id)
           .map((adj) => ({
