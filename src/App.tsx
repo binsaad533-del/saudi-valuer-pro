@@ -119,7 +119,7 @@ const App = () => (
           } />
 
           {/* Client Portal */}
-          <Route path="/client/login" element={<ClientLogin />} />
+          <Route path="/client/login" element={<UnifiedLogin />} />
           <Route path="/client/register" element={<ClientRegister />} />
           <Route path="/client/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
