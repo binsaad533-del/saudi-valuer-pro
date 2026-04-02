@@ -64,6 +64,7 @@ const translations: Record<string, Record<Language, string>> = {
 
   // System section
   systemSection: { ar: "النظام", en: "System" },
+  analytics: { ar: "التحليلات", en: "Analytics" },
   compliance: { ar: "الامتثال", en: "Compliance" },
   myProfile: { ar: "بياناتي", en: "My Profile" },
 
