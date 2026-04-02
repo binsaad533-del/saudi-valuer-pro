@@ -7,6 +7,7 @@ import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { Report, ReportStatus } from "@/types/report";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 type VerifyStatus = "valid" | "superseded" | "cancelled" | "not_found";
@@ -143,7 +144,7 @@ export default function VerifyReport() {
                     <>
                       <div className="p-3 rounded-lg bg-background/60 border text-center">
                         <p className="text-xs text-muted-foreground mb-1">القيمة التقديرية</p>
-                        <p className="text-xl font-bold">{formatNumber(result.report.estimatedValue)} ر.س</p>
+                        <p className="text-xl font-bold">{formatNumber(result.report.estimatedValue)} <SAR /></p>
                       </div>
 
                       <div className="p-3 rounded-lg bg-background/60 border">

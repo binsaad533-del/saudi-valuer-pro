@@ -16,6 +16,7 @@ import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
@@ -129,7 +130,7 @@ export default function ReportsListPage() {
                   <TableCell>{r.clientName}</TableCell>
                   <TableCell>{ASSET_TYPE_LABELS[r.assetType] || r.assetType}</TableCell>
                   <TableCell className="font-medium">
-                    {formatNumber(r.estimatedValue)} ر.س
+                    {formatNumber(r.estimatedValue)} <SAR />
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {formatDate(r.createdAt)}

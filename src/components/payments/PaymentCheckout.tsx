@@ -10,6 +10,7 @@ import {
   AlertTriangle, Clock, Shield,
 } from "lucide-react";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/payment-provider";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 interface PaymentCheckoutProps {
   request: any;
@@ -92,7 +93,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
             <CheckCircle className="w-8 h-8 text-green-500" />
           </div>
           <h3 className="text-lg font-bold text-foreground">تم الدفع بنجاح</h3>
-          <p className="text-sm text-muted-foreground">{stageLabel} - {formatNumber(amount)} ر.س</p>
+          <p className="text-sm text-muted-foreground">{stageLabel} - {formatNumber(amount)} <SAR /></p>
           <Badge className="bg-green-500/10 text-green-600">تم التأكيد</Badge>
         </CardContent>
       </Card>
@@ -112,7 +113,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
         <div className="text-center p-4 bg-primary/5 rounded-lg border border-primary/10">
           <p className="text-xs text-muted-foreground mb-1">المبلغ المطلوب</p>
           <p className="text-3xl font-bold text-primary" dir="ltr">
-            {formatNumber(Number(amount))} <span className="text-sm">ر.س</span>
+            {formatNumber(Number(amount))} <SAR />
           </p>
         </div>
 
@@ -154,7 +155,7 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
           ) : (
             <Shield className="w-5 h-5 ml-2" />
           )}
-          ادفع الآن - {formatNumber(Number(amount))} ر.س
+          ادفع الآن - {formatNumber(Number(amount))} <SAR />
         </Button>
 
         {/* Retry if failed */}

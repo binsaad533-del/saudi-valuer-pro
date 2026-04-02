@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import jsaasLogo from "@/assets/jsaas-logo.png";
 import OfficialStamp from "./OfficialStamp";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 interface ReportPreviewProfessionalProps {
@@ -89,7 +90,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
             <tr>
               <th className="p-2 text-right border">#</th>
               <th className="p-2 text-right border">الوصف</th>
-              <th className="p-2 text-right border">القيمة (ر.س)</th>
+              <th className="p-2 text-right border">القيمة (<SAR size={10} />)</th>
               <th className="p-2 text-right border">المصدر</th>
               <th className="p-2 text-right border">التاريخ</th>
             </tr>
@@ -112,7 +113,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
       <div className="mx-6 mt-6 p-6 bg-primary/5 border-2 border-primary rounded-lg text-center">
         <p className="text-sm text-muted-foreground mb-1">القيمة التقديرية النهائية</p>
         <p className="text-3xl font-bold text-primary">
-          {formatNumber(report.estimatedValue)} <span className="text-lg">ر.س</span>
+          {formatNumber(report.estimatedValue)} <SAR />
         </p>
       </div>
 

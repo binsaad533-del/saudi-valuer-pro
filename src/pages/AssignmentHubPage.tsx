@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 interface StageInfo {
   key: string;
@@ -306,7 +307,7 @@ export default function AssignmentHubPage() {
           </CardHeader>
           <CardContent className="space-y-1.5 text-sm">
             <p className="font-medium text-lg">
-              {assignment.final_value ? `${formatNumber(assignment.final_value)} ر.س` : "لم يُحدد"}
+              {assignment.final_value ? <span className="inline-flex items-center gap-1">{formatNumber(assignment.final_value)} <SAR size={14} /></span> : "لم يُحدد"}
             </p>
             <p className="text-muted-foreground">المنهجية: {assignment.methodology || "—"}</p>
             <p className="text-muted-foreground">الغرض: {assignment.purpose_ar || "—"}</p>

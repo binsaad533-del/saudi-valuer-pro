@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   CheckCircle,
 } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 type Tab = "all" | "review" | "completed";
 
@@ -148,7 +149,7 @@ export default function ValuationsList() {
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">العميل</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الغرض</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الحالة</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">القيمة (ر.س)</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">القيمة (<SAR size={10} />)</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">التاريخ</th>
                   <th className="px-5 py-3"></th>
                 </tr>

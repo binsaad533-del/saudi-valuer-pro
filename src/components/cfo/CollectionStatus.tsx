@@ -2,6 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { invoices } from "@/data/cfoMockData";
 import { useMemo } from "react";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const STATUS_COLORS: Record<string, string> = {
@@ -68,7 +69,7 @@ export default function CollectionStatus() {
                 <span className="text-sm text-foreground">{d.label}</span>
               </div>
               <div className="text-left">
-                <span className="text-sm font-semibold text-foreground">{formatNumber(d.amount)} ر.س</span>
+                <span className="text-sm font-semibold text-foreground">{formatNumber(d.amount)} <SAR /></span>
                 <span className="text-xs text-muted-foreground mr-2">({d.percentage}%)</span>
               </div>
             </div>

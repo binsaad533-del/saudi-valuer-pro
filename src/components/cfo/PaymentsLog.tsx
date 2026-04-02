@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, FileSpreadsheet } from "lucide-react";
 import { exportPaymentsPDF, exportPaymentsExcel } from "@/lib/cfo-export";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 export default function PaymentsLog() {
@@ -62,7 +63,7 @@ export default function PaymentsLog() {
                 <TableCell className="font-medium">{p.paymentNumber}</TableCell>
                 <TableCell>{p.invoiceNumber}</TableCell>
                 <TableCell>{p.clientName}</TableCell>
-                <TableCell>{formatNumber(p.amount)} ر.س</TableCell>
+                <TableCell>{formatNumber(p.amount)} <SAR /></TableCell>
                 <TableCell>
                   <Badge variant="outline" className="bg-muted/50">{methodLabels[p.method]}</Badge>
                 </TableCell>

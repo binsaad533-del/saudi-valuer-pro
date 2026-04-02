@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 interface MarketEntry {
   id?: string;
@@ -500,7 +501,7 @@ export default function MarketDataIntegration() {
                         <th className="p-2 text-right font-medium text-muted-foreground">المدينة</th>
                         <th className="p-2 text-right font-medium text-muted-foreground">الحي</th>
                         <th className="p-2 text-right font-medium text-muted-foreground">النوع</th>
-                        <th className="p-2 text-center font-medium text-muted-foreground">السعر (ر.س)</th>
+                        <th className="p-2 text-center font-medium text-muted-foreground">السعر (<SAR size={10} />)</th>
                         <th className="p-2 text-center font-medium text-muted-foreground">م²</th>
                         <th className="p-2 text-center font-medium text-muted-foreground">التاريخ</th>
                       </tr>
@@ -549,7 +550,7 @@ export default function MarketDataIntegration() {
                     </div>
                     <div className="mt-3 flex items-baseline gap-1">
                       <span className="text-lg font-bold text-primary">{formatNumber(z.avg_price_per_sqm || 0)}</span>
-                      <span className="text-xs text-muted-foreground">ر.س/م²</span>
+                      <span className="text-xs text-muted-foreground"><SAR size={10} />/م²</span>
                     </div>
                     {z.last_updated && (
                       <p className="text-[10px] text-muted-foreground mt-1">آخر تحديث: {z.last_updated.substring(0, 10)}</p>
@@ -726,11 +727,11 @@ export default function MarketDataIntegration() {
                   <Input value={newEntry.district_ar} onChange={e => setNewEntry(p => ({ ...p, district_ar: e.target.value }))} placeholder="النرجس" />
                 </div>
                 <div>
-                  <Label>السعر (ر.س) *</Label>
+                  <Label>السعر (<SAR size={10} />) *</Label>
                   <Input type="number" value={newEntry.price || ""} onChange={e => setNewEntry(p => ({ ...p, price: Number(e.target.value) }))} />
                 </div>
                 <div>
-                  <Label>سعر المتر (ر.س/م²)</Label>
+                  <Label>سعر المتر (<SAR size={10} />/م²)</Label>
                   <Input type="number" value={newEntry.price_per_sqm || ""} onChange={e => setNewEntry(p => ({ ...p, price_per_sqm: Number(e.target.value) }))} />
                 </div>
                 <div>

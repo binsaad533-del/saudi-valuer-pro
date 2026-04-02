@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, FileText, FileSpreadsheet } from "lucide-react";
 import { exportInvoicesPDF, exportInvoicesExcel } from "@/lib/cfo-export";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const statusColors: Record<Invoice["status"], string> = {
@@ -88,7 +89,7 @@ export default function InvoicesTable() {
                 <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
                 <TableCell>{inv.clientName}</TableCell>
                 <TableCell>{inv.valuationType}</TableCell>
-                <TableCell>{formatNumber(inv.amount)} ر.س</TableCell>
+                <TableCell>{formatNumber(inv.amount)} <SAR /></TableCell>
                 <TableCell>{inv.issueDate}</TableCell>
                 <TableCell>{inv.dueDate}</TableCell>
                 <TableCell>

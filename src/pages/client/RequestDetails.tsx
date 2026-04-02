@@ -20,6 +20,7 @@ import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const STATUS_TIMELINE = [
@@ -315,11 +316,11 @@ export default function RequestDetails() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-center p-3 bg-primary/5 rounded-lg">
-                    <p className="text-2xl font-bold text-primary" dir="ltr">{formatNumber(Number(request.quotation_amount))} ر.س</p>
+                    <p className="text-2xl font-bold text-primary" dir="ltr">{formatNumber(Number(request.quotation_amount))} <SAR /></p>
                     {request.payment_structure === "partial" && (
                       <div className="mt-2 text-xs text-muted-foreground space-y-1">
-                        <p>الدفعة الأولى: {formatNumber(Number(request.first_payment_amount))} ر.س</p>
-                        <p>الدفعة النهائية: {formatNumber(request.total_fees - request.first_payment_amount)} ر.س</p>
+                        <p>الدفعة الأولى: {formatNumber(Number(request.first_payment_amount))} <SAR /></p>
+                        <p>الدفعة النهائية: {formatNumber(request.total_fees - request.first_payment_amount)} <SAR /></p>
                       </div>
                     )}
                   </div>

@@ -2,6 +2,7 @@ import TopBar from "@/components/layout/TopBar";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, Filter, Building2, MapPin, TrendingUp, Star, Plus } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const comparables = [
   { id: 1, type: "فيلا سكنية", city: "الرياض", district: "حي النرجس", area: 450, price: 2800000, pricePerM: 6222, date: "2026-02-15", confidence: 92, source: "صفقة فعلية" },
@@ -49,7 +50,7 @@ export default function ComparablesPage() {
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">النوع</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الموقع</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">المساحة (م²)</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">السعر (ر.س)</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">السعر (<SAR size={10} />)</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">سعر/م²</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">التاريخ</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">المصدر</th>

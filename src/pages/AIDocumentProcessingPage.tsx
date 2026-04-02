@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const DOC_CATEGORIES = [
   { value: "deed", label: "صك ملكية", icon: FileCheck },

@@ -15,6 +15,7 @@ import {
   Briefcase, TrendingUp, RotateCcw, HeartPulse, Send, UserCheck, Users,
   FileSearch, ListChecks, CreditCard, ThumbsUp, Ticket, X,
 } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 interface PurposeOption {
   key: string;
@@ -291,7 +292,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
   };
 
   const formatCurrency = (amount: number) =>
-    formatNumber(Math.round(amount)) + " ر.س";
+    <>{formatNumber(Math.round(amount))} <SAR size={12} /></>;
 
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
@@ -1549,7 +1550,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                         </div>
                         <div className="space-y-2">
                           <div>
-                            <label className="text-[10px] text-muted-foreground mb-1 block">السعر الجديد (ر.س)</label>
+                            <label className="text-[10px] text-muted-foreground mb-1 block">السعر الجديد (<SAR size={9} />)</label>
                             <input
                               type="number"
                               value={adjustedPrice}

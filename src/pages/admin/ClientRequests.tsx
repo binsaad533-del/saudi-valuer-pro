@@ -24,6 +24,7 @@ import {
   STATUS_COLORS,
   PIPELINE_PHASES,
 } from "@/lib/workflow-engine";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.fromEntries(
   Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])
@@ -300,7 +301,7 @@ export default function ClientRequests() {
                           {req.property_city_ar && <span>📍 {req.property_city_ar}</span>}
                           {req.land_area && <span>📐 {req.land_area} م²</span>}
                           <span>📅 {formatDate(req.created_at)}</span>
-                          {req.quotation_amount && <span className="text-primary font-medium">💰 {formatNumber(Number(req.quotation_amount))} ر.س</span>}
+                          {req.quotation_amount && <span className="text-primary font-medium">💰 {formatNumber(Number(req.quotation_amount))} <SAR /></span>}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -397,7 +398,7 @@ export default function ClientRequests() {
             {/* Price */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>المبلغ الإجمالي (ر.س)</Label>
+                <Label>المبلغ الإجمالي (<SAR size={10} />)</Label>
                 <Input
                   type="number"
                   value={pricingForm.quotationAmount}
@@ -448,8 +449,8 @@ export default function ClientRequests() {
                 />
                 {pricingForm.quotationAmount && (
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>الدفعة الأولى: {formatNumber(parseFloat(pricingForm.quotationAmount) * parseFloat(pricingForm.firstPaymentPercentage) / 100)} ر.س</span>
-                    <span>الدفعة النهائية: {formatNumber(parseFloat(pricingForm.quotationAmount) * (1 - parseFloat(pricingForm.firstPaymentPercentage) / 100))} ر.س</span>
+                    <span>الدفعة الأولى: {formatNumber(parseFloat(pricingForm.quotationAmount) * parseFloat(pricingForm.firstPaymentPercentage) / 100)} <SAR /></span>
+                    <span>الدفعة النهائية: {formatNumber(parseFloat(pricingForm.quotationAmount) * (1 - parseFloat(pricingForm.firstPaymentPercentage) / 100))} <SAR /></span>
                   </div>
                 )}
               </div>

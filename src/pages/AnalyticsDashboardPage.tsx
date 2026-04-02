@@ -8,6 +8,7 @@ import {
   DollarSign, Target, AlertTriangle, CheckCircle, Loader2,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const COLORS = [
   "hsl(212, 60%, 50%)",
@@ -162,7 +163,7 @@ export default function AnalyticsDashboardPage() {
     { label: "إجمالي المهام", value: data.totalAssignments, icon: FileText, color: "text-primary" },
     { label: "مهام مكتملة", value: data.completedAssignments, icon: CheckCircle, color: "text-success" },
     { label: "متوسط الإنجاز (يوم)", value: data.avgCompletionDays, icon: Clock, color: "text-warning" },
-    { label: "الإيرادات (ر.س)", value: data.totalRevenue.toLocaleString(), icon: DollarSign, color: "text-primary" },
+    { label: "الإيرادات", value: data.totalRevenue.toLocaleString(), icon: DollarSign, color: "text-primary", hasCurrency: true },
     { label: "التزام SLA", value: `${data.slaCompliance}%`, icon: Target, color: data.slaCompliance >= 80 ? "text-success" : "text-destructive" },
     { label: "مهام متأخرة", value: data.overdueTasks, icon: AlertTriangle, color: data.overdueTasks > 0 ? "text-destructive" : "text-success" },
   ];
@@ -183,7 +184,7 @@ export default function AnalyticsDashboardPage() {
           <Card key={i} className="border-border/50">
             <CardContent className="p-4 text-center">
               <kpi.icon className={`h-5 w-5 mx-auto mb-2 ${kpi.color}`} />
-              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+              <p className="text-2xl font-bold text-foreground inline-flex items-center justify-center gap-1">{kpi.value} {(kpi as any).hasCurrency && <SAR size={16} />}</p>
               <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
             </CardContent>
           </Card>
