@@ -686,6 +686,7 @@ export default function MarketDataIntegration() {
                         value={newEntry.source_date}
                         onChange={e => setNewEntry(p => ({ ...p, source_date: e.target.value }))}
                         className="text-sm"
+                        dir="ltr"
                       />
                     </div>
                   </div>
