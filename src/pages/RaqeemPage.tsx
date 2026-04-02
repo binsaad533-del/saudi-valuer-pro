@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send, Bot, User, Paperclip, Trash2, Sparkles, FileText, X, Edit3,
   BookOpen, MessageSquare, Scale, FlaskConical, BarChart3,
+  CheckCircle2, Loader2, AlertCircle, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
