@@ -11,6 +11,7 @@ import {
   TrendingUp, Database, Search, Plus,
   MapPin, Loader2, CheckCircle2, BarChart3,
   Wrench, ExternalLink, Globe, Plane, HardHat, Factory, Building2,
+  Landmark, Scale, Home, AreaChart, Banknote, Map,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNumber } from "@/lib/utils";
