@@ -54,7 +54,26 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
     setUploading(false);
   };
 
-  const handleSave = async () => {
+  const handleSaveAll = async () => {
+    // Save password if provided (for non-owner view)
+    if (!isOwnerView && newPassword) {
+      if (newPassword.length < 6) {
+        toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.error("كلمتا المرور غير متطابقتين");
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast.error("فشل تحديث كلمة المرور");
+        return;
+      }
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+
     if (isOwnerView) {
       const ok = await save({
         full_name_ar: localProfile.full_name_ar,
@@ -78,26 +97,6 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
     }
   };
 
-  const handleChangePassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("كلمتا المرور غير متطابقتين");
-      return;
-    }
-    setChangingPassword(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      toast.error("فشل تحديث كلمة المرور");
-    } else {
-      toast.success("تم تحديث كلمة المرور بنجاح");
-      setNewPassword("");
-      setConfirmPassword("");
-    }
-    setChangingPassword(false);
-  };
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
@@ -154,15 +153,11 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
                 <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} dir="ltr" placeholder="••••••••" />
               </div>
             </div>
-            <Button onClick={handleChangePassword} variant="outline" className="mt-4 gap-2" disabled={changingPassword || !newPassword}>
-              {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              تحديث كلمة المرور
-            </Button>
           </CardContent>
         </Card>
 
         <div className="flex justify-start">
-          <Button onClick={handleSave} className="gap-2" disabled={saving}>
+          <Button onClick={handleSaveAll} className="gap-2" disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             حفظ البيانات
           </Button>
@@ -261,7 +256,7 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
       </Card>
 
       <div className="flex justify-start">
-        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+        <Button onClick={handleSaveAll} className="gap-2" disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ البيانات
         </Button>
