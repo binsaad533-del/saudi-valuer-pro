@@ -184,7 +184,7 @@ export default function AnalyticsDashboardPage() {
           <Card key={i} className="border-border/50">
             <CardContent className="p-4 text-center">
               <kpi.icon className={`h-5 w-5 mx-auto mb-2 ${kpi.color}`} />
-              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
+              <p className="text-2xl font-bold text-foreground inline-flex items-center justify-center gap-1">{kpi.value} {(kpi as any).hasCurrency && <SAR size={16} />}</p>
               <p className="text-xs text-muted-foreground mt-1">{kpi.label}</p>
             </CardContent>
           </Card>

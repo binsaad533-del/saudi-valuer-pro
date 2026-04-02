@@ -50,7 +50,7 @@ export default function ComparablesPage() {
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">النوع</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">الموقع</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">المساحة (م²)</th>
-                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">السعر (ر.س)</th>
+                  <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">السعر (<SAR size={10} />)</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">سعر/م²</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">التاريخ</th>
                   <th className="text-right text-xs font-medium text-muted-foreground px-5 py-3">المصدر</th>
