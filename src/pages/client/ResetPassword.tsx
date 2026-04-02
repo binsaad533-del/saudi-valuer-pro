@@ -59,7 +59,7 @@ export default function ResetPassword() {
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
             <h2 className="text-xl font-bold text-foreground mb-2">تم تغيير كلمة المرور</h2>
             <p className="text-muted-foreground text-sm mb-6">يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.</p>
-            <Button onClick={() => navigate("/client/login")} className="w-full">
+            <Button onClick={() => navigate("/login")} className="w-full">
               تسجيل الدخول
             </Button>
           </div>

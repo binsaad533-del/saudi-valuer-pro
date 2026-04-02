@@ -57,7 +57,7 @@ export default function AuditorDashboard() {
 
   const checkAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate("/client/login"); return; }
+    if (!user) { navigate("/login"); return; }
     const { data: role } = await supabase
       .from("user_roles")
       .select("role")
@@ -65,7 +65,7 @@ export default function AuditorDashboard() {
       .single();
     if (role?.role !== "financial_manager") {
       toast.error("ليس لديك صلاحية الوصول");
-      navigate("/client/login");
+      navigate("/login");
     }
   };
 
@@ -88,7 +88,7 @@ export default function AuditorDashboard() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("تم تسجيل الخروج");
-    navigate("/client/login");
+    navigate("/login");
   };
 
   const filtered = requests.filter(

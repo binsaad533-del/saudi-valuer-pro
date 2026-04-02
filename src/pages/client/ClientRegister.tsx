@@ -138,7 +138,7 @@ export default function ClientRegister() {
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
             <h2 className="text-xl font-bold text-foreground mb-2">تم إنشاء حسابك بنجاح</h2>
             <p className="text-muted-foreground text-sm mb-6">يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك، ثم يمكنك تسجيل الدخول.</p>
-            <Button onClick={() => navigate("/client/login")} className="w-full">الذهاب لتسجيل الدخول</Button>
+            <Button onClick={() => navigate("/login")} className="w-full">الذهاب لتسجيل الدخول</Button>
           </div>
         </div>
       </div>
@@ -289,7 +289,7 @@ export default function ClientRegister() {
           </form>
           <div className="mt-6 text-center text-sm text-muted-foreground">
             لديك حساب بالفعل؟{" "}
-            <Link to="/client/login" className="text-primary font-medium hover:underline">تسجيل الدخول</Link>
+            <Link to="/login" className="text-primary font-medium hover:underline">تسجيل الدخول</Link>
           </div>
         </div>
         <p className="text-center text-xs text-muted-foreground mt-6">© {new Date().getFullYear()} جساس للتقييم - جميع الحقوق محفوظة</p>
