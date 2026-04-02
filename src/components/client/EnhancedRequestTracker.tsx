@@ -87,7 +87,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
                       : "bg-muted text-muted-foreground border-transparent"
                   }`}
                 >
-                  {isDone ? "✓" : i + 1}
+                  {isDone ? "✓" : <span dir="ltr" style={{ fontFamily: "system-ui" }}>{i + 1}</span>}
                 </div>
                 {i < STAGES.length - 1 && (
                   <div className={`h-0.5 flex-1 mx-0.5 rounded-full ${isDone ? "bg-primary" : "bg-border"}`} />
