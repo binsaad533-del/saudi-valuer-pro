@@ -739,7 +739,7 @@ export default function MarketDataIntegration() {
                 </div>
                 <div>
                   <Label>تاريخ الصفقة</Label>
-                  <Input type="date" value={newEntry.transaction_date} onChange={e => setNewEntry(p => ({ ...p, transaction_date: e.target.value }))} />
+                  <Input type="date" value={newEntry.transaction_date} onChange={e => setNewEntry(p => ({ ...p, transaction_date: e.target.value }))} dir="ltr" />
                 </div>
               </div>
               <Button onClick={addComparable} disabled={loading} className="gap-2">
