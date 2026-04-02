@@ -14,7 +14,8 @@ import {
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
 } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/StatusComponents";
-import { RequestTracker } from "@/components/client/RequestTracker";
+import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
+import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
