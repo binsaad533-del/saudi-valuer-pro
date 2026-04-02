@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Database, Download, Shield, Clock, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Database, Download, Shield, Clock, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -7,21 +7,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useOrgSettings } from "@/hooks/useOrgSettings";
+
+const defaults = {
+  autoBackup: true,
+  backupFrequency: "daily",
+  twoFactorAuth: false,
+  auditLog: true,
+};
 
 export default function BackupSettings() {
-  const [form, setForm] = useState({
-    autoBackup: true,
-    backupFrequency: "daily",
-    twoFactorAuth: false,
-    auditLog: true,
-  });
+  const { settings, loading, saving, save } = useOrgSettings("backup");
+  const [form, setForm] = useState(defaults);
+
+  useEffect(() => {
+    if (!loading && Object.keys(settings).length > 0) {
+      setForm({ ...defaults, ...settings });
+    }
+  }, [loading, settings]);
 
   const handleExport = (type: string) => {
     toast.success(`جاري تصدير البيانات بصيغة ${type}...`);
   };
 
-  const handleSave = () => {
-    toast.success("تم حفظ إعدادات الأمان بنجاح");
+  const handleSave = async () => {
+    const ok = await save(form);
+    if (ok) toast.success("تم حفظ إعدادات الأمان بنجاح");
   };
 
   const recentBackups = [
@@ -29,6 +40,10 @@ export default function BackupSettings() {
     { date: "2026-03-28", size: "243 MB", status: "success" },
     { date: "2026-03-27", size: "240 MB", status: "success" },
   ];
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -60,7 +75,6 @@ export default function BackupSettings() {
               </Select>
             </div>
           )}
-
           <div className="pt-2 space-y-2">
             <p className="text-sm font-medium text-foreground">آخر النسخ الاحتياطية</p>
             {recentBackups.map((b, i) => (
@@ -87,16 +101,13 @@ export default function BackupSettings() {
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" onClick={() => handleExport("CSV")}>
-              <Download className="w-4 h-4 ml-2" />
-              تصدير CSV
+              <Download className="w-4 h-4 ml-2" /> تصدير CSV
             </Button>
             <Button variant="outline" onClick={() => handleExport("Excel")}>
-              <Download className="w-4 h-4 ml-2" />
-              تصدير Excel
+              <Download className="w-4 h-4 ml-2" /> تصدير Excel
             </Button>
             <Button variant="outline" onClick={() => handleExport("PDF")}>
-              <Download className="w-4 h-4 ml-2" />
-              تصدير PDF
+              <Download className="w-4 h-4 ml-2" /> تصدير PDF
             </Button>
           </div>
         </CardContent>
@@ -128,8 +139,8 @@ export default function BackupSettings() {
       </Card>
 
       <div className="flex justify-start">
-        <Button onClick={handleSave} className="gap-2">
-          <Save className="w-4 h-4" />
+        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ الإعدادات
         </Button>
       </div>

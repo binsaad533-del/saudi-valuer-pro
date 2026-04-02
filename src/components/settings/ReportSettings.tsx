@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { FileText, Save } from "lucide-react";
+import { useState, useEffect } from "react";
+import { FileText, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,22 +7,37 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { useOrgSettings } from "@/hooks/useOrgSettings";
+
+const defaults = {
+  defaultLanguage: "ar",
+  validityMonths: "3",
+  numberPrefix: "VAL",
+  showWatermark: true,
+  autoNumber: true,
+  defaultTemplate: "standard",
+  showQr: true,
+  footerText: "هذا التقرير سري ولا يجوز توزيعه أو نسخه دون إذن مسبق من شركة جساس للتقييم",
+};
 
 export default function ReportSettings() {
-  const [form, setForm] = useState({
-    defaultLanguage: "ar",
-    validityMonths: "3",
-    numberPrefix: "VAL",
-    showWatermark: true,
-    autoNumber: true,
-    defaultTemplate: "standard",
-    showQr: true,
-    footerText: "هذا التقرير سري ولا يجوز توزيعه أو نسخه دون إذن مسبق",
-  });
+  const { settings, loading, saving, save } = useOrgSettings("reports");
+  const [form, setForm] = useState(defaults);
 
-  const handleSave = () => {
-    toast.success("تم حفظ إعدادات التقارير بنجاح");
+  useEffect(() => {
+    if (!loading && Object.keys(settings).length > 0) {
+      setForm({ ...defaults, ...settings });
+    }
+  }, [loading, settings]);
+
+  const handleSave = async () => {
+    const ok = await save(form);
+    if (ok) toast.success("تم حفظ إعدادات التقارير بنجاح");
   };
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -110,8 +125,8 @@ export default function ReportSettings() {
       </Card>
 
       <div className="flex justify-start">
-        <Button onClick={handleSave} className="gap-2">
-          <Save className="w-4 h-4" />
+        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ الإعدادات
         </Button>
       </div>
