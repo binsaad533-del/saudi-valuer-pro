@@ -51,7 +51,7 @@ export default function ClientRequestsPage() {
   useEffect(() => {
     const load = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/client/login"); return; }
+      if (!user) { navigate("/login"); return; }
 
       const { data } = await supabase
         .from("valuation_requests" as any)

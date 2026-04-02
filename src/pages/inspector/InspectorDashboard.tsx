@@ -59,7 +59,7 @@ export default function InspectorDashboard() {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      navigate("/client/login");
+      navigate("/login");
       return;
     }
 
@@ -119,7 +119,7 @@ export default function InspectorDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    navigate("/client/login");
+    navigate("/login");
   };
 
   const active = inspections.filter(i => i.status === "assigned" || i.status === "in_progress");

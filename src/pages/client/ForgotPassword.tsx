@@ -40,7 +40,7 @@ export default function ForgotPassword() {
             <p className="text-muted-foreground text-sm mb-6">
               يرجى التحقق من بريدك الإلكتروني <span className="font-medium text-foreground" dir="ltr">{email}</span> واتبع الرابط لإعادة تعيين كلمة المرور.
             </p>
-            <Link to="/client/login">
+            <Link to="/login">
               <Button variant="outline" className="w-full">العودة لتسجيل الدخول</Button>
             </Link>
           </div>
@@ -72,7 +72,7 @@ export default function ForgotPassword() {
             </Button>
           </form>
           <div className="mt-4 text-center">
-            <Link to="/client/login" className="text-sm text-primary hover:underline">العودة لتسجيل الدخول</Link>
+            <Link to="/login" className="text-sm text-primary hover:underline">العودة لتسجيل الدخول</Link>
           </div>
         </div>
       </div>

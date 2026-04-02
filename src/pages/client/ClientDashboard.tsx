@@ -37,7 +37,7 @@ export default function ClientDashboard() {
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/client/login"); return; }
+      if (!user) { navigate("/login"); return; }
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -61,7 +61,7 @@ export default function ClientDashboard() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    window.location.replace("/client/login");
+    window.location.replace("/login");
   };
 
   const handleFileUpload = () => {

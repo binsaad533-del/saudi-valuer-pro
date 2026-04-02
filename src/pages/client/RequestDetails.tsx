@@ -64,7 +64,7 @@ export default function RequestDetails() {
 
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { navigate("/client/login"); return; }
+    if (!user) { navigate("/login"); return; }
     setUser(user);
 
     const [reqRes, msgRes, docRes, payRes] = await Promise.all([

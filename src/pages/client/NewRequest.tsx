@@ -102,7 +102,7 @@ export default function NewRequest() {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        navigate("/client/login");
+        navigate("/login");
         return;
       }
       setUser(user);

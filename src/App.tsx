@@ -25,8 +25,10 @@ import ReportsListPage from "@/pages/ReportsListPage";
 import ValuationDetailPage from "@/pages/ValuationDetailPage";
 import NotFound from "./pages/NotFound.tsx";
 
+// Unified Login
+import UnifiedLogin from "@/pages/UnifiedLogin";
+
 // Admin
-import AdminLogin from "@/pages/admin/AdminLogin";
 import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
 import InspectorsListPage from "@/pages/admin/InspectorsListPage";
 import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
@@ -34,7 +36,6 @@ import InspectorCoverage from "@/pages/admin/InspectorCoverage";
 import RaqeemPage from "@/pages/RaqeemPage";
 
 // Client Portal
-import ClientLogin from "@/pages/client/ClientLogin";
 import ClientRegister from "@/pages/client/ClientRegister";
 import ForgotPassword from "@/pages/client/ForgotPassword";
 import ResetPassword from "@/pages/client/ResetPassword";
@@ -54,6 +55,7 @@ import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
+
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
 
@@ -66,8 +68,9 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Admin Login */}
-          <Route path="/login" element={<AdminLogin />} />
+          {/* Unified Login */}
+          <Route path="/login" element={<UnifiedLogin />} />
+          <Route path="/client/login" element={<UnifiedLogin />} />
 
           {/* Admin Routes - Protected */}
           <Route element={
@@ -108,43 +111,42 @@ const App = () => (
 
           {/* Inspector Portal - Protected */}
           <Route path="/inspector" element={
-            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
               <InspectorDashboard />
             </ProtectedRoute>
           } />
           <Route path="/inspector/inspection/:inspectionId" element={
-            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
               <MobileInspectionFlow />
             </ProtectedRoute>
           } />
 
           {/* Client Portal */}
-          <Route path="/client/login" element={<ClientLogin />} />
           <Route path="/client/register" element={<ClientRegister />} />
           <Route path="/client/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/client" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <ClientDashboard />
             </ProtectedRoute>
           } />
           <Route path="/client/dashboard" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <ClientDashboard />
             </ProtectedRoute>
           } />
           <Route path="/client/requests" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <ClientRequestsPage />
             </ProtectedRoute>
           } />
           <Route path="/client/new-request" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <NewRequest />
             </ProtectedRoute>
           } />
           <Route path="/client/request/:id" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/client/login">
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <RequestDetails />
             </ProtectedRoute>
           } />
