@@ -173,15 +173,11 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
                 <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} dir="ltr" placeholder="••••••••" />
               </div>
             </div>
-            <Button onClick={handleChangePassword} variant="outline" className="mt-4 gap-2" disabled={changingPassword || !newPassword}>
-              {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-              تحديث كلمة المرور
-            </Button>
           </CardContent>
         </Card>
 
         <div className="flex justify-start">
-          <Button onClick={handleSave} className="gap-2" disabled={saving}>
+          <Button onClick={handleSaveAll} className="gap-2" disabled={saving}>
             {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             حفظ البيانات
           </Button>
