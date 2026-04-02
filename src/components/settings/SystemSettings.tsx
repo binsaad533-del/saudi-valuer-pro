@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useOrgSettings } from "@/hooks/useOrgSettings";
 
 type AppRole = "owner" | "financial_manager" | "admin_coordinator" | "inspector" | "client";
 
@@ -27,15 +28,18 @@ const roleConfig: { role: AppRole; name: string; nameEn: string; color: "destruc
   { role: "client", name: "عميل", nameEn: "Client", color: "outline" },
 ];
 
+const systemDefaults = {
+  language: "ar",
+  theme: "light",
+  emailNotifications: true,
+  smsNotifications: false,
+  pushNotifications: true,
+  sessionTimeout: "60",
+};
+
 export default function SystemSettings() {
-  const [form, setForm] = useState({
-    language: "ar",
-    theme: "light",
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    sessionTimeout: "60",
-  });
+  const { settings, loading: settingsLoading, saving, save } = useOrgSettings("system");
+  const [form, setForm] = useState(systemDefaults);
 
   const [roleCounts, setRoleCounts] = useState<Record<string, number>>({});
   const [selectedRole, setSelectedRole] = useState<typeof roleConfig[0] | null>(null);
@@ -43,6 +47,12 @@ export default function SystemSettings() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [addingUser, setAddingUser] = useState(false);
+
+  useEffect(() => {
+    if (!settingsLoading && Object.keys(settings).length > 0) {
+      setForm({ ...systemDefaults, ...settings });
+    }
+  }, [settingsLoading, settings]);
 
   useEffect(() => {
     fetchRoleCounts();
@@ -91,7 +101,6 @@ export default function SystemSettings() {
     if (!newEmail.trim() || !selectedRole) return;
     setAddingUser(true);
     try {
-      // Find user by email in profiles
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("user_id, full_name_ar, email")
@@ -103,7 +112,6 @@ export default function SystemSettings() {
         return;
       }
 
-      // Check if already has this role
       const { data: existing } = await supabase
         .from("user_roles")
         .select("id")
@@ -153,9 +161,14 @@ export default function SystemSettings() {
     }
   };
 
-  const handleSave = () => {
-    toast.success("تم حفظ إعدادات النظام بنجاح");
+  const handleSave = async () => {
+    const ok = await save(form);
+    if (ok) toast.success("تم حفظ إعدادات النظام بنجاح");
   };
+
+  if (settingsLoading) {
+    return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -268,13 +281,12 @@ export default function SystemSettings() {
       </Card>
 
       <div className="flex justify-start">
-        <Button onClick={handleSave} className="gap-2">
-          <Save className="w-4 h-4" />
+        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+          {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ الإعدادات
         </Button>
       </div>
 
-      {/* Role Management Dialog */}
       <Dialog open={!!selectedRole} onOpenChange={open => !open && setSelectedRole(null)}>
         <DialogContent className="max-w-md" dir="rtl">
           <DialogHeader>
@@ -287,7 +299,6 @@ export default function SystemSettings() {
             </div>
           ) : (
             <div className="space-y-4">
-              {/* Add user */}
               <div className="flex gap-2">
                 <Input
                   placeholder="البريد الإلكتروني للمستخدم"
@@ -301,7 +312,6 @@ export default function SystemSettings() {
                 </Button>
               </div>
 
-              {/* Users list */}
               {roleUsers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-4">لا يوجد مستخدمون بهذا الدور</p>
               ) : (

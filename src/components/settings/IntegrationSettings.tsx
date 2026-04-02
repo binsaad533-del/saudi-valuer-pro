@@ -1,12 +1,12 @@
-import { useState } from "react";
-import { Plug, Key, CheckCircle2, XCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plug, Key, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-
 import { toast } from "sonner";
+import { useOrgSettings } from "@/hooks/useOrgSettings";
 
 interface Integration {
   name: string;
@@ -16,21 +16,37 @@ interface Integration {
   icon: string;
 }
 
-export default function IntegrationSettings() {
-  const [integrations, setIntegrations] = useState<Integration[]>([
-    { name: "بوابة الدفع", nameEn: "Payment Gateway", description: "ربط بوابة الدفع لتحصيل رسوم التقييم", connected: true, icon: "💳" },
-    { name: "خرائط Google", nameEn: "Google Maps", description: "عرض مواقع العقارات والمقارنات على الخريطة", connected: true, icon: "🗺️" },
-    { name: "وزارة العدل", nameEn: "MOJ API", description: "الربط مع بيانات الصكوك والملكيات", connected: false, icon: "🏛️" },
-    { name: "البريد الإلكتروني", nameEn: "Email Service", description: "إرسال التقارير والإشعارات عبر البريد", connected: true, icon: "📧" },
-    { name: "التوقيع الإلكتروني", nameEn: "E-Signature", description: "توقيع التقارير إلكترونياً", connected: false, icon: "✍️" },
-  ]);
+const defaultIntegrations: Integration[] = [
+  { name: "بوابة الدفع", nameEn: "Payment Gateway", description: "ربط بوابة الدفع لتحصيل رسوم التقييم", connected: false, icon: "💳" },
+  { name: "خرائط Google", nameEn: "Google Maps", description: "عرض مواقع العقارات والمقارنات على الخريطة", connected: false, icon: "🗺️" },
+  { name: "وزارة العدل", nameEn: "MOJ API", description: "الربط مع بيانات الصكوك والملكيات", connected: false, icon: "🏛️" },
+  { name: "البريد الإلكتروني", nameEn: "Email Service", description: "إرسال التقارير والإشعارات عبر البريد", connected: false, icon: "📧" },
+  { name: "التوقيع الإلكتروني", nameEn: "E-Signature", description: "توقيع التقارير إلكترونياً", connected: false, icon: "✍️" },
+];
 
-  const toggleConnection = (index: number) => {
+export default function IntegrationSettings() {
+  const { settings, loading, saving, save } = useOrgSettings("integrations");
+  const [integrations, setIntegrations] = useState<Integration[]>(defaultIntegrations);
+
+  useEffect(() => {
+    if (!loading && settings.integrations) {
+      setIntegrations(settings.integrations);
+    }
+  }, [loading, settings]);
+
+  const toggleConnection = async (index: number) => {
     const updated = [...integrations];
     updated[index].connected = !updated[index].connected;
     setIntegrations(updated);
-    toast.success(updated[index].connected ? `تم ربط ${updated[index].name}` : `تم فصل ${updated[index].name}`);
+    const ok = await save({ integrations: updated });
+    if (ok) {
+      toast.success(updated[index].connected ? `تم ربط ${updated[index].name}` : `تم فصل ${updated[index].name}`);
+    }
   };
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
     <div className="space-y-6">
