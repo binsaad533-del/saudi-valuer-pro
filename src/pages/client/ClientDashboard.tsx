@@ -23,6 +23,7 @@ import { formatDate } from "@/lib/utils";
 export default function ClientDashboard() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
   const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
