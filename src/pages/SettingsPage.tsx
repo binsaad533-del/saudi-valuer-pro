@@ -1,4 +1,6 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket } from "lucide-react";
+import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";
 import ValuerSettings from "@/components/settings/ValuerSettings";
