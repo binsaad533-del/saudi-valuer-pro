@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, FileSearch, Building2, FileText, Truck, Circle } from "lucide-react";
+import { CheckCircle, Clock, FileSearch, Building2, FileText, Truck } from "lucide-react";
 
 const STAGES = [
   { key: "submitted", label: "تم الإرسال", icon: CheckCircle, statuses: ["submitted", "new"] },

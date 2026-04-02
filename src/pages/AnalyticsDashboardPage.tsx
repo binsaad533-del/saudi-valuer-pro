@@ -303,7 +303,7 @@ export default function AnalyticsDashboardPage() {
             <CardHeader>
               <CardTitle className="text-sm flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" />
-                توزيع المهام حسب المدينة
+                توزيع المهام حسب نوع العقار
               </CardTitle>
             </CardHeader>
             <CardContent>
