@@ -27,3 +27,8 @@ export function CurrencyDisplay({ amount, className, iconSize }: { amount: numbe
     </span>
   );
 }
+
+/** For string-only contexts (tooltips, chart formatters) - returns text with ر.س */
+export function formatCurrencyText(amount: number): string {
+  return `${formatNumber(Math.round(amount))} ر.س`;
+}
