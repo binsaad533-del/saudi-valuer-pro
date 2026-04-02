@@ -97,26 +97,6 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
     }
   };
 
-  const handleChangePassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast.error("كلمتا المرور غير متطابقتين");
-      return;
-    }
-    setChangingPassword(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    if (error) {
-      toast.error("فشل تحديث كلمة المرور");
-    } else {
-      toast.success("تم تحديث كلمة المرور بنجاح");
-      setNewPassword("");
-      setConfirmPassword("");
-    }
-    setChangingPassword(false);
-  };
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
