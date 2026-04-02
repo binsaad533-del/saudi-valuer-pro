@@ -14,6 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SettingsPage() {
   const { role, loading } = useAuth();
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
   if (loading) {
