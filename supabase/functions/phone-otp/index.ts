@@ -187,7 +187,11 @@ serve(async (req) => {
   } catch (error: unknown) {
     console.error("Phone OTP error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const userMessage = errorMessage.includes("Twilio API error")
+      ? "تعذر إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم."
+      : errorMessage;
+
+    return new Response(JSON.stringify({ error: userMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
