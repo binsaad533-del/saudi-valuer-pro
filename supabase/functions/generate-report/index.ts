@@ -154,14 +154,16 @@ serve(async (req) => {
       if (assignComps?.length) {
         const compIds = assignComps.map((ac) => ac.comparable_id);
         const acIds = assignComps.map((ac) => ac.id);
-        const [compRes, adjRes] = await Promise.all([
+        const [compRes, adjRes, srcRes] = await Promise.all([
           supabase.from("comparables").select("*").in("id", compIds),
           supabase.from("comparable_adjustments").select("*")
             .in("assignment_comparable_id", acIds).order("sort_order"),
+          supabase.from("comparable_sources").select("*").in("comparable_id", compIds),
         ]);
         comparables = assignComps.map((ac) => ({
           ...ac,
           comparable: compRes.data?.find((c) => c.id === ac.comparable_id) || null,
+          sources: (srcRes.data || []).filter((s) => s.comparable_id === ac.comparable_id),
         }));
         comparableAdjustments = adjRes.data || [];
       }

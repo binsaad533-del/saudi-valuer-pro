@@ -641,6 +641,57 @@ export default function MarketDataIntegration() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Source Selection - MANDATORY */}
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Database className="h-4 w-4 text-primary" />
+                  <Label className="font-bold text-primary text-sm">مصدر البيانات (إلزامي) *</Label>
+                </div>
+                <p className="text-xs text-muted-foreground">يجب توثيق مصدر كل مقارنة وفقاً لمعايير IVS 2025 وتقييم</p>
+                <Select value={newEntry.source_reference_id} onValueChange={v => {
+                  const src = allSources.find(s => s.id === v);
+                  setNewEntry(p => ({ ...p, source_reference_id: v, source_url: src?.url || "" }));
+                }}>
+                  <SelectTrigger><SelectValue placeholder="اختر المصدر المعتمد..." /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="" disabled>— المنصات الحكومية —</SelectItem>
+                    {SA_REAL_ESTATE_SOURCES.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name_ar} — {s.type}</SelectItem>
+                    ))}
+                    <SelectItem value="" disabled>— السوق العقاري —</SelectItem>
+                    {SA_REAL_ESTATE_MARKET_SOURCES.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name_ar} — {s.type}</SelectItem>
+                    ))}
+                    <SelectItem value="" disabled>— الآلات والمعدات —</SelectItem>
+                    {MACHINERY_REFERENCE_SOURCES.map(s => (
+                      <SelectItem key={s.id} value={s.id}>{s.name_ar} — {s.type}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {newEntry.source_reference_id && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <div>
+                      <Label className="text-xs">رقم الصفقة / المرجع</Label>
+                      <Input
+                        value={newEntry.source_reference_number}
+                        onChange={e => setNewEntry(p => ({ ...p, source_reference_number: e.target.value }))}
+                        placeholder="مثال: 1234567890"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">تاريخ المصدر</Label>
+                      <Input
+                        type="date"
+                        value={newEntry.source_date}
+                        onChange={e => setNewEntry(p => ({ ...p, source_date: e.target.value }))}
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>نوع العقار</Label>
@@ -692,7 +743,7 @@ export default function MarketDataIntegration() {
               </div>
               <Button onClick={addComparable} disabled={loading} className="gap-2">
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                حفظ المقارنة
+                حفظ المقارنة مع توثيق المصدر
               </Button>
             </CardContent>
           </Card>
