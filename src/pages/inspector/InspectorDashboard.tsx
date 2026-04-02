@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   MapPin, Clock, CheckCircle, Calendar, Loader2, Building2, Play, Eye, LogOut,
-  User, AlertCircle, RefreshCw,
+  User, AlertCircle, RefreshCw, Settings,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
