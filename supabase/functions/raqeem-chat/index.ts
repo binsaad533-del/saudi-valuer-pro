@@ -121,6 +121,62 @@ const TOOLS = [
         required: ["assignment_id"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "extract_documents",
+      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم (صكوك، رخص بناء، عقود إيجار). يحلل الملفات ويستخرج المعلومات الرئيسية.",
+      parameters: {
+        type: "object",
+        properties: {
+          request_id: {
+            type: "string",
+            description: "معرّف طلب التقييم (UUID)"
+          }
+        },
+        required: ["request_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "translate_report",
+      description: "ترجمة أقسام التقرير بين العربية والإنجليزية باستخدام مصطلحات التقييم المعتمدة (IVS/TAQEEM).",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: {
+            type: "string",
+            description: "معرّف مهمة التقييم (UUID)"
+          },
+          target_lang: {
+            type: "string",
+            enum: ["en", "ar"],
+            description: "اللغة المستهدفة — en للإنجليزية، ar للعربية"
+          }
+        },
+        required: ["assignment_id", "target_lang"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_consistency",
+      description: "فحص تطابق النسختين العربية والإنجليزية من التقرير (القيم والاستنتاجات).",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: {
+            type: "string",
+            description: "معرّف مهمة التقييم (UUID)"
+          }
+        },
+        required: ["assignment_id"]
+      }
+    }
   }
 ];
 
