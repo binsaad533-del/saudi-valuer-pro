@@ -102,6 +102,18 @@ export default function RaqeemPage() {
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantSoFar = "";
+      let currentOrchestration: OrchestrationTool[] = [];
+
+      const upsertOrchestration = (tools: OrchestrationTool[]) => {
+        currentOrchestration = tools;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") {
+            return prev.map((m, i) => (i === prev.length - 1 ? { ...m, orchestration: [...tools] } : m));
+          }
+          return [...prev, { role: "assistant", content: "", orchestration: [...tools] }];
+        });
+      };
 
       const upsert = (chunk: string) => {
         assistantSoFar += chunk;
@@ -110,8 +122,37 @@ export default function RaqeemPage() {
           if (last?.role === "assistant") {
             return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
           }
-          return [...prev, { role: "assistant", content: assistantSoFar }];
+          return [...prev, { role: "assistant", content: assistantSoFar, orchestration: currentOrchestration.length > 0 ? [...currentOrchestration] : undefined }];
         });
+      };
+
+      const processLine = (line: string) => {
+        if (line.startsWith(":") || line.trim() === "") return false;
+        if (!line.startsWith("data: ")) return false;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") return true;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          // Handle orchestration events
+          const orch = parsed.choices?.[0]?.orchestration || parsed.choices?.[0]?.delta?.orchestration;
+          if (orch) {
+            if (orch.type === "orchestration_status") {
+              upsertOrchestration(orch.tools.map((t: any) => ({ ...t, status: "running" as const })));
+            } else if (orch.type === "tool_complete") {
+              const updated = currentOrchestration.map((t) =>
+                t.name === orch.tool
+                  ? { ...t, status: (orch.success ? "complete" : "error") as "complete" | "error", result: orch.result, error: orch.error }
+                  : t
+              );
+              upsertOrchestration(updated);
+            }
+          }
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) upsert(content);
+        } catch {
+          return false;
+        }
+        return false;
       };
 
       let streamDone = false;
@@ -124,33 +165,14 @@ export default function RaqeemPage() {
           let line = textBuffer.slice(0, newlineIndex);
           textBuffer = textBuffer.slice(newlineIndex + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") { streamDone = true; break; }
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsert(content);
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
+          if (processLine(line)) { streamDone = true; break; }
         }
       }
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
           if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (raw.startsWith(":") || raw.trim() === "") continue;
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const c = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (c) upsert(c);
-          } catch { /* ignore */ }
+          processLine(raw);
         }
       }
     },
