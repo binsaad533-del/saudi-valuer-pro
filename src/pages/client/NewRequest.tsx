@@ -36,6 +36,7 @@ import {
   Target,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
 
 interface UploadedFile {
   id: string;
