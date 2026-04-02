@@ -7,12 +7,10 @@ import { toast } from "sonner";
 import {
   LayoutDashboard,
   FileText,
-  Search,
   Users,
   Settings,
   Building2,
   ClipboardCheck,
-  Archive,
   Shield,
   ChevronDown,
   ChevronLeft,
@@ -23,7 +21,6 @@ import {
   Sparkles,
   LogOut,
   Brain,
-  Calculator,
   BarChart3,
 } from "lucide-react";
 const logo = "/favicon.png";
