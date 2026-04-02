@@ -1,7 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { formatNumber } from "@/lib/utils";
-import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import {
   ArrowRight, MapPin, User, Building2, DollarSign,
   Clock, AlertTriangle, Camera, StickyNote,
