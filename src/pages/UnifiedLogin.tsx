@@ -29,6 +29,7 @@ export default function UnifiedLogin() {
   const [phone, setPhone] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
+  const [phoneVerificationToken, setPhoneVerificationToken] = useState("");
 
   const resolveRedirect = async (userId: string): Promise<string | null> => {
     const { data: profile } = await supabase
