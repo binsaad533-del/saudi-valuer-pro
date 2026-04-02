@@ -59,8 +59,7 @@ const navSections: NavSection[] = [
     titleKey: "valuationSection",
     items: [
       { labelKey: "valuations", icon: FileText, path: "/valuations", roles: ["owner"] },
-      { labelKey: "marketComparables", icon: Building2, path: "/comparables", roles: ["owner"] },
-      { labelKey: "marketData", icon: BarChart3, path: "/market-data", roles: ["owner"] },
+      { labelKey: "marketData", icon: Building2, path: "/market-data", roles: ["owner"] },
     ],
     roles: ["owner"],
   },
@@ -76,9 +75,7 @@ const navSections: NavSection[] = [
   {
     titleKey: "aiSection",
     items: [
-      { labelKey: "documentExtraction", icon: Brain, path: "/ai-document-processing", roles: ["owner", "admin_coordinator"] },
-      { labelKey: "scopeAndPricing", icon: Calculator, path: "/ai-scope-pricing", roles: ["owner", "admin_coordinator"] },
-      { labelKey: "reportGeneration", icon: FileText, path: "/ai-report-generation", roles: ["owner"] },
+      { labelKey: "smartTools", icon: Brain, path: "/smart-tools", roles: ["owner", "admin_coordinator"] },
     ],
     roles: ["owner", "admin_coordinator"],
   },
@@ -86,7 +83,6 @@ const navSections: NavSection[] = [
     titleKey: "financeSection",
     items: [
       { labelKey: "cfoDashboard", icon: LayoutDashboard, path: "/cfo-dashboard" },
-      { labelKey: "invoicesPayments", icon: FileText, path: "/valuations", roles: ["financial_manager"] },
     ],
   },
   {
