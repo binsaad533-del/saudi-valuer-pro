@@ -79,15 +79,15 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
             return (
               <div key={stage.key} className="flex items-center flex-1 last:flex-initial">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all text-sm ${
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all text-xs font-semibold border ${
                     isDone
-                      ? "bg-primary/10"
+                      ? "bg-primary/10 text-primary border-primary/20"
                       : isActive
-                      ? "bg-primary/15 border-2 border-primary"
-                      : "bg-muted"
+                      ? `${stage.color} border-2`
+                      : "bg-muted text-muted-foreground border-transparent"
                   }`}
                 >
-                  {isDone ? "✓" : stage.emoji}
+                  {isDone ? "✓" : i + 1}
                 </div>
                 {i < STAGES.length - 1 && (
                   <div className={`h-0.5 flex-1 mx-0.5 rounded-full ${isDone ? "bg-primary" : "bg-border"}`} />
