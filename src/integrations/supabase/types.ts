@@ -1523,6 +1523,76 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          body_ar: string | null
+          body_en: string | null
+          category: string
+          created_at: string
+          id: string
+          is_read: boolean
+          priority: string
+          related_assignment_id: string | null
+          related_request_id: string | null
+          title_ar: string
+          title_en: string | null
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          body_ar?: string | null
+          body_en?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          priority?: string
+          related_assignment_id?: string | null
+          related_request_id?: string | null
+          title_ar: string
+          title_en?: string | null
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          body_ar?: string | null
+          body_en?: string | null
+          category?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          priority?: string
+          related_assignment_id?: string | null
+          related_request_id?: string | null
+          title_ar?: string
+          title_en?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_related_assignment_id_fkey"
+            columns: ["related_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_assignment_id_fkey"
+            columns: ["related_assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_related_request_id_fkey"
+            columns: ["related_request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           address_ar: string | null
@@ -2448,6 +2518,53 @@ export type Database = {
           },
         ]
       }
+      report_templates: {
+        Row: {
+          asset_type: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          is_default: boolean | null
+          name_ar: string
+          name_en: string | null
+          organization_id: string | null
+          template_sections: Json
+          updated_at: string
+        }
+        Insert: {
+          asset_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name_ar: string
+          name_en?: string | null
+          organization_id?: string | null
+          template_sections?: Json
+          updated_at?: string
+        }
+        Update: {
+          asset_type?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          is_default?: boolean | null
+          name_ar?: string
+          name_en?: string | null
+          organization_id?: string | null
+          template_sections?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_templates_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_verification_log: {
         Row: {
           id: string
@@ -3318,6 +3435,8 @@ export type Database = {
       }
       valuation_assignments: {
         Row: {
+          actual_inspection_completed_at: string | null
+          actual_report_completed_at: string | null
           assigned_inspector_id: string | null
           assigned_reviewer_id: string | null
           assigned_valuer_id: string | null
@@ -3352,12 +3471,18 @@ export type Database = {
           retrospective_note_ar: string | null
           retrospective_note_en: string | null
           sequential_number: number
+          sla_inspection_hours: number | null
+          sla_report_hours: number | null
+          sla_status: string | null
+          sla_total_days: number | null
           status: Database["public"]["Enums"]["assignment_status"]
           updated_at: string
           valuation_date: string | null
           valuation_type: Database["public"]["Enums"]["valuation_type"]
         }
         Insert: {
+          actual_inspection_completed_at?: string | null
+          actual_report_completed_at?: string | null
           assigned_inspector_id?: string | null
           assigned_reviewer_id?: string | null
           assigned_valuer_id?: string | null
@@ -3392,12 +3517,18 @@ export type Database = {
           retrospective_note_ar?: string | null
           retrospective_note_en?: string | null
           sequential_number: number
+          sla_inspection_hours?: number | null
+          sla_report_hours?: number | null
+          sla_status?: string | null
+          sla_total_days?: number | null
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
           valuation_date?: string | null
           valuation_type?: Database["public"]["Enums"]["valuation_type"]
         }
         Update: {
+          actual_inspection_completed_at?: string | null
+          actual_report_completed_at?: string | null
           assigned_inspector_id?: string | null
           assigned_reviewer_id?: string | null
           assigned_valuer_id?: string | null
@@ -3432,6 +3563,10 @@ export type Database = {
           retrospective_note_ar?: string | null
           retrospective_note_en?: string | null
           sequential_number?: number
+          sla_inspection_hours?: number | null
+          sla_report_hours?: number | null
+          sla_status?: string | null
+          sla_total_days?: number | null
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
           valuation_date?: string | null

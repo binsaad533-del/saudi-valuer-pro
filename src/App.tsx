@@ -55,6 +55,7 @@ import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
+import AssignmentHubPage from "@/pages/AssignmentHubPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -82,6 +83,7 @@ const App = () => (
             <Route path="/valuations" element={<ValuationsList />} />
             <Route path="/valuations/new" element={<NewValuation />} />
             <Route path="/valuations/:id" element={<ValuationDetailPage />} />
+            <Route path="/assignment/:id" element={<AssignmentHubPage />} />
             <Route path="/valuations/review" element={<ValuationsList />} />
             <Route path="/valuations/completed" element={<ValuationsList />} />
             <Route path="/comparables" element={<ComparablesPage />} />
