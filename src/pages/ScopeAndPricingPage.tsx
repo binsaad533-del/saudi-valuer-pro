@@ -1315,7 +1315,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                     {/* Subtotal */}
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50 mt-1">
                       <span className="text-xs font-semibold text-foreground">المجموع قبل الضريبة</span>
-                      <span className="text-sm font-bold text-foreground">{formatCurrency(discountApplied ? getFinalSubtotal() : pricing.subtotal)}</span>
+                      <span className="text-sm font-bold text-foreground">{formatCurrency(discountApplied ? getFinalSubtotal() : getSubtotalNum())}</span>
                     </div>
 
                     {/* VAT */}
