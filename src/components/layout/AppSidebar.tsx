@@ -24,6 +24,7 @@ import {
   LogOut,
   Brain,
   Calculator,
+  BarChart3,
 } from "lucide-react";
 const logo = "/favicon.png";
 
@@ -90,6 +91,7 @@ const navSections: NavSection[] = [
   {
     titleKey: "systemSection",
     items: [
+      { labelKey: "analytics", icon: BarChart3, path: "/analytics", roles: ["owner"] },
       { labelKey: "compliance", icon: Shield, path: "/compliance", roles: ["owner"] },
       { labelKey: "settings", icon: Settings, path: "/settings", roles: ["owner"] },
       { labelKey: "myProfile", icon: Settings, path: "/settings", roles: ["admin_coordinator", "financial_manager"] },

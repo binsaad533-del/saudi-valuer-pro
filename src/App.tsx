@@ -56,6 +56,7 @@ import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
 import AssignmentHubPage from "@/pages/AssignmentHubPage";
+import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -109,6 +110,7 @@ const App = () => (
             <Route path="/scope-and-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-scope-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-report-generation" element={<AIReportGenerationPage />} />
+            <Route path="/analytics" element={<AnalyticsDashboardPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
