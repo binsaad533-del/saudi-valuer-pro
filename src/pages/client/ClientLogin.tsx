@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { Mail, Lock, Phone, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
+import AppFooter from "@/components/layout/AppFooter";
 
 export default function ClientLogin() {
   const navigate = useNavigate();
@@ -120,8 +121,8 @@ export default function ClientLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center">
         <div className="text-center mb-8">
           <img src={logo} alt="جساس" className="w-28 h-auto mx-auto mb-4 object-contain" />
           <h1 className="text-2xl font-extralight text-foreground">جساس للتقييم .. نصنع للأصل قيمة</h1>
@@ -208,10 +209,8 @@ export default function ClientLogin() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          © {new Date().getFullYear()} جساس للتقييم - جميع الحقوق محفوظة
-        </p>
       </div>
+      <AppFooter />
     </div>
   );
 }
