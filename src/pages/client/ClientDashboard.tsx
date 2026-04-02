@@ -423,8 +423,8 @@ export default function ClientDashboard() {
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">الهاتف الموحد</p>
-                  <p className="text-sm font-medium text-foreground" dir="ltr">920015029</p>
+                  <p className="text-xs text-muted-foreground">الهاتف</p>
+                  <p className="text-sm font-medium text-foreground" dir="ltr">0500668089</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
