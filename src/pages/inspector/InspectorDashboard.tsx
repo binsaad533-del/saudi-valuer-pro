@@ -261,6 +261,7 @@ export default function InspectorDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+      <AppFooter />
     </div>
   );
 }
