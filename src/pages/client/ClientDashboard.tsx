@@ -40,6 +40,7 @@ export default function ClientDashboard() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
+      setUserId(user.id);
 
       const { data: profile } = await supabase
         .from("profiles")
