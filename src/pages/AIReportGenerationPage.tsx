@@ -549,7 +549,7 @@ async function streamReportContent(
 }
 
 /* ──────────────────── Main Component ──────────────────── */
-export default function AIReportGenerationPage() {
+export default function AIReportGenerationPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const initialRequestId = searchParams.get("request_id") || "";

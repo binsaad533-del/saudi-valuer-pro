@@ -54,6 +54,7 @@ const translations: Record<string, Record<Language, string>> = {
 
   // AI section
   aiSection: { ar: "الذكاء", en: "AI" },
+  smartTools: { ar: "الأدوات الذكية", en: "Smart Tools" },
   documentExtraction: { ar: "استخراج المستندات", en: "Document Extraction" },
   scopeAndPricing: { ar: "نطاق العمل والتسعير", en: "Scope & Pricing" },
   reportGeneration: { ar: "توليد التقرير", en: "Report Generation" },

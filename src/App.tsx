@@ -10,7 +10,7 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
 import ValuationsList from "@/pages/ValuationsList";
 import NewValuation from "@/pages/NewValuation";
-import ComparablesPage from "@/pages/ComparablesPage";
+
 import ArchivePage from "@/pages/ArchivePage";
 import VerifyReport from "@/pages/VerifyReport";
 import ReportGenerator from "@/pages/ReportGenerator";
@@ -55,6 +55,7 @@ import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
+import SmartToolsPage from "@/pages/SmartToolsPage";
 import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import MarketDataPage from "@/pages/MarketDataPage";
@@ -88,7 +89,8 @@ const App = () => (
             <Route path="/assignment/:id" element={<AssignmentHubPage />} />
             <Route path="/valuations/review" element={<ValuationsList />} />
             <Route path="/valuations/completed" element={<ValuationsList />} />
-            <Route path="/comparables" element={<ComparablesPage />} />
+            <Route path="/comparables" element={<MarketDataPage />} />
+            <Route path="/market-data" element={<MarketDataPage />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/archive" element={<ArchivePage />} />
             <Route path="/search" element={<SearchPage />} />
@@ -107,12 +109,12 @@ const App = () => (
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
             <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
+            <Route path="/smart-tools" element={<SmartToolsPage />} />
             <Route path="/ai-document-processing" element={<AIDocumentProcessingPage />} />
             <Route path="/scope-and-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-scope-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-report-generation" element={<AIReportGenerationPage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
-            <Route path="/market-data" element={<MarketDataPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}

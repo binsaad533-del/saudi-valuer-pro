@@ -234,7 +234,7 @@ const MOCK_PRICING: PricingData = {
   justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) + رسوم المعاينة (500 ر.س) + رسوم تحليل الدخل (1,000 ر.س) = 5,000 ر.س قبل الضريبة",
 };
 
-export default function ScopeAndPricingPage() {
+export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   const extractedData = location.state?.extractedData || MOCK_EXTRACTED_DATA;
@@ -292,8 +292,8 @@ export default function ScopeAndPricingPage() {
 
   if (!extractedData) {
     return (
-      <div className="min-h-screen" dir="rtl">
-        <TopBar />
+      <div className={embedded ? "" : "min-h-screen"} dir="rtl">
+        {!embedded && <TopBar />}
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <AlertTriangle className="w-12 h-12 text-yellow-500" />
           <h2 className="text-lg font-bold text-foreground">لا توجد بيانات مستخرجة</h2>
@@ -308,9 +308,9 @@ export default function ScopeAndPricingPage() {
   }
 
   return (
-    <div className="min-h-screen" dir="rtl">
-      <TopBar />
-      <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
+    <div className={embedded ? "" : "min-h-screen"} dir="rtl">
+      {!embedded && <TopBar />}
+      <div className={embedded ? "space-y-5" : "p-4 md:p-6 max-w-5xl mx-auto space-y-5"}>
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">

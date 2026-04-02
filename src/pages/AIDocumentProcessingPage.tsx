@@ -85,7 +85,7 @@ const DEMO_FILES: UploadedFile[] = [
   { file: {} as any, name: "عقد_إيجار_شركة_الأفق.pdf", size: 1_950_000, status: "uploaded" },
 ];
 
-export default function AIDocumentProcessingPage() {
+export default function AIDocumentProcessingPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(DEMO_FILES);
@@ -450,9 +450,9 @@ export default function AIDocumentProcessingPage() {
   const highRelevanceCount = uploadedFiles.filter(f => f.relevance === "high").length;
 
   return (
-    <div className="min-h-screen">
-      <TopBar />
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className={embedded ? "" : "min-h-screen"}>
+      {!embedded && <TopBar />}
+      <div className={embedded ? "space-y-6" : "p-6 max-w-5xl mx-auto space-y-6"}>
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
