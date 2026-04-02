@@ -112,13 +112,13 @@ export default function AnalyticsDashboardPage() {
       }));
 
       // Totals
-      const completedAssignments = assignments.filter(a => a.status === "completed").length;
+      const completedAssignments = assignments.filter(a => a.status === "closed" || a.status === "report_issued").length;
       const totalRevenue = payments
         .filter(p => p.payment_status === "paid")
         .reduce((sum, p) => sum + p.amount, 0);
 
       const completionDays = assignments
-        .filter(a => a.status === "completed" && a.created_at && a.updated_at)
+        .filter(a => (a.status === "closed" || a.status === "report_issued") && a.created_at && a.updated_at)
         .map(a => (new Date(a.updated_at!).getTime() - new Date(a.created_at!).getTime()) / (1000 * 60 * 60 * 24));
       const avgCompletionDays = completionDays.length > 0
         ? Math.round(completionDays.reduce((a, b) => a + b, 0) / completionDays.length)
