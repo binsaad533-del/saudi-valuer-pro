@@ -234,7 +234,7 @@ const MOCK_PRICING: PricingData = {
   justification: "تم احتساب التسعير بناءً على الرسوم الأساسية (3,500 ر.س) + رسوم المعاينة (500 ر.س) + رسوم تحليل الدخل (1,000 ر.س) = 5,000 ر.س قبل الضريبة",
 };
 
-export default function ScopeAndPricingPage() {
+export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
   const extractedData = location.state?.extractedData || MOCK_EXTRACTED_DATA;
