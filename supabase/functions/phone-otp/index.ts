@@ -57,8 +57,16 @@ serve(async (req) => {
       const otp = generateOtp();
       otpStore.set(normalizedPhone, { code: otp, expiresAt: Date.now() + 5 * 60 * 1000 });
 
-      // Use the configured Twilio number or a default
-      const twilioFrom = from_number || Deno.env.get("TWILIO_PHONE_NUMBER") || "+15005550006";
+      const twilioFrom = from_number || Deno.env.get("TWILIO_PHONE_NUMBER") || "";
+
+      if (!isValidE164(twilioFrom)) {
+        return new Response(JSON.stringify({
+          error: "خدمة رسائل الجوال غير مهيأة حالياً. رقم الإرسال المعتمد غير صالح، يرجى مراجعة إعدادات الرقم المخصص للرسائل.",
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
         method: "POST",
@@ -77,6 +85,21 @@ serve(async (req) => {
       const data = await response.json();
       if (!response.ok) {
         console.error("Twilio error:", JSON.stringify(data));
+
+        const twilioMessage = typeof data?.message === "string" ? data.message : "";
+        const isInvalidFromNumber = response.status === 400 && (
+          twilioMessage.includes("Invalid From Number") || Number(data?.code) === 21212
+        );
+
+        if (isInvalidFromNumber) {
+          return new Response(JSON.stringify({
+            error: "تعذر إرسال رمز التحقق لأن رقم الإرسال غير صالح حالياً. يرجى تحديث رقم الرسائل المعتمد في إعدادات Twilio.",
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
         throw new Error(`Twilio API error [${response.status}]: ${JSON.stringify(data)}`);
       }
 
