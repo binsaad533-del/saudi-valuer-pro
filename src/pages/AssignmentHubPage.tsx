@@ -76,8 +76,9 @@ export default function AssignmentHubPage() {
       setSlaStatus({ onTrack: daysLeft > 0, daysLeft, progress });
 
       // Fetch related data in parallel
+      const requestId = (asgn as any).request_id;
       const [reqRes, subjRes, inspRes, compRes, checksRes] = await Promise.all([
-        asgn.request_id ? supabase.from("valuation_requests").select("*").eq("id", asgn.request_id).single() : { data: null },
+        requestId ? supabase.from("valuation_requests").select("*").eq("id", requestId).single() : { data: null },
         supabase.from("subjects").select("*").eq("assignment_id", id!).limit(1).single(),
         supabase.from("inspections").select("*").eq("assignment_id", id!).order("created_at", { ascending: false }).limit(1).single(),
         supabase.from("assignment_comparables").select("*, comparables(*)").eq("assignment_id", id!),
