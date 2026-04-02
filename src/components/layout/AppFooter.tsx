@@ -62,7 +62,7 @@ export default function AppFooter() {
             <ul className="space-y-2 text-xs text-muted-foreground">
               <li className="flex items-center justify-center sm:justify-start gap-2">
                 <Phone className="w-3 h-3 shrink-0" />
-                <span dir="ltr">920015029</span>
+                <span dir="ltr">0500668089</span>
               </li>
               <li className="flex items-center justify-center sm:justify-start gap-2">
                 <Phone className="w-3 h-3 shrink-0" />
