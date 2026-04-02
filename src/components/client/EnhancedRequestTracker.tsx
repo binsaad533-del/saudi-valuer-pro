@@ -1,13 +1,12 @@
-import { Check, Clock, FileCheck, CreditCard, Search, HardHat, FileText, PackageCheck } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 const STAGES = [
-  { key: "submitted", label: "تم التقديم", icon: FileCheck, description: "تم استلام طلبك بنجاح" },
-  { key: "payment", label: "الدفع", icon: CreditCard, description: "تأكيد الدفع وعرض السعر" },
-  { key: "assigned", label: "تعيين المقيّم", icon: Search, description: "تم تعيين مقيّم معتمد" },
-  { key: "inspection", label: "المعاينة", icon: HardHat, description: "معاينة العقار ميدانياً" },
-  { key: "drafting", label: "إعداد التقرير", icon: FileText, description: "إعداد ومراجعة التقرير" },
-  { key: "delivered", label: "التسليم", icon: PackageCheck, description: "تقريرك جاهز للتحميل" },
+  { key: "submitted", label: "تم التقديم", emoji: "📩", description: "تم استلام طلبك بنجاح" },
+  { key: "payment", label: "الدفع", emoji: "💳", description: "تأكيد الدفع وعرض السعر" },
+  { key: "assigned", label: "تعيين المقيّم", emoji: "👤", description: "تم تعيين مقيّم معتمد" },
+  { key: "inspection", label: "المعاينة", emoji: "🏗️", description: "معاينة العقار ميدانياً" },
+  { key: "drafting", label: "إعداد التقرير", emoji: "📝", description: "إعداد ومراجعة التقرير" },
+  { key: "delivered", label: "التسليم", emoji: "✅", description: "تقريرك جاهز للتحميل" },
 ];
 
 const STATUS_TO_STAGE: Record<string, number> = {
@@ -23,7 +22,6 @@ const STATUS_TO_STAGE: Record<string, number> = {
   cancelled: -1,
 };
 
-// Estimated business days per stage
 const STAGE_DURATION_DAYS = [1, 2, 1, 3, 5, 1];
 
 interface EnhancedRequestTrackerProps {
@@ -39,7 +37,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
   if (isCancelled) {
     return (
       <div className="flex items-center gap-2 text-destructive text-sm font-medium py-2">
-        <span className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center">✕</span>
+        <span className="w-6 h-6 rounded-full bg-destructive/10 flex items-center justify-center text-xs">✕</span>
         تم إلغاء الطلب
       </div>
     );
@@ -48,7 +46,6 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
   const totalStages = STAGES.length;
   const progressPercent = Math.round(((currentStage + 1) / totalStages) * 100);
 
-  // Estimate dates
   const startDate = createdAt ? new Date(createdAt) : null;
   const stageDates = STAGES.map((_, i) => {
     if (!startDate) return null;
@@ -79,19 +76,18 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
           {STAGES.map((stage, i) => {
             const isDone = i < currentStage;
             const isActive = i === currentStage;
-            const Icon = stage.icon;
             return (
               <div key={stage.key} className="flex items-center flex-1 last:flex-initial">
                 <div
-                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all ${
+                  className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all text-sm ${
                     isDone
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary/10"
                       : isActive
-                      ? "bg-primary/15 text-primary border-2 border-primary"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-primary/15 border-2 border-primary"
+                      : "bg-muted"
                   }`}
                 >
-                  {isDone ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
+                  {isDone ? "✓" : stage.emoji}
                 </div>
                 {i < STAGES.length - 1 && (
                   <div className={`h-0.5 flex-1 mx-0.5 rounded-full ${isDone ? "bg-primary" : "bg-border"}`} />
@@ -109,7 +105,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
       {/* Progress header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Clock className="w-4 h-4 text-muted-foreground" />
+          <span className="text-base">⏱️</span>
           <span className="text-sm text-muted-foreground">تقدم الطلب</span>
         </div>
         <div className="flex items-center gap-3">
@@ -129,7 +125,6 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
           const isDone = i < currentStage;
           const isActive = i === currentStage;
           const isPending = i > currentStage;
-          const Icon = stage.icon;
           const stageDate = stageDates[i];
 
           return (
@@ -142,17 +137,17 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
                   }`}
                 />
               )}
-              {/* Icon node */}
+              {/* Emoji node */}
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-all ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-all text-sm ${
                   isDone
-                    ? "bg-primary text-primary-foreground shadow-sm"
+                    ? "bg-primary/10 shadow-sm"
                     : isActive
-                    ? "bg-primary/15 text-primary border-2 border-primary shadow-md shadow-primary/20"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-primary/15 border-2 border-primary shadow-md shadow-primary/20"
+                    : "bg-muted"
                 }`}
               >
-                {isDone ? <Check className="w-3.5 h-3.5" /> : <Icon className="w-3.5 h-3.5" />}
+                {isDone ? "✓" : stage.emoji}
               </div>
               {/* Content */}
               <div className="flex-1 min-w-0">
