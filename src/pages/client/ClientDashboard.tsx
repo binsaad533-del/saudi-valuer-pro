@@ -12,7 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import {
   Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
-  Phone, Mail, MessageCircle,
+  Phone, Mail, MessageCircle, Sparkles, ArrowLeft,
+  FileCheck, Search, BarChart3, ClipboardCheck,
 } from "lucide-react";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
 import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
