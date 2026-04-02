@@ -54,7 +54,26 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
     setUploading(false);
   };
 
-  const handleSave = async () => {
+  const handleSaveAll = async () => {
+    // Save password if provided (for non-owner view)
+    if (!isOwnerView && newPassword) {
+      if (newPassword.length < 6) {
+        toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        toast.error("كلمتا المرور غير متطابقتين");
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast.error("فشل تحديث كلمة المرور");
+        return;
+      }
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+
     if (isOwnerView) {
       const ok = await save({
         full_name_ar: localProfile.full_name_ar,
