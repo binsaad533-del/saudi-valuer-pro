@@ -20,7 +20,7 @@ import {
   DollarSign, ShieldCheck, Award, Paperclip, type LucideIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 /* ──────────────────── Types ──────────────────── */
 type PipelineStep = 0 | 1 | 2 | 3 | 4 | 5;
@@ -100,7 +100,7 @@ const SECTION_ICONS: Record<string, LucideIcon> = {
   valuation_approaches: Layers,
   sales_comparison_approach: BarChart3,
   cost_approach: Calculator,
-  income_approach: DollarSign,
+  income_approach: SARIcon,
   reconciliation: Scale,
   assumptions_and_limiting_conditions: AlertCircle,
   compliance_statement: ShieldCheck,

@@ -1,5 +1,7 @@
 import { useParams, Link } from "react-router-dom";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { formatNumber } from "@/lib/utils";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import {
   ArrowRight, MapPin, User, Building2, DollarSign,
   Clock, AlertTriangle, Camera, StickyNote,
@@ -148,7 +150,7 @@ export default function ValuationDetailPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-primary" /> بيانات التقييم
+                <SARIcon className="w-4 h-4 text-primary" /> بيانات التقييم
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">

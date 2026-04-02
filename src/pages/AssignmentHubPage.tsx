@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 interface StageInfo {
   key: string;
@@ -302,7 +302,7 @@ export default function AssignmentHubPage() {
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary" /> التقييم
+              <SARIcon className="w-4 h-4 text-primary" /> التقييم
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-1.5 text-sm">
