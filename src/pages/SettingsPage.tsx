@@ -82,6 +82,7 @@ export default function SettingsPage() {
             <TabsContent value="system"><SystemSettings /></TabsContent>
             <TabsContent value="backup"><BackupSettings /></TabsContent>
             <TabsContent value="integrations"><IntegrationSettings /></TabsContent>
+            <TabsContent value="discounts"><DiscountCodesSettings /></TabsContent>
           </>
         )}
       </Tabs>
