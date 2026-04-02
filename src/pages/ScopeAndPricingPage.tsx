@@ -293,6 +293,53 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
   const formatCurrency = (amount: number) =>
     formatNumber(Math.round(amount)) + " ر.س";
 
+  const applyDiscountCode = async () => {
+    if (!discountCode.trim()) return;
+    setCheckingDiscount(true);
+    const { data, error } = await supabase
+      .from("discount_codes")
+      .select("*")
+      .eq("code", discountCode.toUpperCase().trim())
+      .eq("is_active", true)
+      .maybeSingle();
+    if (error || !data) {
+      toast.error("كود الخصم غير صالح أو منتهي");
+      setCheckingDiscount(false);
+      return;
+    }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast.error("كود الخصم منتهي الصلاحية");
+      setCheckingDiscount(false);
+      return;
+    }
+    if (data.max_uses && data.current_uses >= data.max_uses) {
+      toast.error("تم استنفاد عدد مرات استخدام هذا الكود");
+      setCheckingDiscount(false);
+      return;
+    }
+    setDiscountApplied({ code: data.code, percentage: Number(data.discount_percentage) });
+    toast.success(`تم تطبيق خصم ${data.discount_percentage}%`);
+    setCheckingDiscount(false);
+  };
+
+  const removeDiscount = () => {
+    setDiscountApplied(null);
+    setDiscountCode("");
+  };
+
+  const getDiscountAmount = () => {
+    if (!discountApplied || !pricing) return 0;
+    return pricing.subtotal * (discountApplied.percentage / 100);
+  };
+
+  const getFinalSubtotal = () => {
+    if (!pricing) return 0;
+    return pricing.subtotal - getDiscountAmount();
+  };
+
+  const getFinalVat = () => getFinalSubtotal() * ((pricing?.vatRate || 15) / 100);
+  const getFinalTotal = () => getFinalSubtotal() + getFinalVat();
+
   if (!extractedData) {
     return (
       <div className={embedded ? "" : "min-h-screen"} dir="rtl">
