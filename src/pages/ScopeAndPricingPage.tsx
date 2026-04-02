@@ -292,7 +292,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
   };
 
   const formatCurrency = (amount: number) =>
-    formatNumber(Math.round(amount)) + " ر.س";
+    formatNumber(Math.round(amount));
 
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;

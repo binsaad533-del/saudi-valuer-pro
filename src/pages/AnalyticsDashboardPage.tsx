@@ -163,7 +163,7 @@ export default function AnalyticsDashboardPage() {
     { label: "إجمالي المهام", value: data.totalAssignments, icon: FileText, color: "text-primary" },
     { label: "مهام مكتملة", value: data.completedAssignments, icon: CheckCircle, color: "text-success" },
     { label: "متوسط الإنجاز (يوم)", value: data.avgCompletionDays, icon: Clock, color: "text-warning" },
-    { label: "الإيرادات (ر.س)", value: data.totalRevenue.toLocaleString(), icon: DollarSign, color: "text-primary" },
+    { label: "الإيرادات", value: data.totalRevenue.toLocaleString(), icon: DollarSign, color: "text-primary", hasCurrency: true },
     { label: "التزام SLA", value: `${data.slaCompliance}%`, icon: Target, color: data.slaCompliance >= 80 ? "text-success" : "text-destructive" },
     { label: "مهام متأخرة", value: data.overdueTasks, icon: AlertTriangle, color: data.overdueTasks > 0 ? "text-destructive" : "text-success" },
   ];
