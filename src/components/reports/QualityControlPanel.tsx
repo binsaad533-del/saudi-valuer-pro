@@ -111,7 +111,6 @@ export default function QualityControlPanel({ assignment, comparables, inspectio
         <TabsList className="w-full">
           {levels.map(level => {
             const lr = report.levelResults[level];
-            const badge = getQCStatusBadge(lr.status);
             return (
               <TabsTrigger key={level} value={level} className="text-xs gap-1">
                 {LEVEL_ICONS[level]}

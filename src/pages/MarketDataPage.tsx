@@ -8,9 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  TrendingUp, Database, Upload, Search, Plus,
-  MapPin, Calendar, DollarSign, Loader2, CheckCircle2,
-  BarChart3, Building2,
+  TrendingUp, Database, Search, Plus,
+  MapPin, Loader2, CheckCircle2, BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNumber } from "@/lib/utils";
