@@ -327,17 +327,19 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
     setDiscountCode("");
   };
 
+  const getSubtotalNum = () => {
+    if (!pricing) return 0;
+    const s = Number(pricing.subtotal);
+    return isNaN(s) ? Number(pricing.totalPrice) / (1 + (Number(pricing.vatRate) || 15) / 100) : s;
+  };
+
   const getDiscountAmount = () => {
     if (!discountApplied || !pricing) return 0;
-    return pricing.subtotal * (discountApplied.percentage / 100);
+    return getSubtotalNum() * (discountApplied.percentage / 100);
   };
 
-  const getFinalSubtotal = () => {
-    if (!pricing) return 0;
-    return pricing.subtotal - getDiscountAmount();
-  };
-
-  const getFinalVat = () => getFinalSubtotal() * ((pricing?.vatRate || 15) / 100);
+  const getFinalSubtotal = () => getSubtotalNum() - getDiscountAmount();
+  const getFinalVat = () => getFinalSubtotal() * ((Number(pricing?.vatRate) || 15) / 100);
   const getFinalTotal = () => getFinalSubtotal() + getFinalVat();
 
   if (!extractedData) {
@@ -1313,13 +1315,13 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                     {/* Subtotal */}
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50 mt-1">
                       <span className="text-xs font-semibold text-foreground">المجموع قبل الضريبة</span>
-                      <span className="text-sm font-bold text-foreground">{formatCurrency(discountApplied ? getFinalSubtotal() : pricing.subtotal)}</span>
+                      <span className="text-sm font-bold text-foreground">{formatCurrency(discountApplied ? getFinalSubtotal() : getSubtotalNum())}</span>
                     </div>
 
                     {/* VAT */}
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50">
                       <span className="text-xs text-muted-foreground">ضريبة القيمة المضافة ({pricing.vatRate}%)</span>
-                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(discountApplied ? getFinalVat() : pricing.vatAmount)}</span>
+                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(discountApplied ? getFinalVat() : getSubtotalNum() * ((Number(pricing.vatRate) || 15) / 100))}</span>
                     </div>
 
                     {/* Total */}
