@@ -113,7 +113,7 @@ export default function Dashboard() {
             value="385,000"
             subtitle="ريال سعودي"
             icon={<img src={saudiRiyalIcon} alt="ريال سعودي" className="w-5 h-5 object-contain" />}
-            href="/settings"
+            href="/cfo-dashboard"
             trend={{ value: "+15% عن الشهر السابق", positive: true }}
             details={[
               { label: "محصّلة", value: "310,000" },
