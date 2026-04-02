@@ -223,9 +223,68 @@ const SA_REAL_ESTATE_SOURCES: ReferenceSource[] = [
   },
 ];
 
+const SA_REAL_ESTATE_MARKET_SOURCES: ReferenceSource[] = [
+  {
+    id: "aqar",
+    name: "عقار (Aqar.fm)",
+    name_ar: "عقار",
+    sector: "re_market",
+    sector_ar: "منصات السوق العقاري",
+    url: "https://sa.aqar.fm",
+    description_ar: "أكبر منصة عقارية في السعودية لعرض وطلب العقارات، توفر بيانات أسعار العرض الحالية للبيع والإيجار في جميع المدن",
+    type: "سوق عقاري",
+    icon: <Home className="h-5 w-5" />,
+  },
+  {
+    id: "bayut",
+    name: "Bayut",
+    name_ar: "بيوت",
+    sector: "re_market",
+    sector_ar: "منصات السوق العقاري",
+    url: "https://www.bayut.sa",
+    description_ar: "منصة عقارية رائدة توفر إعلانات بيع وإيجار العقارات مع تحليلات سوقية ومؤشرات أسعار الأحياء",
+    type: "سوق عقاري",
+    icon: <Home className="h-5 w-5" />,
+  },
+  {
+    id: "sakan",
+    name: "سكني (Sakani)",
+    name_ar: "سكني",
+    sector: "re_market",
+    sector_ar: "منصات السوق العقاري",
+    url: "https://sakani.sa",
+    description_ar: "منصة وزارة الإسكان للحلول السكنية، توفر بيانات المشاريع السكنية والأسعار المدعومة والتمويل العقاري",
+    type: "حلول سكنية",
+    icon: <Building2 className="h-5 w-5" />,
+  },
+  {
+    id: "deal",
+    name: "صفقة (Deal.sa)",
+    name_ar: "صفقة",
+    sector: "re_market",
+    sector_ar: "منصات السوق العقاري",
+    url: "https://deal.sa",
+    description_ar: "منصة متخصصة في تحليل الصفقات العقارية وتوفير مؤشرات الأسعار للأحياء والمناطق في المملكة",
+    type: "تحليل صفقات",
+    icon: <TrendingUp className="h-5 w-5" />,
+  },
+  {
+    id: "scope",
+    name: "سكوب العقارية",
+    name_ar: "سكوب",
+    sector: "re_market",
+    sector_ar: "منصات السوق العقاري",
+    url: "https://scope.sa",
+    description_ar: "منصة تحليلات عقارية متقدمة توفر خرائط حرارية للأسعار وتقارير سوقية تفصيلية للمناطق والأحياء",
+    type: "تحليلات عقارية",
+    icon: <AreaChart className="h-5 w-5" />,
+  },
+];
+
 const SECTORS = [
   { key: "all", label: "جميع المراجع" },
   { key: "gov_open", label: "🇸🇦 المنصات الحكومية السعودية" },
+  { key: "re_market", label: "🏠 السوق العقاري" },
   { key: "auctions", label: "مزادات الآلات" },
   { key: "construction", label: "الإنشاءات والمعدات الثقيلة" },
   { key: "mining", label: "التعدين" },
@@ -338,7 +397,7 @@ export default function MarketDataIntegration() {
     return <BarChart3 className="h-3 w-3 text-gray-400" />;
   };
 
-  const allSources = [...SA_REAL_ESTATE_SOURCES, ...MACHINERY_REFERENCE_SOURCES];
+  const allSources = [...SA_REAL_ESTATE_SOURCES, ...SA_REAL_ESTATE_MARKET_SOURCES, ...MACHINERY_REFERENCE_SOURCES];
   const filteredSources = selectedSector === "all"
     ? allSources
     : allSources.filter(s => s.sector === selectedSector);
@@ -476,10 +535,10 @@ export default function MarketDataIntegration() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
-                قواعد بيانات ومراجع دولية للآلات والمعدات
+                المراجع والمصادر المعتمدة
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                مصادر موثوقة ومعتمدة عالمياً لاستخدامها كمراجع في تقييم الآلات والمعدات
+                مصادر موثوقة ومعتمدة لاستخدامها كمراجع في تقييم العقارات والآلات والمعدات
               </p>
             </CardHeader>
             <CardContent>
