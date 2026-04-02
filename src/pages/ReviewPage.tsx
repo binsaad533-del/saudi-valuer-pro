@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import { ClipboardCheck, FileText, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 
+type StatusFilter = "all" | "pending" | "in_review" | "needs_revision" | "approved";
+
 export default function ReviewPage() {
   const navigate = useNavigate();
+  const [activeFilter, setActiveFilter] = useState<StatusFilter>("all");
 
   const reports = [
     { ref: "VAL-2026-0042", type: "فيلا سكنية", valuer: "محمد العتيبي", status: "pending", date: "2026-03-25" },
@@ -13,9 +17,18 @@ export default function ReviewPage() {
     { ref: "VAL-2026-0037", type: "أرض تطويرية", valuer: "خالد الشمري", status: "pending", date: "2026-03-15" },
   ];
 
+  const filteredReports = activeFilter === "all" ? reports : reports.filter(r => r.status === activeFilter);
+
   const handleReview = (ref: string) => {
     navigate(`/reports/generate?ref=${encodeURIComponent(ref)}`);
   };
+
+  const statCards: { key: StatusFilter; label: string; value: number; icon: any; color: string; bg: string }[] = [
+    { key: "pending", label: "بانتظار المراجعة", value: reports.filter(r => r.status === "pending").length, icon: Clock, color: "text-warning", bg: "bg-warning/10" },
+    { key: "in_review", label: "قيد المراجعة", value: reports.filter(r => r.status === "in_review").length, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
+    { key: "needs_revision", label: "تحتاج تعديل", value: reports.filter(r => r.status === "needs_revision").length, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+    { key: "approved", label: "معتمدة", value: 12, icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
+  ];
 
   return (
     <div className="min-h-screen">
@@ -26,15 +39,16 @@ export default function ReviewPage() {
           <p className="text-sm text-muted-foreground">مراجعة التقارير وضبط الجودة قبل الإصدار</p>
         </div>
 
-        {/* Stats */}
+        {/* Stats - Clickable */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          {[
-            { label: "بانتظار المراجعة", value: 5, icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-            { label: "قيد المراجعة", value: 2, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
-            { label: "تحتاج تعديل", value: 1, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
-            { label: "معتمدة", value: 12, icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
-          ].map((s) => (
-            <div key={s.label} className="bg-card rounded-lg border border-border p-4 flex items-center gap-3">
+          {statCards.map((s) => (
+            <button
+              key={s.key}
+              onClick={() => setActiveFilter(activeFilter === s.key ? "all" : s.key)}
+              className={`bg-card rounded-lg border p-4 flex items-center gap-3 transition-all text-right ${
+                activeFilter === s.key ? "border-primary ring-2 ring-primary/20 shadow-sm" : "border-border hover:border-primary/40 hover:shadow-sm"
+              }`}
+            >
               <div className={`w-10 h-10 rounded-lg ${s.bg} flex items-center justify-center`}>
                 <s.icon className={`w-5 h-5 ${s.color}`} />
               </div>
@@ -42,7 +56,7 @@ export default function ReviewPage() {
                 <p className="text-2xl font-bold text-foreground">{s.value}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
-            </div>
+            </button>
           ))}
         </div>
 
@@ -52,7 +66,7 @@ export default function ReviewPage() {
             <h3 className="text-sm font-semibold text-foreground">قائمة التقارير للمراجعة</h3>
           </div>
           <div className="divide-y divide-border">
-            {reports.map((r) => (
+            {filteredReports.map((r) => (
               <div
                 key={r.ref}
                 className="px-5 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
