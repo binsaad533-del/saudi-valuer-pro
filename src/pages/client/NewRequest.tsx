@@ -34,6 +34,9 @@ import {
   FileCheck,
   Brain,
   Target,
+  MapPin,
+  Navigation,
+  ExternalLink,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
