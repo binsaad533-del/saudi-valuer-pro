@@ -55,6 +55,7 @@ import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
+import SmartToolsPage from "@/pages/SmartToolsPage";
 import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import MarketDataPage from "@/pages/MarketDataPage";
