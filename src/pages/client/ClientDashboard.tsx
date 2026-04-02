@@ -263,42 +263,46 @@ export default function ClientDashboard() {
         )}
 
         {activeTab === "reports" && (
-          <Card>
-            <CardContent className="p-0">
-              {readyReports.length === 0 ? (
-                <div className="text-center py-16">
-                  <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground text-sm">لا توجد تقارير جاهزة حالياً</p>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {readyReports.map((rpt) => (
-                    <div key={rpt.id} className="flex items-center justify-between gap-3 p-4">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4 text-primary" />
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="p-0">
+                {readyReports.length === 0 ? (
+                  <div className="text-center py-16">
+                    <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                    <p className="text-muted-foreground text-sm">لا توجد تقارير جاهزة حالياً</p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border">
+                    {readyReports.map((rpt) => (
+                      <div key={rpt.id} className="flex items-center justify-between gap-3 p-4">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileText className="w-4 h-4 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-foreground truncate">{rpt.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {rpt.ref} · {rpt.date}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-foreground truncate">{rpt.title}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {rpt.ref} · {rpt.date}
-                          </p>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Download className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+            {/* Archived Reports from admin */}
+            <ClientArchivedReports userId={userId} />
+          </div>
         )}
 
         {activeTab === "documents" && (
@@ -545,5 +549,70 @@ export default function ClientDashboard() {
       </Dialog>
       <AppFooter />
     </div>
+  );
+}
+
+// Archived reports component for client
+function ClientArchivedReports({ userId }: { userId: string }) {
+  const [archives, setArchives] = useState<any[]>([]);
+  const [loadingArchives, setLoadingArchives] = useState(true);
+
+  useEffect(() => {
+    if (!userId) return;
+    const load = async () => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user?.user?.email) return;
+      const { data } = await supabase
+        .from("archived_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+      setArchives(data || []);
+      setLoadingArchives(false);
+    };
+    load();
+  }, [userId]);
+
+  const handleDownload = async (report: any) => {
+    const { data } = await supabase.storage
+      .from("archived-reports")
+      .createSignedUrl(report.file_path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else toast.error("فشل التحميل");
+  };
+
+  if (loadingArchives) return <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
+  if (archives.length === 0) return null;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <FolderOpen className="w-4 h-4 text-primary" />
+          تقارير سابقة مؤرشفة
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {archives.map((r: any) => (
+            <div key={r.id} className="flex items-center justify-between gap-3 p-4">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground truncate">{r.report_title_ar || r.file_name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {r.report_number ? `${r.report_number} · ` : ""}{r.property_city_ar || ""} {r.report_date ? `· ${r.report_date}` : ""}
+                  </p>
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(r)}>
+                <Download className="w-4 h-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
