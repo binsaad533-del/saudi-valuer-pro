@@ -24,6 +24,7 @@ export default function ClientRegister() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phoneOtp, setPhoneOtp] = useState("");
+  const [phoneVerificationToken, setPhoneVerificationToken] = useState("");
 
   // Individual
   const [fullName, setFullName] = useState("");
