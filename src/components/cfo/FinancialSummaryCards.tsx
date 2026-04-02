@@ -1,4 +1,4 @@
-import { DollarSign, CreditCard, Clock, AlertTriangle } from "lucide-react";
+import { CreditCard, Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber } from "@/lib/utils";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
