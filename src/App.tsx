@@ -59,6 +59,7 @@ import SmartToolsPage from "@/pages/SmartToolsPage";
 import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import MarketDataPage from "@/pages/MarketDataPage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -75,6 +76,7 @@ const App = () => (
           {/* Unified Login */}
           <Route path="/login" element={<UnifiedLogin />} />
           <Route path="/client/login" element={<UnifiedLogin />} />
+          <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
           {/* Admin Routes - Protected */}
           <Route element={
