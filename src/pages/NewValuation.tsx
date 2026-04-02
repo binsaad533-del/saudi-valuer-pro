@@ -808,7 +808,7 @@ export default function NewValuation() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">تاريخ التقييم <span className="text-destructive">*</span></label>
-                    <input type="date" value={valuationDate} onChange={(e) => setValuationDate(e.target.value)}
+                    <input type="date" value={valuationDate} onChange={(e) => setValuationDate(e.target.value)} dir="ltr"
                       className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring" />
                   </div>
                 </div>

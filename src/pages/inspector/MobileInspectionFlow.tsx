@@ -1169,7 +1169,7 @@ function SectionApproval({ formData, updateField, canSubmit, submitting, onSubmi
         </FieldGroup>
 
         <FieldGroup label="تاريخ الاعتماد">
-          <Input type="date" value={formData.approval_date} onChange={e => updateField("approval_date", e.target.value)} />
+          <Input type="date" value={formData.approval_date} onChange={e => updateField("approval_date", e.target.value)} dir="ltr" />
         </FieldGroup>
 
         {!canSubmit && (

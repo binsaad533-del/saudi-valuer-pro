@@ -223,7 +223,7 @@ export default function DiscountCodesSettings() {
                   <div className="space-y-1.5">
                     <Label className="text-xs">تاريخ الانتهاء</Label>
                     <Input
-                      type="date"
+                      type="date" dir="ltr"
                       value={expiresAt}
                       onChange={(e) => setExpiresAt(e.target.value)}
                       className="text-sm"

@@ -35,7 +35,7 @@ export default function SectionApproval({ formData, updateField, canSubmit, subm
           <Input value={formData.approval_inspector_name} onChange={(e: any) => updateField("approval_inspector_name", e.target.value)} placeholder="الاسم الكامل للمعاين" />
         </FieldGroup>
         <FieldGroup label="تاريخ الاعتماد">
-          <Input type="date" value={formData.approval_date} onChange={(e: any) => updateField("approval_date", e.target.value)} />
+          <Input type="date" value={formData.approval_date} onChange={(e: any) => updateField("approval_date", e.target.value)} dir="ltr" />
         </FieldGroup>
         {!canSubmit && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive text-center">

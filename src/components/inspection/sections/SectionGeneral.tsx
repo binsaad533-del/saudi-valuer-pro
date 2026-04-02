@@ -35,7 +35,7 @@ export default function SectionGeneral({ formData, updateField }: { formData: Fo
 
         <div className="grid grid-cols-2 gap-3">
           <FieldGroup label="تاريخ المعاينة" required>
-            <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} />
+            <Input type="date" value={formData.inspection_date} onChange={e => updateField("inspection_date", e.target.value)} dir="ltr" />
           </FieldGroup>
           <FieldGroup label="اسم المعاين" required>
             <Input value={formData.inspector_name} onChange={e => updateField("inspector_name", e.target.value)} placeholder="الاسم الكامل" />
