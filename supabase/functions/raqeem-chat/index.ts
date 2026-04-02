@@ -87,6 +87,40 @@ const TOOLS = [
         required: ["assignment_id"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_report",
+      description: "توليد مسودة التقرير الكامل (11 قسم) لمهمة تقييم محددة. يجمع البيانات من 14 جدولاً ويُنتج تقريراً متوافقاً مع IVS 2025.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: {
+            type: "string",
+            description: "معرّف مهمة التقييم (UUID)"
+          }
+        },
+        required: ["assignment_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_compliance",
+      description: "فحص امتثال التقرير للمعايير الدولية (IVS 2025) ومعايير تقييم السعودية. يتحقق من اكتمال الأقسام والبيانات الإلزامية.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: {
+            type: "string",
+            description: "معرّف مهمة التقييم (UUID)"
+          }
+        },
+        required: ["assignment_id"]
+      }
+    }
   }
 ];
 
