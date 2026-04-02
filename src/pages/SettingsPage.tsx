@@ -1,4 +1,4 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug } from "lucide-react";
+import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";
 import ValuerSettings from "@/components/settings/ValuerSettings";
@@ -6,6 +6,7 @@ import ReportSettings from "@/components/settings/ReportSettings";
 import SystemSettings from "@/components/settings/SystemSettings";
 import BackupSettings from "@/components/settings/BackupSettings";
 import IntegrationSettings from "@/components/settings/IntegrationSettings";
+import DiscountCodesSettings from "@/components/settings/DiscountCodesSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
