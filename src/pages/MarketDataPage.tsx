@@ -357,7 +357,7 @@ export default function MarketDataIntegration() {
         <TabsList>
           <TabsTrigger value="browse" className="gap-1"><Search className="h-3 w-3" /> البحث</TabsTrigger>
           <TabsTrigger value="zones" className="gap-1" onClick={loadZoneStats}><MapPin className="h-3 w-3" /> المناطق</TabsTrigger>
-          <TabsTrigger value="machinery-refs" className="gap-1"><Wrench className="h-3 w-3" /> مراجع الآلات</TabsTrigger>
+          <TabsTrigger value="machinery-refs" className="gap-1"><Wrench className="h-3 w-3" /> المراجع والمصادر</TabsTrigger>
           <TabsTrigger value="add" className="gap-1"><Plus className="h-3 w-3" /> إضافة مقارنة</TabsTrigger>
         </TabsList>
 
