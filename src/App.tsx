@@ -10,7 +10,7 @@ import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
 import ValuationsList from "@/pages/ValuationsList";
 import NewValuation from "@/pages/NewValuation";
-import ComparablesPage from "@/pages/ComparablesPage"; // kept for backward compat
+
 import ArchivePage from "@/pages/ArchivePage";
 import VerifyReport from "@/pages/VerifyReport";
 import ReportGenerator from "@/pages/ReportGenerator";
