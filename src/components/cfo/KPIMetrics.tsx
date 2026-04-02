@@ -6,7 +6,7 @@ const kpis = [
   { label: "متوسط مدة التحصيل", value: "23 يوم", icon: TrendingUp, description: "من تاريخ الإصدار للسداد" },
   { label: "نسبة التحصيل", value: "87.4%", icon: Percent, description: "من إجمالي الفواتير المستحقة" },
   { label: "فواتير هذا الشهر vs السابق", value: "8 / 6", icon: FileText, description: "+33% عن الشهر الماضي" },
-  { label: "إيرادات الربع الحالي", value: "930,000 ر.س", icon: BarChart3, description: "الربع الأول 2025" },
+  { label: "إيرادات الربع الحالي", value: "930,000", icon: BarChart3, description: "الربع الأول 2025", hasCurrency: true },
 ];
 
 export default function KPIMetrics() {
