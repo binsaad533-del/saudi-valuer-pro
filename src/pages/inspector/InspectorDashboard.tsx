@@ -12,6 +12,7 @@ import {
 import { format } from "date-fns";
 import { toast } from "sonner";
 import logo from "@/assets/logo.png";
+import AppFooter from "@/components/layout/AppFooter";
 
 interface InspectionTask {
   id: string;
