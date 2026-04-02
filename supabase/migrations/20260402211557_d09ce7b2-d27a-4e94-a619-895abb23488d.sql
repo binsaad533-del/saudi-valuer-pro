@@ -1,0 +1,1 @@
+UPDATE profiles SET organization_id = '52bbe5b4-9de2-4a8d-a156-cbfebed01686' WHERE user_id = 'd578a1bb-9a99-4744-b1fc-ea046a09334f' AND organization_id IS NULL;
