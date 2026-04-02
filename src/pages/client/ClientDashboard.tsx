@@ -362,10 +362,10 @@ export default function ClientDashboard() {
           <CardContent className="pt-0">
             <div className="grid sm:grid-cols-2 gap-3">
               {[
-                { title: "ما هو التقييم؟", desc: "عملية تحديد القيمة السوقية العادلة للأصول — سواء كانت عقارات أو معدات أو آلات — وفقاً للمعايير الدولية والسعودية المعتمدة." },
+                { title: "ما هو التقييم؟", desc: "عملية تحديد القيمة السوقية العادلة للأصول — سواء كانت عقارات أو معدات أو آلات — وفقاً لمعايير التقييم الدولية (IVS) ومعايير الهيئة السعودية للمقيّمين المعتمدين (تقييم)." },
                 { title: "كيف تستعد للمعاينة الميدانية؟", desc: "تأكد من توفر مستندات الملكية والمواصفات الفنية، وإمكانية الوصول للأصل المراد تقييمه يوم المعاينة." },
-                { title: "كم تستغرق عملية التقييم؟", desc: "عادة ما يستغرق التقييم من 3 إلى 7 أيام عمل حسب نوع الأصل وتعقيد التقييم المطلوب." },
-                { title: "هل التقرير معتمد رسمياً؟", desc: "نعم، جميع تقاريرنا معتمدة من مقيّمين مرخصين من الهيئة السعودية للمقيّمين المعتمدين (تقييم)." },
+                { title: "أغراض التقييم المتعددة", desc: "يُستخدم التقييم لأغراض متعددة: التمويل، الرهن، التأمين، البيع والشراء، الاندماج والاستحواذ، التصفية، نزع الملكية، تحليل القيمة المتبقية، والحسابات والمراجعة." },
+                { title: "هل التقرير معتمد رسمياً؟", desc: "نعم، فريقنا حاصل على عضوية الزمالة من هيئة (تقييم) ومعتمدون من الجمعية الأمريكية للمقيّمين (ASA) لممارسة التقييم المهني (USPAP)." },
               ].map((tip, i) => (
                 <div key={i} className="bg-muted/50 rounded-lg p-3 space-y-1">
                   <p className="text-sm font-semibold text-foreground">{tip.title}</p>
@@ -389,10 +389,11 @@ export default function ClientDashboard() {
           <CardContent className="pt-0">
             <Accordion type="single" collapsible className="w-full">
               {[
-                { q: "كيف يمكنني تقديم طلب تقييم جديد؟", a: "اضغط على زر \"طلب تقييم جديد\" في أعلى الصفحة، ثم ارفع المستندات المطلوبة وسيتواصل معك فريقنا خلال 24 ساعة." },
-                { q: "ما أنواع التقييم التي تقدمونها؟", a: "نقدم خدمات تقييم العقارات (سكني، تجاري، صناعي) وتقييم المعدات والآلات والأصول المنقولة، جميعها وفق المعايير المعتمدة." },
+                { q: "كيف يمكنني تقديم طلب تقييم جديد؟", a: "اضغط على زر \"طلب تقييم جديد\" في أعلى الصفحة، ثم ارفع المستندات المتعلقة بالأصل وسيتواصل معك فريقنا خلال 24 ساعة." },
+                { q: "ما أنواع التقييم التي تقدمونها؟", a: "نقدم: تقييم العقارات (سكني، تجاري، صناعي، أراضٍ، مزارع)، تقييم الآلات والمعدات، إدارة الأصول، وخدمات نزع الملكية والتعويضات." },
                 { q: "ما هي المستندات المطلوبة للتقييم؟", a: "تختلف حسب نوع الأصل: للعقارات تشمل صك الملكية ورخصة البناء، وللمعدات تشمل فواتير الشراء والمواصفات الفنية وسجلات الصيانة." },
-                { q: "كيف أتابع حالة طلبي؟", a: "يمكنك متابعة حالة طلبك مباشرة من تبويب \"طلباتي\" حيث يظهر متتبع المراحل الذي يوضح الحالة الحالية لكل طلب بشكل مفصل." },
+                { q: "ما المعايير المعتمدة في تقاريركم؟", a: "تقاريرنا متوافقة مع معايير التقييم الدولية (IVS) ومعايير الهيئة السعودية للمقيّمين المعتمدين (تقييم)، ونطبق أساليب التكلفة والدخل والسوق المعتمدة دولياً." },
+                { q: "كيف أتابع حالة طلبي؟", a: "يمكنك متابعة حالة طلبك من تبويب \"طلباتي\" حيث يظهر متتبع المراحل لكل طلب بشكل مفصل." },
                 { q: "كيف أحصل على نسخة من التقرير؟", a: "بمجرد اكتمال التقييم، ستجد التقرير في تبويب \"التقارير الجاهزة\" حيث يمكنك معاينته وتحميله بصيغة PDF." },
               ].map((item, i) => (
                 <AccordionItem key={i} value={`faq-${i}`}>
@@ -451,15 +452,15 @@ export default function ClientDashboard() {
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
                 <Phone className="w-5 h-5 text-primary shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">الهاتف</p>
-                  <p className="text-sm font-medium text-foreground" dir="ltr">+966 55 000 0000</p>
+                  <p className="text-xs text-muted-foreground">الهاتف الموحد</p>
+                  <p className="text-sm font-medium text-foreground" dir="ltr">920015029</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
                 <Mail className="w-5 h-5 text-primary shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
-                  <p className="text-sm font-medium text-foreground">info@jsaasvaluation.app</p>
+                  <p className="text-sm font-medium text-foreground">care@jsaas-valuation.com</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
@@ -470,9 +471,9 @@ export default function ClientDashboard() {
                 </div>
               </div>
             </div>
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap gap-2">
               <a
-                href="https://wa.me/966550000000"
+                href="https://wa.me/966500668089"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
@@ -480,13 +481,21 @@ export default function ClientDashboard() {
                 <MessageCircle className="w-4 h-4" />
                 تواصل عبر واتساب
               </a>
+              <a
+                href="https://www.jsaas-valuation.com/ar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-border hover:bg-muted rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-foreground"
+              >
+                الموقع الرسمي
+              </a>
             </div>
+            <p className="text-[11px] text-muted-foreground/70 mt-3">
+              الرياض - حي الياسمين - طريق الثمامة | سجل تجاري: 1010625839 | ترخيص تقييم: 4114000015
+            </p>
           </CardContent>
         </Card>
 
-        <div className="text-center py-4">
-          <p className="text-xs text-muted-foreground">© 2026 جساس للتقييم — جميع الحقوق محفوظة</p>
-        </div>
       </main>
 
       {/* New Request Dialog */}
