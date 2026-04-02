@@ -535,10 +535,10 @@ export default function MarketDataIntegration() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
-                قواعد بيانات ومراجع دولية للآلات والمعدات
+                المراجع والمصادر المعتمدة
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                مصادر موثوقة ومعتمدة عالمياً لاستخدامها كمراجع في تقييم الآلات والمعدات
+                مصادر موثوقة ومعتمدة لاستخدامها كمراجع في تقييم العقارات والآلات والمعدات
               </p>
             </CardHeader>
             <CardContent>
