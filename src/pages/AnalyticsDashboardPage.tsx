@@ -41,7 +41,7 @@ export default function AnalyticsDashboardPage() {
   const loadAnalytics = async () => {
     try {
       const [assignmentsRes, paymentsRes, inspectorsRes] = await Promise.all([
-        supabase.from("valuation_assignments").select("id, status, created_at, updated_at, sla_total_days, sla_status, city_ar, inspector_user_id"),
+        supabase.from("valuation_assignments").select("id, status, created_at, updated_at, sla_total_days, sla_status, property_type, assigned_inspector_id"),
         supabase.from("payments").select("amount, payment_status, created_at, paid_at"),
         supabase.from("inspector_profiles").select("user_id, total_completed, avg_rating, avg_completion_hours")
           .eq("is_active", true).limit(20),
