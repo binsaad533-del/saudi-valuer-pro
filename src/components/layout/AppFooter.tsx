@@ -1,5 +1,5 @@
 import { Mail, Phone, MapPin, Globe, Shield, Award } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-full.png";
 
 export default function AppFooter() {
   const year = new Date().getFullYear();
@@ -11,12 +11,9 @@ export default function AppFooter() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {/* Brand */}
           <div className="flex flex-col items-center sm:items-start gap-3">
-            <img src={logo} alt="جساس" className="w-16 h-auto object-contain" />
+            <img src={logo} alt="جساس للتقييم" className="w-32 h-auto object-contain" />
             <p className="text-xs text-muted-foreground text-center sm:text-right leading-relaxed">
               جساس للتقييم — نصنع للأصل قيمة
-            </p>
-            <p className="text-[11px] text-muted-foreground/70 text-center sm:text-right">
-              نقيّم الأصول بعِلم وفنْ
             </p>
           </div>
 
