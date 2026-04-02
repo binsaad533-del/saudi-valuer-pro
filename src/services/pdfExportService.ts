@@ -4,8 +4,7 @@ import type { Report } from "@/types/report";
 import { getStatusLabel } from "@/utils/reportWorkflow";
 import { formatDate, formatNumber } from "@/lib/utils";
 
-
-const PAGE_WIDTH = 210; // A4 mm
+const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
 const MARGIN = 20;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
@@ -13,20 +12,58 @@ const PRIMARY_COLOR: [number, number, number] = [15, 82, 135];
 const DARK: [number, number, number] = [30, 30, 30];
 const GRAY: [number, number, number] = [120, 120, 120];
 const LIGHT_BG: [number, number, number] = [245, 247, 250];
+const GOLD: [number, number, number] = [180, 140, 50];
 
-function addPageNumber(doc: jsPDF) {
+// ─── Drawing Helpers ───
+
+function drawDraftWatermark(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    doc.text(`${i} / ${pageCount}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 8, { align: "center" });
+    doc.setTextColor(220, 220, 220);
+    doc.setFontSize(55);
+    doc.text("مسودة / DRAFT", PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: "center", angle: 45 });
   }
 }
 
+function addPageNumbers(doc: jsPDF, startPage = 2) {
+  const total = doc.getNumberOfPages();
+  for (let i = startPage; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(...GRAY);
+    doc.text(`${i - startPage + 1} / ${total - startPage + 1}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 8, { align: "center" });
+    // Footer line
+    doc.setDrawColor(200, 200, 200);
+    doc.line(MARGIN, PAGE_HEIGHT - 12, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 12);
+  }
+}
+
+function addHeader(doc: jsPDF, reportNumber: string, startPage = 2) {
+  const total = doc.getNumberOfPages();
+  for (let i = startPage; i <= total; i++) {
+    doc.setPage(i);
+    doc.setFontSize(7);
+    doc.setTextColor(...GRAY);
+    doc.text(reportNumber, PAGE_WIDTH - MARGIN, 10, { align: "right" });
+    doc.text("سري وخاص — Confidential", MARGIN, 10);
+    doc.setDrawColor(200, 200, 200);
+    doc.line(MARGIN, 12, PAGE_WIDTH - MARGIN, 12);
+  }
+}
+
+function checkPageBreak(doc: jsPDF, y: number, needed = 30): number {
+  if (y > PAGE_HEIGHT - needed) {
+    doc.addPage();
+    return MARGIN + 5;
+  }
+  return y;
+}
+
 function drawSectionTitle(doc: jsPDF, title: string, y: number): number {
+  y = checkPageBreak(doc, y, 20);
   doc.setFillColor(...PRIMARY_COLOR);
-  doc.rect(MARGIN, y, CONTENT_WIDTH, 8, "F");
+  doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 8, 1, 1, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
   doc.text(title, PAGE_WIDTH - MARGIN - 4, y + 5.5, { align: "right" });
@@ -35,27 +72,19 @@ function drawSectionTitle(doc: jsPDF, title: string, y: number): number {
 }
 
 function drawKeyValue(doc: jsPDF, key: string, value: string, y: number): number {
-  if (y > PAGE_HEIGHT - 30) {
-    doc.addPage();
-    y = MARGIN;
-  }
+  y = checkPageBreak(doc, y);
   doc.setFontSize(9);
   doc.setTextColor(...GRAY);
   doc.text(key, PAGE_WIDTH - MARGIN - 4, y, { align: "right" });
   doc.setTextColor(...DARK);
   doc.setFontSize(10);
-
   const lines = doc.splitTextToSize(value || "—", CONTENT_WIDTH - 10);
   doc.text(lines, PAGE_WIDTH - MARGIN - 4, y + 5, { align: "right" });
   return y + 5 + lines.length * 5 + 3;
 }
 
 function drawTableRow(doc: jsPDF, cells: string[], y: number, isHeader: boolean, colWidths: number[]): number {
-  if (y > PAGE_HEIGHT - 25) {
-    doc.addPage();
-    y = MARGIN;
-  }
-
+  y = checkPageBreak(doc, y, 15);
   if (isHeader) {
     doc.setFillColor(...PRIMARY_COLOR);
     doc.rect(MARGIN, y - 4, CONTENT_WIDTH, 7, "F");
@@ -69,68 +98,168 @@ function drawTableRow(doc: jsPDF, cells: string[], y: number, isHeader: boolean,
     doc.setTextColor(...DARK);
     doc.setFontSize(8);
   }
-
   let x = PAGE_WIDTH - MARGIN;
   cells.forEach((cell, i) => {
     doc.text(cell, x - 2, y, { align: "right" });
     x -= colWidths[i];
   });
-
   return y + 7;
 }
 
-export async function exportReportToPDF(report: Report): Promise<Blob> {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+// ─── Cover Page ───
 
-  // === COVER PAGE ===
+function drawCover(doc: jsPDF, report: Report) {
+  // Full bleed top bar
   doc.setFillColor(...PRIMARY_COLOR);
-  doc.rect(0, 0, PAGE_WIDTH, 80, "F");
+  doc.rect(0, 0, PAGE_WIDTH, 100, "F");
 
+  // Gold accent line
+  doc.setFillColor(...GOLD);
+  doc.rect(0, 100, PAGE_WIDTH, 3, "F");
+
+  // White text on blue
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(22);
-  doc.text("تقرير تقييم", PAGE_WIDTH / 2, 30, { align: "center" });
-  doc.setFontSize(14);
-  doc.text("Valuation Report", PAGE_WIDTH / 2, 40, { align: "center" });
+  doc.setFontSize(28);
+  doc.text("تقرير تقييم", PAGE_WIDTH / 2, 35, { align: "center" });
+  doc.setFontSize(16);
+  doc.text("Valuation Report", PAGE_WIDTH / 2, 48, { align: "center" });
 
+  // Divider line
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.line(PAGE_WIDTH / 2 - 30, 55, PAGE_WIDTH / 2 + 30, 55);
+
+  doc.setFontSize(12);
+  doc.text(report.reportNumber, PAGE_WIDTH / 2, 65, { align: "center" });
   doc.setFontSize(10);
-  doc.text(report.reportNumber, PAGE_WIDTH / 2, 55, { align: "center" });
-  doc.text(formatDate(report.createdAt), PAGE_WIDTH / 2, 62, { align: "center" });
+  doc.text(formatDate(report.createdAt), PAGE_WIDTH / 2, 75, { align: "center" });
 
-  // Status badge
   const statusLabel = getStatusLabel(report.status);
   doc.setFontSize(9);
-  doc.text(`الحالة: ${statusLabel}`, PAGE_WIDTH / 2, 72, { align: "center" });
+  doc.text(`الحالة: ${statusLabel}`, PAGE_WIDTH / 2, 90, { align: "center" });
 
-  // Draft watermark
-  const isDraft = report.status === "draft" || report.status === "review";
-  if (isDraft) {
-    doc.setTextColor(200, 200, 200);
-    doc.setFontSize(60);
-    doc.text("مسودة", PAGE_WIDTH / 2, PAGE_HEIGHT / 2, {
-      align: "center",
-      angle: 45,
-    });
-    doc.setTextColor(...DARK);
-  }
+  // Client info block
+  let y = 120;
+  doc.setTextColor(...DARK);
 
-  // Client info on cover
-  let y = 100;
+  // Decorative box for client info
+  doc.setFillColor(...LIGHT_BG);
+  doc.roundedRect(MARGIN, y - 5, CONTENT_WIDTH, 55, 3, 3, "F");
+  doc.setDrawColor(...PRIMARY_COLOR);
+  doc.roundedRect(MARGIN, y - 5, CONTENT_WIDTH, 55, 3, 3, "S");
+
+  y += 5;
+  doc.setFontSize(11);
+  doc.setTextColor(...PRIMARY_COLOR);
+  doc.text("بيانات التكليف", PAGE_WIDTH - MARGIN - 8, y, { align: "right" });
+  y += 10;
+
   doc.setTextColor(...DARK);
   doc.setFontSize(10);
+  const assetLabel = report.assetType === "real_estate" ? "عقار" : report.assetType === "equipment" ? "معدات" : "مركبة";
 
-  y = drawKeyValue(doc, "العميل", report.clientName, y);
-  y = drawKeyValue(doc, "نوع الأصل", report.assetType === "real_estate" ? "عقار" : report.assetType === "equipment" ? "معدات" : "مركبة", y);
-  y = drawKeyValue(doc, "الموقع", report.assetLocation, y);
+  const coverFields = [
+    ["العميل", report.clientName],
+    ["نوع الأصل", assetLabel],
+    ["الموقع", report.assetLocation],
+  ];
 
-  // === PAGE 2: Details ===
+  coverFields.forEach(([label, val]) => {
+    doc.setTextColor(...GRAY);
+    doc.setFontSize(9);
+    doc.text(`${label}:`, PAGE_WIDTH - MARGIN - 8, y, { align: "right" });
+    doc.setTextColor(...DARK);
+    doc.setFontSize(10);
+    doc.text(val, PAGE_WIDTH - MARGIN - 40, y, { align: "right" });
+    y += 8;
+  });
+
+  // Company info at bottom
+  y = PAGE_HEIGHT - 50;
+  doc.setFillColor(...PRIMARY_COLOR);
+  doc.rect(0, y, PAGE_WIDTH, 50, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(12);
+  doc.text("شركة جساس للتقييم", PAGE_WIDTH / 2, y + 15, { align: "center" });
+  doc.setFontSize(9);
+  doc.text("Jassas Valuation Company", PAGE_WIDTH / 2, y + 23, { align: "center" });
+  doc.setFontSize(8);
+  doc.text("سجل تجاري: 1010625839 | ترخيص تقييم معتمد", PAGE_WIDTH / 2, y + 33, { align: "center" });
+  doc.setFillColor(...GOLD);
+  doc.rect(0, y, PAGE_WIDTH, 2, "F");
+}
+
+// ─── Table of Contents ───
+
+function drawTableOfContents(doc: jsPDF, report: Report) {
   doc.addPage();
-  y = MARGIN;
+  let y = MARGIN + 5;
 
-  y = drawSectionTitle(doc, "وصف الأصل", y);
+  doc.setFillColor(...PRIMARY_COLOR);
+  doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 10, 1, 1, "F");
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.text("جدول المحتويات", PAGE_WIDTH / 2, y + 7, { align: "center" });
+  y += 18;
+
+  const tocItems = [
+    "1. بيانات التكليف والعميل",
+    "2. وصف الأصل",
+    "3. منهجية التقييم",
+    "4. تحليل السوق",
+    "5. المقارنات السوقية",
+    "6. القيمة التقديرية النهائية",
+  ];
+
+  if (report.notes) tocItems.push("7. ملاحظات");
+  tocItems.push(`${tocItems.length + 1}. التوقيع والاعتماد`);
+
+  tocItems.forEach((item, i) => {
+    doc.setTextColor(...DARK);
+    doc.setFontSize(11);
+    doc.text(item, PAGE_WIDTH - MARGIN - 8, y, { align: "right" });
+
+    // Dotted line
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineDashPattern([1, 2], 0);
+    doc.line(MARGIN + 10, y, PAGE_WIDTH - MARGIN - 80, y);
+    doc.setLineDashPattern([], 0);
+
+    doc.setTextColor(...GRAY);
+    doc.setFontSize(9);
+    doc.text(`${i + 2}`, MARGIN + 4, y, { align: "left" });
+    y += 10;
+  });
+}
+
+// ─── Main Export Function ───
+
+export async function exportReportToPDF(report: Report): Promise<Blob> {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const isDraft = report.status === "draft" || report.status === "review";
+
+  // 1. Cover
+  drawCover(doc, report);
+
+  // 2. Table of Contents
+  drawTableOfContents(doc, report);
+
+  // 3. Content pages
+  doc.addPage();
+  let y = MARGIN + 5;
+
+  y = drawSectionTitle(doc, "1. بيانات التكليف والعميل", y);
+  y = drawKeyValue(doc, "العميل", report.clientName, y);
+  y = drawKeyValue(doc, "البريد الإلكتروني", report.clientEmail, y);
+  y = drawKeyValue(doc, "الهاتف", report.clientPhone, y);
+  y += 5;
+
+  y = drawSectionTitle(doc, "2. وصف الأصل", y);
   y = drawKeyValue(doc, "الوصف", report.assetDescription, y);
-  y += 3;
+  y = drawKeyValue(doc, "الموقع", report.assetLocation, y);
+  y += 5;
 
-  y = drawSectionTitle(doc, "منهجية التقييم", y);
+  y = drawSectionTitle(doc, "3. منهجية التقييم", y);
   const methodMap: Record<string, string> = {
     market_comparison: "أسلوب المقارنة بالسوق",
     income: "أسلوب الدخل",
@@ -138,14 +267,14 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
     combined: "أسلوب مشترك",
   };
   y = drawKeyValue(doc, "الأسلوب المستخدم", methodMap[report.methodology] || report.methodology, y);
-  y += 3;
+  y += 5;
 
-  y = drawSectionTitle(doc, "تحليل السوق", y);
+  y = drawSectionTitle(doc, "4. تحليل السوق", y);
   y = drawKeyValue(doc, "التحليل", report.marketAnalysis, y);
-  y += 3;
+  y += 5;
 
-  // === Comparables Table ===
-  y = drawSectionTitle(doc, "المقارنات السوقية", y);
+  // Comparables Table
+  y = drawSectionTitle(doc, "5. المقارنات السوقية", y);
   const colWidths = [15, 55, 35, 40, 25];
   y = drawTableRow(doc, ["#", "الوصف", "القيمة (ر.س)", "المصدر", "التاريخ"], y, true, colWidths);
 
@@ -164,54 +293,50 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
       colWidths
     );
   });
-
   y += 8;
 
-  // === Final Value ===
-  if (y > PAGE_HEIGHT - 60) {
-    doc.addPage();
-    y = MARGIN;
-  }
+  // Final Value - prominent box
+  y = checkPageBreak(doc, y, 50);
+  y = drawSectionTitle(doc, "6. القيمة التقديرية النهائية", y);
 
   doc.setFillColor(...LIGHT_BG);
-  doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 30, 3, 3, "F");
+  doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 35, 3, 3, "F");
   doc.setDrawColor(...PRIMARY_COLOR);
-  doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 30, 3, 3, "S");
+  doc.setLineWidth(0.8);
+  doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 35, 3, 3, "S");
+  doc.setLineWidth(0.2);
+
+  // Gold accent
+  doc.setFillColor(...GOLD);
+  doc.rect(MARGIN, y, 3, 35, "F");
 
   doc.setTextColor(...GRAY);
   doc.setFontSize(10);
   doc.text("القيمة التقديرية النهائية", PAGE_WIDTH / 2, y + 10, { align: "center" });
 
   doc.setTextColor(...PRIMARY_COLOR);
-  doc.setFontSize(20);
-  doc.text(
-    `${formatNumber(report.estimatedValue)} ر.س`,
-    PAGE_WIDTH / 2,
-    y + 22,
-    { align: "center" }
-  );
-
-  y += 38;
+  doc.setFontSize(22);
+  doc.text(`${formatNumber(report.estimatedValue)} ر.س`, PAGE_WIDTH / 2, y + 25, { align: "center" });
+  y += 42;
 
   // Notes
   if (report.notes) {
-    y = drawSectionTitle(doc, "ملاحظات", y);
+    y = drawSectionTitle(doc, "7. ملاحظات", y);
     y = drawKeyValue(doc, "", report.notes, y);
-    y += 3;
+    y += 5;
   }
 
-  // === Signature Page ===
+  // Signature Page
   doc.addPage();
-  y = MARGIN;
+  y = MARGIN + 5;
 
   y = drawSectionTitle(doc, "التوقيع والاعتماد", y);
   y += 5;
-
   y = drawKeyValue(doc, "اسم المقيّم", report.evaluatorName, y);
   y = drawKeyValue(doc, "الهيئة السعودية للمقيمين", report.evaluatorCredentials.saudiAuthority, y);
   y = drawKeyValue(doc, "RICS", report.evaluatorCredentials.rics, y);
   y = drawKeyValue(doc, "ASA", report.evaluatorCredentials.asa, y);
-  y += 5;
+  y += 8;
 
   // Signature image
   if (report.signatureImageUrl) {
@@ -235,9 +360,7 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
   doc.text("التوقيع", PAGE_WIDTH / 2, y, { align: "center" });
   y += 8;
 
-  const dateLabel = report.issuedAt
-    ? formatDate(report.issuedAt)
-    : formatDate(report.createdAt);
+  const dateLabel = report.issuedAt ? formatDate(report.issuedAt) : formatDate(report.createdAt);
   doc.text(`التاريخ: ${dateLabel}`, PAGE_WIDTH / 2, y, { align: "center" });
   y += 15;
 
@@ -258,11 +381,18 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
     }
   }
 
-  // Page numbers
-  addPageNumber(doc);
+  // Post-processing
+  addHeader(doc, report.reportNumber, 2);
+  addPageNumbers(doc, 2);
+
+  if (isDraft) {
+    drawDraftWatermark(doc);
+  }
 
   return doc.output("blob");
 }
+
+// ─── Utilities ───
 
 async function loadImage(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
