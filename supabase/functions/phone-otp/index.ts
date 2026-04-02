@@ -8,11 +8,12 @@ const corsHeaders = {
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
 
-// In-memory OTP store (simple approach for now)
-const otpStore = new Map<string, { code: string; expiresAt: number }>();
-
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function isValidE164(phone: string): boolean {
+  return /^\+[1-9]\d{7,14}$/.test(phone.trim());
 }
 
 serve(async (req) => {
