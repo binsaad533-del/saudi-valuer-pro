@@ -230,13 +230,6 @@ export default function ClientRegister() {
                     <Input id="fullName" placeholder="محمد أحمد" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pr-10" required />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="idNumber">رقم الهوية</Label>
-                  <div className="relative">
-                    <CreditCard className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="idNumber" placeholder="1XXXXXXXXX" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="pr-10" required dir="ltr" maxLength={10} />
-                  </div>
-                </div>
               </>
             ) : (
               <>
