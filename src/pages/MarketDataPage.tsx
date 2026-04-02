@@ -338,9 +338,10 @@ export default function MarketDataIntegration() {
     return <BarChart3 className="h-3 w-3 text-gray-400" />;
   };
 
+  const allSources = [...SA_REAL_ESTATE_SOURCES, ...MACHINERY_REFERENCE_SOURCES];
   const filteredSources = selectedSector === "all"
-    ? MACHINERY_REFERENCE_SOURCES
-    : MACHINERY_REFERENCE_SOURCES.filter(s => s.sector === selectedSector);
+    ? allSources
+    : allSources.filter(s => s.sector === selectedSector);
 
   return (
     <div className="space-y-6" dir="rtl">
