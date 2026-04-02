@@ -1,18 +1,24 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Settings, User, Lock, Save, Loader2, ArrowRight, CheckCircle } from "lucide-react";
+import { Settings, User, Lock, Save, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function UserSettingsPage() {
+  const navigate = useNavigate();
+  const { role } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const backPath = role === "inspector" ? "/inspector" : role === "client" ? "/client/dashboard" : "/";
 
   // Profile fields
   const [fullNameAr, setFullNameAr] = useState("");
@@ -124,14 +130,20 @@ export default function UserSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 p-4 sm:p-6" dir="rtl">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <Settings className="w-5 h-5 text-primary" />
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Settings className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">إعدادات الحساب</h1>
+            <p className="text-sm text-muted-foreground">تعديل المعلومات الشخصية وكلمة المرور</p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">إعدادات الحساب</h1>
-          <p className="text-sm text-muted-foreground">تعديل المعلومات الشخصية وكلمة المرور</p>
-        </div>
+        <Button variant="outline" size="sm" onClick={() => navigate(backPath)} className="gap-1">
+          <ArrowRight className="w-4 h-4" />
+          رجوع
+        </Button>
       </div>
 
       {/* Personal Info Card */}
