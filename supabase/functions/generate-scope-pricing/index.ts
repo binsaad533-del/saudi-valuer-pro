@@ -1,10 +1,67 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+// ─── Fetch relevant knowledge for scope/pricing ───
+async function fetchScopePricingKnowledge(propertyDesc: string, purpose: string): Promise<string> {
+  try {
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+    const { data: docs } = await db
+      .from("raqeem_knowledge")
+      .select("title_ar, content, category, priority")
+      .eq("is_active", true)
+      .order("priority", { ascending: false });
+
+    if (!docs || docs.length === 0) return "";
+
+    const searchTerms = [
+      propertyDesc, purpose, "نطاق", "تسعير", "معايير", "تقييم", "ivs", "منهجية"
+    ].filter(Boolean).map(t => t.toLowerCase());
+
+    const scored = docs.map(doc => {
+      const text = `${doc.title_ar || ""} ${doc.content || ""} ${doc.category || ""}`.toLowerCase();
+      let score = doc.priority || 0;
+      for (const term of searchTerms) {
+        if (text.includes(term)) score += 10;
+      }
+      if (doc.category === "standards" || doc.category === "pricing") score += 15;
+      if (doc.category === "methodology" || doc.category === "guidelines") score += 10;
+      return { ...doc, score };
+    });
+
+    scored.sort((a, b) => b.score - a.score);
+
+    const MAX_CHARS = 20000;
+    let totalChars = 0;
+    const selected: string[] = [];
+
+    for (const doc of scored) {
+      if (doc.score <= 0) break;
+      const chunk = `### ${doc.title_ar}\n${doc.content}`;
+      if (totalChars + chunk.length > MAX_CHARS) {
+        const remaining = MAX_CHARS - totalChars;
+        if (remaining > 200) selected.push(chunk.substring(0, remaining) + "...");
+        break;
+      }
+      selected.push(chunk);
+      totalChars += chunk.length;
+    }
+
+    if (selected.length === 0) return "";
+    return `\n\n══════ المراجع المهنية ══════\n${selected.join("\n\n---\n\n")}`;
+  } catch (e) {
+    console.error("Knowledge fetch error:", e);
+    return "";
+  }
+}
 
 // ─── Base pricing table (SAR) ───
 const BASE_PRICES: Record<string, Record<string, number>> = {
