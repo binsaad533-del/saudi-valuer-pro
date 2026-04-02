@@ -26,7 +26,9 @@ export const RecoveryEmail = ({
   confirmationUrl,
 }: RecoveryEmailProps) => (
   <Html lang="ar" dir="rtl">
-    <Head />
+    <Head>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+    </Head>
     <Preview>إعادة تعيين كلمة المرور - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>

@@ -24,7 +24,9 @@ interface RequestConfirmationProps {
 
 const RequestConfirmationEmail = ({ clientName, requestNumber }: RequestConfirmationProps) => (
   <Html lang="ar" dir="rtl">
-    <Head />
+    <Head>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+    </Head>
     <Preview>تم استلام طلب التقييم - {SITE_NAME}</Preview>
     <Body style={main}>
       <Container style={container}>
