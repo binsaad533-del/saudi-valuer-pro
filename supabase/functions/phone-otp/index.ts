@@ -7,12 +7,91 @@ const corsHeaders = {
 };
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/twilio";
-
-// In-memory OTP store (simple approach for now)
-const otpStore = new Map<string, { code: string; expiresAt: number }>();
+const OTP_TTL_MS = 5 * 60 * 1000;
 
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+function isValidE164(phone: string): boolean {
+  return /^\+[1-9]\d{7,14}$/.test(phone.trim());
+}
+
+function normalizePhone(phone: string): string {
+  const trimmed = phone.trim();
+  if (trimmed.startsWith("+")) return trimmed;
+  return `+966${trimmed.replace(/^0/, "")}`;
+}
+
+function toBase64Url(input: Uint8Array): string {
+  let binary = "";
+  input.forEach((byte) => {
+    binary += String.fromCharCode(byte);
+  });
+
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function fromBase64Url(input: string): Uint8Array {
+  const base64 = input.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = `${base64}${"=".repeat((4 - (base64.length % 4 || 4)) % 4)}`;
+  const binary = atob(padded);
+  return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+}
+
+async function signPayload(payload: string, secret: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  return toBase64Url(new Uint8Array(signature));
+}
+
+async function createVerificationToken(phone: string, otp: string, expiresAt: number, secret: string): Promise<string> {
+  const payload = toBase64Url(new TextEncoder().encode(JSON.stringify({ phone, otp, expiresAt })));
+  const signature = await signPayload(payload, secret);
+  return `${payload}.${signature}`;
+}
+
+async function verifyVerificationToken(token: string, phone: string, otp: string, secret: string): Promise<{ valid: boolean; error?: string }> {
+  const [payload, signature] = token.split(".");
+  if (!payload || !signature) {
+    return { valid: false, error: "رمز التحقق غير صالح، أعد طلب رمز جديد" };
+  }
+
+  const expectedSignature = await signPayload(payload, secret);
+  if (signature !== expectedSignature) {
+    return { valid: false, error: "رمز التحقق غير صالح، أعد طلب رمز جديد" };
+  }
+
+  try {
+    const decoded = JSON.parse(new TextDecoder().decode(fromBase64Url(payload))) as {
+      phone: string;
+      otp: string;
+      expiresAt: number;
+    };
+
+    if (decoded.phone !== phone) {
+      return { valid: false, error: "هذا الرمز مرتبط برقم جوال مختلف" };
+    }
+
+    if (Date.now() > decoded.expiresAt) {
+      return { valid: false, error: "انتهت صلاحية الرمز، أعد طلب رمز جديد" };
+    }
+
+    if (decoded.otp !== otp) {
+      return { valid: false, error: "رمز التحقق غير صحيح" };
+    }
+
+    return { valid: true };
+  } catch {
+    return { valid: false, error: "تعذر قراءة رمز التحقق، أعد طلب رمز جديد" };
+  }
 }
 
 serve(async (req) => {
@@ -21,43 +100,44 @@ serve(async (req) => {
   }
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  if (!LOVABLE_API_KEY) {
-    return new Response(JSON.stringify({ error: "LOVABLE_API_KEY not configured" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-  if (!TWILIO_API_KEY) {
-    return new Response(JSON.stringify({ error: "TWILIO_API_KEY not configured" }), {
+  const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER") || "";
+  const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+  const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const SIGNING_SECRET = SUPABASE_SERVICE_ROLE_KEY || LOVABLE_API_KEY;
+
+  if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SIGNING_SECRET) {
+    return new Response(JSON.stringify({ error: "خدمة التحقق غير مهيأة حالياً" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 
   try {
-    const { action, phone, code, from_number } = await req.json();
+    const { action, phone, code, from_number, verification_token } = await req.json();
 
     if (!phone) {
-      return new Response(JSON.stringify({ error: "Phone number is required" }), {
+      return new Response(JSON.stringify({ error: "رقم الجوال مطلوب" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Normalize phone number to E.164
-    let normalizedPhone = phone.trim();
-    if (!normalizedPhone.startsWith("+")) {
-      normalizedPhone = `+966${normalizedPhone.replace(/^0/, "")}`;
-    }
+    const normalizedPhone = normalizePhone(phone);
 
     if (action === "send") {
       const otp = generateOtp();
-      otpStore.set(normalizedPhone, { code: otp, expiresAt: Date.now() + 5 * 60 * 1000 });
+      const expiresAt = Date.now() + OTP_TTL_MS;
+      const twilioFrom = from_number || TWILIO_PHONE_NUMBER;
 
-      // Use the configured Twilio number or a default
-      const twilioFrom = from_number || Deno.env.get("TWILIO_PHONE_NUMBER") || "+15005550006";
+      if (!isValidE164(twilioFrom)) {
+        return new Response(JSON.stringify({
+          error: "تعذر إرسال رمز التحقق لأن رقم الرسائل غير مهيأ بشكل صحيح حالياً.",
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
 
       const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
         method: "POST",
@@ -76,10 +156,31 @@ serve(async (req) => {
       const data = await response.json();
       if (!response.ok) {
         console.error("Twilio error:", JSON.stringify(data));
-        throw new Error(`Twilio API error [${response.status}]: ${JSON.stringify(data)}`);
+        const twilioMessage = typeof data?.message === "string" ? data.message : "";
+        const isInvalidFromNumber = response.status === 400 && (
+          twilioMessage.includes("Invalid From Number") || Number(data?.code) === 21212
+        );
+
+        if (isInvalidFromNumber) {
+          return new Response(JSON.stringify({
+            error: "تعذر إرسال رمز التحقق لأن رقم الرسائل المعتمد غير صالح حالياً.",
+          }), {
+            status: 500,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+
+        throw new Error(`Twilio API error [${response.status}]`);
       }
 
-      return new Response(JSON.stringify({ success: true, message: "OTP sent" }), {
+      const verificationToken = await createVerificationToken(normalizedPhone, otp, expiresAt, SIGNING_SECRET);
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: "OTP sent",
+        verification_token: verificationToken,
+        expires_in_seconds: OTP_TTL_MS / 1000,
+      }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -87,59 +188,44 @@ serve(async (req) => {
 
     if (action === "verify") {
       if (!code) {
-        return new Response(JSON.stringify({ error: "Verification code is required" }), {
+        return new Response(JSON.stringify({ error: "رمز التحقق مطلوب", valid: false }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      const stored = otpStore.get(normalizedPhone);
-      if (!stored) {
-        return new Response(JSON.stringify({ error: "لم يتم إرسال رمز لهذا الرقم", valid: false }), {
+      if (!verification_token) {
+        return new Response(JSON.stringify({ error: "انتهت جلسة التحقق، أعد طلب رمز جديد", valid: false }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      if (Date.now() > stored.expiresAt) {
-        otpStore.delete(normalizedPhone);
-        return new Response(JSON.stringify({ error: "انتهت صلاحية الرمز", valid: false }), {
+      const verification = await verifyVerificationToken(verification_token, normalizedPhone, code, SIGNING_SECRET);
+      if (!verification.valid) {
+        return new Response(JSON.stringify({ error: verification.error, valid: false }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      if (stored.code !== code) {
-        return new Response(JSON.stringify({ error: "رمز غير صحيح", valid: false }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      otpStore.delete(normalizedPhone);
-
-      // Find user by phone in profiles and sign them in
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const supabase = createClient(supabaseUrl, serviceRoleKey);
-
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { data: profile } = await supabase
         .from("profiles")
         .select("user_id, email")
         .eq("phone", normalizedPhone)
         .maybeSingle();
 
-      if (!profile) {
+      if (!profile?.email) {
         return new Response(JSON.stringify({ error: "لا يوجد حساب مرتبط بهذا الرقم", valid: false }), {
           status: 404,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Generate a magic link for the user
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
-        email: profile.email!,
+        email: profile.email,
       });
 
       if (linkError) {
@@ -156,14 +242,18 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: "Invalid action. Use 'send' or 'verify'" }), {
+    return new Response(JSON.stringify({ error: "إجراء غير صالح" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: unknown) {
     console.error("Phone OTP error:", error);
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    const userMessage = errorMessage.includes("Twilio API error")
+      ? "تعذر إرسال رمز التحقق حالياً. يرجى المحاولة لاحقاً أو التواصل مع الدعم."
+      : errorMessage;
+
+    return new Response(JSON.stringify({ error: userMessage }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

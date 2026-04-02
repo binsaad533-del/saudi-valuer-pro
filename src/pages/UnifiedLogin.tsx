@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { Mail, Lock, Phone, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -28,6 +29,7 @@ export default function UnifiedLogin() {
   const [phone, setPhone] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
+  const [phoneVerificationToken, setPhoneVerificationToken] = useState("");
 
   const resolveRedirect = async (userId: string): Promise<string | null> => {
     const { data: profile } = await supabase
@@ -87,10 +89,12 @@ export default function UnifiedLogin() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      setPhoneVerificationToken(data?.verification_token || "");
       setPhoneOtpSent(true);
       toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
+      toast({ title: "تعذر إرسال الرمز", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -101,7 +105,7 @@ export default function UnifiedLogin() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("phone-otp", {
-        body: { action: "verify", phone, code: phoneOtpCode },
+        body: { action: "verify", phone, code: phoneOtpCode, verification_token: phoneVerificationToken },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -112,12 +116,12 @@ export default function UnifiedLogin() {
           type: "magiclink",
         });
         if (verifyError) throw verifyError;
-        // After OTP verify, auth state change will trigger redirect via useEffect
       } else if (data?.valid && data?.email) {
         toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
       }
-    } catch (err: any) {
-      toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر التحقق من رمز الجوال حالياً");
+      toast({ title: "تعذر التحقق", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -199,7 +203,7 @@ export default function UnifiedLogin() {
                     {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                     تحقق وسجّل الدخول
                   </Button>
-                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setPhoneOtpSent(false)}>تغيير الرقم</Button>
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => { setPhoneOtpSent(false); setPhoneOtpCode(""); setPhoneVerificationToken(""); }}>تغيير الرقم</Button>
                 </form>
               )}
             </TabsContent>

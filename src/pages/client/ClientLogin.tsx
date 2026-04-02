@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { Mail, Lock, Phone, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -30,6 +31,7 @@ export default function ClientLogin() {
   const [phone, setPhone] = useState("");
   const [phoneOtpSent, setPhoneOtpSent] = useState(false);
   const [phoneOtpCode, setPhoneOtpCode] = useState("");
+  const [phoneVerificationToken, setPhoneVerificationToken] = useState("");
 
   const checkAccountAndGetPath = async (userId: string): Promise<string | null> => {
     const { data: profile } = await supabase
@@ -81,8 +83,9 @@ export default function ClientLogin() {
       if (data?.error) throw new Error(data.error);
       setPhoneOtpSent(true);
       toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
+      toast({ title: "تعذر إرسال الرمز", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -99,7 +102,6 @@ export default function ClientLogin() {
       if (data?.error) throw new Error(data.error);
 
       if (data?.valid && data?.token_hash) {
-        // Use the token to verify OTP via magic link
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: data.token_hash,
           type: "magiclink",
@@ -109,8 +111,9 @@ export default function ClientLogin() {
       } else if (data?.valid && data?.email) {
         toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
       }
-    } catch (err: any) {
-      toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر التحقق من رمز الجوال حالياً");
+      toast({ title: "تعذر التحقق", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -193,7 +196,7 @@ export default function ClientLogin() {
                     {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                     تحقق وسجّل الدخول
                   </Button>
-                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setPhoneOtpSent(false)}>تغيير الرقم</Button>
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => { setPhoneOtpSent(false); setPhoneOtpCode(""); setPhoneVerificationToken(""); }}>تغيير الرقم</Button>
                 </form>
               )}
             </TabsContent>
