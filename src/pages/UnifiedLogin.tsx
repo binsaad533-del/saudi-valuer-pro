@@ -203,7 +203,7 @@ export default function UnifiedLogin() {
                     {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                     تحقق وسجّل الدخول
                   </Button>
-                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => setPhoneOtpSent(false)}>تغيير الرقم</Button>
+                  <Button type="button" variant="ghost" className="w-full text-sm" onClick={() => { setPhoneOtpSent(false); setPhoneOtpCode(""); setPhoneVerificationToken(""); }}>تغيير الرقم</Button>
                 </form>
               )}
             </TabsContent>
