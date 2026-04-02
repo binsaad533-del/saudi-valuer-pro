@@ -356,6 +356,7 @@ export default function NewRequest() {
             extractedData,
             files: uploadedFiles,
             clientInfo,
+            assetLocations,
           },
         } as any)
         .select()
