@@ -114,7 +114,7 @@ export default function AssignmentHubPage() {
     const status = assignment.status || "";
     const hasInspection = !!inspection;
     const inspectionDone = inspection?.completed || inspection?.status === "completed";
-    const hasComparables = comparables.length >= 3;
+    const _hasComparables = comparables.length >= 3;
     const hasValue = !!assignment.final_value;
     const reportStatus = assignment.report_status || "";
 

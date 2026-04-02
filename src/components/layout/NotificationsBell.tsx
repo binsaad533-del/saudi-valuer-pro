@@ -124,7 +124,7 @@ export default function NotificationsBell() {
           )}
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[360px] p-0" dir="rtl">
+      <DropdownMenuContent align="end" className="w-[360px] p-0">
         <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
           <span className="text-sm font-semibold">الإشعارات</span>
           {unreadCount > 0 && (
