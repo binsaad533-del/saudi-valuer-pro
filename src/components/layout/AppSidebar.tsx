@@ -24,6 +24,7 @@ import {
   LogOut,
   Brain,
   Calculator,
+  BarChart3,
 } from "lucide-react";
 const logo = "/favicon.png";
 
