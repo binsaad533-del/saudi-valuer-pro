@@ -86,37 +86,11 @@ export default function AssetLocationPicker({ locations, onChange }: AssetLocati
         {/* Location chips */}
         {locations.length > 0 && (
           <div className="space-y-2">
-            {cities.length > 1 ? (
-              // Group by city
-              cities.map(city => (
-                <div key={city} className="space-y-1.5">
-                  <p className="text-[11px] font-semibold text-muted-foreground">{city}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {locations.filter(l => l.city === city).map(loc => (
-                      <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
-                    ))}
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {locations.map(loc => (
-                  <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
-                ))}
-              </div>
-            )}
-
-            {/* Locations without city */}
-            {locations.filter(l => !l.city).length > 0 && cities.length > 0 && (
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-semibold text-muted-foreground">أخرى</p>
-                <div className="flex flex-wrap gap-2">
-                  {locations.filter(l => !l.city).map(loc => (
-                    <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="flex flex-wrap gap-2">
+            {locations.map(loc => (
+              <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
+            ))}
+          </div>
           </div>
         )}
 
