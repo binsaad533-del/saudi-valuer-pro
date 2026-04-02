@@ -1,4 +1,4 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug } from "lucide-react";
+import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";
 import ValuerSettings from "@/components/settings/ValuerSettings";
@@ -6,6 +6,7 @@ import ReportSettings from "@/components/settings/ReportSettings";
 import SystemSettings from "@/components/settings/SystemSettings";
 import BackupSettings from "@/components/settings/BackupSettings";
 import IntegrationSettings from "@/components/settings/IntegrationSettings";
+import DiscountCodesSettings from "@/components/settings/DiscountCodesSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -30,6 +31,7 @@ export default function SettingsPage() {
     { value: "system", label: t("system"), icon: Monitor },
     { value: "backup", label: t("backupSecurity"), icon: Database },
     { value: "integrations", label: t("integrations"), icon: Plug },
+    { value: "discounts", label: "أكواد الخصم", icon: Ticket },
   ];
 
   const adminTabs = [
@@ -80,6 +82,7 @@ export default function SettingsPage() {
             <TabsContent value="system"><SystemSettings /></TabsContent>
             <TabsContent value="backup"><BackupSettings /></TabsContent>
             <TabsContent value="integrations"><IntegrationSettings /></TabsContent>
+            <TabsContent value="discounts"><DiscountCodesSettings /></TabsContent>
           </>
         )}
       </Tabs>
