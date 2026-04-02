@@ -66,8 +66,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Admin Login */}
-          <Route path="/login" element={<AdminLogin />} />
+          {/* Unified Login */}
+          <Route path="/login" element={<UnifiedLogin />} />
 
           {/* Admin Routes - Protected */}
           <Route element={
