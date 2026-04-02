@@ -1,10 +1,89 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+function supabaseAdmin() {
+  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+}
+
+// ─── Fetch relevant knowledge from raqeem_knowledge ───
+async function fetchRelevantKnowledge(context: {
+  assetType?: string;
+  methodology?: string;
+  propertyType?: string;
+  purposeOfValuation?: string;
+}): Promise<string> {
+  try {
+    const db = supabaseAdmin();
+    const { data: docs } = await db
+      .from("raqeem_knowledge")
+      .select("title_ar, content, category, priority")
+      .eq("is_active", true)
+      .order("priority", { ascending: false });
+
+    if (!docs || docs.length === 0) return "";
+
+    // Build search terms from context
+    const searchTerms = [
+      context.assetType,
+      context.methodology,
+      context.propertyType,
+      context.purposeOfValuation,
+      "تقرير", "تقييم", "معايير",
+    ].filter(Boolean).map(t => t!.toLowerCase());
+
+    // Score each document by relevance
+    const scored = docs.map(doc => {
+      const text = `${doc.title_ar || ""} ${doc.content || ""} ${doc.category || ""}`.toLowerCase();
+      let score = doc.priority || 0;
+      for (const term of searchTerms) {
+        if (text.includes(term)) score += 10;
+      }
+      // Boost standards and guidelines
+      if (doc.category === "standards" || doc.category === "guidelines") score += 15;
+      if (doc.category === "methodology") score += 10;
+      return { ...doc, score };
+    });
+
+    // Sort by score, take top relevant docs
+    scored.sort((a, b) => b.score - a.score);
+
+    // Dynamic truncation: fit within ~30K chars total
+    const MAX_CHARS = 30000;
+    let totalChars = 0;
+    const selected: string[] = [];
+
+    for (const doc of scored) {
+      if (doc.score <= 0) break;
+      const chunk = `### ${doc.title_ar}\n[${doc.category}]\n${doc.content}`;
+      if (totalChars + chunk.length > MAX_CHARS) {
+        // Truncate last doc to fit
+        const remaining = MAX_CHARS - totalChars;
+        if (remaining > 200) {
+          selected.push(chunk.substring(0, remaining) + "...");
+        }
+        break;
+      }
+      selected.push(chunk);
+      totalChars += chunk.length;
+    }
+
+    if (selected.length === 0) return "";
+
+    return `\n\n══════ المراجع المهنية والمعايير ══════\nالمصادر التالية مستخرجة من قاعدة المعرفة المعتمدة. استخدمها لتعزيز دقة ومهنية التقرير:\n\n${selected.join("\n\n---\n\n")}`;
+  } catch (e) {
+    console.error("Knowledge fetch error:", e);
+    return "";
+  }
+}
 
 type Mode = "full_report" | "section" | "review" | "structured_sections";
 
@@ -45,6 +124,9 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY)
       throw new Error("LOVABLE_API_KEY is not configured");
 
+    // Fetch relevant knowledge from the knowledge base
+    const knowledgeContext = await fetchRelevantKnowledge(context);
+
     const systemPrompt = `أنت "رقيم" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم العقاري باللغة العربية وفقاً لمعايير IVS 2025 والهيئة السعودية للمقيمين المعتمدين (تقييم).
 
 قواعد صارمة:
@@ -54,7 +136,8 @@ serve(async (req) => {
 - لا تذكر أنك ذكاء اصطناعي أو نظام آلي في نص التقرير
 - القيم المالية بالريال السعودي (ر.س)
 - اكتب بصيغة الغائب ("يرى المقيّم" وليس "أرى")
-- عند طلب JSON أعد JSON فقط بدون أي نص إضافي`;
+- عند طلب JSON أعد JSON فقط بدون أي نص إضافي
+- استند في كتابتك إلى المراجع المهنية والمعايير المرفقة أدناه عند توفرها، واستشهد بالمعايير ذات الصلة${knowledgeContext}`;
 
     const contextBlock = `بيانات التقييم:
 - نوع الأصل: ${context.assetType || "عقاري"}
@@ -91,7 +174,8 @@ ${contextBlock}
 
 الأقسام المطلوبة: ${requestedKeys.join(", ")}
 
-لكل قسم، اكتب محتوى مهنياً مفصلاً باللغة العربية والإنجليزية.`;
+لكل قسم، اكتب محتوى مهنياً مفصلاً باللغة العربية والإنجليزية.
+استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
     } else if (mode === "full_report") {
       userPrompt = `قم بتوليد تقرير تقييم كامل يشمل جميع الأقسام:
 1. الملخص التنفيذي
@@ -108,7 +192,8 @@ ${contextBlock}
 
 ${contextBlock}
 
-اكتب كل قسم بعنوان واضح ومحتوى مهني مفصّل ومتسق.`;
+اكتب كل قسم بعنوان واضح ومحتوى مهني مفصّل ومتسق.
+استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
     } else if (mode === "section") {
       const sectionNames: Record<string, string> = {
         executive_summary: "الملخص التنفيذي",
@@ -130,12 +215,15 @@ ${contextBlock}
 
 ${contextBlock}
 
-اكتب محتوى مهنياً مفصلاً لهذا القسم فقط، بالعربية.`;
+اكتب محتوى مهنياً مفصلاً لهذا القسم فقط، بالعربية.
+استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
     } else if (mode === "review") {
       userPrompt = `راجع النص التالي من تقرير تقييم عقاري وقدّم:
 1. **تحليل الجودة**: تقييم شامل (الدقة المهنية، الامتثال لـ IVS 2025، المصطلحات)
 2. **التحسينات المقترحة**: قائمة مرقمة بالتعديلات مع السبب
 3. **النص المحسّن**: أعد كتابة النص بالكامل بعد تطبيق التحسينات
+
+استند إلى المعايير والمراجع المرفقة في system prompt عند المراجعة.
 
 النص الحالي:
 ---
