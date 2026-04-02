@@ -29,7 +29,9 @@ export const InviteEmail = ({
   confirmationUrl,
 }: InviteEmailProps) => (
   <Html lang="ar" dir="rtl">
-    <Head />
+    <Head>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+    </Head>
     <Preview>تمت دعوتك للانضمام إلى جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>

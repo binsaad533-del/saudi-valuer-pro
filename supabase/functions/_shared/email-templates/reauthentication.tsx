@@ -21,7 +21,9 @@ const LOGO_URL = 'https://vprxcirjtzsxyllqjjyr.supabase.co/storage/v1/object/pub
 
 export const ReauthenticationEmail = ({ token }: ReauthenticationEmailProps) => (
   <Html lang="ar" dir="rtl">
-    <Head />
+    <Head>
+      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
+    </Head>
     <Preview>رمز التحقق - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
