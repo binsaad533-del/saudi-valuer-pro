@@ -315,7 +315,11 @@ export default function MarketDataIntegration() {
     land_area: 0,
     transaction_date: new Date().toISOString().split("T")[0],
     transaction_type: "sale",
-    source: "manual",
+    source: "",
+    source_reference_id: "",
+    source_reference_number: "",
+    source_date: new Date().toISOString().split("T")[0],
+    source_url: "",
   });
 
   const searchComparables = async () => {
