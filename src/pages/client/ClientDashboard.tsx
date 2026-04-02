@@ -503,7 +503,7 @@ export default function ClientDashboard() {
             >
               <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
-              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، مخططات، كروكي — PDF, JPG, PNG</p>
+              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، فواتير شراء، مواصفات فنية — PDF, JPG, PNG</p>
               <input
                 ref={newReqFileRef}
                 type="file"
