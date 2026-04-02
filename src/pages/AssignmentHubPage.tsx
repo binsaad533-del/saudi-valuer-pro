@@ -3,9 +3,9 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { formatNumber } from "@/lib/utils";
 import {
-  ArrowRight, MapPin, User, Building2, DollarSign, Clock, Camera,
+  MapPin, User, Building2, DollarSign, Clock, Camera,
   FileText, CheckCircle2, AlertTriangle, ChevronLeft, Loader2,
-  ClipboardCheck, Scale, Globe, Shield, Sparkles, ExternalLink,
+  ClipboardCheck, Scale, Shield, Sparkles, ExternalLink,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
