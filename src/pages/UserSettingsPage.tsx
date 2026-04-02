@@ -12,9 +12,13 @@ import { Settings, User, Lock, Save, Loader2, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 export default function UserSettingsPage() {
+  const navigate = useNavigate();
+  const { role } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+
+  const backPath = role === "inspector" ? "/inspector" : role === "client" ? "/client/dashboard" : "/";
 
   // Profile fields
   const [fullNameAr, setFullNameAr] = useState("");
