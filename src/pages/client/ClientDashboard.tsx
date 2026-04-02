@@ -14,7 +14,8 @@ import {
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
 } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/StatusComponents";
-import { RequestTracker } from "@/components/client/RequestTracker";
+import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
+import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 
@@ -22,6 +23,7 @@ import { formatDate } from "@/lib/utils";
 export default function ClientDashboard() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
+  const [userId, setUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
   const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
@@ -38,6 +40,7 @@ export default function ClientDashboard() {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
+      setUserId(user.id);
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -143,7 +146,8 @@ export default function ClientDashboard() {
             <h2 className="text-sm font-bold text-foreground">بوابة العملاء</h2>
             <p className="text-xs text-muted-foreground">جساس للتقييم</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <ClientNotificationsBell userId={userId} />
             <span className="text-sm text-foreground font-medium hidden sm:block">أهلاً، {userName}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 ml-1" /> خروج
@@ -245,7 +249,7 @@ export default function ClientDashboard() {
                           </div>
                         </div>
                       </div>
-                      <RequestTracker status={req.status} />
+                      <EnhancedRequestTracker status={req.status} createdAt={req.created_at} compact />
                     </Link>
                   ))}
                 </div>
