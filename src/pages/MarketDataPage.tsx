@@ -363,6 +363,10 @@ export default function MarketDataIntegration() {
       toast.error("أكمل البيانات المطلوبة");
       return;
     }
+    if (!newEntry.source_reference_id) {
+      toast.error("يجب اختيار مصدر البيانات — هذا إلزامي لتقرير التقييم");
+      return;
+    }
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -371,7 +375,10 @@ export default function MarketDataIntegration() {
       const { data: profile } = await supabase.from("profiles").select("organization_id").eq("user_id", user.id).maybeSingle();
       if (!profile?.organization_id) throw new Error("No organization");
 
-      const { error } = await supabase.from("comparables").insert({
+      // Find selected source details
+      const selectedSource = allSources.find(s => s.id === newEntry.source_reference_id);
+
+      const { data: comp, error } = await supabase.from("comparables").insert({
         property_type: newEntry.property_type as any,
         city_ar: newEntry.city_ar,
         district_ar: newEntry.district_ar,
@@ -382,15 +389,32 @@ export default function MarketDataIntegration() {
         transaction_type: newEntry.transaction_type,
         organization_id: profile.organization_id,
         created_by: user.id,
-      });
+      }).select("id").single();
 
       if (error) throw error;
-      toast.success("تمت إضافة المقارنة بنجاح");
+
+      // Save source reference to comparable_sources table
+      if (comp?.id && selectedSource) {
+        await supabase.from("comparable_sources").insert({
+          comparable_id: comp.id,
+          source_type: selectedSource.sector,
+          source_name_ar: selectedSource.name_ar,
+          source_name_en: selectedSource.name,
+          url: newEntry.source_url || selectedSource.url,
+          reference_number: newEntry.source_reference_number || null,
+          source_date: newEntry.source_date || null,
+          notes: `المصدر: ${selectedSource.name_ar} (${selectedSource.type})`,
+        });
+      }
+
+      toast.success("تمت إضافة المقارنة مع توثيق المصدر بنجاح");
       setNewEntry({
         property_type: "residential",
         city_ar: "", district_ar: "", price: 0, price_per_sqm: 0,
         land_area: 0, transaction_date: new Date().toISOString().split("T")[0],
-        transaction_type: "sale", source: "manual",
+        transaction_type: "sale", source: "",
+        source_reference_id: "", source_reference_number: "",
+        source_date: new Date().toISOString().split("T")[0], source_url: "",
       });
     } catch (err: any) {
       toast.error(err.message || "خطأ في الإضافة");
