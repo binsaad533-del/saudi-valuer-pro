@@ -18,6 +18,17 @@ export function SAR({ className = "", size = 14 }: SARProps) {
   );
 }
 
+/** Lucide-compatible SAR icon – accepts className with w-X h-X sizing */
+export function SARIcon({ className = "" }: { className?: string }) {
+  return (
+    <img
+      src={saudiRiyalIcon}
+      alt="ر.س"
+      className={`inline-block ${className}`}
+    />
+  );
+}
+
 /** Format a number with the SAR icon as a React element */
 export function CurrencyDisplay({ amount, className, iconSize }: { amount: number; className?: string; iconSize?: number }) {
   return (
