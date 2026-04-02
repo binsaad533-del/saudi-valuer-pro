@@ -60,6 +60,7 @@ import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import MarketDataPage from "@/pages/MarketDataPage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
+import UserSettingsPage from "@/pages/UserSettingsPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
