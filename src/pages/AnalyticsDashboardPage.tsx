@@ -88,13 +88,17 @@ export default function AnalyticsDashboardPage() {
         return { month: monthNames[parseInt(m) - 1], ...v };
       });
 
-      // City distribution
-      const cityMap: Record<string, number> = {};
+      // Property type distribution (instead of city)
+      const propMap: Record<string, number> = {};
+      const propLabels: Record<string, string> = {
+        residential: "سكني", commercial: "تجاري", land: "أراضي",
+        industrial: "صناعي", agricultural: "زراعي", mixed_use: "متعدد",
+      };
       assignments.forEach(a => {
-        const c = a.city_ar || "غير محدد";
-        cityMap[c] = (cityMap[c] || 0) + 1;
+        const c = propLabels[a.property_type] || a.property_type || "غير محدد";
+        propMap[c] = (propMap[c] || 0) + 1;
       });
-      const cityDistribution = Object.entries(cityMap)
+      const cityDistribution = Object.entries(propMap)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 6)
         .map(([name, value]) => ({ name, value }));
