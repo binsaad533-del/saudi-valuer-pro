@@ -186,8 +186,8 @@ export default function ClientRegister() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
+      <div className="w-full max-w-md flex-1 flex flex-col justify-center">
         <div className="text-center mb-8">
           <img src={logo} alt="جساس" className="w-16 h-16 mx-auto mb-4" />
           <h1 className="text-2xl font-extralight text-foreground">جساس للتقييم .. نصنع للأصل قيمة</h1>
