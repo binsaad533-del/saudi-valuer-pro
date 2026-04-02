@@ -540,7 +540,7 @@ export default function ClientDashboard() {
               <Label htmlFor="req-notes">ملاحظات (اختياري)</Label>
               <Textarea
                 id="req-notes"
-                placeholder="أي تفاصيل إضافية عن العقار أو الطلب..."
+                placeholder="أي تفاصيل إضافية عن الأصل المراد تقييمه..."
                 value={newReqNotes}
                 onChange={(e) => setNewReqNotes(e.target.value)}
                 rows={3}
