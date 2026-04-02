@@ -1321,7 +1321,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                     {/* VAT */}
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50">
                       <span className="text-xs text-muted-foreground">ضريبة القيمة المضافة ({pricing.vatRate}%)</span>
-                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(discountApplied ? getFinalVat() : pricing.vatAmount)}</span>
+                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(discountApplied ? getFinalVat() : getSubtotalNum() * ((Number(pricing.vatRate) || 15) / 100))}</span>
                     </div>
 
                     {/* Total */}
