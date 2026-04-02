@@ -292,8 +292,8 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
 
   if (!extractedData) {
     return (
-      <div className="min-h-screen" dir="rtl">
-        <TopBar />
+      <div className={embedded ? "" : "min-h-screen"} dir="rtl">
+        {!embedded && <TopBar />}
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <AlertTriangle className="w-12 h-12 text-yellow-500" />
           <h2 className="text-lg font-bold text-foreground">لا توجد بيانات مستخرجة</h2>
