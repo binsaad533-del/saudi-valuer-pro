@@ -13,7 +13,7 @@ import {
   Edit3, ChevronDown, ChevronUp, Calculator, Shield, Clock, Star,
   Wrench, Layers, Home, Target, Landmark, Scale, Gavel,
   Briefcase, TrendingUp, RotateCcw, HeartPulse, Send, UserCheck, Users,
-  FileSearch, ListChecks, CreditCard, ThumbsUp,
+  FileSearch, ListChecks, CreditCard, ThumbsUp, Ticket, X,
 } from "lucide-react";
 
 interface PurposeOption {
