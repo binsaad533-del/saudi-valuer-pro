@@ -26,7 +26,6 @@ export default function AppFooter() {
             <ul className="space-y-1.5 text-xs text-muted-foreground">
               <li>تقييم العقارات</li>
               <li>تقييم الآلات والمعدات</li>
-              
               <li>نزع الملكية والتعويضات</li>
             </ul>
           </div>
@@ -34,32 +33,27 @@ export default function AppFooter() {
           {/* Credentials */}
           <div className="text-center sm:text-right">
             <h4 className="text-sm font-semibold text-foreground mb-3">التراخيص والاعتمادات</h4>
-            <ul className="space-y-1.5 text-xs text-muted-foreground">
+            <ul className="space-y-2 text-xs text-muted-foreground">
               <li className="flex items-center justify-center sm:justify-start gap-1.5">
                 <Shield className="w-3 h-3 shrink-0 text-primary" />
                 <span>سجل تجاري: 1010625839</span>
               </li>
+              {/* عقار */}
               <li className="flex items-center justify-center sm:justify-start gap-1.5">
                 <Award className="w-3 h-3 shrink-0 text-primary" />
-                <span>ترخيص تقييم آلات ومعدات: 4114000015</span>
+                <span>عقار — ترخيص وعضوية: 1210001217</span>
+              </li>
+              {/* آلات ومعدات */}
+              <li className="flex items-center justify-center sm:justify-start gap-1.5">
+                <Award className="w-3 h-3 shrink-0 text-primary" />
+                <span>آلات ومعدات — ترخيص: 4114000015</span>
               </li>
               <li className="flex items-center justify-center sm:justify-start gap-1.5">
                 <Award className="w-3 h-3 shrink-0 text-primary" />
-                <span>عضوية تقييم آلات ومعدات: 4210000041</span>
-              </li>
-              <li className="flex items-center justify-center sm:justify-start gap-1.5">
-                <Award className="w-3 h-3 shrink-0 text-primary" />
-                <span>ترخيص تقييم عقار: 1210001217</span>
-              </li>
-              <li className="flex items-center justify-center sm:justify-start gap-1.5">
-                <Award className="w-3 h-3 shrink-0 text-primary" />
-                <span>عضوية تقييم عقار: 1210001217</span>
+                <span>آلات ومعدات — عضوية: 4210000041</span>
               </li>
               <li className="text-[11px] text-muted-foreground/70 mt-1">
-                عضو معتمد من هيئة المقيّمين (TAQEEM)
-              </li>
-              <li className="text-[11px] text-muted-foreground/70">
-                معايير IVS الدولية | ASA | USPAP
+                حاصل على الزمالة | TAQEEM | IVS | ASA
               </li>
             </ul>
           </div>
@@ -71,10 +65,6 @@ export default function AppFooter() {
               <li className="flex items-center justify-center sm:justify-start gap-2">
                 <Phone className="w-3 h-3 shrink-0" />
                 <span dir="ltr">0500668089</span>
-              </li>
-              <li className="flex items-center justify-center sm:justify-start gap-2">
-                <Phone className="w-3 h-3 shrink-0" />
-                <span dir="ltr">+966 500 668 089</span>
               </li>
               <li className="flex items-center justify-center sm:justify-start gap-2">
                 <Mail className="w-3 h-3 shrink-0" />
