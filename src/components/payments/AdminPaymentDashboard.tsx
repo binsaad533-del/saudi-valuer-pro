@@ -101,7 +101,7 @@ export default function AdminPaymentDashboard() {
             <CardContent className="p-4 flex items-center justify-between">
               <s.icon className={`w-6 h-6 ${s.color} opacity-60`} />
               <div className="text-left">
-                <p className="text-lg font-bold text-foreground">{s.value}</p>
+                <p className="text-lg font-bold text-foreground inline-flex items-center gap-1">{s.value} {(s as any).hasCurrency && <SAR size={14} />}</p>
                 <p className="text-[10px] text-muted-foreground">{s.label}</p>
               </div>
             </CardContent>
