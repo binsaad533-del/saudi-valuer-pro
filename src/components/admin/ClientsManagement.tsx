@@ -346,7 +346,7 @@ export default function ClientsManagement() {
             <DollarSign className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <p className="text-lg font-bold text-foreground">{formatCurrency(stats.totalRevenue)}</p>
+            <p className="text-lg font-bold text-foreground">{formatCurrencyJSX(stats.totalRevenue)}</p>
             <p className="text-xs text-muted-foreground">إجمالي الإيرادات</p>
           </div>
         </div>
@@ -367,7 +367,7 @@ export default function ClientsManagement() {
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{u.full_name_ar}</p>
-                  <p className="text-[10px] text-muted-foreground">{formatCurrency(u.totalRevenue)}</p>
+                  <p className="text-[10px] text-muted-foreground">{formatCurrencyJSX(u.totalRevenue)}</p>
                 </div>
               </div>
             ))}
@@ -461,7 +461,7 @@ export default function ClientsManagement() {
                     <TableCell dir="ltr" className="text-left text-sm">{user.phone || "—"}</TableCell>
                     <TableCell dir="ltr" className="text-left text-sm">{user.email || "—"}</TableCell>
                     <TableCell className="text-sm font-medium">
-                      {user.totalRevenue > 0 ? formatCurrency(user.totalRevenue) : "—"}
+                      {user.totalRevenue > 0 ? formatCurrencyJSX(user.totalRevenue) : "—"}
                     </TableCell>
                     <TableCell className="text-sm">{user.projectCount || "—"}</TableCell>
                     <TableCell>
@@ -561,7 +561,7 @@ export default function ClientsManagement() {
               <div className="bg-muted/50 rounded-lg p-3">
                 <p className="font-medium">{categoryUser.full_name_ar}</p>
                 <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                  <span>الإيرادات: {formatCurrency(categoryUser.totalRevenue)}</span>
+                  <span>الإيرادات: {formatCurrencyJSX(categoryUser.totalRevenue)}</span>
                   <span>•</span>
                   <span>المشاريع: {categoryUser.projectCount}</span>
                 </div>
@@ -618,7 +618,7 @@ export default function ClientsManagement() {
               <div className="border-t border-border pt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="text-muted-foreground">إجمالي الإيرادات</p>
-                  <p className="font-bold text-primary">{formatCurrency(profileUser.totalRevenue)}</p>
+                  <p className="font-bold text-primary">{formatCurrencyJSX(profileUser.totalRevenue)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">عدد المشاريع</p>
@@ -626,7 +626,7 @@ export default function ClientsManagement() {
                 </div>
                 <div>
                   <p className="text-muted-foreground">متوسط قيمة المشروع</p>
-                  <p className="font-medium">{formatCurrency(profileUser.avgProjectValue)}</p>
+                  <p className="font-medium">{formatCurrencyJSX(profileUser.avgProjectValue)}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">آخر نشاط</p>
