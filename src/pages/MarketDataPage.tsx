@@ -27,6 +27,10 @@ interface MarketEntry {
   transaction_date: string;
   transaction_type: string;
   source: string;
+  source_reference_id: string;
+  source_reference_number: string;
+  source_date: string;
+  source_url: string;
 }
 
 interface ReferenceSource {
