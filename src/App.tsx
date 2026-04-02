@@ -161,6 +161,11 @@ const App = () => (
               <RequestDetails />
             </ProtectedRoute>
           } />
+          <Route path="/client/settings" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
+              <UserSettingsPage />
+            </ProtectedRoute>
+          } />
 
           {/* Public Verification */}
           <Route path="/verify" element={<VerifyReport />} />
