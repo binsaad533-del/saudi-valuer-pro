@@ -139,15 +139,15 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
               )}
               {/* Emoji node */}
               <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 transition-all text-sm ${
+                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 z-10 transition-all text-xs font-semibold border ${
                   isDone
-                    ? "bg-primary/10 shadow-sm"
+                    ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
                     : isActive
-                    ? "bg-primary/15 border-2 border-primary shadow-md shadow-primary/20"
-                    : "bg-muted"
+                    ? `${stage.color} border-2 shadow-md`
+                    : "bg-muted text-muted-foreground border-transparent"
                 }`}
               >
-                {isDone ? "✓" : stage.emoji}
+                {isDone ? "✓" : i + 1}
               </div>
               {/* Content */}
               <div className="flex-1 min-w-0">
