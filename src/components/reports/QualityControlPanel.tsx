@@ -110,7 +110,6 @@ export default function QualityControlPanel({ assignment, comparables, inspectio
       <Tabs defaultValue="automated" dir="rtl">
         <TabsList className="w-full">
           {levels.map(level => {
-            const lr = report.levelResults[level];
             return (
               <TabsTrigger key={level} value={level} className="text-xs gap-1">
                 {LEVEL_ICONS[level]}
