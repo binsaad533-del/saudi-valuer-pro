@@ -15,7 +15,7 @@ import {
   Briefcase, TrendingUp, RotateCcw, HeartPulse, Send, UserCheck, Users,
   FileSearch, ListChecks, CreditCard, ThumbsUp, Ticket, X,
 } from "lucide-react";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 interface PurposeOption {
   key: string;
@@ -1146,7 +1146,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                    <SARIcon className="w-4 h-4 text-emerald-600" />
                   </div>
                   <div>
                     <h3 className="text-sm font-bold text-foreground">التسعير الذكي</h3>

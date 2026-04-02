@@ -20,7 +20,7 @@ import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
 import { formatDate, formatNumber } from "@/lib/utils";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 
 const STATUS_TIMELINE = [
@@ -312,7 +312,7 @@ export default function RequestDetails() {
             {showQuotation && (
               <Card className="shadow-card border-primary/20">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><DollarSign className="w-4 h-4 text-primary" />عرض السعر</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2"><SARIcon className="w-4 h-4 text-primary" />عرض السعر</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-center p-3 bg-primary/5 rounded-lg">

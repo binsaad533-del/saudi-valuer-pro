@@ -1,7 +1,7 @@
 import { DollarSign, CreditCard, Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber } from "@/lib/utils";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 
 interface SummaryCard {
@@ -14,7 +14,7 @@ interface SummaryCard {
 }
 
 const cards: SummaryCard[] = [
-  { title: "إجمالي الإيرادات", value: 2970000, trend: "+12.5%", trendPositive: true, icon: DollarSign, variant: "success" },
+  { title: "إجمالي الإيرادات", value: 2970000, trend: "+12.5%", trendPositive: true, icon: SARIcon, variant: "success" },
   { title: "المدفوعات المستلمة", value: 2230000, trend: "+8.3%", trendPositive: true, icon: CreditCard, variant: "primary" },
   { title: "الفواتير المعلقة", value: 540000, trend: "+15.2%", trendPositive: false, icon: Clock, variant: "warning" },
   { title: "المبالغ المتأخرة", value: 200000, trend: "-5.1%", trendPositive: true, icon: AlertTriangle, variant: "destructive" },

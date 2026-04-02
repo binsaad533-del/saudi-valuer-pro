@@ -24,7 +24,7 @@ import {
   STATUS_COLORS,
   PIPELINE_PHASES,
 } from "@/lib/workflow-engine";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.fromEntries(
   Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])
@@ -310,7 +310,7 @@ export default function ClientRequests() {
                         {/* Action buttons based on status */}
                         {req.status === "submitted" && (
                           <Button size="sm" onClick={() => { moveToStatus(req.id, "under_pricing"); }}>
-                            <DollarSign className="w-3 h-3 ml-1" />تسعير
+                            <SARIcon className="w-3 h-3 ml-1" />تسعير
                           </Button>
                         )}
                         {req.status === "under_pricing" && (
@@ -377,7 +377,7 @@ export default function ClientRequests() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
+              <SARIcon className="w-5 h-5 text-primary" />
               إعداد عرض السعر
             </DialogTitle>
           </DialogHeader>
