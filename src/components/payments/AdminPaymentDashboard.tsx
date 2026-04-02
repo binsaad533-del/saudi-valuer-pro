@@ -95,7 +95,7 @@ export default function AdminPaymentDashboard() {
           { label: "مدفوعة", value: stats.paid, icon: CheckCircle, color: "text-green-500" },
           { label: "معلقة", value: stats.pending, icon: Clock, color: "text-amber-500" },
           { label: "فاشلة", value: stats.failed, icon: XCircle, color: "text-destructive" },
-          { label: "إجمالي المحصل", value: `${formatNumber(stats.totalAmount)} ر.س`, icon: Shield, color: "text-primary" },
+          { label: "إجمالي المحصل", value: formatNumber(stats.totalAmount), icon: Shield, color: "text-primary", hasCurrency: true },
         ].map((s) => (
           <Card key={s.label} className="shadow-card">
             <CardContent className="p-4 flex items-center justify-between">
