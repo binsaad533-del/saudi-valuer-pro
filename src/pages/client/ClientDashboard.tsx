@@ -486,6 +486,7 @@ export default function ClientDashboard() {
         <div className="text-center py-4">
           <p className="text-xs text-muted-foreground">© 2026 جساس للتقييم — جميع الحقوق محفوظة</p>
         </div>
+      </main>
 
       {/* New Request Dialog */}
       <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
