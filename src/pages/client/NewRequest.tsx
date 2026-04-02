@@ -823,6 +823,66 @@ export default function NewRequest() {
               </CardContent>
             </Card>
 
+            {/* Discount Code */}
+            <Card>
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">كود خصم (اختياري)</span>
+                </div>
+                {clientDiscountApplied ? (
+                  <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">{clientDiscountApplied.code}</span>
+                      <Badge className="text-[9px] h-4 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border-0">-{clientDiscountApplied.percentage}%</Badge>
+                    </div>
+                    <button onClick={() => { setClientDiscountApplied(null); setClientDiscountCode(""); }} className="text-muted-foreground hover:text-destructive">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <Input
+                      value={clientDiscountCode}
+                      onChange={(e) => setClientDiscountCode(e.target.value.toUpperCase())}
+                      placeholder="أدخل كود الخصم"
+                      className="font-mono tracking-wider text-sm"
+                      dir="ltr"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 text-xs"
+                      disabled={!clientDiscountCode.trim() || clientCheckingDiscount}
+                      onClick={async () => {
+                        setClientCheckingDiscount(true);
+                        const { data, error } = await supabase
+                          .from("discount_codes")
+                          .select("*")
+                          .eq("code", clientDiscountCode.toUpperCase().trim())
+                          .eq("is_active", true)
+                          .maybeSingle();
+                        if (error || !data) {
+                          toast({ title: "كود الخصم غير صالح", variant: "destructive" });
+                        } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
+                          toast({ title: "كود الخصم منتهي الصلاحية", variant: "destructive" });
+                        } else if (data.max_uses && data.current_uses >= data.max_uses) {
+                          toast({ title: "تم استنفاد عدد مرات استخدام هذا الكود", variant: "destructive" });
+                        } else {
+                          setClientDiscountApplied({ code: data.code, percentage: Number(data.discount_percentage) });
+                          toast({ title: `تم تطبيق خصم ${data.discount_percentage}%` });
+                        }
+                        setClientCheckingDiscount(false);
+                      }}
+                    >
+                      {clientCheckingDiscount ? <Loader2 className="w-3 h-3 animate-spin" /> : "تطبيق"}
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep("upload")} className="gap-2">
                 <ArrowRight className="w-4 h-4" />
