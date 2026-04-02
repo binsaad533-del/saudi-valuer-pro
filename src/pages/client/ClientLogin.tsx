@@ -82,8 +82,9 @@ export default function ClientLogin() {
       if (data?.error) throw new Error(data.error);
       setPhoneOtpSent(true);
       toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
+      toast({ title: "تعذر إرسال الرمز", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -100,7 +101,6 @@ export default function ClientLogin() {
       if (data?.error) throw new Error(data.error);
 
       if (data?.valid && data?.token_hash) {
-        // Use the token to verify OTP via magic link
         const { error: verifyError } = await supabase.auth.verifyOtp({
           token_hash: data.token_hash,
           type: "magiclink",
@@ -110,8 +110,9 @@ export default function ClientLogin() {
       } else if (data?.valid && data?.email) {
         toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
       }
-    } catch (err: any) {
-      toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر التحقق من رمز الجوال حالياً");
+      toast({ title: "تعذر التحقق", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

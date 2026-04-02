@@ -90,8 +90,9 @@ export default function UnifiedLogin() {
       if (data?.error) throw new Error(data.error);
       setPhoneOtpSent(true);
       toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
+      toast({ title: "تعذر إرسال الرمز", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -117,8 +118,9 @@ export default function UnifiedLogin() {
       } else if (data?.valid && data?.email) {
         toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
       }
-    } catch (err: any) {
-      toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر التحقق من رمز الجوال حالياً");
+      toast({ title: "تعذر التحقق", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }

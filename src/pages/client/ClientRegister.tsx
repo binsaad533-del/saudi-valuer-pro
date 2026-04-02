@@ -87,7 +87,9 @@ export default function ClientRegister() {
         if (otpData?.error) throw new Error(otpData.error);
         setStep("verify-phone");
         toast({ title: "تم إرسال رمز التحقق إلى جوالك" });
-      } catch {
+      } catch (otpError: unknown) {
+        const message = await extractEdgeFunctionErrorMessage(otpError, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
+        toast({ title: "تم إنشاء الحساب", description: `${message} يمكنك حالياً إكمال الدخول عبر البريد الإلكتروني بعد تأكيده.`, variant: "destructive" });
         setStep("done");
       }
     } catch (err: any) {
@@ -108,8 +110,9 @@ export default function ClientRegister() {
       if (!data?.valid) throw new Error(data?.error || "رمز غير صحيح");
       toast({ title: "تم التحقق من رقم الجوال بنجاح" });
       setStep("done");
-    } catch (err: any) {
-      toast({ title: "رمز غير صحيح", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر التحقق من رقم الجوال حالياً");
+      toast({ title: "تعذر التحقق", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -124,8 +127,9 @@ export default function ClientRegister() {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
       toast({ title: "تم إعادة إرسال رمز التحقق" });
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+    } catch (err: unknown) {
+      const message = await extractEdgeFunctionErrorMessage(err, "تعذر إعادة إرسال رمز التحقق حالياً");
+      toast({ title: "تعذر إعادة الإرسال", description: message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
