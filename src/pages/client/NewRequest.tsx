@@ -681,6 +681,9 @@ export default function NewRequest() {
               </CardContent>
             </Card>
 
+            {/* Asset Locations */}
+            <AssetLocationPicker locations={assetLocations} onChange={setAssetLocations} />
+
             {/* Next button */}
             <Button
               onClick={processWithAI}
