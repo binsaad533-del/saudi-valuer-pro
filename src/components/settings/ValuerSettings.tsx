@@ -1,14 +1,20 @@
 import { useState, useRef } from "react";
-import { UserCircle, Upload, Save, PenTool, Loader2 } from "lucide-react";
+import { UserCircle, Upload, Save, PenTool, Loader2, Lock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { useProfileSettings, uploadSettingsFile } from "@/hooks/useOrgSettings";
 
-export default function ValuerSettings() {
+interface ValuerSettingsProps {
+  isOwnerView?: boolean;
+}
+
+export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsProps) {
   const { profile, loading, saving, save, userId } = useProfileSettings();
   const [localProfile, setLocalProfile] = useState<Record<string, any>>({});
   const [initialized, setInitialized] = useState(false);
@@ -16,6 +22,11 @@ export default function ValuerSettings() {
   const [uploadingSignature, setUploadingSignature] = useState(false);
   const avatarRef = useRef<HTMLInputElement>(null);
   const signatureRef = useRef<HTMLInputElement>(null);
+
+  // Password fields
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [changingPassword, setChangingPassword] = useState(false);
 
   // Sync once from DB
   if (!initialized && !loading && profile.user_id) {
@@ -44,24 +55,123 @@ export default function ValuerSettings() {
   };
 
   const handleSave = async () => {
-    const ok = await save({
-      full_name_ar: localProfile.full_name_ar,
-      full_name_en: localProfile.full_name_en,
-      taqeem_membership: localProfile.taqeem_membership,
-      taqeem_membership_machinery: localProfile.taqeem_membership_machinery,
-      specialization: localProfile.specialization,
-      phone: localProfile.phone,
-      email: localProfile.email,
-      avatar_url: localProfile.avatar_url,
-      signature_url: localProfile.signature_url,
-    });
-    if (ok) toast.success("تم حفظ بيانات المقيّم بنجاح");
+    if (isOwnerView) {
+      const ok = await save({
+        full_name_ar: localProfile.full_name_ar,
+        full_name_en: localProfile.full_name_en,
+        taqeem_membership: localProfile.taqeem_membership,
+        taqeem_membership_machinery: localProfile.taqeem_membership_machinery,
+        specialization: localProfile.specialization,
+        phone: localProfile.phone,
+        email: localProfile.email,
+        avatar_url: localProfile.avatar_url,
+        signature_url: localProfile.signature_url,
+      });
+      if (ok) toast.success("تم حفظ بيانات المقيّم بنجاح");
+    } else {
+      const ok = await save({
+        full_name_ar: localProfile.full_name_ar,
+        full_name_en: localProfile.full_name_en,
+        phone: localProfile.phone,
+      });
+      if (ok) toast.success("تم حفظ البيانات بنجاح");
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error("كلمتا المرور غير متطابقتين");
+      return;
+    }
+    setChangingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error) {
+      toast.error("فشل تحديث كلمة المرور");
+    } else {
+      toast.success("تم تحديث كلمة المرور بنجاح");
+      setNewPassword("");
+      setConfirmPassword("");
+    }
+    setChangingPassword(false);
   };
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
   }
 
+  // Simplified view for non-owner roles (coordinator, financial manager)
+  if (!isOwnerView) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <UserCircle className="w-5 h-5 text-primary" />
+              البيانات الشخصية
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>الاسم الكامل (عربي)</Label>
+                <Input value={localProfile.full_name_ar || ""} onChange={e => update("full_name_ar", e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Full Name (English)</Label>
+                <Input value={localProfile.full_name_en || ""} onChange={e => update("full_name_en", e.target.value)} dir="ltr" />
+              </div>
+              <div className="space-y-2">
+                <Label>الهاتف</Label>
+                <Input value={localProfile.phone || ""} onChange={e => update("phone", e.target.value)} dir="ltr" />
+              </div>
+              <div className="space-y-2">
+                <Label>البريد الإلكتروني</Label>
+                <Input value={localProfile.email || ""} disabled dir="ltr" className="bg-muted" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-foreground">
+              <Lock className="w-5 h-5 text-primary" />
+              تغيير كلمة المرور
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>كلمة المرور الجديدة</Label>
+                <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} dir="ltr" placeholder="••••••••" />
+              </div>
+              <div className="space-y-2">
+                <Label>تأكيد كلمة المرور</Label>
+                <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} dir="ltr" placeholder="••••••••" />
+              </div>
+            </div>
+            <Button onClick={handleChangePassword} variant="outline" className="mt-4 gap-2" disabled={changingPassword || !newPassword}>
+              {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+              تحديث كلمة المرور
+            </Button>
+          </CardContent>
+        </Card>
+
+        <div className="flex justify-start">
+          <Button onClick={handleSave} className="gap-2" disabled={saving}>
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            حفظ البيانات
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Full view for owner
   return (
     <div className="space-y-6">
       <Card>
