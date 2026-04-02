@@ -9,9 +9,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
   Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
+  Phone, Mail, MessageCircle, HelpCircle, Lightbulb, Newspaper, ChevronLeft,
 } from "lucide-react";
 import { StatusBadge } from "@/components/workflow/StatusComponents";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
