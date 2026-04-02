@@ -1550,7 +1550,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                         </div>
                         <div className="space-y-2">
                           <div>
-                            <label className="text-[10px] text-muted-foreground mb-1 block">السعر الجديد (ر.س)</label>
+                            <label className="text-[10px] text-muted-foreground mb-1 block">السعر الجديد (<SAR size={9} />)</label>
                             <input
                               type="number"
                               value={adjustedPrice}

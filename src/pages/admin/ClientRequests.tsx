@@ -398,7 +398,7 @@ export default function ClientRequests() {
             {/* Price */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>المبلغ الإجمالي (ر.س)</Label>
+                <Label>المبلغ الإجمالي (<SAR size={10} />)</Label>
                 <Input
                   type="number"
                   value={pricingForm.quotationAmount}
