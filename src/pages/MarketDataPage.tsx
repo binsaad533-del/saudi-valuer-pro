@@ -501,7 +501,7 @@ export default function MarketDataIntegration() {
                         <th className="p-2 text-right font-medium text-muted-foreground">المدينة</th>
                         <th className="p-2 text-right font-medium text-muted-foreground">الحي</th>
                         <th className="p-2 text-right font-medium text-muted-foreground">النوع</th>
-                        <th className="p-2 text-center font-medium text-muted-foreground">السعر (ر.س)</th>
+                        <th className="p-2 text-center font-medium text-muted-foreground">السعر (<SAR size={10} />)</th>
                         <th className="p-2 text-center font-medium text-muted-foreground">م²</th>
                         <th className="p-2 text-center font-medium text-muted-foreground">التاريخ</th>
                       </tr>
