@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { Mail, Lock, Phone, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
+import AppFooter from "@/components/layout/AppFooter";
 
 export default function ClientLogin() {
   const navigate = useNavigate();
