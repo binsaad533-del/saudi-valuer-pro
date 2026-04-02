@@ -1,188 +1,555 @@
-import { useState } from "react";
-import TopBar from "@/components/layout/TopBar";
-import { Search, Calendar, FileText, Building2, MapPin, Download, Eye, QrCode, X } from "lucide-react";
+import { useState, useRef, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-
-const archived = [
-  { ref: "VAL-2026-0038", type: "عقار مدر للدخل", city: "مكة المكرمة", client: "وزارة المالية", value: "22,000,000", issueDate: "2026-03-16", status: "صادر" },
-  { ref: "VAL-2026-0035", type: "أرض خام", city: "الرياض", client: "أمانة الرياض", value: "45,000,000", issueDate: "2026-03-08", status: "صادر" },
-  { ref: "VAL-2026-0030", type: "فيلا سكنية", city: "جدة", client: "بنك الراجحي", value: "3,200,000", issueDate: "2026-02-25", status: "صادر" },
-  { ref: "VAL-2026-0025", type: "مبنى تجاري", city: "الدمام", client: "شركة أرامكو", value: "18,500,000", issueDate: "2026-02-15", status: "صادر" },
-];
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import {
+  Archive, Upload, Search, FileText, Loader2, Sparkles, Trash2,
+  Link2, CheckCircle, AlertTriangle, Eye, Download, UserPlus,
+} from "lucide-react";
 
 export default function ArchivePage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewReport, setViewReport] = useState<typeof archived[0] | null>(null);
-  const [showQr, setShowQr] = useState<typeof archived[0] | null>(null);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [indexing, setIndexing] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [linkDialog, setLinkDialog] = useState<any>(null);
+  const [editDialog, setEditDialog] = useState<any>(null);
+  const [clientSearch, setClientSearch] = useState("");
 
-  const filtered = archived.filter(
-    (r) =>
-      r.ref.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.client.includes(searchQuery) ||
-      r.type.includes(searchQuery)
-  );
+  // Fetch archived reports
+  const { data: reports = [], isLoading } = useQuery({
+    queryKey: ["archived-reports"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("archived_reports")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
 
-  const handleDownload = (report: typeof archived[0]) => {
-    toast.success(`جاري تحميل تقرير ${report.ref}...`);
-    // In production this would call generate-report-pdf edge function
+  // Fetch clients for linking
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients-for-link", clientSearch],
+    queryFn: async () => {
+      let q = supabase.from("clients").select("id, name_ar, email, phone").eq("is_active", true).limit(20);
+      if (clientSearch) q = q.ilike("name_ar", `%${clientSearch}%`);
+      const { data } = await q;
+      return data || [];
+    },
+  });
+
+  // Get org ID
+  const getOrgId = async () => {
+    if (!user) return null;
+    const { data } = await supabase
+      .from("profiles")
+      .select("organization_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return data?.organization_id;
+  };
+
+  // Bulk upload handler
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files?.length || !user) return;
+
+    const orgId = await getOrgId();
+    if (!orgId) { toast.error("لم يتم العثور على المنظمة"); return; }
+
+    setUploading(true);
+    let successCount = 0;
+
+    for (const file of Array.from(files)) {
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error(`${file.name}: الحد الأقصى 20 ميغابايت`);
+        continue;
+      }
+
+      const ext = file.name.split(".").pop();
+      const path = `${orgId}/${crypto.randomUUID()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("archived-reports")
+        .upload(path, file);
+
+      if (uploadError) {
+        toast.error(`فشل رفع: ${file.name}`);
+        continue;
+      }
+
+      const { error: insertError } = await supabase
+        .from("archived_reports")
+        .insert({
+          organization_id: orgId,
+          uploaded_by: user.id,
+          file_name: file.name,
+          file_path: path,
+          file_size: file.size,
+          mime_type: file.type,
+          report_title_ar: file.name.replace(/\.[^/.]+$/, ""),
+        });
+
+      if (insertError) {
+        toast.error(`فشل حفظ: ${file.name}`);
+      } else {
+        successCount++;
+      }
+    }
+
+    if (successCount > 0) {
+      toast.success(`تم رفع ${successCount} ملف بنجاح`);
+      queryClient.invalidateQueries({ queryKey: ["archived-reports"] });
+    }
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  // AI indexing
+  const handleIndex = async (report: any) => {
+    setIndexing(report.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-archive-metadata", {
+        body: { archived_report_id: report.id, file_name: report.file_name },
+      });
+      if (error) throw error;
+      if (data?.success) {
+        toast.success("تم الفهرسة بنجاح بالذكاء الاصطناعي");
+        queryClient.invalidateQueries({ queryKey: ["archived-reports"] });
+      } else {
+        toast.error("فشل الاستخراج التلقائي");
+      }
+    } catch {
+      toast.error("خطأ في الفهرسة الذكية");
+    }
+    setIndexing(null);
+  };
+
+  // Link to client
+  const handleLinkClient = async (reportId: string, clientId: string, clientName: string) => {
+    const { error } = await supabase
+      .from("archived_reports")
+      .update({ client_id: clientId, client_name_ar: clientName })
+      .eq("id", reportId);
+    if (error) {
+      toast.error("فشل الربط");
+    } else {
+      toast.success("تم ربط التقرير بالعميل");
+      queryClient.invalidateQueries({ queryKey: ["archived-reports"] });
+      setLinkDialog(null);
+    }
+  };
+
+  // Delete report
+  const handleDelete = async (report: any) => {
+    if (!confirm("هل أنت متأكد من حذف هذا التقرير؟")) return;
+    await supabase.storage.from("archived-reports").remove([report.file_path]);
+    const { error } = await supabase.from("archived_reports").delete().eq("id", report.id);
+    if (error) toast.error("فشل الحذف");
+    else {
+      toast.success("تم الحذف");
+      queryClient.invalidateQueries({ queryKey: ["archived-reports"] });
+    }
+  };
+
+  // Save manual edits
+  const handleSaveEdit = async () => {
+    if (!editDialog) return;
+    const { id, ...updates } = editDialog;
+    const { error } = await supabase.from("archived_reports").update(updates).eq("id", id);
+    if (error) toast.error("فشل الحفظ");
+    else {
+      toast.success("تم الحفظ");
+      queryClient.invalidateQueries({ queryKey: ["archived-reports"] });
+      setEditDialog(null);
+    }
+  };
+
+  // Download file
+  const handleDownload = async (report: any) => {
+    const { data } = await supabase.storage
+      .from("archived-reports")
+      .createSignedUrl(report.file_path, 60);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else toast.error("فشل التحميل");
+  };
+
+  // Filter
+  const filtered = reports.filter((r: any) => {
+    const matchSearch = !search ||
+      r.file_name?.includes(search) ||
+      r.report_title_ar?.includes(search) ||
+      r.report_number?.includes(search) ||
+      r.client_name_ar?.includes(search) ||
+      r.property_city_ar?.includes(search);
+    const matchType = typeFilter === "all" || r.report_type === typeFilter;
+    return matchSearch && matchType;
+  });
+
+  const formatSize = (bytes: number) => {
+    if (!bytes) return "-";
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
-    <div className="min-h-screen">
-      <TopBar />
-      <div className="p-6 space-y-5">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Archive className="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">أرشيف التقارير</h1>
+            <p className="text-sm text-muted-foreground">رفع وفهرسة التقارير السابقة وربطها بالعملاء</p>
+          </div>
+        </div>
         <div>
-          <h2 className="text-lg font-bold text-foreground">الأرشيف</h2>
-          <p className="text-sm text-muted-foreground">التقارير الصادرة والمؤرشفة - سجل دائم غير قابل للتعديل</p>
-        </div>
-
-        <div className="flex gap-3">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="بحث بالرقم المرجعي أو العميل..."
-              className="w-full pr-10 pl-4 py-2.5 rounded-lg border border-input bg-background text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-          </div>
-        </div>
-
-        {filtered.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground text-sm">
-            لا توجد نتائج مطابقة للبحث
-          </div>
-        )}
-
-        <div className="grid gap-4">
-          {filtered.map((r) => (
-            <div key={r.ref} className="bg-card rounded-lg border border-border shadow-card p-5 flex items-center justify-between hover:shadow-elevated transition-shadow">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-lg bg-success/10 flex items-center justify-center">
-                  <FileText className="w-6 h-6 text-success" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">{r.ref}</span>
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">{r.status}</span>
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{r.type}</span>
-                    <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{r.city}</span>
-                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{r.issueDate}</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">{r.client} | القيمة: {r.value} ر.س</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setViewReport(r)}
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
-                  title="عرض"
-                >
-                  <Eye className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDownload(r)}
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
-                  title="تحميل PDF"
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setShowQr(r)}
-                  className="p-2 rounded-md hover:bg-muted text-muted-foreground transition-colors"
-                  title="رمز التحقق"
-                >
-                  <QrCode className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          ))}
+          <input
+            ref={fileRef}
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+            className="hidden"
+            onChange={handleUpload}
+          />
+          <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gap-2">
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            رفع ملفات
+          </Button>
         </div>
       </div>
 
-      {/* View Report Modal */}
-      {viewReport && (
-        <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setViewReport(null)}>
-          <div className="bg-card rounded-xl border border-border shadow-elevated max-w-lg w-full p-6 space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-foreground">تفاصيل التقرير</h3>
-              <button onClick={() => setViewReport(null)} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="space-y-3 text-sm">
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">الرقم المرجعي</span>
-                <span className="font-medium text-foreground" dir="ltr">{viewReport.ref}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">نوع العقار</span>
-                <span className="text-foreground">{viewReport.type}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">المدينة</span>
-                <span className="text-foreground">{viewReport.city}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">العميل</span>
-                <span className="text-foreground">{viewReport.client}</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">القيمة</span>
-                <span className="font-bold text-foreground">{viewReport.value} ر.س</span>
-              </div>
-              <div className="flex justify-between py-2 border-b border-border">
-                <span className="text-muted-foreground">تاريخ الإصدار</span>
-                <span className="text-foreground">{viewReport.issueDate}</span>
-              </div>
-              <div className="flex justify-between py-2">
-                <span className="text-muted-foreground">الحالة</span>
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-success/10 text-success font-medium">{viewReport.status}</span>
-              </div>
-            </div>
-            <button
-              onClick={() => { handleDownload(viewReport); setViewReport(null); }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              <Download className="w-4 h-4" />
-              تحميل التقرير PDF
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">{reports.length}</p>
+            <p className="text-xs text-muted-foreground">إجمالي الملفات</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-success">{reports.filter((r: any) => r.is_indexed).length}</p>
+            <p className="text-xs text-muted-foreground">مفهرسة</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-warning">{reports.filter((r: any) => !r.is_indexed).length}</p>
+            <p className="text-xs text-muted-foreground">بانتظار الفهرسة</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4 text-center">
+            <p className="text-2xl font-bold text-primary">{reports.filter((r: any) => r.client_id).length}</p>
+            <p className="text-xs text-muted-foreground">مربوطة بعملاء</p>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* QR Code Modal */}
-      {showQr && (
-        <div className="fixed inset-0 z-50 bg-foreground/20 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowQr(null)}>
-          <div className="bg-card rounded-xl border border-border shadow-elevated max-w-sm w-full p-6 space-y-4 text-center" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-foreground">رمز التحقق</h3>
-              <button onClick={() => setShowQr(null)} className="p-1 rounded-md hover:bg-muted text-muted-foreground">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="py-6 flex flex-col items-center gap-3">
-              <div className="w-40 h-40 bg-muted rounded-lg flex items-center justify-center border-2 border-dashed border-border">
-                <QrCode className="w-20 h-20 text-muted-foreground/50" />
-              </div>
-              <p className="text-sm text-muted-foreground">رمز QR للتحقق من صحة التقرير</p>
-              <p className="text-xs font-mono text-foreground/70" dir="ltr">{showQr.ref}</p>
-            </div>
-            <button
-              onClick={() => {
-                navigator.clipboard.writeText(`https://saudi-valuer-pro.lovable.app/verify/${showQr.ref}`);
-                toast.success("تم نسخ رابط التحقق");
-              }}
-              className="w-full py-2.5 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              نسخ رابط التحقق
-            </button>
-          </div>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="بحث بالاسم، الرقم، العميل، المدينة..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pr-9"
+          />
         </div>
-      )}
+        <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="نوع التقرير" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">جميع الأنواع</SelectItem>
+            <SelectItem value="real_estate">تقييم عقاري</SelectItem>
+            <SelectItem value="land">أراضي</SelectItem>
+            <SelectItem value="residential">سكني</SelectItem>
+            <SelectItem value="commercial">تجاري</SelectItem>
+            <SelectItem value="machinery">آلات ومعدات</SelectItem>
+            <SelectItem value="other">أخرى</SelectItem>
+          </SelectContent>
+        </Select>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={!reports.some((r: any) => !r.is_indexed)}
+          onClick={async () => {
+            const unindexed = reports.filter((r: any) => !r.is_indexed);
+            for (const r of unindexed) {
+              await handleIndex(r);
+            }
+          }}
+        >
+          <Sparkles className="w-4 h-4" />
+          فهرسة الكل بالذكاء الاصطناعي
+        </Button>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Archive className="w-10 h-10 mx-auto mb-3 opacity-40" />
+              <p>لا توجد تقارير مؤرشفة</p>
+              <p className="text-xs mt-1">ابدأ برفع ملفات التقارير السابقة</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>الملف</TableHead>
+                    <TableHead>العنوان / الرقم</TableHead>
+                    <TableHead>النوع</TableHead>
+                    <TableHead>المدينة</TableHead>
+                    <TableHead>العميل</TableHead>
+                    <TableHead>الحالة</TableHead>
+                    <TableHead>الإجراءات</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((r: any) => (
+                    <TableRow key={r.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm truncate max-w-[160px]">{r.file_name}</p>
+                            <p className="text-xs text-muted-foreground">{formatSize(r.file_size)}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm font-medium">{r.report_title_ar || "-"}</p>
+                        {r.report_number && <p className="text-xs text-muted-foreground">{r.report_number}</p>}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="text-xs">
+                          {r.report_type === "real_estate" ? "عقاري" :
+                           r.report_type === "land" ? "أراضي" :
+                           r.report_type === "residential" ? "سكني" :
+                           r.report_type === "commercial" ? "تجاري" :
+                           r.report_type === "machinery" ? "آلات" : r.report_type || "-"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{r.property_city_ar || "-"}</TableCell>
+                      <TableCell>
+                        {r.client_name_ar ? (
+                          <div className="flex items-center gap-1">
+                            <CheckCircle className="w-3 h-3 text-success" />
+                            <span className="text-sm">{r.client_name_ar}</span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">غير مربوط</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {r.is_indexed ? (
+                          <Badge className="bg-success/10 text-success border-success/20 text-xs">
+                            مفهرس {r.ai_confidence ? `${Math.round(r.ai_confidence * 100)}%` : ""}
+                          </Badge>
+                        ) : indexing === r.id ? (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Loader2 className="w-3 h-3 animate-spin" /> جاري الفهرسة
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="text-xs text-warning">بانتظار</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDownload(r)}>
+                            <Download className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleIndex(r)} disabled={indexing === r.id}>
+                            <Sparkles className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setEditDialog({ ...r })}>
+                            <Eye className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setLinkDialog(r); setClientSearch(""); }}>
+                            <UserPlus className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(r)}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Link Client Dialog */}
+      <Dialog open={!!linkDialog} onOpenChange={() => setLinkDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" />
+              ربط التقرير بعميل
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              التقرير: {linkDialog?.report_title_ar || linkDialog?.file_name}
+            </p>
+            <Input
+              placeholder="بحث عن عميل..."
+              value={clientSearch}
+              onChange={(e) => setClientSearch(e.target.value)}
+            />
+            <div className="max-h-48 overflow-y-auto space-y-1">
+              {clients.map((c: any) => (
+                <button
+                  key={c.id}
+                  className="w-full text-right p-2 rounded-lg hover:bg-muted text-sm flex justify-between items-center"
+                  onClick={() => handleLinkClient(linkDialog.id, c.id, c.name_ar)}
+                >
+                  <span className="text-xs text-muted-foreground">{c.email}</span>
+                  <span>{c.name_ar}</span>
+                </button>
+              ))}
+              {clients.length === 0 && (
+                <p className="text-center text-xs text-muted-foreground py-4">لا توجد نتائج</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit/View Dialog */}
+      <Dialog open={!!editDialog} onOpenChange={() => setEditDialog(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات التقرير</DialogTitle>
+          </DialogHeader>
+          {editDialog && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label className="text-xs">عنوان التقرير</Label>
+                  <Input
+                    value={editDialog.report_title_ar || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, report_title_ar: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">رقم التقرير</Label>
+                  <Input
+                    value={editDialog.report_number || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, report_number: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">نوع التقرير</Label>
+                  <Select value={editDialog.report_type || "real_estate"} onValueChange={(v) => setEditDialog({ ...editDialog, report_type: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="real_estate">عقاري</SelectItem>
+                      <SelectItem value="land">أراضي</SelectItem>
+                      <SelectItem value="residential">سكني</SelectItem>
+                      <SelectItem value="commercial">تجاري</SelectItem>
+                      <SelectItem value="machinery">آلات ومعدات</SelectItem>
+                      <SelectItem value="other">أخرى</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">تاريخ التقرير</Label>
+                  <Input
+                    type="date"
+                    dir="ltr"
+                    value={editDialog.report_date || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, report_date: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">نوع العقار</Label>
+                  <Input
+                    value={editDialog.property_type || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, property_type: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">المدينة</Label>
+                  <Input
+                    value={editDialog.property_city_ar || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, property_city_ar: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">الحي</Label>
+                  <Input
+                    value={editDialog.property_district_ar || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, property_district_ar: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">اسم العميل</Label>
+                  <Input
+                    value={editDialog.client_name_ar || ""}
+                    onChange={(e) => setEditDialog({ ...editDialog, client_name_ar: e.target.value })}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">ملاحظات</Label>
+                <Input
+                  value={editDialog.notes || ""}
+                  onChange={(e) => setEditDialog({ ...editDialog, notes: e.target.value })}
+                />
+              </div>
+              {editDialog.ai_confidence > 0 && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
+                  <Sparkles className="w-3.5 h-3.5 text-primary" />
+                  ثقة الذكاء الاصطناعي: {Math.round(editDialog.ai_confidence * 100)}%
+                  {editDialog.ai_confidence < 0.8 && (
+                    <span className="flex items-center gap-1 text-warning">
+                      <AlertTriangle className="w-3 h-3" /> يُنصح بالمراجعة
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">إلغاء</Button>
+            </DialogClose>
+            <Button onClick={handleSaveEdit} className="gap-2">
+              <CheckCircle className="w-4 h-4" /> حفظ
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
