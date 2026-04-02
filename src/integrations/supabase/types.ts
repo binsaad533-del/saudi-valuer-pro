@@ -1593,6 +1593,41 @@ export type Database = {
           },
         ]
       }
+      organization_settings: {
+        Row: {
+          category: string
+          id: string
+          organization_id: string
+          settings: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          id?: string
+          organization_id: string
+          settings?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          id?: string
+          organization_id?: string
+          settings?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           address_ar: string | null
@@ -1950,6 +1985,7 @@ export type Database = {
           signature_url: string | null
           specialization: string | null
           taqeem_membership: string | null
+          taqeem_membership_machinery: string | null
           title_ar: string | null
           title_en: string | null
           updated_at: string
@@ -1975,6 +2011,7 @@ export type Database = {
           signature_url?: string | null
           specialization?: string | null
           taqeem_membership?: string | null
+          taqeem_membership_machinery?: string | null
           title_ar?: string | null
           title_en?: string | null
           updated_at?: string
@@ -2000,6 +2037,7 @@ export type Database = {
           signature_url?: string | null
           specialization?: string | null
           taqeem_membership?: string | null
+          taqeem_membership_machinery?: string | null
           title_ar?: string | null
           title_en?: string | null
           updated_at?: string
