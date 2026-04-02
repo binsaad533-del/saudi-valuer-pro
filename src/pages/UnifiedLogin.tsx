@@ -63,7 +63,16 @@ export default function UnifiedLogin() {
       const path = await resolveRedirect(authData.user.id);
       if (path) navigate(path, { replace: true });
     } catch (err: any) {
-      toast({ title: "خطأ في تسجيل الدخول", description: err.message, variant: "destructive" });
+      const message = typeof err?.message === "string" ? err.message.toLowerCase() : "";
+      const isEmailNotConfirmed = err?.code === "email_not_confirmed" || message.includes("email not confirmed");
+
+      toast({
+        title: isEmailNotConfirmed ? "البريد الإلكتروني غير مؤكد" : "خطأ في تسجيل الدخول",
+        description: isEmailNotConfirmed
+          ? "تم إنشاء الحساب بنجاح، لكن يلزم تأكيد البريد الإلكتروني أولاً من الرسالة المرسلة إلى بريدك ثم إعادة المحاولة."
+          : err.message,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
