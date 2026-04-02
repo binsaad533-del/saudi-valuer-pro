@@ -2,7 +2,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Bell, CalendarDays, Globe, ArrowRight, Check } from "lucide-react";
+import { CalendarDays, Globe, ArrowRight, Check } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { formatDate } from "@/lib/utils";
 import {
@@ -11,6 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import NotificationsBell from "./NotificationsBell";
 
 export default function TopBar() {
   const navigate = useNavigate();
@@ -69,10 +70,7 @@ export default function TopBar() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <button className="relative p-2 rounded-md hover:bg-muted transition-colors text-muted-foreground">
-          <Bell className="w-[18px] h-[18px]" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-destructive" />
-        </button>
+        <NotificationsBell />
         <div className="flex items-center gap-2 text-sm text-muted-foreground border-r border-border pr-3 mr-1">
           <CalendarDays className="w-4 h-4" />
           <span>{dateStr}</span>
