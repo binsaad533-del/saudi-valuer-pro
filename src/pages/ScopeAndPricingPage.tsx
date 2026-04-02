@@ -1259,22 +1259,73 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                       </div>
                     )}
 
+                    {/* Discount Code Input */}
+                    <div className="p-2.5 rounded-lg border border-dashed border-border/50 bg-muted/10 space-y-2 mt-1">
+                      <div className="flex items-center gap-2">
+                        <Ticket className="w-3.5 h-3.5 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground font-semibold">كود خصم</span>
+                      </div>
+                      {discountApplied ? (
+                        <div className="flex items-center justify-between p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span className="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-400">{discountApplied.code}</span>
+                            <Badge variant="secondary" className="text-[9px] h-4">-{discountApplied.percentage}%</Badge>
+                          </div>
+                          <button onClick={removeDiscount} className="text-muted-foreground hover:text-destructive">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            value={discountCode}
+                            onChange={(e) => setDiscountCode(e.target.value.toUpperCase())}
+                            placeholder="أدخل كود الخصم"
+                            className="flex-1 px-2.5 py-1.5 text-xs font-mono rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary/30"
+                            dir="ltr"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-[10px] h-7 px-2.5"
+                            disabled={!discountCode.trim() || checkingDiscount}
+                            onClick={applyDiscountCode}
+                          >
+                            {checkingDiscount ? <Loader2 className="w-3 h-3 animate-spin" /> : "تطبيق"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Discount amount row */}
+                    {discountApplied && (
+                      <div className="flex items-center justify-between p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                          <span className="text-xs text-foreground">خصم ({discountApplied.percentage}%)</span>
+                        </div>
+                        <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">-{formatCurrency(getDiscountAmount())}</span>
+                      </div>
+                    )}
+
                     {/* Subtotal */}
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50 mt-1">
                       <span className="text-xs font-semibold text-foreground">المجموع قبل الضريبة</span>
-                      <span className="text-sm font-bold text-foreground">{formatCurrency(pricing.subtotal)}</span>
+                      <span className="text-sm font-bold text-foreground">{formatCurrency(discountApplied ? getFinalSubtotal() : pricing.subtotal)}</span>
                     </div>
 
                     {/* VAT */}
                     <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/50">
                       <span className="text-xs text-muted-foreground">ضريبة القيمة المضافة ({pricing.vatRate}%)</span>
-                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(pricing.vatAmount)}</span>
+                      <span className="text-xs font-semibold text-foreground">+{formatCurrency(discountApplied ? getFinalVat() : pricing.vatAmount)}</span>
                     </div>
 
                     {/* Total */}
                     <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5 border border-primary/20">
                       <span className="text-sm font-bold text-foreground">الإجمالي (شامل الضريبة)</span>
-                      <span className="text-lg font-bold text-primary">{formatCurrency(pricing.totalPrice)}</span>
+                      <span className="text-lg font-bold text-primary">{formatCurrency(discountApplied ? getFinalTotal() : pricing.totalPrice)}</span>
                     </div>
                   </div>
                 )}
