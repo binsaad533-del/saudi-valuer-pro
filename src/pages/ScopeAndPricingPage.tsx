@@ -292,7 +292,7 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
   };
 
   const formatCurrency = (amount: number) =>
-    formatNumber(Math.round(amount));
+    <>{formatNumber(Math.round(amount))} <SAR size={12} /></>;
 
   const applyDiscountCode = async () => {
     if (!discountCode.trim()) return;
