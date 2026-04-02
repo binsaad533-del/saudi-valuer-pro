@@ -86,6 +86,7 @@ export default function ClientRegister() {
         });
         if (otpError) throw otpError;
         if (otpData?.error) throw new Error(otpData.error);
+        setPhoneVerificationToken(otpData?.verification_token || "");
         setStep("verify-phone");
         toast({ title: "تم إرسال رمز التحقق إلى جوالك" });
       } catch (otpError: unknown) {
@@ -105,7 +106,7 @@ export default function ClientRegister() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("phone-otp", {
-        body: { action: "verify", phone, code: phoneOtp },
+        body: { action: "verify", phone, code: phoneOtp, verification_token: phoneVerificationToken },
       });
       if (error) throw error;
       if (!data?.valid) throw new Error(data?.error || "رمز غير صحيح");
@@ -127,6 +128,7 @@ export default function ClientRegister() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      setPhoneVerificationToken(data?.verification_token || "");
       toast({ title: "تم إعادة إرسال رمز التحقق" });
     } catch (err: unknown) {
       const message = await extractEdgeFunctionErrorMessage(err, "تعذر إعادة إرسال رمز التحقق حالياً");
