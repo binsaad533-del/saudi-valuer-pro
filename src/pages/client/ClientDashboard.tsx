@@ -343,7 +343,149 @@ export default function ClientDashboard() {
             </Card>
           </div>
         )}
-      </main>
+
+
+        {/* ───── أقسام إضافية ───── */}
+        <Separator className="my-2" />
+
+        {/* نصائح ومعلومات تقييمية */}
+        <Card className="overflow-hidden">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+                <Lightbulb className="w-4 h-4 text-amber-600" />
+              </div>
+              نصائح ومعلومات تقييمية
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                { title: "ما هو التقييم العقاري؟", desc: "عملية تحديد القيمة السوقية العادلة للعقار وفقاً للمعايير الدولية والسعودية المعتمدة من هيئة تقييم." },
+                { title: "كيف تستعد للمعاينة الميدانية؟", desc: "تأكد من توفر صك الملكية، رخصة البناء، وإمكانية الوصول لجميع أجزاء العقار يوم المعاينة." },
+                { title: "كم تستغرق عملية التقييم؟", desc: "عادة ما يستغرق التقييم من 3 إلى 7 أيام عمل حسب نوع العقار وتعقيد التقييم." },
+                { title: "هل التقرير معتمد رسمياً؟", desc: "نعم، جميع تقاريرنا معتمدة من مقيّمين مرخصين من الهيئة السعودية للمقيّمين المعتمدين (تقييم)." },
+              ].map((tip, i) => (
+                <div key={i} className="bg-muted/50 rounded-lg p-3 space-y-1">
+                  <p className="text-sm font-semibold text-foreground">{tip.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{tip.desc}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* الأسئلة الشائعة */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <HelpCircle className="w-4 h-4 text-primary" />
+              </div>
+              الأسئلة الشائعة
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Accordion type="single" collapsible className="w-full">
+              {[
+                { q: "كيف يمكنني تقديم طلب تقييم جديد؟", a: "اضغط على زر \"طلب تقييم جديد\" في أعلى الصفحة، ثم ارفع المستندات المطلوبة (صك الملكية، رخصة البناء) وسيتواصل معك فريقنا خلال 24 ساعة." },
+                { q: "ما هي المستندات المطلوبة للتقييم؟", a: "المستندات الأساسية تشمل: صك الملكية، رخصة البناء (إن وجدت)، كروكي الموقع، وأي مستندات إضافية تدعم عملية التقييم مثل عقود الإيجار." },
+                { q: "كيف أتابع حالة طلبي؟", a: "يمكنك متابعة حالة طلبك مباشرة من تبويب \"طلباتي\" حيث يظهر متتبع المراحل الذي يوضح الحالة الحالية لكل طلب بشكل مفصل." },
+                { q: "هل يمكنني تعديل طلب بعد إرساله؟", a: "نعم، يمكنك التواصل مع فريقنا عبر المحادثة الداخلية في صفحة تفاصيل الطلب لإضافة ملاحظات أو مستندات جديدة." },
+                { q: "كيف أحصل على نسخة من التقرير؟", a: "بمجرد اكتمال التقييم، ستجد التقرير في تبويب \"التقارير الجاهزة\" حيث يمكنك معاينته وتحميله بصيغة PDF." },
+              ].map((item, i) => (
+                <AccordionItem key={i} value={`faq-${i}`}>
+                  <AccordionTrigger className="text-sm text-right hover:no-underline">
+                    {item.q}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                    {item.a}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardContent>
+        </Card>
+
+        {/* آخر الأخبار والتحديثات */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                <Newspaper className="w-4 h-4 text-emerald-600" />
+              </div>
+              آخر الأخبار والتحديثات
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0 space-y-3">
+            {[
+              { date: "1 أبريل 2026", title: "تحديث منصة جساس إلى الإصدار 3.0", desc: "تم إطلاق النسخة الجديدة من المنصة مع تحسينات في تجربة المستخدم وسرعة إصدار التقارير." },
+              { date: "25 مارس 2026", title: "تحديث معايير التقييم وفق تقييم 2026", desc: "تم تطبيق أحدث إرشادات الهيئة السعودية للمقيّمين المعتمدين على جميع التقارير الصادرة." },
+              { date: "15 مارس 2026", title: "إضافة خدمة تقييم المعدات والآلات", desc: "أصبح بإمكانكم الآن طلب تقييم المعدات الصناعية والآلات بالإضافة إلى العقارات." },
+            ].map((news, i) => (
+              <div key={i} className="flex gap-3 items-start p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 shrink-0" />
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium text-foreground">{news.title}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{news.desc}</p>
+                  <p className="text-[11px] text-muted-foreground/70">{news.date}</p>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* بيانات التواصل والدعم */}
+        <Card className="bg-gradient-to-l from-primary/5 to-transparent">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Phone className="w-4 h-4 text-primary" />
+              </div>
+              تواصل معنا
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid sm:grid-cols-3 gap-3">
+              <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
+                <Phone className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">الهاتف</p>
+                  <p className="text-sm font-medium text-foreground" dir="ltr">+966 55 000 0000</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
+                <Mail className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
+                  <p className="text-sm font-medium text-foreground">info@jsaasvaluation.app</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
+                <Clock className="w-5 h-5 text-primary shrink-0" />
+                <div>
+                  <p className="text-xs text-muted-foreground">ساعات العمل</p>
+                  <p className="text-sm font-medium text-foreground">الأحد - الخميس، 8ص - 5م</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-3">
+              <a
+                href="https://wa.me/966550000000"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+                تواصل عبر واتساب
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center py-4">
+          <p className="text-xs text-muted-foreground">© 2026 جساس للتقييم — جميع الحقوق محفوظة</p>
+        </div>
 
       {/* New Request Dialog */}
       <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
