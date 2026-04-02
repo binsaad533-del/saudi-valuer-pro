@@ -72,19 +72,21 @@ async function buildContextualPrompt(supabaseClient: any): Promise<string> {
     contextSections.push(section);
   }
 
-  // 3. Knowledge documents
+  // 3. Knowledge documents — load ALL active docs (no arbitrary limit)
   const { data: knowledge } = await supabaseClient
     .from("raqeem_knowledge")
     .select("title_ar, content, category, priority")
     .eq("is_active", true)
-    .order("priority", { ascending: false })
-    .limit(20);
+    .order("priority", { ascending: false });
 
   if (knowledge && knowledge.length > 0) {
-    let section = "\n\n## مستندات مرجعية من المدير\n";
+    let section = `\n\n## مستندات مرجعية من المدير (${knowledge.length} مستند)\n`;
+    // Budget: ~3000 chars per doc to fit context window with many docs
+    const perDocLimit = Math.min(3000, Math.floor(800000 / knowledge.length));
     for (const k of knowledge) {
-      // Truncate very long docs to fit context window
-      const content = k.content.length > 2000 ? k.content.substring(0, 2000) + "..." : k.content;
+      const content = k.content && k.content.length > perDocLimit
+        ? k.content.substring(0, perDocLimit) + "..."
+        : (k.content || "[محتوى غير مستخرج]");
       section += `\n### ${k.title_ar} [${k.category}]\n${content}\n`;
     }
     contextSections.push(section);

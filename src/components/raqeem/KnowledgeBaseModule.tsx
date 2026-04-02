@@ -77,6 +77,26 @@ export default function KnowledgeBaseModule() {
 
   useEffect(() => { fetchDocs(); }, []);
 
+  const extractPdfText = async (knowledgeId: string, filePath: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke("extract-pdf-text", {
+        body: { knowledge_id: knowledgeId, file_path: filePath },
+      });
+      if (error) {
+        console.error("Extract error:", error);
+        return false;
+      }
+      if (data?.success) {
+        console.log(`Extracted ${data.content_length} chars for ${knowledgeId}`);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Extract exception:", e);
+      return false;
+    }
+  };
+
   const addDoc = async () => {
     if (!form.title_ar) { toast.error("العنوان مطلوب"); return; }
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,12 +120,12 @@ export default function KnowledgeBaseModule() {
       fileName = file.name;
       fileSize = file.size;
       mimeType = file.type;
-      content = content || `[ملف مرفق: ${file.name}]`;
+      content = content || `[جاري استخراج المحتوى...]`;
     } else if (!content) {
       toast.error("المحتوى مطلوب"); return;
     }
 
-    const { error } = await supabase.from("raqeem_knowledge").insert({
+    const { data: insertData, error } = await supabase.from("raqeem_knowledge").insert({
       ...form,
       content,
       file_name: fileName,
@@ -113,7 +133,7 @@ export default function KnowledgeBaseModule() {
       mime_type: mimeType,
       file_path: filePath,
       uploaded_by: user.id,
-    } as any);
+    } as any).select("id").single();
     if (error) { toast.error("حدث خطأ"); console.error(error); return; }
 
     toast.success("تم إضافة المعرفة بنجاح");
@@ -122,6 +142,18 @@ export default function KnowledgeBaseModule() {
     setFile(null);
     setUploadMode("text");
     fetchDocs();
+
+    // Auto-extract text from file in background
+    if (filePath && insertData?.id) {
+      toast.info("جاري استخراج محتوى الملف تلقائياً...");
+      const success = await extractPdfText(insertData.id, filePath);
+      if (success) {
+        toast.success("تم استخراج محتوى الملف بنجاح ✅");
+        fetchDocs();
+      } else {
+        toast.warning("تعذر استخراج المحتوى تلقائياً — يمكنك إضافته يدوياً");
+      }
+    }
   };
 
   const handleBulkFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,11 +180,11 @@ export default function KnowledgeBaseModule() {
     setBulkTotal(bulkFiles.length);
     let successCount = 0;
     let failCount = 0;
+    const uploadedItems: { id: string; path: string }[] = [];
 
     for (let i = 0; i < bulkFiles.length; i++) {
       const f = bulkFiles[i];
       try {
-        // Upload file to storage
         const ext = f.name.split('.').pop() || 'bin';
         const safeName = `${crypto.randomUUID()}.${ext}`;
         const path = `raqeem-knowledge/${safeName}`;
@@ -161,11 +193,10 @@ export default function KnowledgeBaseModule() {
           .upload(path, f, { contentType: f.type || 'application/octet-stream' });
         if (uploadError) { console.error("Bulk upload error:", uploadError); failCount++; setBulkProgress(i + 1); continue; }
 
-        // Insert knowledge record
-        const { error } = await supabase.from("raqeem_knowledge").insert({
+        const { data: insertData, error } = await supabase.from("raqeem_knowledge").insert({
           title_ar: getFileTitle(f.name),
           category: bulkCategory,
-          content: `[ملف مرفق: ${f.name}]`,
+          content: `[جاري استخراج المحتوى...]`,
           source_type: "document",
           priority: bulkPriority,
           file_name: f.name,
@@ -173,9 +204,12 @@ export default function KnowledgeBaseModule() {
           mime_type: f.type,
           file_path: path,
           uploaded_by: user.id,
-        } as any);
+        } as any).select("id").single();
 
-        if (error) { failCount++; } else { successCount++; }
+        if (error) { failCount++; } else {
+          successCount++;
+          if (insertData?.id) uploadedItems.push({ id: insertData.id, path });
+        }
       } catch {
         failCount++;
       }
@@ -190,6 +224,23 @@ export default function KnowledgeBaseModule() {
       setBulkFiles([]);
       if (bulkInputRef.current) bulkInputRef.current.value = "";
       fetchDocs();
+    }
+
+    // Auto-extract text from all uploaded files in background
+    if (uploadedItems.length > 0) {
+      toast.info(`جاري استخراج محتوى ${uploadedItems.length} ملف تلقائياً...`);
+      let extractSuccess = 0;
+      for (const item of uploadedItems) {
+        const ok = await extractPdfText(item.id, item.path);
+        if (ok) extractSuccess++;
+      }
+      if (extractSuccess > 0) {
+        toast.success(`تم استخراج محتوى ${extractSuccess} ملف بنجاح ✅`);
+        fetchDocs();
+      }
+      if (extractSuccess < uploadedItems.length) {
+        toast.warning(`تعذر استخراج محتوى ${uploadedItems.length - extractSuccess} ملف`);
+      }
     }
   };
 
