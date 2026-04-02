@@ -144,7 +144,7 @@ export default function VerifyReport() {
                     <>
                       <div className="p-3 rounded-lg bg-background/60 border text-center">
                         <p className="text-xs text-muted-foreground mb-1">القيمة التقديرية</p>
-                        <p className="text-xl font-bold">{formatNumber(result.report.estimatedValue)} ر.س</p>
+                        <p className="text-xl font-bold">{formatNumber(result.report.estimatedValue)} <SAR /></p>
                       </div>
 
                       <div className="p-3 rounded-lg bg-background/60 border">

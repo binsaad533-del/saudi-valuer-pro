@@ -113,7 +113,7 @@ export default function ReportPreviewProfessional({ report }: ReportPreviewProfe
       <div className="mx-6 mt-6 p-6 bg-primary/5 border-2 border-primary rounded-lg text-center">
         <p className="text-sm text-muted-foreground mb-1">القيمة التقديرية النهائية</p>
         <p className="text-3xl font-bold text-primary">
-          {formatNumber(report.estimatedValue)} <span className="text-lg">ر.س</span>
+          {formatNumber(report.estimatedValue)} <SAR />
         </p>
       </div>
 

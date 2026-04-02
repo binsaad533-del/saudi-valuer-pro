@@ -82,7 +82,7 @@ export default function PaymentHistory({ requestId, refreshKey }: PaymentHistory
                 </div>
               </div>
               <div className="text-left">
-                <p className="text-sm font-bold text-foreground" dir="ltr">{formatNumber(Number(pay.amount))} ر.س</p>
+                <p className="text-sm font-bold text-foreground" dir="ltr">{formatNumber(Number(pay.amount))} <SAR /></p>
                 <Badge variant="secondary" className={`text-[10px] ${
                   pay.payment_status === "paid" ? "bg-green-500/10 text-green-600" :
                   pay.payment_status === "failed" ? "bg-destructive/10 text-destructive" :

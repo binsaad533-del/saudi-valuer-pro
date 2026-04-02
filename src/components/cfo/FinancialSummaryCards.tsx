@@ -45,7 +45,7 @@ export default function FinancialSummaryCards() {
               <div className="flex flex-col">
                 <span className="text-sm text-muted-foreground">{card.title}</span>
                 <span className="text-2xl font-bold text-foreground mt-1">
-                  {formatNumber(card.value)} ر.س
+                  {formatNumber(card.value)} <SAR />
                 </span>
                 <span className={`text-xs mt-1 ${card.trendPositive ? "text-success" : "text-destructive"}`}>
                   {card.trend} عن الشهر السابق

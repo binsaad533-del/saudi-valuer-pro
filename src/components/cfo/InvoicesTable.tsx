@@ -89,7 +89,7 @@ export default function InvoicesTable() {
                 <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
                 <TableCell>{inv.clientName}</TableCell>
                 <TableCell>{inv.valuationType}</TableCell>
-                <TableCell>{formatNumber(inv.amount)} ر.س</TableCell>
+                <TableCell>{formatNumber(inv.amount)} <SAR /></TableCell>
                 <TableCell>{inv.issueDate}</TableCell>
                 <TableCell>{inv.dueDate}</TableCell>
                 <TableCell>
