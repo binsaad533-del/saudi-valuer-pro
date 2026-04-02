@@ -1,4 +1,6 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket } from "lucide-react";
+import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import CompanySettings from "@/components/settings/CompanySettings";
 import ValuerSettings from "@/components/settings/ValuerSettings";
@@ -12,6 +14,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function SettingsPage() {
   const { role, loading } = useAuth();
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
   if (loading) {
@@ -46,6 +49,9 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="shrink-0">
+          <ArrowRight className="w-5 h-5" />
+        </Button>
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <Settings className="w-5 h-5 text-primary" />
         </div>
