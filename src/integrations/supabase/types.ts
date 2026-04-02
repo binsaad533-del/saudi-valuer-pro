@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      archived_reports: {
+        Row: {
+          ai_confidence: number | null
+          ai_extracted_data: Json | null
+          client_id: string | null
+          client_name_ar: string | null
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          is_indexed: boolean | null
+          mime_type: string | null
+          notes: string | null
+          organization_id: string
+          property_address_ar: string | null
+          property_city_ar: string | null
+          property_district_ar: string | null
+          property_type: string | null
+          report_date: string | null
+          report_number: string | null
+          report_title_ar: string | null
+          report_title_en: string | null
+          report_type: string | null
+          tags: string[] | null
+          updated_at: string
+          uploaded_by: string
+        }
+        Insert: {
+          ai_confidence?: number | null
+          ai_extracted_data?: Json | null
+          client_id?: string | null
+          client_name_ar?: string | null
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          is_indexed?: boolean | null
+          mime_type?: string | null
+          notes?: string | null
+          organization_id: string
+          property_address_ar?: string | null
+          property_city_ar?: string | null
+          property_district_ar?: string | null
+          property_type?: string | null
+          report_date?: string | null
+          report_number?: string | null
+          report_title_ar?: string | null
+          report_title_en?: string | null
+          report_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by: string
+        }
+        Update: {
+          ai_confidence?: number | null
+          ai_extracted_data?: Json | null
+          client_id?: string | null
+          client_name_ar?: string | null
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          is_indexed?: boolean | null
+          mime_type?: string | null
+          notes?: string | null
+          organization_id?: string
+          property_address_ar?: string | null
+          property_city_ar?: string | null
+          property_district_ar?: string | null
+          property_type?: string | null
+          report_date?: string | null
+          report_number?: string | null
+          report_title_ar?: string | null
+          report_title_en?: string | null
+          report_type?: string | null
+          tags?: string[] | null
+          updated_at?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "archived_reports_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "archived_reports_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_comparables: {
         Row: {
           assignment_id: string
