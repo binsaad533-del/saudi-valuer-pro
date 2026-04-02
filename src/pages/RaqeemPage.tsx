@@ -17,10 +17,19 @@ import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
 import PerformanceDashboard from "@/components/raqeem/PerformanceDashboard";
 import TestHistoryModule from "@/components/raqeem/TestHistoryModule";
 
+interface OrchestrationTool {
+  name: string;
+  args: Record<string, any>;
+  status: "running" | "complete" | "error";
+  result?: any;
+  error?: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
   attachments?: { name: string; type: string }[];
+  orchestration?: OrchestrationTool[];
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`;
