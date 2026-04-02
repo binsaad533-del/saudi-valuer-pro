@@ -87,6 +87,40 @@ const TOOLS = [
         required: ["assignment_id"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_report",
+      description: "توليد مسودة التقرير الكامل (11 قسم) لمهمة تقييم محددة. يجمع البيانات من 14 جدولاً ويُنتج تقريراً متوافقاً مع IVS 2025.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: {
+            type: "string",
+            description: "معرّف مهمة التقييم (UUID)"
+          }
+        },
+        required: ["assignment_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "check_compliance",
+      description: "فحص امتثال التقرير للمعايير الدولية (IVS 2025) ومعايير تقييم السعودية. يتحقق من اكتمال الأقسام والبيانات الإلزامية.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: {
+            type: "string",
+            description: "معرّف مهمة التقييم (UUID)"
+          }
+        },
+        required: ["assignment_id"]
+      }
+    }
   }
 ];
 
@@ -158,37 +192,182 @@ async function executeTool(
   serviceKey: string
 ): Promise<{ success: boolean; result: any; error?: string }> {
   try {
-    let functionName = "";
-    let body: any = {};
+    const db = createClient(supabaseUrl, serviceKey);
 
     if (toolName === "generate_scope") {
-      functionName = "generate-scope-pricing";
-      body = { requestId: args.request_id };
-    } else if (toolName === "run_valuation") {
-      functionName = "valuation-engine";
-      body = { assignmentId: args.assignment_id, step: args.step || "full" };
-    } else {
-      return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
+      return await callInternalFunction(supabaseUrl, serviceKey, "generate-scope-pricing", { requestId: args.request_id });
+    }
+    
+    if (toolName === "run_valuation") {
+      return await callInternalFunction(supabaseUrl, serviceKey, "valuation-engine", { assignmentId: args.assignment_id, step: args.step || "full" });
     }
 
-    const resp = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${serviceKey}`,
-      },
-      body: JSON.stringify(body),
-    });
-
-    const data = await resp.json();
-    if (!resp.ok) {
-      return { success: false, result: null, error: data.error || `خطأ ${resp.status}` };
+    if (toolName === "generate_report") {
+      // Build context from DB for report generation
+      const context = await buildReportContext(db, args.assignment_id);
+      if (!context) {
+        return { success: false, result: null, error: "لم يتم العثور على مهمة التقييم" };
+      }
+      return await callInternalFunction(supabaseUrl, serviceKey, "generate-report-content", {
+        mode: "structured_sections",
+        context,
+      });
     }
-    return { success: true, result: data };
+
+    if (toolName === "check_compliance") {
+      // Fetch compliance checks from DB
+      const complianceResult = await runComplianceCheck(db, args.assignment_id);
+      return { success: true, result: complianceResult };
+    }
+
+    return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
   } catch (e) {
     console.error(`Tool execution error (${toolName}):`, e);
     return { success: false, result: null, error: e instanceof Error ? e.message : "خطأ غير متوقع" };
   }
+}
+
+async function callInternalFunction(
+  supabaseUrl: string,
+  serviceKey: string,
+  functionName: string,
+  body: any
+): Promise<{ success: boolean; result: any; error?: string }> {
+  const resp = await fetch(`${supabaseUrl}/functions/v1/${functionName}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await resp.json();
+  if (!resp.ok) {
+    return { success: false, result: null, error: data.error || `خطأ ${resp.status}` };
+  }
+  return { success: true, result: data };
+}
+
+// Build report context from DB tables
+async function buildReportContext(db: any, assignmentId: string) {
+  const { data: assignment } = await db
+    .from("valuation_assignments")
+    .select("*, valuation_requests(*), subjects(*)")
+    .eq("id", assignmentId)
+    .single();
+
+  if (!assignment) return null;
+
+  const request = assignment.valuation_requests;
+  const subjects = Array.isArray(assignment.subjects) ? assignment.subjects : assignment.subjects ? [assignment.subjects] : [];
+  const subject = subjects[0] || {};
+
+  // Fetch client
+  let clientName = "";
+  if (request?.client_id) {
+    const { data: client } = await db.from("clients").select("name_ar").eq("id", request.client_id).single();
+    clientName = client?.name_ar || "";
+  }
+
+  // Fetch inspection summary
+  let inspectionSummary = "";
+  const { data: inspection } = await db.from("inspections").select("findings_ar, notes_ar").eq("assignment_id", assignmentId).limit(1).single();
+  if (inspection) {
+    inspectionSummary = [inspection.findings_ar, inspection.notes_ar].filter(Boolean).join(". ");
+  }
+
+  // Fetch comparables
+  const { data: assocComps } = await db.from("assignment_comparables").select("comparable_id, weight, notes").eq("assignment_id", assignmentId);
+  let comparables: any[] = [];
+  if (assocComps?.length) {
+    const ids = assocComps.map((c: any) => c.comparable_id);
+    const { data: comps } = await db.from("comparables").select("*").in("id", ids);
+    comparables = (comps || []).map((c: any) => ({
+      description: c.description_ar || c.address_ar || "مقارن",
+      value: c.price || 0,
+      source: c.transaction_type || "",
+    }));
+  }
+
+  return {
+    assetType: assignment.valuation_type || "عقاري",
+    assetDescription: subject.description_ar || request?.property_description || "",
+    assetLocation: subject.address_ar || "",
+    assetCity: subject.city_ar || "",
+    methodology: assignment.methodology || "أسلوب المقارنة",
+    estimatedValue: assignment.final_value || undefined,
+    clientName,
+    purposeOfValuation: assignment.purpose_ar || request?.purpose || "تقدير القيمة السوقية",
+    landArea: subject.land_area ? String(subject.land_area) : "",
+    buildingArea: subject.building_area ? String(subject.building_area) : "",
+    propertyType: subject.property_type || "سكني",
+    inspectionDate: inspection?.inspection_date || "",
+    referenceNumber: assignment.reference_number || "",
+    inspectionSummary,
+    comparables,
+  };
+}
+
+// Run compliance check against assignment data
+async function runComplianceCheck(db: any, assignmentId: string) {
+  const checks: { check: string; passed: boolean; note: string }[] = [];
+
+  // 1. Assignment exists
+  const { data: assignment } = await db.from("valuation_assignments").select("*").eq("id", assignmentId).single();
+  if (!assignment) {
+    return { passed: false, score: 0, checks: [{ check: "وجود المهمة", passed: false, note: "لم يتم العثور على مهمة التقييم" }] };
+  }
+
+  // 2. Subject property
+  const { data: subjects } = await db.from("subjects").select("*").eq("assignment_id", assignmentId);
+  const hasSubject = subjects && subjects.length > 0;
+  checks.push({ check: "بيانات العقار محل التقييم", passed: !!hasSubject, note: hasSubject ? `${subjects.length} عقار مسجل` : "لا توجد بيانات عقار" });
+
+  // 3. Inspection
+  const { data: inspections } = await db.from("inspections").select("id, status, completed").eq("assignment_id", assignmentId);
+  const completedInspection = inspections?.find((i: any) => i.completed || i.status === "completed");
+  checks.push({ check: "المعاينة الميدانية", passed: !!completedInspection, note: completedInspection ? "مكتملة" : "غير مكتملة أو غير موجودة" });
+
+  // 4. Comparables
+  const { data: comps } = await db.from("assignment_comparables").select("id").eq("assignment_id", assignmentId);
+  const hasComps = comps && comps.length >= 3;
+  checks.push({ check: "المقارنات السوقية (≥3)", passed: !!hasComps, note: `${comps?.length || 0} مقارنات` });
+
+  // 5. Methodology defined
+  checks.push({ check: "المنهجية محددة", passed: !!assignment.methodology, note: assignment.methodology || "غير محددة" });
+
+  // 6. Purpose defined
+  checks.push({ check: "غرض التقييم محدد", passed: !!(assignment.purpose_ar || assignment.purpose_en), note: assignment.purpose_ar || "غير محدد" });
+
+  // 7. Reference number
+  checks.push({ check: "الرقم المرجعي", passed: !!assignment.reference_number, note: assignment.reference_number || "غير مُولّد" });
+
+  // 8. Value assigned
+  checks.push({ check: "القيمة النهائية", passed: !!assignment.final_value, note: assignment.final_value ? `${Number(assignment.final_value).toLocaleString()} ر.س` : "غير محددة" });
+
+  // 9. Assumptions
+  const { data: assumptions } = await db.from("assumptions").select("id").eq("assignment_id", assignmentId);
+  checks.push({ check: "الافتراضات والشروط المقيدة", passed: !!(assumptions && assumptions.length > 0), note: `${assumptions?.length || 0} بند` });
+
+  // 10. Photos
+  const inspectionIds = inspections?.map((i: any) => i.id) || [];
+  let photoCount = 0;
+  if (inspectionIds.length > 0) {
+    const { data: photos } = await db.from("inspection_photos").select("id").in("inspection_id", inspectionIds);
+    photoCount = photos?.length || 0;
+  }
+  checks.push({ check: "صور المعاينة (≥5)", passed: photoCount >= 5, note: `${photoCount} صورة` });
+
+  const passedCount = checks.filter(c => c.passed).length;
+  const score = Math.round((passedCount / checks.length) * 100);
+
+  return {
+    passed: score >= 80,
+    score,
+    total_checks: checks.length,
+    passed_checks: passedCount,
+    checks,
+  };
 }
 
 serve(async (req) => {

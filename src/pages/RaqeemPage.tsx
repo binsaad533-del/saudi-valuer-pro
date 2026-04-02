@@ -38,6 +38,8 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`
 const TOOL_LABELS: Record<string, { label: string; icon: string }> = {
   generate_scope: { label: "توليد نطاق العمل والتسعير", icon: "📋" },
   run_valuation: { label: "تشغيل محرك التقييم", icon: "🔢" },
+  generate_report: { label: "توليد مسودة التقرير", icon: "📄" },
+  check_compliance: { label: "فحص الامتثال والجودة", icon: "✅" },
 };
 
 const SUGGESTED_PROMPTS = [
