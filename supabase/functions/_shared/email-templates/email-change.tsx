@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Text,
@@ -21,38 +22,40 @@ interface EmailChangeEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL = 'https://vprxcirjtzsxyllqjjyr.supabase.co/storage/v1/object/public/logos/email-logo.png'
+
 export const EmailChangeEmail = ({
   siteName,
   email,
   newEmail,
   confirmationUrl,
 }: EmailChangeEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="ar" dir="rtl">
     <Head />
-    <Preview>Confirm your email change for {siteName}</Preview>
+    <Preview>تأكيد تغيير البريد الإلكتروني - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Confirm your email change</Heading>
+        <Img src={LOGO_URL} alt="جساس للتقييم" width="140" height="auto" style={logo} />
+        <Heading style={h1}>تأكيد تغيير البريد الإلكتروني</Heading>
         <Text style={text}>
-          You requested to change your email address for {siteName} from{' '}
+          طلبت تغيير بريدك الإلكتروني في جساس للتقييم من{' '}
           <Link href={`mailto:${email}`} style={link}>
             {email}
           </Link>{' '}
-          to{' '}
+          إلى{' '}
           <Link href={`mailto:${newEmail}`} style={link}>
             {newEmail}
           </Link>
           .
         </Text>
         <Text style={text}>
-          Click the button below to confirm this change:
+          اضغط على الزر أدناه لتأكيد هذا التغيير:
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Confirm Email Change
+          تأكيد تغيير البريد
         </Button>
         <Text style={footer}>
-          If you didn't request this change, please secure your account
-          immediately.
+          إذا لم تطلب هذا التغيير، يرجى تأمين حسابك فوراً.
         </Text>
       </Container>
     </Body>
@@ -61,27 +64,28 @@ export const EmailChangeEmail = ({
 
 export default EmailChangeEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Cairo', 'Inter', Arial, sans-serif" }
+const container = { padding: '20px 25px', textAlign: 'right' as const }
+const logo = { margin: '0 0 24px 0' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(215, 30%, 18%)',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
+  color: 'hsl(215, 15%, 52%)',
+  lineHeight: '1.7',
   margin: '0 0 25px',
 }
-const link = { color: 'inherit', textDecoration: 'underline' }
+const link = { color: 'hsl(212, 60%, 50%)', textDecoration: 'underline' }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: 'hsl(212, 60%, 50%)',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  borderRadius: '10px',
+  padding: '12px 24px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }

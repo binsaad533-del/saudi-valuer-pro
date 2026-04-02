@@ -9,6 +9,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Preview,
   Text,
 } from 'npm:@react-email/components@0.0.22'
@@ -18,26 +19,29 @@ interface RecoveryEmailProps {
   confirmationUrl: string
 }
 
+const LOGO_URL = 'https://vprxcirjtzsxyllqjjyr.supabase.co/storage/v1/object/public/logos/email-logo.png'
+
 export const RecoveryEmail = ({
   siteName,
   confirmationUrl,
 }: RecoveryEmailProps) => (
-  <Html lang="en" dir="ltr">
+  <Html lang="ar" dir="rtl">
     <Head />
-    <Preview>Reset your password for {siteName}</Preview>
+    <Preview>إعادة تعيين كلمة المرور - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
+        <Img src={LOGO_URL} alt="جساس للتقييم" width="140" height="auto" style={logo} />
+        <Heading style={h1}>إعادة تعيين كلمة المرور</Heading>
         <Text style={text}>
-          We received a request to reset your password for {siteName}. Click
-          the button below to choose a new password.
+          تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك في جساس للتقييم.
+          اضغط على الزر أدناه لاختيار كلمة مرور جديدة.
         </Text>
         <Button style={button} href={confirmationUrl}>
-          Reset Password
+          إعادة تعيين كلمة المرور
         </Button>
         <Text style={footer}>
-          If you didn't request a password reset, you can safely ignore this
-          email. Your password will not be changed.
+          إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد بأمان.
+          لن يتم تغيير كلمة مرورك.
         </Text>
       </Container>
     </Body>
@@ -46,26 +50,27 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
-const container = { padding: '20px 25px' }
+const main = { backgroundColor: '#ffffff', fontFamily: "'Cairo', 'Inter', Arial, sans-serif" }
+const container = { padding: '20px 25px', textAlign: 'right' as const }
+const logo = { margin: '0 0 24px 0' }
 const h1 = {
   fontSize: '22px',
   fontWeight: 'bold' as const,
-  color: '#000000',
+  color: 'hsl(215, 30%, 18%)',
   margin: '0 0 20px',
 }
 const text = {
   fontSize: '14px',
-  color: '#55575d',
-  lineHeight: '1.5',
+  color: 'hsl(215, 15%, 52%)',
+  lineHeight: '1.7',
   margin: '0 0 25px',
 }
 const button = {
-  backgroundColor: '#000000',
+  backgroundColor: 'hsl(212, 60%, 50%)',
   color: '#ffffff',
   fontSize: '14px',
-  borderRadius: '8px',
-  padding: '12px 20px',
+  borderRadius: '10px',
+  padding: '12px 24px',
   textDecoration: 'none',
 }
 const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
