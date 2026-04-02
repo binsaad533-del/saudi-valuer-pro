@@ -33,7 +33,7 @@ export const InviteEmail = ({
     <Preview>تمت دعوتك للانضمام إلى جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="جساس للتقييم" width="140" height="auto" style={logo} />
+        <Img src={LOGO_URL} alt="جساس للتقييم" width="80" height="auto" style={logo} />
         <Heading style={h1}>دعوة للانضمام</Heading>
         <Text style={text}>
           تمت دعوتك للانضمام إلى{' '}
