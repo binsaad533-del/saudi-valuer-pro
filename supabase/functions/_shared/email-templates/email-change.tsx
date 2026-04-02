@@ -35,7 +35,7 @@ export const EmailChangeEmail = ({
     <Preview>تأكيد تغيير البريد الإلكتروني - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="جساس للتقييم" width="140" height="auto" style={logo} />
+        <Img src={LOGO_URL} alt="جساس للتقييم" width="80" height="auto" style={logo} />
         <Heading style={h1}>تأكيد تغيير البريد الإلكتروني</Heading>
         <Text style={text}>
           طلبت تغيير بريدك الإلكتروني في جساس للتقييم من{' '}

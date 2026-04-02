@@ -28,7 +28,7 @@ const RequestConfirmationEmail = ({ clientName, requestNumber }: RequestConfirma
     <Preview>تم استلام طلب التقييم - {SITE_NAME}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt={SITE_NAME} width="140" height="auto" style={logo} />
+        <Img src={LOGO_URL} alt={SITE_NAME} width="80" height="auto" style={logo} />
         <Heading style={h1}>
           {clientName ? `مرحباً ${clientName}،` : 'مرحباً،'}
         </Heading>

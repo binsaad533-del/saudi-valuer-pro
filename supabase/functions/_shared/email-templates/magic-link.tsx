@@ -30,7 +30,7 @@ export const MagicLinkEmail = ({
     <Preview>رابط تسجيل الدخول - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="جساس للتقييم" width="140" height="auto" style={logo} />
+        <Img src={LOGO_URL} alt="جساس للتقييم" width="80" height="auto" style={logo} />
         <Heading style={h1}>رابط تسجيل الدخول</Heading>
         <Text style={text}>
           اضغط على الزر أدناه لتسجيل الدخول إلى جساس للتقييم.

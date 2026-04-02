@@ -30,7 +30,7 @@ export const RecoveryEmail = ({
     <Preview>إعادة تعيين كلمة المرور - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Img src={LOGO_URL} alt="جساس للتقييم" width="140" height="auto" style={logo} />
+        <Img src={LOGO_URL} alt="جساس للتقييم" width="80" height="auto" style={logo} />
         <Heading style={h1}>إعادة تعيين كلمة المرور</Heading>
         <Text style={text}>
           تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك في جساس للتقييم.
