@@ -36,7 +36,10 @@ export default function ArchivePage() {
         .from("archived_reports")
         .select("*")
         .order("created_at", { ascending: false });
-      if (error) throw error;
+      if (error) {
+        console.error("Archive fetch error:", error);
+        return [];
+      }
       return data || [];
     },
   });
