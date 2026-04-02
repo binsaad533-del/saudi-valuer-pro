@@ -1,5 +1,5 @@
 import { Mail, Phone, MapPin, Globe, Shield, Award } from "lucide-react";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo-full.png";
 
 export default function AppFooter() {
   const year = new Date().getFullYear();
