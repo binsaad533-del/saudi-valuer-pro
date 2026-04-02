@@ -493,7 +493,7 @@ export default function ClientDashboard() {
         <DialogContent className="sm:max-w-md" dir="rtl">
           <DialogHeader>
             <DialogTitle>طلب تقييم جديد</DialogTitle>
-            <DialogDescription>ارفع المستندات المتعلقة بالعقار وسنتولى الباقي</DialogDescription>
+            <DialogDescription>ارفع المستندات المتعلقة بالأصل المراد تقييمه وسنتولى الباقي</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
             {/* Upload area */}
