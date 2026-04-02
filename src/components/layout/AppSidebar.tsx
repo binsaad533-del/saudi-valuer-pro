@@ -58,7 +58,6 @@ const navSections: NavSection[] = [
     titleKey: "valuationSection",
     items: [
       { labelKey: "valuations", icon: FileText, path: "/valuations", roles: ["owner"] },
-      { labelKey: "reports", icon: FileText, path: "/reports", roles: ["owner"] },
       { labelKey: "marketComparables", icon: Building2, path: "/comparables", roles: ["owner"] },
     ],
     roles: ["owner"],
