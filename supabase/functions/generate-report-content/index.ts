@@ -105,7 +105,7 @@ serve(async (req) => {
         assetCity?: string;
         methodology?: string;
         estimatedValue?: number;
-        comparables?: { description: string; value: number; source?: string }[];
+        comparables?: { description: string; value: number; source?: string; reference_number?: string; source_date?: string }[];
         inspectionSummary?: string;
         clientName?: string;
         clientIdNumber?: string;
