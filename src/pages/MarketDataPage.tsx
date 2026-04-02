@@ -731,7 +731,7 @@ export default function MarketDataIntegration() {
                   <Input type="number" value={newEntry.price || ""} onChange={e => setNewEntry(p => ({ ...p, price: Number(e.target.value) }))} />
                 </div>
                 <div>
-                  <Label>سعر المتر (ر.س/م²)</Label>
+                  <Label>سعر المتر (<SAR size={10} />/م²)</Label>
                   <Input type="number" value={newEntry.price_per_sqm || ""} onChange={e => setNewEntry(p => ({ ...p, price_per_sqm: Number(e.target.value) }))} />
                 </div>
                 <div>
