@@ -197,44 +197,42 @@ export default function InspectorsListPage() {
           <AddInspectorDialog onCreated={fetchInspectors} />
         </div>
 
-        {/* Stats */}
+        {/* Stats - Clickable filters */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-          <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Users className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-              <p className="text-xs text-muted-foreground">إجمالي المعاينين</p>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.active}</p>
-              <p className="text-xs text-muted-foreground">نشطون حالياً</p>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <Award className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.topPerformers}</p>
-              <p className="text-xs text-muted-foreground">أداء متميز</p>
-            </div>
-          </div>
-          <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <MapPin className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{stats.totalCompleted}</p>
-              <p className="text-xs text-muted-foreground">معاينات مكتملة</p>
-            </div>
-          </div>
+          {[
+            { key: "all", label: "إجمالي المعاينين", value: stats.total, icon: Users, iconColor: "text-primary", bgColor: "bg-primary/10" },
+            { key: "active", label: "نشطون حالياً", value: stats.active, icon: CheckCircle2, iconColor: "text-emerald-600", bgColor: "bg-emerald-500/10" },
+            { key: "top_performer", label: "أداء متميز", value: stats.topPerformers, icon: Award, iconColor: "text-amber-600", bgColor: "bg-amber-500/10" },
+            { key: "completed", label: "معاينات مكتملة", value: stats.totalCompleted, icon: MapPin, iconColor: "text-primary", bgColor: "bg-primary/10" },
+          ].map((stat) => {
+            const isActive =
+              (stat.key === "all" && statusFilter === "all" && categoryFilter === "all") ||
+              (stat.key === "active" && statusFilter === "active") ||
+              (stat.key === "top_performer" && categoryFilter === "top_performer");
+            return (
+              <button
+                key={stat.key}
+                onClick={() => {
+                  if (stat.key === "all") { setStatusFilter("all"); setCategoryFilter("all"); }
+                  else if (stat.key === "active") { setStatusFilter("active"); setCategoryFilter("all"); }
+                  else if (stat.key === "top_performer") { setCategoryFilter("top_performer"); setStatusFilter("all"); }
+                  // "completed" sorts by completed tasks
+                  else if (stat.key === "completed") { setSortField("completed"); setSortAsc(false); setStatusFilter("all"); setCategoryFilter("all"); }
+                }}
+                className={`bg-card rounded-xl border p-4 flex items-center gap-3 transition-all text-right ${
+                  isActive ? "border-primary ring-2 ring-primary/20 shadow-sm" : "border-border hover:border-primary/40 hover:shadow-sm"
+                }`}
+              >
+                <div className={`w-10 h-10 rounded-lg ${stat.bgColor} flex items-center justify-center`}>
+                  <stat.icon className={`w-5 h-5 ${stat.iconColor}`} />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
         {/* Filters */}
