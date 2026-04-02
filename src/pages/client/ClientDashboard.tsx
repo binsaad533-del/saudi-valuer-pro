@@ -250,6 +250,7 @@ export default function ClientDashboard() {
                         </div>
                       </div>
                       <EnhancedRequestTracker status={req.status} createdAt={req.created_at} compact />
+                    </Link>
                   ))}
                 </div>
               )}
