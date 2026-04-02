@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import TopBar from "@/components/layout/TopBar";
 import { formatDate } from "@/lib/utils";
+import AddInspectorDialog from "@/components/inspectors/AddInspectorDialog";
 
 
 interface InspectorRow {
