@@ -1,6 +1,7 @@
 import { DollarSign, CreditCard, Clock, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 interface SummaryCard {

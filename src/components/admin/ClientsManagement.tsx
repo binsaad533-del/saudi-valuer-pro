@@ -21,6 +21,7 @@ import {
   ArrowUpDown, DollarSign, BarChart3,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 // ── Types ──
 interface UserRow {

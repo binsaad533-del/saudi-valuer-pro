@@ -20,6 +20,7 @@ import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const STATUS_TIMELINE = [

@@ -16,6 +16,7 @@ import { mockReports } from "@/data/mockReports";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const ASSET_TYPE_LABELS: Record<string, string> = {

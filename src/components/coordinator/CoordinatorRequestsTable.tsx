@@ -14,6 +14,7 @@ import { STATUS_LABELS as WF_STATUS_LABELS, STATUS_COLORS } from "@/lib/workflow
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = Object.fromEntries(

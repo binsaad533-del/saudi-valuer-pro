@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { TrendingUp, Percent, FileText, BarChart3 } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const kpis = [
   { label: "متوسط مدة التحصيل", value: "23 يوم", icon: TrendingUp, description: "من تاريخ الإصدار للسداد" },

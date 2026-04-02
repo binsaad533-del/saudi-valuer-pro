@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CreditCard, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 interface PaymentHistoryProps {

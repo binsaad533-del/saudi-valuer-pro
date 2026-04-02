@@ -8,6 +8,7 @@ import {
   DollarSign, Target, AlertTriangle, CheckCircle, Loader2,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const COLORS = [
   "hsl(212, 60%, 50%)",

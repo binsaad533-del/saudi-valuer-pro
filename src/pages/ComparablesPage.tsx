@@ -2,6 +2,7 @@ import TopBar from "@/components/layout/TopBar";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { Search, Filter, Building2, MapPin, TrendingUp, Star, Plus } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const comparables = [
   { id: 1, type: "فيلا سكنية", city: "الرياض", district: "حي النرجس", area: 450, price: 2800000, pricePerM: 6222, date: "2026-02-15", confidence: 92, source: "صفقة فعلية" },

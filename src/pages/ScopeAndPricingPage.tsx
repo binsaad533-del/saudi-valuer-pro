@@ -15,6 +15,7 @@ import {
   Briefcase, TrendingUp, RotateCcw, HeartPulse, Send, UserCheck, Users,
   FileSearch, ListChecks, CreditCard, ThumbsUp, Ticket, X,
 } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 interface PurposeOption {
   key: string;

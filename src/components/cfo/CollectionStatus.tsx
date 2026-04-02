@@ -2,6 +2,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { invoices } from "@/data/cfoMockData";
 import { useMemo } from "react";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const STATUS_COLORS: Record<string, string> = {

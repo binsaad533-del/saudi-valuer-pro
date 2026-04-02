@@ -31,6 +31,7 @@ import { InspectionAnalysisView } from "@/components/inspectors/InspectionAnalys
 import ReportLifecyclePanel from "@/components/reports/ReportLifecyclePanel";
 import ValidationPanel from "@/components/validation/ValidationPanel";
 import { Clipboard } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const PIPELINE_STEPS = [
   { key: "inspection", label: "تحليل المعاينة (AI)", icon: Clipboard, ai: true },

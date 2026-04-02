@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, FileSpreadsheet } from "lucide-react";
 import { exportPaymentsPDF, exportPaymentsExcel } from "@/lib/cfo-export";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 export default function PaymentsLog() {

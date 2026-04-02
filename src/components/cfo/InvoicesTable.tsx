@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Search, FileText, FileSpreadsheet } from "lucide-react";
 import { exportInvoicesPDF, exportInvoicesExcel } from "@/lib/cfo-export";
 import { formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 const statusColors: Record<Invoice["status"], string> = {

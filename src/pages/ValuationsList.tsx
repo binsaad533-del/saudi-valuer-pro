@@ -13,6 +13,7 @@ import {
   ClipboardCheck,
   CheckCircle,
 } from "lucide-react";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 type Tab = "all" | "review" | "completed";
 

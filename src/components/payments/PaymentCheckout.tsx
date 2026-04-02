@@ -10,6 +10,7 @@ import {
   AlertTriangle, Clock, Shield,
 } from "lucide-react";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/lib/payment-provider";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 interface PaymentCheckoutProps {
   request: any;

@@ -24,6 +24,7 @@ import {
   STATUS_COLORS,
   PIPELINE_PHASES,
 } from "@/lib/workflow-engine";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.fromEntries(
   Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])

@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import jsaasLogo from "@/assets/jsaas-logo.png";
 import OfficialStamp from "./OfficialStamp";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { SAR } from "@/components/ui/saudi-riyal";
 
 
 interface ReportPreviewProfessionalProps {
