@@ -92,8 +92,8 @@ export default function KnowledgeBaseModule() {
       const path = `raqeem-knowledge/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("attachments")
-        .upload(path, file);
-      if (uploadError) { toast.error("فشل رفع الملف"); return; }
+        .upload(path, file, { contentType: file.type || 'application/octet-stream' });
+      if (uploadError) { toast.error(`فشل رفع الملف: ${uploadError.message}`); console.error("Upload error:", uploadError); return; }
       filePath = path;
       fileName = file.name;
       fileSize = file.size;
@@ -154,8 +154,8 @@ export default function KnowledgeBaseModule() {
         const path = `raqeem-knowledge/${Date.now()}_${f.name}`;
         const { error: uploadError } = await supabase.storage
           .from("attachments")
-          .upload(path, f);
-        if (uploadError) { failCount++; setBulkProgress(i + 1); continue; }
+          .upload(path, f, { contentType: f.type || 'application/octet-stream' });
+        if (uploadError) { console.error("Bulk upload error:", uploadError); failCount++; setBulkProgress(i + 1); continue; }
 
         // Insert knowledge record
         const { error } = await supabase.from("raqeem_knowledge").insert({
