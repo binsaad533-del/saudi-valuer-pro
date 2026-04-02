@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound, Eye, EyeOff, Building2, CreditCard, UserCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
 

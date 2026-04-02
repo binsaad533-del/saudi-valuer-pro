@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { Mail, Lock, Phone, KeyRound, Loader2, Eye, EyeOff } from "lucide-react";
 import logo from "@/assets/logo.png";
 
