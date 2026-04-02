@@ -55,6 +55,7 @@ import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
 import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
 import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
 import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
+import AssignmentHubPage from "@/pages/AssignmentHubPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
