@@ -179,6 +179,9 @@ serve(async (req) => {
     const { basePrice, sizeCategory, cityMultiplier, purposeMultiplier, category } =
       calculateBasePrice(propertyDesc, area, city, purpose);
 
+    // Fetch relevant knowledge from knowledge base
+    const knowledgeContext = await fetchScopePricingKnowledge(propertyDesc, purpose);
+
     // ─── Enhanced AI prompt ───
     const systemPrompt = `أنت خبير تقييم عقاري سعودي معتمد من الهيئة السعودية للمقيّمين المعتمدين (تقييم) بخبرة 15+ سنة.
 
@@ -188,6 +191,8 @@ serve(async (req) => {
 2. **تحليل الغرض من التقييم**: تحديد الغرض من التقييم (تمويل بنكي / بيع وشراء / تأمين / تقسيم تركة / فض نزاع / حكم قضائي / محاسبة / استثمار / إعادة تقييم / تصفية / رهن) بناءً على المستندات المرفقة ونوع العميل. اذكر جميع الأغراض المحتملة مع نسب الثقة.
 3. نطاق عمل تفصيلي يتوافق مع معايير التقييم الدولية IVS 2025 ومعايير تقييم السعودية.
 4. تعديلات تسعير مبنية على تعقيد الطلب الفعلي.
+
+استند إلى المراجع المهنية المرفقة أدناه لتعزيز دقة التحليل.
 
 ## قواعد تحديد الغرض من التقييم (purposeAnalysis)
 - حدد الغرض الرئيسي بناءً على المستندات (مثلاً: خطاب بنك = تمويل بنكي، أمر محكمة = حكم قضائي)
@@ -232,7 +237,7 @@ serve(async (req) => {
 ## ملاحظات مهمة
 - الافتراضات يجب أن تشمل: صحة المستندات، حالة السوق، الحقوق القانونية
 - القيود يجب أن تشمل: نطاق المعاينة، مصادر المعلومات، التحفظات
-- المخرجات: تقرير عربي + ملخص تنفيذي + شهادة قيمة كحد أدنى`;
+- المخرجات: تقرير عربي + ملخص تنفيذي + شهادة قيمة كحد أدنى${knowledgeContext}`;
 
     const buildingInfo = extractedData.building
       ? `\n- مساحة البناء: ${extractedData.building?.buildingArea || "—"} م²
