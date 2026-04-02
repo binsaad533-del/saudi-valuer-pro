@@ -232,25 +232,8 @@ export default function RequestDetails() {
 
       {/* Progress Timeline */}
       <div className="bg-card border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-3">
-          <div className="flex items-center justify-between overflow-x-auto gap-1">
-            {STATUS_TIMELINE.map((step, i) => {
-              const stepIndex = STATUS_ORDER.indexOf(step.key);
-              const isActive = currentStepIndex >= stepIndex;
-              const isCurrent = request.status === step.key || (i > 0 && STATUS_ORDER.indexOf(STATUS_TIMELINE[i-1].key) < currentStepIndex && stepIndex >= currentStepIndex);
-              return (
-                <div key={step.key} className="flex items-center gap-1 min-w-0">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] font-bold ${
-                    isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}>
-                    {isActive ? "✓" : i + 1}
-                  </div>
-                  <span className={`text-[10px] whitespace-nowrap ${isActive ? "text-primary font-medium" : "text-muted-foreground"}`}>{step.label}</span>
-                  {i < STATUS_TIMELINE.length - 1 && <div className={`h-px w-4 shrink-0 ${isActive ? "bg-primary" : "bg-border"}`} />}
-                </div>
-              );
-            })}
-          </div>
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <EnhancedRequestTracker status={request.status} createdAt={request.created_at} />
         </div>
       </div>
 
