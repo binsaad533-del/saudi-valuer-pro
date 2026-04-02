@@ -22,7 +22,7 @@ const CITIES = [
 ];
 
 const SPECIALIZATIONS = [
-  "سكني", "تجاري", "صناعي", "أراضي", "زراعي", "آلات ومعدات",
+  "عقارات", "آلات ومعدات", "عقارات وآلات ومعدات",
 ];
 
 export default function AddInspectorDialog({ onCreated }: Props) {
