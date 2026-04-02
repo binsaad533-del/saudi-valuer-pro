@@ -20,6 +20,7 @@ import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTrack
 import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import AppFooter from "@/components/layout/AppFooter";
 
 
 export default function ClientDashboard() {
