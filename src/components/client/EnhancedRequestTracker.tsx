@@ -1,12 +1,12 @@
 import { Progress } from "@/components/ui/progress";
 
 const STAGES = [
-  { key: "submitted", label: "تم التقديم", emoji: "📩", description: "تم استلام طلبك بنجاح" },
-  { key: "payment", label: "الدفع", emoji: "💳", description: "تأكيد الدفع وعرض السعر" },
-  { key: "assigned", label: "تعيين المقيّم", emoji: "👤", description: "تم تعيين مقيّم معتمد" },
-  { key: "inspection", label: "المعاينة", emoji: "🏗️", description: "معاينة العقار ميدانياً" },
-  { key: "drafting", label: "إعداد التقرير", emoji: "📝", description: "إعداد ومراجعة التقرير" },
-  { key: "delivered", label: "التسليم", emoji: "✅", description: "تقريرك جاهز للتحميل" },
+  { key: "submitted", label: "تم التقديم", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح" },
+  { key: "payment", label: "الدفع", color: "bg-red-50 text-red-500 border-red-200", description: "تأكيد الدفع وعرض السعر" },
+  { key: "assigned", label: "تعيين المقيّم", color: "bg-emerald-50 text-emerald-500 border-emerald-200", description: "تم تعيين مقيّم معتمد" },
+  { key: "inspection", label: "المعاينة", color: "bg-indigo-50 text-indigo-500 border-indigo-200", description: "معاينة العقار ميدانياً" },
+  { key: "drafting", label: "إعداد التقرير", color: "bg-amber-50 text-amber-500 border-amber-200", description: "إعداد ومراجعة التقرير" },
+  { key: "delivered", label: "التسليم", color: "bg-violet-50 text-violet-500 border-violet-200", description: "تقريرك جاهز للتحميل" },
 ];
 
 const STATUS_TO_STAGE: Record<string, number> = {
