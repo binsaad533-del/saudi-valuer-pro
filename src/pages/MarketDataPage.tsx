@@ -550,7 +550,7 @@ export default function MarketDataIntegration() {
                     </div>
                     <div className="mt-3 flex items-baseline gap-1">
                       <span className="text-lg font-bold text-primary">{formatNumber(z.avg_price_per_sqm || 0)}</span>
-                      <span className="text-xs text-muted-foreground">ر.س/م²</span>
+                      <span className="text-xs text-muted-foreground"><SAR size={10} />/م²</span>
                     </div>
                     {z.last_updated && (
                       <p className="text-[10px] text-muted-foreground mt-1">آخر تحديث: {z.last_updated.substring(0, 10)}</p>
