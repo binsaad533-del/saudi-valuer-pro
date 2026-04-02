@@ -105,7 +105,9 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
       {/* Progress header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-base">⏱️</span>
+          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
+            <span className="text-primary text-[10px] font-bold">%</span>
+          </div>
           <span className="text-sm text-muted-foreground">تقدم الطلب</span>
         </div>
         <div className="flex items-center gap-3">
