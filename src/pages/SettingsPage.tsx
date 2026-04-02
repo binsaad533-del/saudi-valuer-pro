@@ -74,7 +74,7 @@ export default function SettingsPage() {
           </TabsList>
         )}
 
-        <TabsContent value="valuer"><ValuerSettings /></TabsContent>
+        <TabsContent value="valuer"><ValuerSettings isOwnerView={isOwner} /></TabsContent>
         {isOwner && (
           <>
             <TabsContent value="company"><CompanySettings /></TabsContent>
