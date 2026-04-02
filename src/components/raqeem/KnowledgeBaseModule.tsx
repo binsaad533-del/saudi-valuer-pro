@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   BookOpen, Plus, Trash2, CheckCircle, XCircle,
-  FileText, Upload, Eye,
+  FileText, Upload, Eye, FolderUp, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Progress } from "@/components/ui/progress";
 
 interface KnowledgeDoc {
   id: string;
@@ -43,6 +44,7 @@ export default function KnowledgeBaseModule() {
   const [docs, setDocs] = useState<KnowledgeDoc[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [bulkDialogOpen, setBulkDialogOpen] = useState(false);
   const [viewDoc, setViewDoc] = useState<KnowledgeDoc | null>(null);
   const [uploadMode, setUploadMode] = useState<"text" | "file">("text");
   const [form, setForm] = useState({
@@ -53,6 +55,15 @@ export default function KnowledgeBaseModule() {
     priority: 7,
   });
   const [file, setFile] = useState<File | null>(null);
+
+  // Bulk upload state
+  const [bulkFiles, setBulkFiles] = useState<File[]>([]);
+  const [bulkCategory, setBulkCategory] = useState("ivs_standards");
+  const [bulkPriority, setBulkPriority] = useState(7);
+  const [bulkUploading, setBulkUploading] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState(0);
+  const [bulkTotal, setBulkTotal] = useState(0);
+  const bulkInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocs = async () => {
     const { data } = await supabase
@@ -78,7 +89,6 @@ export default function KnowledgeBaseModule() {
     let filePath: string | null = null;
 
     if (uploadMode === "file" && file) {
-      // Upload file to storage
       const path = `raqeem-knowledge/${Date.now()}_${file.name}`;
       const { error: uploadError } = await supabase.storage
         .from("attachments")
@@ -112,6 +122,73 @@ export default function KnowledgeBaseModule() {
     fetchDocs();
   };
 
+  const handleBulkFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setBulkFiles(files);
+  };
+
+  const removeBulkFile = (index: number) => {
+    setBulkFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileTitle = (fileName: string) => {
+    // Remove extension and clean up the name as a title
+    return fileName.replace(/\.[^/.]+$/, "").replace(/[_-]/g, " ");
+  };
+
+  const uploadBulk = async () => {
+    if (bulkFiles.length === 0) { toast.error("اختر ملفات أولاً"); return; }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { toast.error("يجب تسجيل الدخول"); return; }
+
+    setBulkUploading(true);
+    setBulkProgress(0);
+    setBulkTotal(bulkFiles.length);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < bulkFiles.length; i++) {
+      const f = bulkFiles[i];
+      try {
+        // Upload file to storage
+        const path = `raqeem-knowledge/${Date.now()}_${f.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from("attachments")
+          .upload(path, f);
+        if (uploadError) { failCount++; setBulkProgress(i + 1); continue; }
+
+        // Insert knowledge record
+        const { error } = await supabase.from("raqeem_knowledge").insert({
+          title_ar: getFileTitle(f.name),
+          category: bulkCategory,
+          content: `[ملف مرفق: ${f.name}]`,
+          source_type: "document",
+          priority: bulkPriority,
+          file_name: f.name,
+          file_size: f.size,
+          mime_type: f.type,
+          file_path: path,
+          uploaded_by: user.id,
+        } as any);
+
+        if (error) { failCount++; } else { successCount++; }
+      } catch {
+        failCount++;
+      }
+      setBulkProgress(i + 1);
+    }
+
+    setBulkUploading(false);
+    if (successCount > 0) toast.success(`تم رفع ${successCount} مرجع بنجاح`);
+    if (failCount > 0) toast.error(`فشل رفع ${failCount} ملف`);
+    if (successCount > 0) {
+      setBulkDialogOpen(false);
+      setBulkFiles([]);
+      if (bulkInputRef.current) bulkInputRef.current.value = "";
+      fetchDocs();
+    }
+  };
+
   const toggleActive = async (doc: KnowledgeDoc) => {
     await supabase.from("raqeem_knowledge").update({ is_active: !doc.is_active } as any).eq("id", doc.id);
     toast.success(doc.is_active ? "تم التعطيل" : "تم التفعيل");
@@ -138,99 +215,201 @@ export default function KnowledgeBaseModule() {
           <h3 className="text-base font-bold text-foreground">قاعدة المعرفة</h3>
           <p className="text-xs text-muted-foreground">المستندات والمعايير التي يعتمد عليها رقيم كمراجع أساسية</p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm"><Plus className="w-4 h-4 ml-1" /> إضافة معرفة</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>إضافة معرفة جديدة</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <Input
-                placeholder="العنوان بالعربية *"
-                value={form.title_ar}
-                onChange={(e) => setForm({ ...form, title_ar: e.target.value })}
-              />
-              <div className="grid grid-cols-2 gap-3">
-                <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(CATEGORIES).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={String(form.priority)} onValueChange={(v) => setForm({ ...form, priority: parseInt(v) })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">أولوية قصوى</SelectItem>
-                    <SelectItem value="7">عالية</SelectItem>
-                    <SelectItem value="5">متوسطة</SelectItem>
-                    <SelectItem value="3">منخفضة</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Upload mode toggle */}
-              <div className="flex gap-2">
-                <Button
-                  variant={uploadMode === "text" ? "default" : "outline"} size="sm"
-                  onClick={() => setUploadMode("text")}
-                >
-                  <FileText className="w-3.5 h-3.5 ml-1" /> نص
-                </Button>
-                <Button
-                  variant={uploadMode === "file" ? "default" : "outline"} size="sm"
-                  onClick={() => setUploadMode("file")}
-                >
-                  <Upload className="w-3.5 h-3.5 ml-1" /> ملف
-                </Button>
-              </div>
-
-              {uploadMode === "text" ? (
-                <Textarea
-                  placeholder="المحتوى — الصق نص المعيار أو السياسة أو القرار هنا..."
-                  value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
-                  rows={8}
-                />
-              ) : (
-                <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
-                  <input
-                    type="file"
-                    id="knowledge-file"
-                    className="hidden"
-                    accept=".pdf,.xlsx,.xls,.csv,.txt,.doc,.docx"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                  />
-                  <label htmlFor="knowledge-file" className="cursor-pointer">
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
-                    {file ? (
-                      <p className="text-sm text-foreground font-medium">{file.name}</p>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">
-                        PDF, Excel, Word, أو نص عادي
-                      </p>
-                    )}
-                  </label>
-                  {file && (
-                    <Textarea
-                      placeholder="وصف أو ملاحظات إضافية (اختياري)"
-                      value={form.content}
-                      onChange={(e) => setForm({ ...form, content: e.target.value })}
-                      rows={3}
-                      className="mt-3"
-                    />
-                  )}
+        <div className="flex gap-2">
+          {/* Bulk Upload Button */}
+          <Dialog open={bulkDialogOpen} onOpenChange={setBulkDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" variant="outline">
+                <FolderUp className="w-4 h-4 ml-1" /> رفع جماعي
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>رفع ملفات جماعي</DialogTitle>
+              </DialogHeader>
+              <p className="text-xs text-muted-foreground">
+                اختر عدة ملفات دفعة واحدة — كل ملف يُسجَّل كمرجع مستقل باسمه تلقائياً
+              </p>
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <Select value={bulkCategory} onValueChange={setBulkCategory}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CATEGORIES).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={String(bulkPriority)} onValueChange={(v) => setBulkPriority(parseInt(v))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">أولوية قصوى</SelectItem>
+                      <SelectItem value="7">عالية</SelectItem>
+                      <SelectItem value="5">متوسطة</SelectItem>
+                      <SelectItem value="3">منخفضة</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button onClick={addDoc}>حفظ</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+
+                <div
+                  className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                  onClick={() => bulkInputRef.current?.click()}
+                >
+                  <input
+                    ref={bulkInputRef}
+                    type="file"
+                    className="hidden"
+                    multiple
+                    accept=".pdf,.xlsx,.xls,.csv,.txt,.doc,.docx"
+                    onChange={handleBulkFiles}
+                  />
+                  <FolderUp className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    اضغط لاختيار عدة ملفات
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PDF, Excel, Word, أو نص عادي
+                  </p>
+                </div>
+
+                {bulkFiles.length > 0 && (
+                  <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                    <p className="text-xs font-medium text-foreground">
+                      {bulkFiles.length} ملف مختار:
+                    </p>
+                    {bulkFiles.map((f, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs bg-muted/50 rounded px-2 py-1.5">
+                        <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="flex-1 truncate text-foreground">{f.name}</span>
+                        <span className="text-muted-foreground shrink-0">{formatSize(f.size)}</span>
+                        <Button
+                          variant="ghost" size="icon"
+                          className="h-5 w-5 shrink-0 text-destructive"
+                          onClick={(e) => { e.stopPropagation(); removeBulkFile(i); }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {bulkUploading && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>جاري الرفع...</span>
+                      <span>{bulkProgress} / {bulkTotal}</span>
+                    </div>
+                    <Progress value={(bulkProgress / bulkTotal) * 100} />
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button onClick={uploadBulk} disabled={bulkFiles.length === 0 || bulkUploading}>
+                  {bulkUploading ? (
+                    <><Loader2 className="w-4 h-4 ml-1 animate-spin" /> جاري الرفع...</>
+                  ) : (
+                    <><Upload className="w-4 h-4 ml-1" /> رفع {bulkFiles.length > 0 ? `(${bulkFiles.length})` : ""}</>
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Single add button */}
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm"><Plus className="w-4 h-4 ml-1" /> إضافة معرفة</Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>إضافة معرفة جديدة</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <Input
+                  placeholder="العنوان بالعربية *"
+                  value={form.title_ar}
+                  onChange={(e) => setForm({ ...form, title_ar: e.target.value })}
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(CATEGORIES).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={String(form.priority)} onValueChange={(v) => setForm({ ...form, priority: parseInt(v) })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">أولوية قصوى</SelectItem>
+                      <SelectItem value="7">عالية</SelectItem>
+                      <SelectItem value="5">متوسطة</SelectItem>
+                      <SelectItem value="3">منخفضة</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    variant={uploadMode === "text" ? "default" : "outline"} size="sm"
+                    onClick={() => setUploadMode("text")}
+                  >
+                    <FileText className="w-3.5 h-3.5 ml-1" /> نص
+                  </Button>
+                  <Button
+                    variant={uploadMode === "file" ? "default" : "outline"} size="sm"
+                    onClick={() => setUploadMode("file")}
+                  >
+                    <Upload className="w-3.5 h-3.5 ml-1" /> ملف
+                  </Button>
+                </div>
+
+                {uploadMode === "text" ? (
+                  <Textarea
+                    placeholder="المحتوى — الصق نص المعيار أو السياسة أو القرار هنا..."
+                    value={form.content}
+                    onChange={(e) => setForm({ ...form, content: e.target.value })}
+                    rows={8}
+                  />
+                ) : (
+                  <div className="border-2 border-dashed border-border rounded-lg p-6 text-center">
+                    <input
+                      type="file"
+                      id="knowledge-file"
+                      className="hidden"
+                      accept=".pdf,.xlsx,.xls,.csv,.txt,.doc,.docx"
+                      onChange={(e) => setFile(e.target.files?.[0] || null)}
+                    />
+                    <label htmlFor="knowledge-file" className="cursor-pointer">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                      {file ? (
+                        <p className="text-sm text-foreground font-medium">{file.name}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          PDF, Excel, Word, أو نص عادي
+                        </p>
+                      )}
+                    </label>
+                    {file && (
+                      <Textarea
+                        placeholder="وصف أو ملاحظات إضافية (اختياري)"
+                        value={form.content}
+                        onChange={(e) => setForm({ ...form, content: e.target.value })}
+                        rows={3}
+                        className="mt-3"
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button onClick={addDoc}>حفظ</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Stats */}
