@@ -89,6 +89,7 @@ export default function UnifiedLogin() {
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
+      setPhoneVerificationToken(data?.verification_token || "");
       setPhoneOtpSent(true);
       toast({ title: "تم إرسال رمز التحقق", description: "يرجى التحقق من رسائل الجوال" });
     } catch (err: unknown) {
@@ -104,7 +105,7 @@ export default function UnifiedLogin() {
     setLoading(true);
     try {
       const { data, error } = await supabase.functions.invoke("phone-otp", {
-        body: { action: "verify", phone, code: phoneOtpCode },
+        body: { action: "verify", phone, code: phoneOtpCode, verification_token: phoneVerificationToken },
       });
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
@@ -115,7 +116,6 @@ export default function UnifiedLogin() {
           type: "magiclink",
         });
         if (verifyError) throw verifyError;
-        // After OTP verify, auth state change will trigger redirect via useEffect
       } else if (data?.valid && data?.email) {
         toast({ title: "تم التحقق", description: "يرجى تسجيل الدخول بالبريد الإلكتروني" });
       }
