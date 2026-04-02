@@ -453,6 +453,14 @@ export default function ClientDashboard() {
                 تواصل عبر واتساب
               </a>
               <a
+                href="/Profile_Jsaas_Valuation.pdf"
+                download="بروفايل_جساس_للتقييم.pdf"
+                className="inline-flex items-center gap-2 border border-border hover:bg-muted rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-foreground"
+              >
+                <Download className="w-4 h-4" />
+                تحميل بروفايل الشركة
+              </a>
+              <a
                 href="https://www.jsaas-valuation.com/ar"
                 target="_blank"
                 rel="noopener noreferrer"
