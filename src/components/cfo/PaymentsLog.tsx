@@ -35,14 +35,26 @@ export default function PaymentsLog() {
           </Button>
         </div>
       </div>
-      <div className="p-4 flex flex-col sm:flex-row gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">من:</span>
-          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-40" dir="ltr" />
+      <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <label className="text-sm text-muted-foreground block">من</label>
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full"
+            dir="ltr"
+          />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground whitespace-nowrap">إلى:</span>
-          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="w-40" dir="ltr" />
+        <div className="space-y-1.5">
+          <label className="text-sm text-muted-foreground block">إلى</label>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full"
+            dir="ltr"
+          />
         </div>
       </div>
       <div className="overflow-x-auto">
