@@ -230,13 +230,6 @@ export default function ClientRegister() {
                     <Input id="fullName" placeholder="محمد أحمد" value={fullName} onChange={(e) => setFullName(e.target.value)} className="pr-10" required />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="idNumber">رقم الهوية</Label>
-                  <div className="relative">
-                    <CreditCard className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="idNumber" placeholder="1XXXXXXXXX" value={idNumber} onChange={(e) => setIdNumber(e.target.value)} className="pr-10" required dir="ltr" maxLength={10} />
-                  </div>
-                </div>
               </>
             ) : (
               <>
@@ -245,13 +238,6 @@ export default function ClientRegister() {
                   <div className="relative">
                     <Building2 className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input id="companyName" placeholder="شركة المثال للتطوير" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="pr-10" required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="crNumber">السجل التجاري</Label>
-                  <div className="relative">
-                    <CreditCard className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="crNumber" placeholder="10XXXXXXXX" value={crNumber} onChange={(e) => setCrNumber(e.target.value)} className="pr-10" required dir="ltr" maxLength={10} />
                   </div>
                 </div>
                 <div className="space-y-2">
