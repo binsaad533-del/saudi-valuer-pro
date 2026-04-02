@@ -450,9 +450,9 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
   const highRelevanceCount = uploadedFiles.filter(f => f.relevance === "high").length;
 
   return (
-    <div className="min-h-screen">
-      <TopBar />
-      <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className={embedded ? "" : "min-h-screen"}>
+      {!embedded && <TopBar />}
+      <div className={embedded ? "space-y-6" : "p-6 max-w-5xl mx-auto space-y-6"}>
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
