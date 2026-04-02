@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import {
   Send, Bot, User, Paperclip, Trash2, Sparkles, FileText, X, Edit3,
   BookOpen, MessageSquare, Scale, FlaskConical, BarChart3,
+  CheckCircle2, Loader2, AlertCircle, Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,13 +18,27 @@ import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
 import PerformanceDashboard from "@/components/raqeem/PerformanceDashboard";
 import TestHistoryModule from "@/components/raqeem/TestHistoryModule";
 
+interface OrchestrationTool {
+  name: string;
+  args: Record<string, any>;
+  status: "running" | "complete" | "error";
+  result?: any;
+  error?: string;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
   attachments?: { name: string; type: string }[];
+  orchestration?: OrchestrationTool[];
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`;
+
+const TOOL_LABELS: Record<string, { label: string; icon: string }> = {
+  generate_scope: { label: "توليد نطاق العمل والتسعير", icon: "📋" },
+  run_valuation: { label: "تشغيل محرك التقييم", icon: "🔢" },
+};
 
 const SUGGESTED_PROMPTS = [
   "ما هي منهجيات التقييم العقاري المعتمدة؟",
@@ -88,6 +103,18 @@ export default function RaqeemPage() {
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantSoFar = "";
+      let currentOrchestration: OrchestrationTool[] = [];
+
+      const upsertOrchestration = (tools: OrchestrationTool[]) => {
+        currentOrchestration = tools;
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last?.role === "assistant") {
+            return prev.map((m, i) => (i === prev.length - 1 ? { ...m, orchestration: [...tools] } : m));
+          }
+          return [...prev, { role: "assistant", content: "", orchestration: [...tools] }];
+        });
+      };
 
       const upsert = (chunk: string) => {
         assistantSoFar += chunk;
@@ -96,8 +123,37 @@ export default function RaqeemPage() {
           if (last?.role === "assistant") {
             return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
           }
-          return [...prev, { role: "assistant", content: assistantSoFar }];
+          return [...prev, { role: "assistant", content: assistantSoFar, orchestration: currentOrchestration.length > 0 ? [...currentOrchestration] : undefined }];
         });
+      };
+
+      const processLine = (line: string) => {
+        if (line.startsWith(":") || line.trim() === "") return false;
+        if (!line.startsWith("data: ")) return false;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === "[DONE]") return true;
+        try {
+          const parsed = JSON.parse(jsonStr);
+          // Handle orchestration events
+          const orch = parsed.choices?.[0]?.orchestration || parsed.choices?.[0]?.delta?.orchestration;
+          if (orch) {
+            if (orch.type === "orchestration_status") {
+              upsertOrchestration(orch.tools.map((t: any) => ({ ...t, status: "running" as const })));
+            } else if (orch.type === "tool_complete") {
+              const updated = currentOrchestration.map((t) =>
+                t.name === orch.tool
+                  ? { ...t, status: (orch.success ? "complete" : "error") as "complete" | "error", result: orch.result, error: orch.error }
+                  : t
+              );
+              upsertOrchestration(updated);
+            }
+          }
+          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
+          if (content) upsert(content);
+        } catch {
+          return false;
+        }
+        return false;
       };
 
       let streamDone = false;
@@ -110,33 +166,14 @@ export default function RaqeemPage() {
           let line = textBuffer.slice(0, newlineIndex);
           textBuffer = textBuffer.slice(newlineIndex + 1);
           if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (line.startsWith(":") || line.trim() === "") continue;
-          if (!line.startsWith("data: ")) continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") { streamDone = true; break; }
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (content) upsert(content);
-          } catch {
-            textBuffer = line + "\n" + textBuffer;
-            break;
-          }
+          if (processLine(line)) { streamDone = true; break; }
         }
       }
       if (textBuffer.trim()) {
         for (let raw of textBuffer.split("\n")) {
           if (!raw) continue;
           if (raw.endsWith("\r")) raw = raw.slice(0, -1);
-          if (raw.startsWith(":") || raw.trim() === "") continue;
-          if (!raw.startsWith("data: ")) continue;
-          const jsonStr = raw.slice(6).trim();
-          if (jsonStr === "[DONE]") continue;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const c = parsed.choices?.[0]?.delta?.content as string | undefined;
-            if (c) upsert(c);
-          } catch { /* ignore */ }
+          processLine(raw);
         }
       }
     },
@@ -332,6 +369,42 @@ export default function RaqeemPage() {
                               <FileText className="w-3 h-3" /> {att.name}
                             </Badge>
                           ))}
+                        </div>
+                      )}
+                      {/* Orchestration status cards */}
+                      {msg.orchestration && msg.orchestration.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
+                            <Zap className="w-3.5 h-3.5 text-primary" />
+                            <span>تنسيق الأنظمة</span>
+                          </div>
+                          {msg.orchestration.map((tool, ti) => {
+                            const toolInfo = TOOL_LABELS[tool.name] || { label: tool.name, icon: "⚙️" };
+                            return (
+                              <div
+                                key={ti}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg border text-xs ${
+                                  tool.status === "running"
+                                    ? "border-primary/30 bg-primary/5"
+                                    : tool.status === "complete"
+                                    ? "border-green-500/30 bg-green-500/5"
+                                    : "border-destructive/30 bg-destructive/5"
+                                }`}
+                              >
+                                <span className="text-base">{toolInfo.icon}</span>
+                                <span className="font-medium flex-1">{toolInfo.label}</span>
+                                {tool.status === "running" && (
+                                  <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                                )}
+                                {tool.status === "complete" && (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                )}
+                                {tool.status === "error" && (
+                                  <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       {msg.role === "assistant" ? (
