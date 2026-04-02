@@ -276,7 +276,7 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
       </Card>
 
       <div className="flex justify-start">
-        <Button onClick={handleSave} className="gap-2" disabled={saving}>
+        <Button onClick={handleSaveAll} className="gap-2" disabled={saving}>
           {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
           حفظ البيانات
         </Button>
