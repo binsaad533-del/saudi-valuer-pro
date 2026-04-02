@@ -371,6 +371,42 @@ export default function RaqeemPage() {
                           ))}
                         </div>
                       )}
+                      {/* Orchestration status cards */}
+                      {msg.orchestration && msg.orchestration.length > 0 && (
+                        <div className="mb-3 space-y-2">
+                          <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
+                            <Zap className="w-3.5 h-3.5 text-primary" />
+                            <span>تنسيق الأنظمة</span>
+                          </div>
+                          {msg.orchestration.map((tool, ti) => {
+                            const toolInfo = TOOL_LABELS[tool.name] || { label: tool.name, icon: "⚙️" };
+                            return (
+                              <div
+                                key={ti}
+                                className={`flex items-center gap-2.5 p-2.5 rounded-lg border text-xs ${
+                                  tool.status === "running"
+                                    ? "border-primary/30 bg-primary/5"
+                                    : tool.status === "complete"
+                                    ? "border-green-500/30 bg-green-500/5"
+                                    : "border-destructive/30 bg-destructive/5"
+                                }`}
+                              >
+                                <span className="text-base">{toolInfo.icon}</span>
+                                <span className="font-medium flex-1">{toolInfo.label}</span>
+                                {tool.status === "running" && (
+                                  <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                                )}
+                                {tool.status === "complete" && (
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />
+                                )}
+                                {tool.status === "error" && (
+                                  <AlertCircle className="w-3.5 h-3.5 text-destructive" />
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                       {msg.role === "assistant" ? (
                         <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right' }}>
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
