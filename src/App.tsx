@@ -112,6 +112,7 @@ const App = () => (
             <Route path="/ai-scope-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-report-generation" element={<AIReportGenerationPage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
+            <Route path="/market-data" element={<MarketDataPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}

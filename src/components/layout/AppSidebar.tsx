@@ -60,6 +60,7 @@ const navSections: NavSection[] = [
     items: [
       { labelKey: "valuations", icon: FileText, path: "/valuations", roles: ["owner"] },
       { labelKey: "marketComparables", icon: Building2, path: "/comparables", roles: ["owner"] },
+      { labelKey: "marketData", icon: BarChart3, path: "/market-data", roles: ["owner"] },
     ],
     roles: ["owner"],
   },
