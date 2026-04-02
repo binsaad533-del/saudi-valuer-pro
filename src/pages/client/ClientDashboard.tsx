@@ -438,7 +438,7 @@ export default function ClientDashboard() {
                 <Clock className="w-5 h-5 text-primary shrink-0" />
                 <div>
                   <p className="text-xs text-muted-foreground">ساعات العمل</p>
-                  <p className="text-sm font-medium text-foreground">الأحد - الخميس، 8ص - 5م</p>
+                  <p className="text-sm font-medium text-foreground">السبت - الخميس، 8ص - 5م</p>
                 </div>
               </div>
             </div>
