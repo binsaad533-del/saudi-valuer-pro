@@ -241,13 +241,6 @@ export default function ClientRegister() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="crNumber">السجل التجاري</Label>
-                  <div className="relative">
-                    <CreditCard className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input id="crNumber" placeholder="10XXXXXXXX" value={crNumber} onChange={(e) => setCrNumber(e.target.value)} className="pr-10" required dir="ltr" maxLength={10} />
-                  </div>
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="contactPerson">اسم المفوض</Label>
                   <div className="relative">
                     <UserCheck className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
