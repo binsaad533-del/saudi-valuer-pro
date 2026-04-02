@@ -89,7 +89,8 @@ const App = () => (
             <Route path="/assignment/:id" element={<AssignmentHubPage />} />
             <Route path="/valuations/review" element={<ValuationsList />} />
             <Route path="/valuations/completed" element={<ValuationsList />} />
-            <Route path="/comparables" element={<ComparablesPage />} />
+            <Route path="/comparables" element={<MarketDataPage />} />
+            <Route path="/market-data" element={<MarketDataPage />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/archive" element={<ArchivePage />} />
             <Route path="/search" element={<SearchPage />} />
@@ -108,12 +109,12 @@ const App = () => (
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
             <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
+            <Route path="/smart-tools" element={<SmartToolsPage />} />
             <Route path="/ai-document-processing" element={<AIDocumentProcessingPage />} />
             <Route path="/scope-and-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-scope-pricing" element={<ScopeAndPricingPage />} />
             <Route path="/ai-report-generation" element={<AIReportGenerationPage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
-            <Route path="/market-data" element={<MarketDataPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
