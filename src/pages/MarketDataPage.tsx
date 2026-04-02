@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp, Database, Search, Plus,
   MapPin, Loader2, CheckCircle2, BarChart3,
+  Wrench, ExternalLink, Globe, Plane, HardHat, Factory, Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatNumber } from "@/lib/utils";
@@ -27,6 +28,129 @@ interface MarketEntry {
   source: string;
 }
 
+interface ReferenceSource {
+  id: string;
+  name: string;
+  name_ar: string;
+  sector: string;
+  sector_ar: string;
+  url: string;
+  description_ar: string;
+  type: string;
+  icon: React.ReactNode;
+}
+
+const MACHINERY_REFERENCE_SOURCES: ReferenceSource[] = [
+  {
+    id: "bidspotter",
+    name: "Bidspotter",
+    name_ar: "بيدسبوتر",
+    sector: "auctions",
+    sector_ar: "مزادات الآلات والمعدات",
+    url: "https://www.bidspotter.com",
+    description_ar: "منصة مزادات دولية متخصصة في الآلات والمعدات الصناعية، توفر بيانات أسعار فعلية من مزادات حقيقية حول العالم",
+    type: "مزادات",
+    icon: <Factory className="h-5 w-5" />,
+  },
+  {
+    id: "ritchie-brothers",
+    name: "Ritchie Brothers",
+    name_ar: "ريتشي براذرز",
+    sector: "construction",
+    sector_ar: "الإنشاءات والمعدات الثقيلة (الحديد الأصفر)",
+    url: "https://www.rbauction.com",
+    description_ar: "أكبر شركة مزادات معدات صناعية وإنشائية في العالم. مرجع رئيسي لأسعار المعدات الثقيلة مثل الحفارات والرافعات والجرافات",
+    type: "مزادات / قاعدة بيانات",
+    icon: <HardHat className="h-5 w-5" />,
+  },
+  {
+    id: "rock-and-dirt",
+    name: "Rock and Dirt",
+    name_ar: "روك آند دِرت",
+    sector: "mining",
+    sector_ar: "التعدين والمحاجر",
+    url: "https://www.rockanddirt.com",
+    description_ar: "قاعدة بيانات متخصصة في معدات التعدين والمحاجر والبناء، تتضمن أسعار بيع وتأجير المعدات المستعملة والجديدة",
+    type: "قاعدة بيانات",
+    icon: <Wrench className="h-5 w-5" />,
+  },
+  {
+    id: "aircraft-bluebook",
+    name: "Aircraft Bluebook",
+    name_ar: "دليل الطائرات الأزرق",
+    sector: "aviation",
+    sector_ar: "الطائرات",
+    url: "https://www.aircraftbluebook.com",
+    description_ar: "المرجع المعتمد لتقييم الطائرات، يوفر أسعار سوقية محدثة لجميع أنواع الطائرات المدنية والخاصة",
+    type: "دليل تقييم",
+    icon: <Plane className="h-5 w-5" />,
+  },
+  {
+    id: "vref",
+    name: "V-REF",
+    name_ar: "في-ريف",
+    sector: "aviation",
+    sector_ar: "الطائرات",
+    url: "https://www.vref.com",
+    description_ar: "دليل تقييم طائرات معتمد يوفر القيم السوقية العادلة للطائرات ذات المحركات المكبسية والتوربينية",
+    type: "دليل تقييم",
+    icon: <Plane className="h-5 w-5" />,
+  },
+  {
+    id: "jetnet",
+    name: "Jet-Net",
+    name_ar: "جِت نت",
+    sector: "aviation",
+    sector_ar: "الطائرات",
+    url: "https://www.jetnet.com",
+    description_ar: "قاعدة بيانات شاملة للطائرات التجارية والخاصة تشمل تاريخ الملكية والصيانة والأسعار السوقية",
+    type: "قاعدة بيانات",
+    icon: <Plane className="h-5 w-5" />,
+  },
+  {
+    id: "amstat",
+    name: "AMSTAT",
+    name_ar: "أمستات",
+    sector: "aviation",
+    sector_ar: "الطائرات",
+    url: "https://www.amstatcorp.com",
+    description_ar: "منصة معلومات سوق الطيران توفر بيانات الملكية والعمليات وتحليلات السوق للطائرات",
+    type: "تحليلات سوقية",
+    icon: <Plane className="h-5 w-5" />,
+  },
+  {
+    id: "airliner-price-guide",
+    name: "Airliner Price Guide",
+    name_ar: "دليل أسعار الطائرات",
+    sector: "aviation",
+    sector_ar: "الطائرات",
+    url: "https://www.airlinerpriceguide.com",
+    description_ar: "دليل متخصص في أسعار الطائرات التجارية الكبيرة يغطي طائرات بوينغ وإيرباص وغيرها",
+    type: "دليل أسعار",
+    icon: <Plane className="h-5 w-5" />,
+  },
+  {
+    id: "marshall-swift",
+    name: "Marshall & Swift / CoreLogic",
+    name_ar: "مارشال آند سويفت / كور لوجيكس",
+    sector: "construction_costs",
+    sector_ar: "تكاليف البناء والإحلال",
+    url: "https://www.corelogic.com",
+    description_ar: "المرجع العالمي الأول لتقدير تكاليف البناء والإحلال، يُستخدم في أسلوب التكلفة لتقييم المباني والمنشآت الصناعية",
+    type: "قاعدة بيانات تكاليف",
+    icon: <Building2 className="h-5 w-5" />,
+  },
+];
+
+const SECTORS = [
+  { key: "all", label: "جميع القطاعات" },
+  { key: "auctions", label: "مزادات الآلات" },
+  { key: "construction", label: "الإنشاءات والمعدات الثقيلة" },
+  { key: "mining", label: "التعدين" },
+  { key: "aviation", label: "الطائرات" },
+  { key: "construction_costs", label: "تكاليف البناء" },
+];
+
 export default function MarketDataIntegration() {
   const [activeTab, setActiveTab] = useState("browse");
   const [loading, setLoading] = useState(false);
@@ -34,6 +158,7 @@ export default function MarketDataIntegration() {
   const [searchCity, setSearchCity] = useState("");
   const [searchType, setSearchType] = useState("");
   const [zoneStats, setZoneStats] = useState<any[]>([]);
+  const [selectedSector, setSelectedSector] = useState("all");
 
   // Manual entry state
   const [newEntry, setNewEntry] = useState<MarketEntry>({
@@ -131,6 +256,10 @@ export default function MarketDataIntegration() {
     return <BarChart3 className="h-3 w-3 text-gray-400" />;
   };
 
+  const filteredSources = selectedSector === "all"
+    ? MACHINERY_REFERENCE_SOURCES
+    : MACHINERY_REFERENCE_SOURCES.filter(s => s.sector === selectedSector);
+
   return (
     <div className="space-y-6" dir="rtl">
       <div>
@@ -138,13 +267,14 @@ export default function MarketDataIntegration() {
           <Database className="h-6 w-6 text-primary" />
           بيانات السوق والمقارنات
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">استيراد وإدارة بيانات السوق العقاري</p>
+        <p className="text-sm text-muted-foreground mt-1">استيراد وإدارة بيانات السوق العقاري ومراجع الآلات والمعدات</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList>
           <TabsTrigger value="browse" className="gap-1"><Search className="h-3 w-3" /> البحث</TabsTrigger>
           <TabsTrigger value="zones" className="gap-1" onClick={loadZoneStats}><MapPin className="h-3 w-3" /> المناطق</TabsTrigger>
+          <TabsTrigger value="machinery-refs" className="gap-1"><Wrench className="h-3 w-3" /> مراجع الآلات</TabsTrigger>
           <TabsTrigger value="add" className="gap-1"><Plus className="h-3 w-3" /> إضافة مقارنة</TabsTrigger>
         </TabsList>
 
@@ -254,6 +384,76 @@ export default function MarketDataIntegration() {
                 </Card>
               ))}
             </div>
+          )}
+        </TabsContent>
+
+        {/* Machinery Reference Sources Tab */}
+        <TabsContent value="machinery-refs" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Globe className="h-4 w-4 text-primary" />
+                قواعد بيانات ومراجع دولية للآلات والمعدات
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                مصادر موثوقة ومعتمدة عالمياً لاستخدامها كمراجع في تقييم الآلات والمعدات
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {SECTORS.map(s => (
+                  <Button
+                    key={s.key}
+                    variant={selectedSector === s.key ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setSelectedSector(s.key)}
+                  >
+                    {s.label}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredSources.map(source => (
+              <Card key={source.id} className="border-border/50 hover:border-primary/30 transition-colors">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5 p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+                      {source.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-semibold text-sm text-foreground">{source.name}</h3>
+                        <Badge variant="secondary" className="text-[10px]">{source.type}</Badge>
+                      </div>
+                      <p className="text-xs text-primary/80 font-medium mt-0.5">{source.sector_ar}</p>
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{source.description_ar}</p>
+                      <a
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-3"
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                        {source.url.replace("https://www.", "")}
+                      </a>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {filteredSources.length === 0 && (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <Wrench className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                <p>لا توجد مراجع في هذا القطاع</p>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
