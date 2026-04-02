@@ -66,7 +66,7 @@ export default function ReviewPage() {
             <h3 className="text-sm font-semibold text-foreground">قائمة التقارير للمراجعة</h3>
           </div>
           <div className="divide-y divide-border">
-            {reports.map((r) => (
+            {filteredReports.map((r) => (
               <div
                 key={r.ref}
                 className="px-5 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
