@@ -98,6 +98,11 @@ export default function NewRequest() {
     intendedUsers: "",
   });
 
+  // Discount code
+  const [clientDiscountCode, setClientDiscountCode] = useState("");
+  const [clientDiscountApplied, setClientDiscountApplied] = useState<{ code: string; percentage: number } | null>(null);
+  const [clientCheckingDiscount, setClientCheckingDiscount] = useState(false);
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
