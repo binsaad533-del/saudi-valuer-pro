@@ -1,7 +1,22 @@
+import { useNavigate } from "react-router-dom";
 import TopBar from "@/components/layout/TopBar";
 import { ClipboardCheck, FileText, AlertTriangle, CheckCircle2, Clock } from "lucide-react";
 
 export default function ReviewPage() {
+  const navigate = useNavigate();
+
+  const reports = [
+    { ref: "VAL-2026-0042", type: "فيلا سكنية", valuer: "محمد العتيبي", status: "pending", date: "2026-03-25" },
+    { ref: "VAL-2026-0041", type: "مبنى تجاري", valuer: "خالد الشمري", status: "in_review", date: "2026-03-22" },
+    { ref: "VAL-2026-0040", type: "أرض خام", valuer: "سعد القحطاني", status: "needs_revision", date: "2026-03-20" },
+    { ref: "VAL-2026-0039", type: "مجمع سكني", valuer: "محمد العتيبي", status: "pending", date: "2026-03-18" },
+    { ref: "VAL-2026-0037", type: "أرض تطويرية", valuer: "خالد الشمري", status: "pending", date: "2026-03-15" },
+  ];
+
+  const handleReview = (ref: string) => {
+    navigate(`/reports/generate?ref=${encodeURIComponent(ref)}`);
+  };
+
   return (
     <div className="min-h-screen">
       <TopBar />
@@ -37,14 +52,12 @@ export default function ReviewPage() {
             <h3 className="text-sm font-semibold text-foreground">قائمة التقارير للمراجعة</h3>
           </div>
           <div className="divide-y divide-border">
-            {[
-              { ref: "VAL-2026-0042", type: "فيلا سكنية", valuer: "محمد العتيبي", status: "pending", date: "2026-03-25" },
-              { ref: "VAL-2026-0041", type: "مبنى تجاري", valuer: "خالد الشمري", status: "in_review", date: "2026-03-22" },
-              { ref: "VAL-2026-0040", type: "أرض خام", valuer: "سعد القحطاني", status: "needs_revision", date: "2026-03-20" },
-              { ref: "VAL-2026-0039", type: "مجمع سكني", valuer: "محمد العتيبي", status: "pending", date: "2026-03-18" },
-              { ref: "VAL-2026-0037", type: "أرض تطويرية", valuer: "خالد الشمري", status: "pending", date: "2026-03-15" },
-            ].map((r) => (
-              <div key={r.ref} className="px-5 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+            {reports.map((r) => (
+              <div
+                key={r.ref}
+                className="px-5 py-4 flex items-center justify-between hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleReview(r.ref)}
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                     <ClipboardCheck className="w-5 h-5 text-primary" />
@@ -63,7 +76,10 @@ export default function ReviewPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">{r.type} • المقيّم: {r.valuer} • {r.date}</p>
                   </div>
                 </div>
-                <button className="px-4 py-2 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleReview(r.ref); }}
+                  className="px-4 py-2 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                >
                   مراجعة
                 </button>
               </div>
