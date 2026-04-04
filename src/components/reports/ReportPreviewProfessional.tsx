@@ -16,8 +16,9 @@ interface ReportPreviewProfessionalProps {
   valuationMode?: "field" | "desktop";
 }
 
-export default function ReportPreviewProfessional({ report }: ReportPreviewProfessionalProps) {
+export default function ReportPreviewProfessional({ report, valuationMode = "field" }: ReportPreviewProfessionalProps) {
   const isDraft = report.status === "draft" || report.status === "review";
+  const isDesktop = valuationMode === "desktop";
 
   return (
     <div className="relative bg-white text-black print:shadow-none" dir="rtl">
