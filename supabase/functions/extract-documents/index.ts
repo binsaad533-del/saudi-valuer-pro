@@ -95,10 +95,11 @@ serve(async (req) => {
         text: `تم رفع ${fileNames.length} مستند. قم بتحليل محتوى المستندات التالية واستخرج جميع البيانات:`,
       });
 
-      for (const fc of fileContents) {
+      for (const [index, fc] of fileContents.entries()) {
+        const manualHint = fileDescriptions?.[index];
         userContent.push({
           type: "text",
-          text: `\n--- ملف: ${fc.name} ---`,
+          text: `\n--- ملف: ${fc.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""} ---`,
         });
 
         if (fc.mimeType.startsWith("image/")) {
@@ -109,10 +110,9 @@ serve(async (req) => {
             },
           });
         } else if (fc.mimeType === "application/pdf") {
-          // For PDFs, send as base64 with instruction
           userContent.push({
             type: "text",
-            text: `[ملف PDF - ${fc.name}] - حلل محتوى هذا الملف بناءً على اسمه ووصفه`,
+            text: `[ملف PDF - ${fc.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""}] - حلل محتوى هذا الملف بناءً على اسمه ووصفه`,
           });
         }
       }
