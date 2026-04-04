@@ -127,6 +127,29 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
         </div>
       )}
 
+      {/* Desktop Valuation Disclosure */}
+      {isDesktop && (
+        <div className="mx-6 mt-6 p-4 border-2 border-amber-400 bg-amber-50 rounded-lg">
+          <div className="flex items-start gap-2 mb-2">
+            <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+            <h2 className="text-lg font-bold text-amber-800">بيان الإفصاح — تقييم مكتبي</h2>
+          </div>
+          <div className="text-sm text-amber-900 space-y-2">
+            <p className="font-medium">Desktop Valuation Disclosure</p>
+            <p>لم يتم إجراء أي معاينة مادية أو شخصية للأصل المُقيَّم. تم إعداد هذا التقييم بالاعتماد على المستندات والبيانات المتاحة والأدلة البديلة المجمعة دون زيارة ميدانية.</p>
+            <p className="font-medium mt-3">القيود الناتجة عن غياب المعاينة:</p>
+            <ul className="list-disc list-inside space-y-1 text-amber-800">
+              <li>لم يتم التحقق البصري من الحالة الفعلية للأصل أو مطابقته للمخططات</li>
+              <li>قد تكون هناك عوامل مؤثرة على القيمة لم تُكتشف في غياب المعاينة الميدانية</li>
+              <li>يعتمد التقييم على دقة وصحة المعلومات المقدمة من العميل والمصادر المتاحة</li>
+            </ul>
+            <p className="mt-3 text-xs text-amber-700">
+              هذا التقييم متوافق مع معايير التقييم الدولية (IVS 2025) — المادتان 20.4 و108.3، ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم) — البندان 154 و161.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Separator className="mx-6 my-6" />
 
       {/* Signature Block */}
