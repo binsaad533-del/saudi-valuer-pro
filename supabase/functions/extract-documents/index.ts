@@ -247,7 +247,7 @@ serve(async (req) => {
                       description: "Key numbers, dates, and identifiers extracted from documents",
                     },
                   },
-                  required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories"],
+                  required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories", "assetFields"],
                 },
               },
             },
