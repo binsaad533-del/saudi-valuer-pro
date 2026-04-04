@@ -383,7 +383,9 @@ export default function NewValuation() {
           valuation_mode: valuationMode,
           desktop_disclaimer_accepted: valuationMode === "desktop" ? desktopDisclaimerAccepted : false,
           asset_data: {
-            ...assetFields,
+            description: assetDescription,
+            fields: dynamicAssetFields,
+            location: locationFields,
             ai_extracted: true,
             ai_confidence: extracted?.confidence,
             analysis_method: extracted?.analysisMethod,
