@@ -1,11 +1,160 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import * as XLSX from "https://esm.sh/xlsx@0.18.5";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
+
+// ── helpers ──────────────────────────────────────────────────────────
+
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+}
+
+function mimeCategory(mime: string): "image" | "pdf" | "excel" | "csv" | "word" | "zip" | "text" | "unsupported" {
+  if (mime.startsWith("image/")) return "image";
+  if (mime === "application/pdf") return "pdf";
+  if (
+    mime === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+    mime === "application/vnd.ms-excel" ||
+    mime === "application/x-excel"
+  ) return "excel";
+  if (mime === "text/csv" || mime === "text/tab-separated-values") return "csv";
+  if (
+    mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+    mime === "application/msword"
+  ) return "word";
+  if (
+    mime === "application/zip" ||
+    mime === "application/x-zip-compressed" ||
+    mime === "application/x-rar-compressed" ||
+    mime === "application/x-7z-compressed" ||
+    mime === "application/gzip"
+  ) return "zip";
+  if (mime.startsWith("text/")) return "text";
+  return "unsupported";
+}
+
+function guessExtMime(name: string): string {
+  const ext = name.split(".").pop()?.toLowerCase() || "";
+  const map: Record<string, string> = {
+    xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    xls: "application/vnd.ms-excel",
+    csv: "text/csv",
+    tsv: "text/tab-separated-values",
+    pdf: "application/pdf",
+    docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    doc: "application/msword",
+    zip: "application/zip",
+    rar: "application/x-rar-compressed",
+    "7z": "application/x-7z-compressed",
+    gz: "application/gzip",
+    jpg: "image/jpeg", jpeg: "image/jpeg",
+    png: "image/png", webp: "image/webp", gif: "image/gif",
+    txt: "text/plain", json: "application/json", xml: "text/xml",
+  };
+  return map[ext] || "application/octet-stream";
+}
+
+/** Convert an Excel workbook buffer to a concise text representation */
+function excelToText(buf: Uint8Array, fileName: string): string {
+  try {
+    const wb = XLSX.read(buf, { type: "array", cellDates: true });
+    const parts: string[] = [`📊 ملف إكسل: ${fileName}`];
+    for (const sheetName of wb.SheetNames) {
+      const ws = wb.Sheets[sheetName];
+      const rows: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+      if (rows.length === 0) continue;
+      parts.push(`\n── ورقة: ${sheetName} (${rows.length} صف) ──`);
+      // Include up to 200 rows to stay within limits
+      const limit = Math.min(rows.length, 200);
+      for (let r = 0; r < limit; r++) {
+        parts.push(rows[r].map((c: any) => String(c ?? "")).join(" | "));
+      }
+      if (rows.length > limit) parts.push(`... و ${rows.length - limit} صف إضافي`);
+    }
+    return parts.join("\n");
+  } catch (e) {
+    return `[تعذر قراءة ملف إكسل ${fileName}: ${e}]`;
+  }
+}
+
+/** Extract text content from a DOCX buffer (simplified XML extraction) */
+function docxToText(buf: Uint8Array, fileName: string): string {
+  try {
+    const zip = new JSZip();
+    // JSZip loadAsync is async but we need sync; use workaround
+    // Actually we will handle this in the async flow
+    return `__DOCX_PENDING__${fileName}`;
+  } catch {
+    return `[تعذر قراءة ملف Word ${fileName}]`;
+  }
+}
+
+async function docxToTextAsync(buf: Uint8Array, fileName: string): Promise<string> {
+  try {
+    const zip = await JSZip.loadAsync(buf);
+    const docXml = await zip.file("word/document.xml")?.async("string");
+    if (!docXml) return `[ملف Word فارغ: ${fileName}]`;
+    // Strip XML tags to get plain text
+    const text = docXml.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    return `📄 ملف Word: ${fileName}\n${text.substring(0, 15000)}`;
+  } catch (e) {
+    return `[تعذر قراءة ملف Word ${fileName}: ${e}]`;
+  }
+}
+
+/** Process a ZIP file, extracting readable contents */
+async function processZip(
+  buf: Uint8Array,
+  fileName: string,
+  supabase: any
+): Promise<{ texts: string[]; images: { name: string; base64: string; mimeType: string }[] }> {
+  const texts: string[] = [];
+  const images: { name: string; base64: string; mimeType: string }[] = [];
+  try {
+    const zip = await JSZip.loadAsync(buf);
+    const entries = Object.keys(zip.files);
+    texts.push(`📦 ملف مضغوط: ${fileName} — يحتوي ${entries.length} ملف`);
+
+    for (const entry of entries.slice(0, 50)) {
+      const file = zip.files[entry];
+      if (file.dir) continue;
+      const innerMime = guessExtMime(entry);
+      const cat = mimeCategory(innerMime);
+      const innerBuf = await file.async("uint8array");
+
+      if (cat === "image") {
+        images.push({ name: entry, base64: uint8ToBase64(innerBuf), mimeType: innerMime });
+      } else if (cat === "excel") {
+        texts.push(excelToText(innerBuf, entry));
+      } else if (cat === "csv" || cat === "text") {
+        const decoder = new TextDecoder("utf-8");
+        const txt = decoder.decode(innerBuf).substring(0, 10000);
+        texts.push(`📄 ${entry}:\n${txt}`);
+      } else if (cat === "word") {
+        texts.push(await docxToTextAsync(innerBuf, entry));
+      } else if (cat === "pdf") {
+        // PDFs inside ZIPs: send as images to AI
+        images.push({ name: entry, base64: uint8ToBase64(innerBuf), mimeType: "application/pdf" });
+      } else {
+        texts.push(`📎 ${entry} (${innerMime}) — ملف غير مدعوم للقراءة المباشرة`);
+      }
+    }
+    if (entries.length > 50) texts.push(`... و ${entries.length - 50} ملف إضافي لم يتم معالجته`);
+  } catch (e) {
+    texts.push(`[تعذر فك ضغط ${fileName}: ${e}]`);
+  }
+  return { texts, images };
+}
+
+// ── main handler ─────────────────────────────────────────────────────
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -18,8 +167,9 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
-    // If storage paths provided, download actual file content for multimodal analysis
-    let fileContents: { name: string; base64: string; mimeType: string }[] = [];
+    // Collect multimodal content & text extractions
+    const visionItems: { name: string; base64: string; mimeType: string }[] = [];
+    const textExtractions: string[] = [];
 
     if (storagePaths && storagePaths.length > 0) {
       const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -28,43 +178,84 @@ serve(async (req) => {
 
       for (const sp of storagePaths) {
         try {
-          const { data, error } = await supabase.storage
-            .from("client-uploads")
-            .download(sp.path);
-          if (error || !data) continue;
+          const { data, error } = await supabase.storage.from("client-uploads").download(sp.path);
+          if (error || !data) {
+            console.error(`Download failed ${sp.path}:`, error);
+            continue;
+          }
 
           const arrayBuf = await data.arrayBuffer();
-          const base64 = btoa(
-            new Uint8Array(arrayBuf).reduce((s, b) => s + String.fromCharCode(b), "")
-          );
-          const mimeType = sp.mimeType || "application/octet-stream";
+          const bytes = new Uint8Array(arrayBuf);
+          const mime = sp.mimeType || guessExtMime(sp.name || sp.path);
+          const cat = mimeCategory(mime);
 
-          // Only include supported types for vision (images, PDFs)
-          const supportedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"];
-          if (supportedTypes.some(t => mimeType.startsWith(t.split("/")[0]) || mimeType === t)) {
-            fileContents.push({ name: sp.name, base64, mimeType });
+          switch (cat) {
+            case "image":
+              visionItems.push({ name: sp.name, base64: uint8ToBase64(bytes), mimeType: mime });
+              break;
+            case "pdf":
+              visionItems.push({ name: sp.name, base64: uint8ToBase64(bytes), mimeType: mime });
+              break;
+            case "excel":
+              textExtractions.push(excelToText(bytes, sp.name));
+              break;
+            case "csv":
+            case "text": {
+              const decoder = new TextDecoder("utf-8");
+              const txt = decoder.decode(bytes).substring(0, 15000);
+              textExtractions.push(`📄 ${sp.name}:\n${txt}`);
+              break;
+            }
+            case "word":
+              textExtractions.push(await docxToTextAsync(bytes, sp.name));
+              break;
+            case "zip": {
+              const zipResult = await processZip(bytes, sp.name, supabase);
+              textExtractions.push(...zipResult.texts);
+              visionItems.push(...zipResult.images);
+              break;
+            }
+            default:
+              textExtractions.push(`📎 ${sp.name} (${mime}) — نوع ملف غير مدعوم للقراءة المباشرة، سيتم التصنيف حسب اسم الملف`);
           }
         } catch (e) {
-          console.error(`Failed to download ${sp.path}:`, e);
+          console.error(`Failed to process ${sp.path}:`, e);
         }
       }
     }
 
     const systemPrompt = `أنت محرك استخراج بيانات متقدم متخصص في التقييم العقاري والآلات والمعدات في المملكة العربية السعودية.
 
-مهمتك: تحليل المستندات المرفوعة (صور، PDF، وثائق) واستخراج:
+مهمتك: تحليل جميع المستندات والملفات المرفوعة (صور، PDF، إكسل، Word، CSV، ملفات مضغوطة) واستخراج كل المعلومات بدقة عالية جداً.
 
-1. **نوع التقييم** (real_estate / machinery / mixed) مع مستوى الثقة
-2. **بيانات العميل**: الاسم، رقم الهوية/السجل التجاري، الهاتف، البريد
-3. **وصف الأصل**: وصف مهني تفصيلي للأصل محل التقييم باللغة العربية (فقرة أو أكثر)
-4. **حقول الأصل الديناميكية (assetFields)**: استخرج كل البيانات المتاحة كحقول منفصلة مع نسبة ثقة لكل حقل. الحقول تختلف حسب نوع الأصل:
-   - **عقاري**: المساحة، رقم الصك، التصنيف (سكني/تجاري/أرض)، عدد الطوابق، سنة البناء، نوع الإنشاء، عدد الوحدات، مساحة البناء، الزاوية، عرض الشارع، التشطيب، وأي بيانات أخرى متاحة
-   - **آلات ومعدات**: اسم المعدة، الشركة المصنعة، الموديل، سنة الصنع، الرقم التسلسلي، الحالة، القدرة/السعة، ساعات التشغيل، نوع الوقود، بلد المنشأ، وأي بيانات أخرى متاحة
-   - **مختلط**: جميع الحقول ذات الصلة من النوعين
-   - لا تقتصر على حقول محددة — استخرج كل ما تجده في المستندات
-5. **تصنيف كل مستند**: نوعه
-6. **غرض التقييم** المحتمل
-7. **البيانات المستخرجة من المحتوى**: أرقام، تواريخ، أسماء، عناوين
+تعليمات حاسمة:
+1. **وصف الأصل**: يجب أن يكون وصفاً مهنياً تفصيلياً شاملاً باللغة العربية يعكس كل محتويات المستندات والصور. يشمل:
+   - الوصف الفيزيائي الكامل (المساحات، الأبعاد، المواصفات الفنية)
+   - الحالة العامة والتفاصيل الدقيقة من الصور
+   - البيانات المالية أو القانونية المستخرجة من الجداول والمستندات
+   - الموقع والعنوان إن وُجد
+   - أي معلومة أخرى ذات صلة بالتقييم
+   
+2. **نوع التقييم** (real_estate / machinery / mixed) مع مستوى الثقة
+
+3. **بيانات العميل**: الاسم، رقم الهوية/السجل التجاري، الهاتف، البريد
+
+4. **حقول الأصل الديناميكية (assetFields)**: استخرج كل البيانات المتاحة كحقول منفصلة:
+   - **عقاري**: المساحة، رقم الصك، التصنيف، عدد الطوابق، سنة البناء، نوع الإنشاء، عدد الوحدات، مساحة البناء، عرض الشارع، التشطيب، إلخ
+   - **آلات ومعدات**: اسم المعدة، الشركة المصنعة، الموديل، سنة الصنع، الرقم التسلسلي، الحالة، القدرة/السعة، ساعات التشغيل، نوع الوقود، بلد المنشأ، إلخ
+   - **من جداول الإكسل**: استخرج كل عمود كحقل منفصل مع قيمته
+   - لا تقتصر على حقول محددة — استخرج كل ما تجده
+
+5. **تصنيف كل مستند**: نوعه وأهميته
+
+6. **البيانات المستخرجة**: كل الأرقام والتواريخ والأسماء والعناوين
+
+تعليمات خاصة بالملفات:
+- **إكسل/CSV**: حلل كل صف وعمود واستخرج البيانات المهمة كحقول ديناميكية. إذا كان الجدول يحتوي على قائمة معدات أو أصول، استخرج كل عنصر.
+- **PDF**: حلل النصوص والجداول والصور المضمنة.
+- **الصور**: حلل المحتوى المرئي بدقة (نوع المبنى، حالته، المعدات، الأرقام المكتوبة).
+- **Word**: استخرج النصوص والجداول.
+- **ملفات مضغوطة**: تم فك ضغطها مسبقاً — حلل كل ملف داخلها.
 
 تعليمات حقول الأصل (assetFields):
 - كل حقل يجب أن يكون له key فريد بالإنجليزية (مثل area, deedNumber, machineName)
@@ -85,63 +276,84 @@ serve(async (req) => {
 - عقد / اتفاقية = contract
 - تقرير فني / تقييم سابق = technical_report
 - خريطة / موقع = location_map
+- جدول بيانات / إكسل = spreadsheet
+- ملف مضغوط = archive
 - أخرى = other
 
 قواعد حاسمة لتحديد نوع التقييم:
-- إذا كانت الصور أو المستندات تخص آلات أو معدات فقط ولا توجد مؤشرات عقارية واضحة (مثل صك، أرض، مبنى، مخطط، رخصة بناء) فصنّف الطلب = machinery
-- لا تعتبر أي صورة لمعدة أو آلة على أنها property_photo لمجرد أنها صورة
-- استخدم mixed فقط عند وجود أدلة واضحة على وجود أصل عقاري + آلات/معدات معاً
-- عند الشك بين real_estate و machinery بسبب الصور، أعط الأفضلية للمحتوى المرئي الفعلي داخل الصورة وليس لاسم الملف العام مثل WhatsApp Image
-- إذا أرسل النظام تلميح تصنيف يدوي للملف فاعتبره إشارة قوية يجب احترامها ما لم يكن محتوى الملف يناقضه بوضوح
+- إذا كانت الصور أو المستندات تخص آلات أو معدات فقط = machinery
+- إذا كانت تخص عقارات فقط = real_estate
+- استخدم mixed فقط عند وجود أدلة واضحة على النوعين معاً
+- إذا أرسل النظام تلميح تصنيف يدوي فاحترمه ما لم يناقضه المحتوى
 
 قواعد الأولوية:
-- إذا وُجد محتوى فعلي (صور/PDF) = حلل المحتوى بعمق واستخرج كل البيانات الممكنة
+- إذا وُجد محتوى فعلي = حلل المحتوى بعمق واستخرج كل البيانات الممكنة
 - إذا أسماء ملفات فقط = استنتج من الأسماء
 - أعط نسبة ثقة أعلى عند تحليل المحتوى الفعلي`;
 
     // Build messages with multimodal content
     const userContent: any[] = [];
 
-    if (fileContents.length > 0) {
+    const hasContent = visionItems.length > 0 || textExtractions.length > 0;
+
+    if (hasContent) {
       userContent.push({
         type: "text",
-        text: `تم رفع ${fileNames.length} مستند. قم بتحليل محتوى المستندات التالية واستخرج جميع البيانات:`,
+        text: `تم رفع ${fileNames.length} مستند. قم بتحليل محتوى المستندات التالية واستخرج جميع البيانات بدقة عالية:`,
       });
 
-      for (const [index, fc] of fileContents.entries()) {
-        const manualHint = fileDescriptions?.[index];
+      // Add text extractions (Excel, CSV, Word, etc.)
+      if (textExtractions.length > 0) {
         userContent.push({
           type: "text",
-          text: `\n--- ملف: ${fc.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""} ---`,
+          text: `\n=== محتوى مستخرج من الملفات ===\n${textExtractions.join("\n\n")}`,
+        });
+      }
+
+      // Add vision items (images, PDFs)
+      for (const [index, item] of visionItems.entries()) {
+        const originalIndex = fileNames.findIndex((n: string) => n === item.name);
+        const manualHint = originalIndex >= 0 ? fileDescriptions?.[originalIndex] : "";
+
+        userContent.push({
+          type: "text",
+          text: `\n--- ملف: ${item.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""} ---`,
         });
 
-        if (fc.mimeType.startsWith("image/")) {
+        if (item.mimeType.startsWith("image/")) {
           userContent.push({
             type: "image_url",
-            image_url: {
-              url: `data:${fc.mimeType};base64,${fc.base64}`,
-            },
+            image_url: { url: `data:${item.mimeType};base64,${item.base64}` },
           });
-        } else if (fc.mimeType === "application/pdf") {
+        } else if (item.mimeType === "application/pdf") {
+          // Send PDF as inline data for Gemini
           userContent.push({
-            type: "text",
-            text: `[ملف PDF - ${fc.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""}] - حلل محتوى هذا الملف بناءً على اسمه ووصفه`,
+            type: "image_url",
+            image_url: { url: `data:application/pdf;base64,${item.base64}` },
           });
         }
       }
 
-      // Add files that couldn't be downloaded
+      // Add remaining files that weren't processed
+      const processedNames = new Set([
+        ...visionItems.map((v) => v.name),
+        ...textExtractions.map((t) => {
+          const match = t.match(/[:：]\s*(.+?)[\n$]/);
+          return match?.[1] || "";
+        }),
+      ]);
+      const remaining = fileNames.filter((n: string) => !processedNames.has(n));
+      if (remaining.length > 0) {
         const remainingWithHints = remaining.map((n: string) => {
-          const originalIndex = fileNames.findIndex((fileName: string) => fileName === n);
-          const hint = originalIndex >= 0 ? fileDescriptions?.[originalIndex] : "";
+          const idx = fileNames.indexOf(n);
+          const hint = idx >= 0 ? fileDescriptions?.[idx] : "";
           return hint ? `${n} — تصنيف يدوي مقترح: ${hint}` : n;
         });
-        if (remaining.length > 0) {
-          userContent.push({
-            type: "text",
-            text: `\nملفات إضافية (أسماء فقط):\n${remainingWithHints.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
-          });
-        }
+        userContent.push({
+          type: "text",
+          text: `\nملفات إضافية (أسماء فقط):\n${remainingWithHints.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
+        });
+      }
     } else {
       userContent.push({
         type: "text",
@@ -149,126 +361,112 @@ serve(async (req) => {
       });
     }
 
-    const response = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: userContent },
-          ],
-          tools: [
-            {
-              type: "function",
-              function: {
-                name: "extract_valuation_data",
-                description: "Extract structured valuation data from document analysis",
-                parameters: {
-                  type: "object",
-                  properties: {
-                    discipline: {
-                      type: "string",
-                      enum: ["real_estate", "machinery", "mixed"],
-                      description: "Detected valuation type",
-                    },
-                    discipline_label: {
-                      type: "string",
-                      description: "Arabic label for the discipline",
-                    },
-                    confidence: {
-                      type: "number",
-                      description: "Confidence score 0-100",
-                    },
-                    client: {
-                      type: "object",
-                      properties: {
-                        clientName: { type: "string" },
-                        idNumber: { type: "string" },
-                        phone: { type: "string" },
-                        email: { type: "string" },
-                      },
-                    },
-                    asset: {
-                      type: "object",
-                      properties: {
-                        description: { type: "string", description: "وصف تفصيلي مهني للأصل باللغة العربية" },
-                      },
-                    },
-                    assetFields: {
-                      type: "array",
-                      description: "حقول ديناميكية مستخرجة من المستندات — تتغير حسب نوع الأصل",
-                      items: {
-                        type: "object",
-                        properties: {
-                          key: { type: "string", description: "Unique field key in English (e.g. area, deedNumber, machineName)" },
-                          label: { type: "string", description: "Arabic label for the field" },
-                          value: { type: "string", description: "Extracted value" },
-                          confidence: { type: "number", description: "Confidence 0-100 for this specific field" },
-                          source: { type: "string", description: "Which document this was extracted from" },
-                          group: { type: "string", enum: ["property", "machinery", "financial", "legal", "general"], description: "Field category group" },
-                        },
-                        required: ["key", "label", "value", "confidence"],
-                      },
-                    },
-                    suggestedPurpose: { type: "string" },
-                    notes: {
-                      type: "array",
-                      items: { type: "string" },
-                      description: "AI notes and recommendations in Arabic",
-                    },
-                    documentCategories: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          fileName: { type: "string" },
-                          category: {
-                            type: "string",
-                            enum: [
-                              "deed", "building_permit", "floor_plan",
-                              "property_photo", "machinery_photo", "identity_doc", "invoice",
-                              "contract", "technical_report", "location_map", "other",
-                            ],
-                          },
-                          categoryLabel: { type: "string", description: "Arabic label for the category" },
-                          relevance: { type: "string", enum: ["high", "medium", "low"] },
-                          extractedInfo: {
-                            type: "string",
-                            description: "Key info extracted from this specific document in Arabic",
-                          },
-                        },
-                        required: ["fileName", "category", "categoryLabel", "relevance"],
-                      },
-                    },
-                    extractedNumbers: {
-                      type: "array",
-                      items: {
-                        type: "object",
-                        properties: {
-                          label: { type: "string", description: "What this number represents in Arabic" },
-                          value: { type: "string" },
-                          source: { type: "string", description: "Which document this was extracted from" },
-                        },
-                        required: ["label", "value", "source"],
-                      },
-                      description: "Key numbers, dates, and identifiers extracted from documents",
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userContent },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "extract_valuation_data",
+              description: "Extract structured valuation data from document analysis",
+              parameters: {
+                type: "object",
+                properties: {
+                  discipline: {
+                    type: "string",
+                    enum: ["real_estate", "machinery", "mixed"],
+                  },
+                  discipline_label: { type: "string" },
+                  confidence: { type: "number" },
+                  client: {
+                    type: "object",
+                    properties: {
+                      clientName: { type: "string" },
+                      idNumber: { type: "string" },
+                      phone: { type: "string" },
+                      email: { type: "string" },
                     },
                   },
-                  required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories", "assetFields"],
+                  asset: {
+                    type: "object",
+                    properties: {
+                      description: { type: "string", description: "وصف تفصيلي مهني شامل للأصل باللغة العربية يعكس كل محتويات المستندات والصور والجداول" },
+                    },
+                  },
+                  assetFields: {
+                    type: "array",
+                    description: "حقول ديناميكية مستخرجة من جميع المستندات والملفات",
+                    items: {
+                      type: "object",
+                      properties: {
+                        key: { type: "string" },
+                        label: { type: "string" },
+                        value: { type: "string" },
+                        confidence: { type: "number" },
+                        source: { type: "string" },
+                        group: { type: "string", enum: ["property", "machinery", "financial", "legal", "general"] },
+                      },
+                      required: ["key", "label", "value", "confidence"],
+                    },
+                  },
+                  suggestedPurpose: { type: "string" },
+                  notes: {
+                    type: "array",
+                    items: { type: "string" },
+                  },
+                  documentCategories: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        fileName: { type: "string" },
+                        category: {
+                          type: "string",
+                          enum: [
+                            "deed", "building_permit", "floor_plan",
+                            "property_photo", "machinery_photo", "identity_doc", "invoice",
+                            "contract", "technical_report", "location_map",
+                            "spreadsheet", "archive", "other",
+                          ],
+                        },
+                        categoryLabel: { type: "string" },
+                        relevance: { type: "string", enum: ["high", "medium", "low"] },
+                        extractedInfo: { type: "string" },
+                      },
+                      required: ["fileName", "category", "categoryLabel", "relevance"],
+                    },
+                  },
+                  extractedNumbers: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        label: { type: "string" },
+                        value: { type: "string" },
+                        source: { type: "string" },
+                      },
+                      required: ["label", "value", "source"],
+                    },
+                  },
                 },
+                required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories", "assetFields"],
               },
             },
-          ],
-          tool_choice: { type: "function", function: { name: "extract_valuation_data" } },
-        }),
-      }
-    );
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "extract_valuation_data" } },
+      }),
+    });
 
     if (!response.ok) {
       const status = response.status;
@@ -299,9 +497,10 @@ serve(async (req) => {
 
     const extracted = JSON.parse(toolCall.function.arguments);
 
+    // Post-process discipline based on document categories
     const docCategories = Array.isArray(extracted.documentCategories) ? extracted.documentCategories.map((doc: { category?: string }) => doc.category) : [];
-    const hasPropertyEvidence = docCategories.some((category: string) => ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].includes(category));
-    const hasMachineryEvidence = docCategories.some((category: string) => ["machinery_photo", "invoice", "technical_report"].includes(category));
+    const hasPropertyEvidence = docCategories.some((c: string) => ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].includes(c));
+    const hasMachineryEvidence = docCategories.some((c: string) => ["machinery_photo"].includes(c));
 
     if (hasMachineryEvidence && !hasPropertyEvidence) {
       extracted.discipline = "machinery";
@@ -311,10 +510,17 @@ serve(async (req) => {
       extracted.discipline_label = "تقييم مختلط";
     }
 
-    // Add metadata about analysis method
-    extracted.analysisMethod = fileContents.length > 0 ? "content_analysis" : "filename_only";
-    extracted.analyzedFilesCount = fileContents.length;
+    // Metadata
+    extracted.analysisMethod = hasContent ? "content_analysis" : "filename_only";
+    extracted.analyzedFilesCount = visionItems.length + textExtractions.length;
     extracted.totalFilesCount = fileNames.length;
+    extracted.processedFileTypes = {
+      images: visionItems.filter((v) => v.mimeType.startsWith("image/")).length,
+      pdfs: visionItems.filter((v) => v.mimeType === "application/pdf").length,
+      spreadsheets: textExtractions.filter((t) => t.startsWith("📊")).length,
+      documents: textExtractions.filter((t) => t.startsWith("📄")).length,
+      archives: textExtractions.filter((t) => t.startsWith("📦")).length,
+    };
 
     return new Response(JSON.stringify(extracted), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
