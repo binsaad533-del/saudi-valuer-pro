@@ -76,6 +76,15 @@ interface ExtractedNumber {
   source: string;
 }
 
+interface AssetField {
+  key: string;
+  label: string;
+  value: string;
+  confidence: number;
+  source?: string;
+  group?: string;
+}
+
 interface ExtractedData {
   discipline: string;
   discipline_label: string;
@@ -88,15 +97,8 @@ interface ExtractedData {
   };
   asset: {
     description?: string;
-    city?: string;
-    district?: string;
-    area?: string;
-    deedNumber?: string;
-    classification?: string;
-    machineName?: string;
-    manufacturer?: string;
-    model?: string;
   };
+  assetFields?: AssetField[];
   suggestedPurpose?: string;
   notes: string[];
   documentCategories: { fileName: string; category: string; categoryLabel?: string; relevance: string; extractedInfo?: string }[];
