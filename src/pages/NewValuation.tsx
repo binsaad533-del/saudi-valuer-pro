@@ -294,6 +294,12 @@ export default function NewValuation() {
       case 3:
         if (!purpose) errors.push("يجب تحديد غرض التقييم");
         if (!valuationDate) errors.push("يجب تحديد تاريخ التقييم");
+        if (valuationMode === "desktop" && DESKTOP_BLOCKED_PURPOSES.includes(purpose)) {
+          errors.push("التقييم المكتبي غير مسموح لهذا الغرض — يتطلب معاينة ميدانية");
+        }
+        if (valuationMode === "desktop" && !desktopDisclaimerAccepted) {
+          errors.push("يجب الموافقة على إقرار التقييم المكتبي");
+        }
         break;
       case 4:
         for (let s = 1; s <= 3; s++) {
