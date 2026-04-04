@@ -369,6 +369,8 @@ export default function NewValuation() {
           client_phone: clientFields.phone || "",
           client_email: clientFields.email || "",
           intended_user_ar: clientFields.clientName || "",
+          valuation_mode: valuationMode,
+          desktop_disclaimer_accepted: valuationMode === "desktop" ? desktopDisclaimerAccepted : false,
           asset_data: {
             ...assetFields,
             ai_extracted: true,
