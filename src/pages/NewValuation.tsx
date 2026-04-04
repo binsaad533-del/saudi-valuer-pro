@@ -745,7 +745,7 @@ export default function NewValuation() {
                 </div>
               </div>
 
-              {/* Asset data - AI extracted (read-only) */}
+              {/* Asset data - AI extracted dynamic fields */}
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-primary" />
@@ -756,17 +756,17 @@ export default function NewValuation() {
                   </span>
                 </h4>
                 <div className="space-y-4">
-                  {/* Asset description - AI extracted, read-only */}
+                  {/* Asset description - AI extracted, editable */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
                       <Sparkles className="w-3 h-3 text-primary" />
                       وصف الأصل
                     </label>
                     <textarea
-                      value={assetFields.description || ""}
-                      readOnly
+                      value={assetDescription}
+                      onChange={(e) => setAssetDescription(e.target.value)}
                       rows={3}
-                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-muted/50 text-sm resize-none cursor-default text-muted-foreground"
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                     />
                   </div>
 
@@ -783,8 +783,8 @@ export default function NewValuation() {
                         </label>
                         <input
                           type="text"
-                          value={assetFields.city || ""}
-                          onChange={(e) => setAssetFields(prev => ({ ...prev, city: e.target.value }))}
+                          value={locationFields.city}
+                          onChange={(e) => setLocationFields(prev => ({ ...prev, city: e.target.value }))}
                           className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                       </div>
@@ -794,38 +794,82 @@ export default function NewValuation() {
                         </label>
                         <input
                           type="text"
-                          value={assetFields.district || ""}
-                          onChange={(e) => setAssetFields(prev => ({ ...prev, district: e.target.value }))}
+                          value={locationFields.district}
+                          onChange={(e) => setLocationFields(prev => ({ ...prev, district: e.target.value }))}
                           className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Other asset fields - AI extracted, read-only */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {[
-                      { key: "area", label: "المساحة (م²)", icon: Ruler },
-                      { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
-                      { key: "classification", label: "التصنيف", icon: Tag },
-                      { key: "machineName", label: "اسم المعدة", icon: Building2 },
-                      { key: "manufacturer", label: "الشركة المصنعة", icon: Building2 },
-                      { key: "model", label: "الموديل", icon: Tag },
-                    ].map(f => (
-                      <div key={f.key}>
-                        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
-                          <Sparkles className="w-3 h-3 text-primary" />
-                          {f.label}
-                        </label>
-                        <input
-                          type="text"
-                          value={assetFields[f.key] || ""}
-                          readOnly
-                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-muted/50 text-sm cursor-default text-muted-foreground"
-                        />
+                  {/* Dynamic AI-extracted fields with confidence */}
+                  {dynamicAssetFields.filter(f => f.key !== "city" && f.key !== "district").length > 0 && (
+                    <div className="space-y-3">
+                      <h5 className="text-xs font-semibold text-muted-foreground">البيانات المستخرجة</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {dynamicAssetFields
+                          .filter(f => f.key !== "city" && f.key !== "district")
+                          .map((field, idx) => {
+                            const confColor = field.confidence >= 85 ? "text-green-600" : field.confidence >= 70 ? "text-yellow-600" : "text-red-500";
+                            const confBg = field.confidence >= 85 ? "bg-green-500" : field.confidence >= 70 ? "bg-yellow-500" : "bg-red-500";
+                            return (
+                              <div key={field.key} className="relative">
+                                <label className="flex items-center justify-between text-sm font-medium text-foreground mb-1.5">
+                                  <span className="flex items-center gap-1.5">
+                                    <Sparkles className="w-3 h-3 text-primary" />
+                                    {field.label}
+                                  </span>
+                                  <span className={`text-[10px] font-medium ${confColor} flex items-center gap-1`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${confBg}`} />
+                                    {field.confidence}%
+                                  </span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    const newFields = [...dynamicAssetFields];
+                                    const realIdx = newFields.findIndex(f => f.key === field.key);
+                                    if (realIdx >= 0) {
+                                      newFields[realIdx] = { ...newFields[realIdx], value: e.target.value };
+                                      setDynamicAssetFields(newFields);
+                                    }
+                                  }}
+                                  className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                />
+                                {field.source && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">المصدر: {field.source}</p>
+                                )}
+                                {field.confidence < 70 && (
+                                  <p className="text-[10px] text-red-500 mt-0.5 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" /> غير موثوق — يحتاج تأكيد يدوي
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Add custom field button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const key = `custom_${Date.now()}`;
+                      setDynamicAssetFields(prev => [...prev, {
+                        key,
+                        label: "حقل مخصص",
+                        value: "",
+                        confidence: 100,
+                        source: "إضافة يدوية",
+                        group: "general",
+                      }]);
+                    }}
+                    className="w-full py-2 rounded-lg border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    + إضافة حقل مخصص
+                  </button>
                 </div>
               </div>
             </div>
