@@ -27,7 +27,13 @@ export default function SettingsPage() {
 
   const isOwner = role === "owner";
 
-  const ownerTabs = [
+  // Non-owner admins should use /account instead
+  if (!isOwner) {
+    navigate("/account", { replace: true });
+    return null;
+  }
+
+  const tabs = [
     { value: "company", label: t("companyData"), icon: Building2 },
     { value: "valuer", label: t("valuerData"), icon: UserCircle },
     { value: "reports", label: t("reportsSettings"), icon: FileText },
@@ -36,15 +42,9 @@ export default function SettingsPage() {
     { value: "integrations", label: t("integrations"), icon: Plug },
     { value: "discounts", label: "أكواد الخصم", icon: Ticket },
   ];
-
-  const adminTabs = [
-    { value: "valuer", label: t("myProfileTitle"), icon: UserCircle },
-  ];
-
-  const tabs = isOwner ? ownerTabs : adminTabs;
-  const defaultTab = isOwner ? "company" : "valuer";
-  const pageTitle = isOwner ? t("settingsTitle") : t("myProfileTitle");
-  const pageDesc = isOwner ? t("settingsDesc") : t("myProfileDesc");
+  const defaultTab = "company";
+  const pageTitle = t("settingsTitle");
+  const pageDesc = t("settingsDesc");
 
   return (
     <div className="space-y-6">
