@@ -136,8 +136,8 @@ export default function UserSettingsPage() {
             <Settings className="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">إعدادات الحساب</h1>
-            <p className="text-sm text-muted-foreground">تعديل المعلومات الشخصية وكلمة المرور</p>
+            <h1 className="text-2xl font-bold text-foreground">حسابي</h1>
+            <p className="text-sm text-muted-foreground">تعديل بياناتك الشخصية وكلمة المرور</p>
           </div>
         </div>
         <Button variant="outline" size="sm" onClick={() => navigate(backPath)} className="gap-1">
