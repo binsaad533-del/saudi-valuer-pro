@@ -68,7 +68,7 @@ const translations: Record<string, Record<Language, string>> = {
   systemSection: { ar: "النظام", en: "System" },
   analytics: { ar: "التحليلات", en: "Analytics" },
   compliance: { ar: "الامتثال", en: "Compliance" },
-  myProfile: { ar: "بياناتي", en: "My Profile" },
+  myProfile: { ar: "حسابي", en: "My Account" },
 
   // Quick actions
   quickActions: { ar: "إجراءات سريعة", en: "Quick Actions" },
@@ -112,8 +112,8 @@ const translations: Record<string, Record<Language, string>> = {
   integrations: { ar: "التكاملات", en: "Integrations" },
   settingsTitle: { ar: "الإعدادات", en: "Settings" },
   settingsDesc: { ar: "إدارة إعدادات المنصة والشركة والتقارير", en: "Manage platform, company, and report settings" },
-  myProfileTitle: { ar: "بياناتي", en: "My Profile" },
-  myProfileDesc: { ar: "تعديل بياناتك الشخصية", en: "Edit your personal information" },
+  myProfileTitle: { ar: "حسابي", en: "My Account" },
+  myProfileDesc: { ar: "تعديل بياناتك الشخصية وكلمة المرور", en: "Edit your personal information and password" },
 
   // Valuations list page
   valuationsList: { ar: "قائمة التقييمات", en: "Valuations List" },
