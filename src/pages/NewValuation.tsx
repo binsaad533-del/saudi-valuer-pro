@@ -327,13 +327,13 @@ export default function NewValuation() {
     if (uploadedFiles.length > 0) total += 15;
     if (extracted) total += 15;
     if (clientFields.clientName?.trim()) total += 15;
-    if (assetFields.description?.trim()) total += 10;
-    const filledAsset = Object.values(assetFields).filter(v => v?.trim()).length;
+    if (assetDescription?.trim()) total += 10;
+    const filledAsset = dynamicAssetFields.filter(f => f.value?.trim()).length;
     total += Math.min(filledAsset * 2, 15);
     if (purpose) total += 15;
     if (valuationDate) total += 15;
     return Math.min(total, 100);
-  }, [uploadedFiles, extracted, clientFields, assetFields, purpose, valuationDate]);
+  }, [uploadedFiles, extracted, clientFields, assetDescription, dynamicAssetFields, purpose, valuationDate]);
 
   const canGoToStep = useCallback((target: number): boolean => {
     if (target === 1) return true;
