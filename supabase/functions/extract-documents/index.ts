@@ -56,10 +56,23 @@ serve(async (req) => {
 
 1. **نوع التقييم** (real_estate / machinery / mixed) مع مستوى الثقة
 2. **بيانات العميل**: الاسم، رقم الهوية/السجل التجاري، الهاتف، البريد
-3. **بيانات الأصل**: الوصف، المدينة، الحي، المساحة، رقم الصك، التصنيف، وبيانات الآلة/المعدة مثل الاسم والشركة المصنعة والموديل
-4. **تصنيف كل مستند**: نوعه (صك، رخصة بناء، مخطط، فاتورة، عقد، صورة أصل عقاري، صورة آلة/معدة، هوية، تقرير فني، أخرى)
-5. **غرض التقييم** المحتمل
-6. **البيانات المستخرجة من المحتوى**: أرقام، تواريخ، أسماء، عناوين ظاهرة في الوثائق
+3. **وصف الأصل**: وصف مهني تفصيلي للأصل محل التقييم باللغة العربية (فقرة أو أكثر)
+4. **حقول الأصل الديناميكية (assetFields)**: استخرج كل البيانات المتاحة كحقول منفصلة مع نسبة ثقة لكل حقل. الحقول تختلف حسب نوع الأصل:
+   - **عقاري**: المساحة، رقم الصك، التصنيف (سكني/تجاري/أرض)، عدد الطوابق، سنة البناء، نوع الإنشاء، عدد الوحدات، مساحة البناء، الزاوية، عرض الشارع، التشطيب، وأي بيانات أخرى متاحة
+   - **آلات ومعدات**: اسم المعدة، الشركة المصنعة، الموديل، سنة الصنع، الرقم التسلسلي، الحالة، القدرة/السعة، ساعات التشغيل، نوع الوقود، بلد المنشأ، وأي بيانات أخرى متاحة
+   - **مختلط**: جميع الحقول ذات الصلة من النوعين
+   - لا تقتصر على حقول محددة — استخرج كل ما تجده في المستندات
+5. **تصنيف كل مستند**: نوعه
+6. **غرض التقييم** المحتمل
+7. **البيانات المستخرجة من المحتوى**: أرقام، تواريخ، أسماء، عناوين
+
+تعليمات حقول الأصل (assetFields):
+- كل حقل يجب أن يكون له key فريد بالإنجليزية (مثل area, deedNumber, machineName)
+- كل حقل يجب أن يكون له label عربي واضح
+- كل حقل يجب أن يكون له نسبة ثقة (0-100) تعكس مدى تأكدك من القيمة
+- حدد مصدر الاستخراج (اسم المستند)
+- صنّف كل حقل ضمن مجموعة: property, machinery, financial, legal, general
+- كن شاملاً — استخرج أكبر عدد ممكن من الحقول
 
 قواعد التصنيف:
 - صك / صك إلكتروني = deed
@@ -184,15 +197,23 @@ serve(async (req) => {
                     asset: {
                       type: "object",
                       properties: {
-                        description: { type: "string" },
-                        city: { type: "string" },
-                        district: { type: "string" },
-                        area: { type: "string" },
-                        deedNumber: { type: "string" },
-                        classification: { type: "string" },
-                        machineName: { type: "string" },
-                        manufacturer: { type: "string" },
-                        model: { type: "string" },
+                        description: { type: "string", description: "وصف تفصيلي مهني للأصل باللغة العربية" },
+                      },
+                    },
+                    assetFields: {
+                      type: "array",
+                      description: "حقول ديناميكية مستخرجة من المستندات — تتغير حسب نوع الأصل",
+                      items: {
+                        type: "object",
+                        properties: {
+                          key: { type: "string", description: "Unique field key in English (e.g. area, deedNumber, machineName)" },
+                          label: { type: "string", description: "Arabic label for the field" },
+                          value: { type: "string", description: "Extracted value" },
+                          confidence: { type: "number", description: "Confidence 0-100 for this specific field" },
+                          source: { type: "string", description: "Which document this was extracted from" },
+                          group: { type: "string", enum: ["property", "machinery", "financial", "legal", "general"], description: "Field category group" },
+                        },
+                        required: ["key", "label", "value", "confidence"],
                       },
                     },
                     suggestedPurpose: { type: "string" },
@@ -239,7 +260,7 @@ serve(async (req) => {
                       description: "Key numbers, dates, and identifiers extracted from documents",
                     },
                   },
-                  required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories"],
+                  required: ["discipline", "discipline_label", "confidence", "notes", "documentCategories", "assetFields"],
                 },
               },
             },

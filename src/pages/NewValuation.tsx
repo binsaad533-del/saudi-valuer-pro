@@ -5,9 +5,9 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ChevronLeft, ChevronRight, Upload, FileText, CheckCircle2,
+  ChevronLeft, ChevronRight, FileText, CheckCircle2,
   AlertTriangle, AlertCircle, Eye, Send, Loader2, Sparkles, X,
-  FolderUp, Brain, FileSearch, Tag, Hash, Calendar, MapPin,
+  FolderUp, Brain, FileSearch, Tag, Hash, MapPin,
   Building2, User, Phone, Mail, Ruler, FileCheck, ShieldCheck,
   Image as ImageIcon, FileSpreadsheet, File,
 } from "lucide-react";
@@ -76,6 +76,15 @@ interface ExtractedNumber {
   source: string;
 }
 
+interface AssetField {
+  key: string;
+  label: string;
+  value: string;
+  confidence: number;
+  source?: string;
+  group?: string;
+}
+
 interface ExtractedData {
   discipline: string;
   discipline_label: string;
@@ -88,15 +97,8 @@ interface ExtractedData {
   };
   asset: {
     description?: string;
-    city?: string;
-    district?: string;
-    area?: string;
-    deedNumber?: string;
-    classification?: string;
-    machineName?: string;
-    manufacturer?: string;
-    model?: string;
   };
+  assetFields?: AssetField[];
   suggestedPurpose?: string;
   notes: string[];
   documentCategories: { fileName: string; category: string; categoryLabel?: string; relevance: string; extractedInfo?: string }[];
@@ -127,7 +129,9 @@ export default function NewValuation() {
   // Step 2: AI extracted data (editable)
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
   const [clientFields, setClientFields] = useState<Record<string, string>>({});
-  const [assetFields, setAssetFields] = useState<Record<string, string>>({});
+  const [dynamicAssetFields, setDynamicAssetFields] = useState<AssetField[]>([]);
+  const [assetDescription, setAssetDescription] = useState("");
+  const [locationFields, setLocationFields] = useState<{ city: string; district: string }>({ city: "", district: "" });
 
   // Step 3: purpose & valuation config
   const [purpose, setPurpose] = useState("");
@@ -228,17 +232,23 @@ export default function NewValuation() {
         phone: result.client?.phone || "",
         email: result.client?.email || "",
       });
-      setAssetFields({
-        description: result.asset?.description || "",
-        city: result.asset?.city || "",
-        district: result.asset?.district || "",
-        area: result.asset?.area || "",
-        deedNumber: result.asset?.deedNumber || "",
-        classification: result.asset?.classification || "",
-        machineName: result.asset?.machineName || "",
-        manufacturer: result.asset?.manufacturer || "",
-        model: result.asset?.model || "",
-      });
+      setAssetDescription(result.asset?.description || "");
+      // Set dynamic asset fields from AI
+      if (result.assetFields && result.assetFields.length > 0) {
+        setDynamicAssetFields(result.assetFields);
+      } else {
+        // Fallback: no dynamic fields returned
+        setDynamicAssetFields([]);
+      }
+      // Extract location if present in dynamic fields
+      const cityField = result.assetFields?.find(f => f.key === "city");
+      const districtField = result.assetFields?.find(f => f.key === "district");
+      if (cityField || districtField) {
+        setLocationFields({
+          city: cityField?.value || "",
+          district: districtField?.value || "",
+        });
+      }
       if (result.suggestedPurpose) setPurpose(result.suggestedPurpose);
 
       // Update file categories from AI
@@ -289,7 +299,7 @@ export default function NewValuation() {
         break;
       case 2:
         if (!clientFields.clientName?.trim()) errors.push("اسم العميل مطلوب");
-        if (!assetFields.description?.trim()) warnings.push("وصف الأصل غير مكتمل");
+        if (!assetDescription?.trim()) warnings.push("وصف الأصل غير مكتمل");
         if (uploadedFiles.some(f => !f.category)) warnings.push("بعض الملفات لم تُصنَّف بعد");
         break;
       case 3:
@@ -310,20 +320,20 @@ export default function NewValuation() {
         break;
     }
     return { valid: errors.length === 0, errors, warnings };
-  }, [uploadedFiles, extracted, clientFields, assetFields, purpose, valuationDate]);
+  }, [uploadedFiles, extracted, clientFields, assetDescription, dynamicAssetFields, purpose, valuationDate]);
 
   const progressPercent = useMemo(() => {
     let total = 0;
     if (uploadedFiles.length > 0) total += 15;
     if (extracted) total += 15;
     if (clientFields.clientName?.trim()) total += 15;
-    if (assetFields.description?.trim()) total += 10;
-    const filledAsset = Object.values(assetFields).filter(v => v?.trim()).length;
+    if (assetDescription?.trim()) total += 10;
+    const filledAsset = dynamicAssetFields.filter(f => f.value?.trim()).length;
     total += Math.min(filledAsset * 2, 15);
     if (purpose) total += 15;
     if (valuationDate) total += 15;
     return Math.min(total, 100);
-  }, [uploadedFiles, extracted, clientFields, assetFields, purpose, valuationDate]);
+  }, [uploadedFiles, extracted, clientFields, assetDescription, dynamicAssetFields, purpose, valuationDate]);
 
   const canGoToStep = useCallback((target: number): boolean => {
     if (target === 1) return true;
@@ -373,7 +383,9 @@ export default function NewValuation() {
           valuation_mode: valuationMode,
           desktop_disclaimer_accepted: valuationMode === "desktop" ? desktopDisclaimerAccepted : false,
           asset_data: {
-            ...assetFields,
+            description: assetDescription,
+            fields: dynamicAssetFields,
+            location: locationFields,
             ai_extracted: true,
             ai_confidence: extracted?.confidence,
             analysis_method: extracted?.analysisMethod,
@@ -412,7 +424,7 @@ export default function NewValuation() {
     } finally {
       setSubmitting(false);
     }
-  }, [extracted, clientFields, assetFields, purpose, valueBasis, valuationDate, valuationMode, desktopDisclaimerAccepted, uploadedFiles, validateStep, logActivity, navigate]);
+  }, [extracted, clientFields, dynamicAssetFields, assetDescription, locationFields, purpose, valueBasis, valuationDate, valuationMode, desktopDisclaimerAccepted, uploadedFiles, validateStep, logActivity, navigate]);
 
   const allStepValidations = useMemo(() => STEPS.map(s => ({ step: s, validation: validateStep(s.id) })), [validateStep]);
 
@@ -733,7 +745,7 @@ export default function NewValuation() {
                 </div>
               </div>
 
-              {/* Asset data - AI extracted (read-only) */}
+              {/* Asset data - AI extracted dynamic fields */}
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-primary" />
@@ -744,17 +756,17 @@ export default function NewValuation() {
                   </span>
                 </h4>
                 <div className="space-y-4">
-                  {/* Asset description - AI extracted, read-only */}
+                  {/* Asset description - AI extracted, editable */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+                    <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
                       <Sparkles className="w-3 h-3 text-primary" />
                       وصف الأصل
                     </label>
                     <textarea
-                      value={assetFields.description || ""}
-                      readOnly
+                      value={assetDescription}
+                      onChange={(e) => setAssetDescription(e.target.value)}
                       rows={3}
-                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-muted/50 text-sm resize-none cursor-default text-muted-foreground"
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                     />
                   </div>
 
@@ -771,8 +783,8 @@ export default function NewValuation() {
                         </label>
                         <input
                           type="text"
-                          value={assetFields.city || ""}
-                          onChange={(e) => setAssetFields(prev => ({ ...prev, city: e.target.value }))}
+                          value={locationFields.city}
+                          onChange={(e) => setLocationFields(prev => ({ ...prev, city: e.target.value }))}
                           className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                       </div>
@@ -782,38 +794,82 @@ export default function NewValuation() {
                         </label>
                         <input
                           type="text"
-                          value={assetFields.district || ""}
-                          onChange={(e) => setAssetFields(prev => ({ ...prev, district: e.target.value }))}
+                          value={locationFields.district}
+                          onChange={(e) => setLocationFields(prev => ({ ...prev, district: e.target.value }))}
                           className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                         />
                       </div>
                     </div>
                   </div>
 
-                  {/* Other asset fields - AI extracted, read-only */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {[
-                      { key: "area", label: "المساحة (م²)", icon: Ruler },
-                      { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
-                      { key: "classification", label: "التصنيف", icon: Tag },
-                      { key: "machineName", label: "اسم المعدة", icon: Building2 },
-                      { key: "manufacturer", label: "الشركة المصنعة", icon: Building2 },
-                      { key: "model", label: "الموديل", icon: Tag },
-                    ].map(f => (
-                      <div key={f.key}>
-                        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
-                          <Sparkles className="w-3 h-3 text-primary" />
-                          {f.label}
-                        </label>
-                        <input
-                          type="text"
-                          value={assetFields[f.key] || ""}
-                          readOnly
-                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-muted/50 text-sm cursor-default text-muted-foreground"
-                        />
+                  {/* Dynamic AI-extracted fields with confidence */}
+                  {dynamicAssetFields.filter(f => f.key !== "city" && f.key !== "district").length > 0 && (
+                    <div className="space-y-3">
+                      <h5 className="text-xs font-semibold text-muted-foreground">البيانات المستخرجة</h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {dynamicAssetFields
+                          .filter(f => f.key !== "city" && f.key !== "district")
+                          .map((field) => {
+                            const confColor = field.confidence >= 85 ? "text-green-600" : field.confidence >= 70 ? "text-yellow-600" : "text-red-500";
+                            const confBg = field.confidence >= 85 ? "bg-green-500" : field.confidence >= 70 ? "bg-yellow-500" : "bg-red-500";
+                            return (
+                              <div key={field.key} className="relative">
+                                <label className="flex items-center justify-between text-sm font-medium text-foreground mb-1.5">
+                                  <span className="flex items-center gap-1.5">
+                                    <Sparkles className="w-3 h-3 text-primary" />
+                                    {field.label}
+                                  </span>
+                                  <span className={`text-[10px] font-medium ${confColor} flex items-center gap-1`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${confBg}`} />
+                                    {field.confidence}%
+                                  </span>
+                                </label>
+                                <input
+                                  type="text"
+                                  value={field.value}
+                                  onChange={(e) => {
+                                    const newFields = [...dynamicAssetFields];
+                                    const realIdx = newFields.findIndex(f => f.key === field.key);
+                                    if (realIdx >= 0) {
+                                      newFields[realIdx] = { ...newFields[realIdx], value: e.target.value };
+                                      setDynamicAssetFields(newFields);
+                                    }
+                                  }}
+                                  className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                                />
+                                {field.source && (
+                                  <p className="text-[10px] text-muted-foreground mt-0.5 truncate">المصدر: {field.source}</p>
+                                )}
+                                {field.confidence < 70 && (
+                                  <p className="text-[10px] text-red-500 mt-0.5 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3" /> غير موثوق — يحتاج تأكيد يدوي
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
                       </div>
-                    ))}
-                  </div>
+                    </div>
+                  )}
+
+                  {/* Add custom field button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const key = `custom_${Date.now()}`;
+                      setDynamicAssetFields(prev => [...prev, {
+                        key,
+                        label: "حقل مخصص",
+                        value: "",
+                        confidence: 100,
+                        source: "إضافة يدوية",
+                        group: "general",
+                      }]);
+                    }}
+                    className="w-full py-2 rounded-lg border-2 border-dashed border-border text-sm text-muted-foreground hover:border-primary/30 hover:text-primary transition-colors flex items-center justify-center gap-1.5"
+                  >
+                    + إضافة حقل مخصص
+                  </button>
                 </div>
               </div>
             </div>
@@ -889,7 +945,7 @@ export default function NewValuation() {
                     <div className="flex justify-between"><span className="text-muted-foreground">طريقة التقييم</span><span className={`font-medium flex items-center gap-1 ${valuationMode === "desktop" ? "text-accent-foreground" : "text-foreground"}`}>{valuationMode === "desktop" ? "📋 مكتبي" : "🏗️ ميداني"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{clientFields.clientName || "-"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">الوثائق</span><span className="font-medium text-foreground">{uploadedFiles.length} ملف ({classifiedCount} مُصنَّف)</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetFields.description || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetDescription || "-"}</span></div>
                   </div>
                 </div>
 
@@ -975,7 +1031,7 @@ export default function NewValuation() {
                   { label: "العميل", value: clientFields.clientName || "-" },
                   { label: "رقم الهوية", value: clientFields.idNumber || "-" },
                   { label: "عدد الوثائق", value: `${uploadedFiles.length} ملف (${classifiedCount} مُصنَّف)` },
-                  { label: "وصف الأصل", value: assetFields.description || "-" },
+                  { label: "وصف الأصل", value: assetDescription || "-" },
                   { label: "غرض التقييم", value: purpose || "-" },
                   { label: "أساس القيمة", value: valueBasis },
                   { label: "تاريخ التقييم", value: valuationDate || "-" },
