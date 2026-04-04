@@ -19,7 +19,8 @@ const DOC_CATEGORIES = [
   { value: "deed", label: "صك ملكية", icon: FileCheck },
   { value: "building_permit", label: "رخصة بناء", icon: ShieldCheck },
   { value: "floor_plan", label: "مخطط معماري", icon: Ruler },
-  { value: "property_photo", label: "صورة عقار", icon: ImageIcon },
+  { value: "property_photo", label: "صورة أصل عقاري", icon: ImageIcon },
+  { value: "machinery_photo", label: "صورة آلة / معدة", icon: ImageIcon },
   { value: "identity_doc", label: "وثيقة هوية", icon: User },
   { value: "invoice", label: "فاتورة / سند", icon: FileSpreadsheet },
   { value: "contract", label: "عقد / اتفاقية", icon: FileText },
@@ -138,6 +139,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
   const generateMockResult = (files: UploadedFile[]): ExtractedData => {
     const guessCategory = (name: string): { category: string; label: string; extractedInfo?: string; relevance: string } => {
       const n = name.toLowerCase();
+      const machineryKeywords = ["آلة", "الات", "معدة", "معدات", "حفار", "شيول", "مولد", "رافعة", "بوكلين", "كمبروسر", "ضاغط", "forklift", "generator", "crane", "excavator", "loader", "bulldozer", "compressor", "equipment", "machinery", "machine"];
       // صكوك ملكية
       if (n.includes("صك") || n.includes("deed") || n.includes("ملكي") || n.includes("title"))
         return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م² — حي النرجس، الرياض — ثقة 96%" };
@@ -155,16 +157,19 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "إيجار سنوي: 85,000 ر.س — المستأجر: شركة الأفق — ثقة 88%" };
       // فواتير
       if (n.includes("فاتور") || n.includes("invoice") || n.includes("سند") || n.includes("إيصال") || n.includes("receipt"))
-        return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة صيانة — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
+        return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة شراء/صيانة معدات — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
       // وثائق هوية
       if (n.includes("هوي") || n.includes("جواز") || n.includes("إقام") || n.includes("id") || n.includes("passport") || n.includes("iqama"))
         return { category: "identity_doc", label: "وثيقة هوية", relevance: "medium", extractedInfo: "هوية وطنية — رقم: 1088456723 — الاسم: أحمد بن عبدالله المالكي" };
       // خرائط مواقع
       if (n.includes("map") || n.includes("خريط") || n.includes("موقع") || n.includes("location") || n.includes("gps"))
         return { category: "location_map", label: "خريطة موقع", relevance: "medium", extractedInfo: "إحداثيات: 24.7136°N, 46.6753°E — حي النرجس، الرياض" };
-      // صور عقارية
+      // صور آلات ومعدات
+      if (machineryKeywords.some(keyword => n.includes(keyword)) || n.includes("واتساب") && n.includes("معدة"))
+        return { category: "machinery_photo", label: "صورة آلة / معدة", relevance: "high", extractedInfo: "صورة معدة تشغيل/إنتاج — يلزم التحقق من الشركة المصنعة والموديل وسنة الصنع" };
+      // صور أصول عقارية
       if (/\.(jpg|jpeg|png|webp|tif|tiff|gif)$/i.test(n) || n.includes("صور") || n.includes("واجه") || n.includes("photo") || n.includes("img"))
-        return { category: "property_photo", label: "صورة عقار", relevance: "medium", extractedInfo: "صورة واجهة رئيسية — حالة التشطيب: جيدة — طابقين" };
+        return { category: "property_photo", label: "صورة أصل عقاري", relevance: "medium", extractedInfo: "صورة أصل عقاري — يلزم تأكيد نوع الأصل من المستخدم" };
       // PDF عام
       if (n.endsWith(".pdf"))
         return { category: "technical_report", label: "مستند PDF", relevance: "medium", extractedInfo: "مستند PDF — يحتوي على بيانات نصية قابلة للاستخراج" };
@@ -253,10 +258,17 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
       );
     }
     if (cats.has("property_photo")) {
-      const src = files[categorized.findIndex(c => c.category === "property_photo")]?.name || "صورة عقار";
+      const src = files[categorized.findIndex(c => c.category === "property_photo")]?.name || "صورة أصل عقاري";
       numbers.push(
-        { label: "حالة التشطيب", value: "جيدة — سوبر لوكس", source: src },
-        { label: "عدد الطوابق المرئية", value: "طابقين", source: src },
+        { label: "حالة الأصل الظاهرة", value: "جيدة", source: src },
+        { label: "ملاحظة", value: "يلزم تأكيد نوع الأصل من المستندات الداعمة", source: src },
+      );
+    }
+    if (cats.has("machinery_photo")) {
+      const src = files[categorized.findIndex(c => c.category === "machinery_photo")]?.name || "صورة آلة / معدة";
+      numbers.push(
+        { label: "نوع الأصل الظاهر", value: "آلة / معدة", source: src },
+        { label: "الحالة الظاهرة", value: "تعمل ظاهرياً — تحتاج فحص فني", source: src },
       );
     }
 
@@ -268,9 +280,12 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
       );
     }
 
+    const hasPropertyEvidence = ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].some(category => cats.has(category));
+    const hasMachineryEvidence = ["machinery_photo", "invoice", "technical_report"].some(category => cats.has(category));
+
     return {
-      discipline: "real_estate",
-      discipline_label: "تقييم عقاري",
+      discipline: hasMachineryEvidence && hasPropertyEvidence ? "mixed" : hasMachineryEvidence ? "machinery" : "real_estate",
+      discipline_label: hasMachineryEvidence && hasPropertyEvidence ? "تقييم مختلط" : hasMachineryEvidence ? "تقييم آلات ومعدات" : "تقييم عقاري",
       confidence: Math.min(95, 70 + categorized.filter(c => c.relevance === "high").length * 8),
       client: cats.has("deed") || cats.has("identity_doc") ? {
         clientName: "أحمد بن عبدالله المالكي",
@@ -278,7 +293,11 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         phone: "0551234567",
         email: "ahmed.maliki@email.com",
       } : {},
-      asset: cats.has("deed") || cats.has("floor_plan") || cats.has("building_permit") ? {
+      asset: hasMachineryEvidence && !hasPropertyEvidence ? {
+        description: "معدات وآلات مرفوعة ضمن الطلب",
+        classification: "آلات ومعدات",
+        machineName: "معدة تحتاج اعتماد الاسم من المستندات",
+      } : cats.has("deed") || cats.has("floor_plan") || cats.has("building_permit") ? {
         description: "فيلا سكنية دورين مع ملحق",
         city: "الرياض",
         district: "حي النرجس",
@@ -286,12 +305,13 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         deedNumber: cats.has("deed") ? "1234567" : undefined,
         classification: "سكني",
       } : {},
-      suggestedPurpose: cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
+      suggestedPurpose: hasMachineryEvidence && !hasPropertyEvidence ? "تقييم أصول" : cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
       notes: [
         ...(cats.has("deed") ? ["تم التعرف على صك إلكتروني — استُخرج رقم الصك واسم المالك والمساحة والموقع"] : []),
         ...(cats.has("building_permit") ? ["تم اكتشاف رخصة بناء — استُخرج رقم الرخصة وعدد الأدوار المرخصة"] : []),
         ...(cats.has("floor_plan") ? ["تم تحليل المخطط المعماري — استُخرجت مساحة البناء وعدد الغرف"] : []),
-        ...(cats.has("technical_report") ? ["تم اكتشاف تقرير تقييم سابق — استُخرجت القيمة السوقية وسعر المتر"] : []),
+        ...(cats.has("technical_report") ? ["تم اكتشاف تقرير فني/تقييم سابق — استُخرجت بيانات فنية مساندة"] : []),
+        ...(cats.has("machinery_photo") ? ["تم رصد صور آلات/معدات — تم ترجيح نوع التقييم كآلات ومعدات"] : []),
         ...(cats.has("contract") ? ["تم تحليل عقد إيجار — استُخرجت قيمة الإيجار ومدة العقد"] : []),
         ...(cats.has("deed") && cats.has("floor_plan") ? ["✅ المساحة في الصك متطابقة مع المخطط المعماري"] : []),
         ...(cats.has("building_permit") ? ["⚠️ يُنصح بالتحقق من صلاحية رخصة البناء"] : []),

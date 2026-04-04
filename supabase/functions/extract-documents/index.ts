@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { fileNames, fileDescriptions, storagePaths, requestId } = await req.json();
+    const { fileNames, fileDescriptions, storagePaths, requestId: _requestId } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
@@ -56,8 +56,8 @@ serve(async (req) => {
 
 1. **نوع التقييم** (real_estate / machinery / mixed) مع مستوى الثقة
 2. **بيانات العميل**: الاسم، رقم الهوية/السجل التجاري، الهاتف، البريد
-3. **بيانات الأصل**: الوصف، المدينة، الحي، المساحة، رقم الصك، التصنيف
-4. **تصنيف كل مستند**: نوعه (صك، رخصة بناء، مخطط، فاتورة، عقد، صورة عقار، هوية، تقرير فني، أخرى)
+3. **بيانات الأصل**: الوصف، المدينة، الحي، المساحة، رقم الصك، التصنيف، وبيانات الآلة/المعدة مثل الاسم والشركة المصنعة والموديل
+4. **تصنيف كل مستند**: نوعه (صك، رخصة بناء، مخطط، فاتورة، عقد، صورة أصل عقاري، صورة آلة/معدة، هوية، تقرير فني، أخرى)
 5. **غرض التقييم** المحتمل
 6. **البيانات المستخرجة من المحتوى**: أرقام، تواريخ، أسماء، عناوين ظاهرة في الوثائق
 
@@ -65,13 +65,21 @@ serve(async (req) => {
 - صك / صك إلكتروني = deed
 - رخصة بناء / تصريح = building_permit
 - مخطط معماري / كروكي = floor_plan
-- صورة عقار / واجهة = property_photo
+- صورة مبنى / أرض / واجهة / أصل عقاري = property_photo
+- صورة حفار / شيول / مولد / خط إنتاج / رافعة / شاحنة / معدة ثقيلة / آلة صناعية / معدة ورشة = machinery_photo
 - هوية / جواز / إقامة = identity_doc
 - فاتورة / سند = invoice
 - عقد / اتفاقية = contract
 - تقرير فني / تقييم سابق = technical_report
 - خريطة / موقع = location_map
 - أخرى = other
+
+قواعد حاسمة لتحديد نوع التقييم:
+- إذا كانت الصور أو المستندات تخص آلات أو معدات فقط ولا توجد مؤشرات عقارية واضحة (مثل صك، أرض، مبنى، مخطط، رخصة بناء) فصنّف الطلب = machinery
+- لا تعتبر أي صورة لمعدة أو آلة على أنها property_photo لمجرد أنها صورة
+- استخدم mixed فقط عند وجود أدلة واضحة على وجود أصل عقاري + آلات/معدات معاً
+- عند الشك بين real_estate و machinery بسبب الصور، أعط الأفضلية للمحتوى المرئي الفعلي داخل الصورة وليس لاسم الملف العام مثل WhatsApp Image
+- إذا أرسل النظام تلميح تصنيف يدوي للملف فاعتبره إشارة قوية يجب احترامها ما لم يكن محتوى الملف يناقضه بوضوح
 
 قواعد الأولوية:
 - إذا وُجد محتوى فعلي (صور/PDF) = حلل المحتوى بعمق واستخرج كل البيانات الممكنة
@@ -87,10 +95,11 @@ serve(async (req) => {
         text: `تم رفع ${fileNames.length} مستند. قم بتحليل محتوى المستندات التالية واستخرج جميع البيانات:`,
       });
 
-      for (const fc of fileContents) {
+      for (const [index, fc] of fileContents.entries()) {
+        const manualHint = fileDescriptions?.[index];
         userContent.push({
           type: "text",
-          text: `\n--- ملف: ${fc.name} ---`,
+          text: `\n--- ملف: ${fc.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""} ---`,
         });
 
         if (fc.mimeType.startsWith("image/")) {
@@ -101,23 +110,25 @@ serve(async (req) => {
             },
           });
         } else if (fc.mimeType === "application/pdf") {
-          // For PDFs, send as base64 with instruction
           userContent.push({
             type: "text",
-            text: `[ملف PDF - ${fc.name}] - حلل محتوى هذا الملف بناءً على اسمه ووصفه`,
+            text: `[ملف PDF - ${fc.name}${manualHint ? ` — تصنيف يدوي مقترح: ${manualHint}` : ""}] - حلل محتوى هذا الملف بناءً على اسمه ووصفه`,
           });
         }
       }
 
       // Add files that couldn't be downloaded
-      const analyzedNames = fileContents.map(f => f.name);
-      const remaining = fileNames.filter((n: string) => !analyzedNames.includes(n));
-      if (remaining.length > 0) {
-        userContent.push({
-          type: "text",
-          text: `\nملفات إضافية (أسماء فقط):\n${remaining.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
+        const remainingWithHints = remaining.map((n: string) => {
+          const originalIndex = fileNames.findIndex((fileName: string) => fileName === n);
+          const hint = originalIndex >= 0 ? fileDescriptions?.[originalIndex] : "";
+          return hint ? `${n} — تصنيف يدوي مقترح: ${hint}` : n;
         });
-      }
+        if (remaining.length > 0) {
+          userContent.push({
+            type: "text",
+            text: `\nملفات إضافية (أسماء فقط):\n${remainingWithHints.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
+          });
+        }
     } else {
       userContent.push({
         type: "text",
@@ -200,7 +211,7 @@ serve(async (req) => {
                             type: "string",
                             enum: [
                               "deed", "building_permit", "floor_plan",
-                              "property_photo", "identity_doc", "invoice",
+                              "property_photo", "machinery_photo", "identity_doc", "invoice",
                               "contract", "technical_report", "location_map", "other",
                             ],
                           },
@@ -266,6 +277,18 @@ serve(async (req) => {
     }
 
     const extracted = JSON.parse(toolCall.function.arguments);
+
+    const docCategories = Array.isArray(extracted.documentCategories) ? extracted.documentCategories.map((doc: { category?: string }) => doc.category) : [];
+    const hasPropertyEvidence = docCategories.some((category: string) => ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].includes(category));
+    const hasMachineryEvidence = docCategories.some((category: string) => ["machinery_photo", "invoice", "technical_report"].includes(category));
+
+    if (hasMachineryEvidence && !hasPropertyEvidence) {
+      extracted.discipline = "machinery";
+      extracted.discipline_label = "تقييم آلات ومعدات";
+    } else if (hasMachineryEvidence && hasPropertyEvidence) {
+      extracted.discipline = "mixed";
+      extracted.discipline_label = "تقييم مختلط";
+    }
 
     // Add metadata about analysis method
     extracted.analysisMethod = fileContents.length > 0 ? "content_analysis" : "filename_only";
