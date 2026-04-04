@@ -945,7 +945,7 @@ export default function NewValuation() {
                     <div className="flex justify-between"><span className="text-muted-foreground">طريقة التقييم</span><span className={`font-medium flex items-center gap-1 ${valuationMode === "desktop" ? "text-accent-foreground" : "text-foreground"}`}>{valuationMode === "desktop" ? "📋 مكتبي" : "🏗️ ميداني"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{clientFields.clientName || "-"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">الوثائق</span><span className="font-medium text-foreground">{uploadedFiles.length} ملف ({classifiedCount} مُصنَّف)</span></div>
-                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetFields.description || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetDescription || "-"}</span></div>
                   </div>
                 </div>
 
