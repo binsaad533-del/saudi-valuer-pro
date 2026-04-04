@@ -803,7 +803,7 @@ export default function NewValuation() {
                       <p className="text-[10px] text-muted-foreground mt-1">يشمل معاينة مادية للأصل</p>
                     </button>
                     <button
-                      onClick={() => setValuationMode("desktop")}
+                      onClick={() => { setValuationMode("desktop"); if (DESKTOP_BLOCKED_PURPOSES.includes(purpose)) setPurpose(""); }}
                       className={`p-4 rounded-lg border-2 text-center transition-all ${valuationMode === "desktop" ? "border-accent bg-accent/10" : "border-border hover:border-accent/30"}`}
                     >
                       <FileSearch className={`w-6 h-6 mx-auto mb-2 ${valuationMode === "desktop" ? "text-accent-foreground" : "text-muted-foreground"}`} />
