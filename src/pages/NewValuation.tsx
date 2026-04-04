@@ -424,7 +424,7 @@ export default function NewValuation() {
     } finally {
       setSubmitting(false);
     }
-  }, [extracted, clientFields, assetFields, purpose, valueBasis, valuationDate, valuationMode, desktopDisclaimerAccepted, uploadedFiles, validateStep, logActivity, navigate]);
+  }, [extracted, clientFields, dynamicAssetFields, assetDescription, locationFields, purpose, valueBasis, valuationDate, valuationMode, desktopDisclaimerAccepted, uploadedFiles, validateStep, logActivity, navigate]);
 
   const allStepValidations = useMemo(() => STEPS.map(s => ({ step: s, validation: validateStep(s.id) })), [validateStep]);
 
