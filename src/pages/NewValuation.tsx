@@ -1031,7 +1031,7 @@ export default function NewValuation() {
                   { label: "العميل", value: clientFields.clientName || "-" },
                   { label: "رقم الهوية", value: clientFields.idNumber || "-" },
                   { label: "عدد الوثائق", value: `${uploadedFiles.length} ملف (${classifiedCount} مُصنَّف)` },
-                  { label: "وصف الأصل", value: assetFields.description || "-" },
+                  { label: "وصف الأصل", value: assetDescription || "-" },
                   { label: "غرض التقييم", value: purpose || "-" },
                   { label: "أساس القيمة", value: valueBasis },
                   { label: "تاريخ التقييم", value: valuationDate || "-" },
