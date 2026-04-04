@@ -11,6 +11,8 @@ import { User, Lock, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function MyAccountSettings() {
+  const { role } = useAuth();
+  const isOwner = role === "owner";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
