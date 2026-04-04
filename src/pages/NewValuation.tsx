@@ -132,6 +132,8 @@ export default function NewValuation() {
   const [purpose, setPurpose] = useState("");
   const [valueBasis, setValueBasis] = useState(VALUE_BASES[0]);
   const [valuationDate, setValuationDate] = useState("");
+  const [valuationMode, setValuationMode] = useState<"field" | "desktop">("field");
+  const [desktopDisclaimerAccepted, setDesktopDisclaimerAccepted] = useState(false);
 
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
