@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,6 +11,8 @@ import { User, Lock, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function MyAccountSettings() {
+  const { role } = useAuth();
+  const isOwner = role === "owner";
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
@@ -157,15 +160,19 @@ export default function MyAccountSettings() {
 
           <div className="space-y-2">
             <Label>نوع الحساب</Label>
-            <Select value={userType} onValueChange={setUserType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="external">فرد</SelectItem>
-                <SelectItem value="corporate">شركة / مؤسسة</SelectItem>
-              </SelectContent>
-            </Select>
+            {isOwner ? (
+              <Input value="مالك المنصة" readOnly className="bg-muted font-medium text-primary" />
+            ) : (
+              <Select value={userType} onValueChange={setUserType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="external">فرد</SelectItem>
+                  <SelectItem value="corporate">شركة / مؤسسة</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <Separator />
