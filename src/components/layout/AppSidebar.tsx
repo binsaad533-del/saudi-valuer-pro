@@ -22,6 +22,7 @@ import {
   LogOut,
   Brain,
   BarChart3,
+  UserCircle,
 } from "lucide-react";
 const logo = "/favicon.png";
 
