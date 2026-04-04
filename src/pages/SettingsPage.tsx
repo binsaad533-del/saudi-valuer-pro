@@ -35,6 +35,7 @@ export default function SettingsPage() {
   }
 
   const tabs = [
+    { value: "myaccount", label: "حسابي", icon: User },
     { value: "company", label: t("companyData"), icon: Building2 },
     { value: "valuer", label: t("valuerData"), icon: UserCircle },
     { value: "reports", label: t("reportsSettings"), icon: FileText },
