@@ -1,4 +1,4 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight } from "lucide-react";
+import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -9,6 +9,7 @@ import SystemSettings from "@/components/settings/SystemSettings";
 import BackupSettings from "@/components/settings/BackupSettings";
 import IntegrationSettings from "@/components/settings/IntegrationSettings";
 import DiscountCodesSettings from "@/components/settings/DiscountCodesSettings";
+import MyAccountSettings from "@/components/settings/MyAccountSettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
