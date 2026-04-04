@@ -733,26 +733,66 @@ export default function NewValuation() {
                 </div>
               </div>
 
-              {/* Asset data */}
+              {/* Asset data - AI extracted (read-only) */}
               <div>
                 <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
                   <Building2 className="w-4 h-4 text-primary" />
                   بيانات الأصل
+                  <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full mr-auto flex items-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    مستخرجة بالذكاء الاصطناعي
+                  </span>
                 </h4>
                 <div className="space-y-4">
+                  {/* Asset description - AI extracted, read-only */}
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">وصف الأصل</label>
+                    <label className="block text-sm font-medium text-foreground mb-1.5 flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-primary" />
+                      وصف الأصل
+                    </label>
                     <textarea
                       value={assetFields.description || ""}
-                      onChange={(e) => setAssetFields(prev => ({ ...prev, description: e.target.value }))}
+                      readOnly
                       rows={3}
-                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                      className="w-full px-4 py-2.5 rounded-lg border border-input bg-muted/50 text-sm resize-none cursor-default text-muted-foreground"
                     />
                   </div>
+
+                  {/* Location - user selects via Google Maps */}
+                  <div className="p-4 rounded-lg border-2 border-primary/20 bg-primary/5">
+                    <label className="flex items-center gap-1.5 text-sm font-semibold text-foreground mb-3">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      الموقع — يُحدد من العميل عبر خرائط قوقل
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
+                          <MapPin className="w-3 h-3" /> المدينة
+                        </label>
+                        <input
+                          type="text"
+                          value={assetFields.city || ""}
+                          onChange={(e) => setAssetFields(prev => ({ ...prev, city: e.target.value }))}
+                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground mb-1.5">
+                          <MapPin className="w-3 h-3" /> الحي / الموقع
+                        </label>
+                        <input
+                          type="text"
+                          value={assetFields.district || ""}
+                          onChange={(e) => setAssetFields(prev => ({ ...prev, district: e.target.value }))}
+                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Other asset fields - AI extracted, read-only */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {[
-                      { key: "city", label: "المدينة", icon: MapPin },
-                      { key: "district", label: "الحي / الموقع", icon: MapPin },
                       { key: "area", label: "المساحة (م²)", icon: Ruler },
                       { key: "deedNumber", label: "رقم الصك", icon: FileCheck },
                       { key: "classification", label: "التصنيف", icon: Tag },
@@ -762,14 +802,14 @@ export default function NewValuation() {
                     ].map(f => (
                       <div key={f.key}>
                         <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1.5">
-                          <f.icon className="w-3.5 h-3.5 text-muted-foreground" />
+                          <Sparkles className="w-3 h-3 text-primary" />
                           {f.label}
                         </label>
                         <input
                           type="text"
                           value={assetFields[f.key] || ""}
-                          onChange={(e) => setAssetFields(prev => ({ ...prev, [f.key]: e.target.value }))}
-                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                          readOnly
+                          className="w-full px-4 py-2.5 rounded-lg border border-input bg-muted/50 text-sm cursor-default text-muted-foreground"
                         />
                       </div>
                     ))}
