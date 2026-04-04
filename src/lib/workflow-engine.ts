@@ -202,30 +202,41 @@ export async function transitionStatus(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
 
-  // ── Inspection enforcement: block valuation without completed inspection ──
+  // ── Inspection enforcement: block valuation without completed inspection (field mode only) ──
   if (toStatus === "valuation_in_progress") {
-    const { data: inspections } = await supabase
-      .from("inspections")
-      .select("id, status, completed, submitted_at")
-      .eq("assignment_id", assignmentId)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    // Check if this is a desktop valuation
+    const { data: assignmentData } = await supabase
+      .from("valuation_assignments")
+      .select("valuation_mode")
+      .eq("id", assignmentId)
+      .single();
 
-    const inspection = inspections?.[0];
-    if (!inspection) {
-      return { success: false, error: "لا يمكن بدء التقييم بدون معاينة ميدانية." };
-    }
-    if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
-      return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
-    }
+    const isDesktop = assignmentData?.valuation_mode === "desktop";
 
-    const { count: photoCount } = await supabase
-      .from("inspection_photos")
-      .select("id", { count: "exact", head: true })
-      .eq("inspection_id", inspection.id);
+    if (!isDesktop) {
+      const { data: inspections } = await supabase
+        .from("inspections")
+        .select("id, status, completed, submitted_at")
+        .eq("assignment_id", assignmentId)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    if (!photoCount || photoCount === 0) {
-      return { success: false, error: "لا يمكن بدء التقييم بدون صور المعاينة." };
+      const inspection = inspections?.[0];
+      if (!inspection) {
+        return { success: false, error: "لا يمكن بدء التقييم بدون معاينة ميدانية." };
+      }
+      if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
+        return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
+      }
+
+      const { count: photoCount } = await supabase
+        .from("inspection_photos")
+        .select("id", { count: "exact", head: true })
+        .eq("inspection_id", inspection.id);
+
+      if (!photoCount || photoCount === 0) {
+        return { success: false, error: "لا يمكن بدء التقييم بدون صور المعاينة." };
+      }
     }
   }
 

@@ -928,6 +928,7 @@ export default function NewValuation() {
               <div className="space-y-3">
                 {[
                   { label: "نوع التقييم (ذكاء اصطناعي)", value: extracted?.discipline_label || "-" },
+                  { label: "طريقة التقييم", value: valuationMode === "desktop" ? "📋 تقييم مكتبي" : "🏗️ تقييم ميداني" },
                   { label: "مستوى الثقة", value: `${extracted?.confidence || 0}%` },
                   { label: "طريقة التحليل", value: extracted?.analysisMethod === "content_analysis" ? "تحليل محتوى فعلي" : "تحليل أسماء الملفات" },
                   { label: "العميل", value: clientFields.clientName || "-" },
