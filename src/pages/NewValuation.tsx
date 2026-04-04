@@ -299,7 +299,7 @@ export default function NewValuation() {
         break;
       case 2:
         if (!clientFields.clientName?.trim()) errors.push("اسم العميل مطلوب");
-        if (!assetFields.description?.trim()) warnings.push("وصف الأصل غير مكتمل");
+        if (!assetDescription?.trim()) warnings.push("وصف الأصل غير مكتمل");
         if (uploadedFiles.some(f => !f.category)) warnings.push("بعض الملفات لم تُصنَّف بعد");
         break;
       case 3:
