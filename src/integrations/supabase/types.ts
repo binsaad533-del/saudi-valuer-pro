@@ -4014,13 +4014,19 @@ export type Database = {
           ai_suggested_turnaround: string | null
           ai_validated: boolean | null
           amount_paid: number | null
+          asset_data: Json | null
           assignment_id: string | null
           basis_of_value: Database["public"]["Enums"]["basis_of_value"] | null
           building_area: number | null
+          client_email: string | null
+          client_id_number: string | null
+          client_name_ar: string | null
+          client_phone: string | null
           client_user_id: string
           completed_at: string | null
           created_at: string
           desktop_disclaimer_accepted: boolean | null
+          discipline: string | null
           draft_report_url: string | null
           fees_breakdown: Json | null
           final_report_url: string | null
@@ -4029,6 +4035,7 @@ export type Database = {
           id: string
           intended_use_ar: string | null
           intended_use_en: string | null
+          intended_user_ar: string | null
           intended_users_ar: string | null
           intended_users_en: string | null
           is_locked: boolean | null
@@ -4053,6 +4060,7 @@ export type Database = {
           property_district_en: string | null
           property_type: Database["public"]["Enums"]["property_type"] | null
           purpose: Database["public"]["Enums"]["valuation_purpose"] | null
+          purpose_ar: string | null
           quotation_amount: number | null
           quotation_approved_at: string | null
           quotation_currency: string | null
@@ -4069,8 +4077,10 @@ export type Database = {
           terms_en: string | null
           total_fees: number | null
           updated_at: string
+          valuation_date: string | null
           valuation_mode: string
           valuation_type: Database["public"]["Enums"]["valuation_type"] | null
+          value_basis_ar: string | null
         }
         Insert: {
           ai_complexity_level?: string | null
@@ -4081,13 +4091,19 @@ export type Database = {
           ai_suggested_turnaround?: string | null
           ai_validated?: boolean | null
           amount_paid?: number | null
+          asset_data?: Json | null
           assignment_id?: string | null
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
           building_area?: number | null
+          client_email?: string | null
+          client_id_number?: string | null
+          client_name_ar?: string | null
+          client_phone?: string | null
           client_user_id: string
           completed_at?: string | null
           created_at?: string
           desktop_disclaimer_accepted?: boolean | null
+          discipline?: string | null
           draft_report_url?: string | null
           fees_breakdown?: Json | null
           final_report_url?: string | null
@@ -4096,6 +4112,7 @@ export type Database = {
           id?: string
           intended_use_ar?: string | null
           intended_use_en?: string | null
+          intended_user_ar?: string | null
           intended_users_ar?: string | null
           intended_users_en?: string | null
           is_locked?: boolean | null
@@ -4120,6 +4137,7 @@ export type Database = {
           property_district_en?: string | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
           purpose?: Database["public"]["Enums"]["valuation_purpose"] | null
+          purpose_ar?: string | null
           quotation_amount?: number | null
           quotation_approved_at?: string | null
           quotation_currency?: string | null
@@ -4136,8 +4154,10 @@ export type Database = {
           terms_en?: string | null
           total_fees?: number | null
           updated_at?: string
+          valuation_date?: string | null
           valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
+          value_basis_ar?: string | null
         }
         Update: {
           ai_complexity_level?: string | null
@@ -4148,13 +4168,19 @@ export type Database = {
           ai_suggested_turnaround?: string | null
           ai_validated?: boolean | null
           amount_paid?: number | null
+          asset_data?: Json | null
           assignment_id?: string | null
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
           building_area?: number | null
+          client_email?: string | null
+          client_id_number?: string | null
+          client_name_ar?: string | null
+          client_phone?: string | null
           client_user_id?: string
           completed_at?: string | null
           created_at?: string
           desktop_disclaimer_accepted?: boolean | null
+          discipline?: string | null
           draft_report_url?: string | null
           fees_breakdown?: Json | null
           final_report_url?: string | null
@@ -4163,6 +4189,7 @@ export type Database = {
           id?: string
           intended_use_ar?: string | null
           intended_use_en?: string | null
+          intended_user_ar?: string | null
           intended_users_ar?: string | null
           intended_users_en?: string | null
           is_locked?: boolean | null
@@ -4187,6 +4214,7 @@ export type Database = {
           property_district_en?: string | null
           property_type?: Database["public"]["Enums"]["property_type"] | null
           purpose?: Database["public"]["Enums"]["valuation_purpose"] | null
+          purpose_ar?: string | null
           quotation_amount?: number | null
           quotation_approved_at?: string | null
           quotation_currency?: string | null
@@ -4203,8 +4231,10 @@ export type Database = {
           terms_en?: string | null
           total_fees?: number | null
           updated_at?: string
+          valuation_date?: string | null
           valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
+          value_basis_ar?: string | null
         }
         Relationships: [
           {
