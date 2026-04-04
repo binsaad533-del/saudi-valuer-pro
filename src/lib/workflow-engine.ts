@@ -380,29 +380,37 @@ export async function triggerAutomationPipeline(assignmentId: string) {
     // 2. Call AI intake function
     await supabase.functions.invoke("ai-intake", { body: { assignment_id: assignmentId } });
 
-    // 3. Move to inspection required
-    await transitionStatus(assignmentId, "under_ai_review", "inspection_required", undefined, "المراجعة الذكية مكتملة");
-
-    // 4. Auto-assign inspector
-    const { data: assignment } = await supabase
+    // Check if desktop valuation — skip inspection
+    const { data: assignmentInfo } = await supabase
       .from("valuation_assignments")
-      .select("id, subjects(city_ar, district_ar, latitude, longitude)")
+      .select("valuation_mode, id, subjects(city_ar, district_ar, latitude, longitude)")
       .eq("id", assignmentId)
       .single();
 
-    const subject = (assignment as any)?.subjects?.[0];
-    const { data: inspectorResult } = await supabase.functions.invoke("smart-inspector-assignment", {
-      body: {
-        assignment_id: assignmentId,
-        property_city_ar: subject?.city_ar || "",
-        property_district_ar: subject?.district_ar || "",
-        property_latitude: subject?.latitude,
-        property_longitude: subject?.longitude,
-      },
-    });
+    const isDesktop = assignmentInfo?.valuation_mode === "desktop";
 
-    if (inspectorResult?.assigned) {
-      await transitionStatus(assignmentId, "inspection_required", "inspection_assigned", undefined, "تعيين معاين تلقائي");
+    if (isDesktop) {
+      // Desktop: skip inspection → go directly to valuation
+      await transitionStatus(assignmentId, "under_ai_review", "valuation_in_progress", undefined, "تقييم مكتبي — تخطي المعاينة الميدانية");
+    } else {
+      // Field: normal flow with inspection
+      await transitionStatus(assignmentId, "under_ai_review", "inspection_required", undefined, "المراجعة الذكية مكتملة");
+
+      // 4. Auto-assign inspector
+      const subject = (assignmentInfo as any)?.subjects?.[0];
+      const { data: inspectorResult } = await supabase.functions.invoke("smart-inspector-assignment", {
+        body: {
+          assignment_id: assignmentId,
+          property_city_ar: subject?.city_ar || "",
+          property_district_ar: subject?.district_ar || "",
+          property_latitude: subject?.latitude,
+          property_longitude: subject?.longitude,
+        },
+      });
+
+      if (inspectorResult?.assigned) {
+        await transitionStatus(assignmentId, "inspection_required", "inspection_assigned", undefined, "تعيين معاين تلقائي");
+      }
     }
   } catch (err) {
     console.error("Automation pipeline error:", err);
