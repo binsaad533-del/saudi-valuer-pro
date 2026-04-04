@@ -44,7 +44,7 @@ export default function SettingsPage() {
     { value: "integrations", label: t("integrations"), icon: Plug },
     { value: "discounts", label: "أكواد الخصم", icon: Ticket },
   ];
-  const defaultTab = "company";
+  const defaultTab = "myaccount";
   const pageTitle = t("settingsTitle");
   const pageDesc = t("settingsDesc");
 
