@@ -118,14 +118,17 @@ serve(async (req) => {
       }
 
       // Add files that couldn't be downloaded
-      const analyzedNames = fileContents.map(f => f.name);
-      const remaining = fileNames.filter((n: string) => !analyzedNames.includes(n));
-      if (remaining.length > 0) {
-        userContent.push({
-          type: "text",
-          text: `\nملفات إضافية (أسماء فقط):\n${remaining.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
+        const remainingWithHints = remaining.map((n: string) => {
+          const originalIndex = fileNames.findIndex((fileName: string) => fileName === n);
+          const hint = originalIndex >= 0 ? fileDescriptions?.[originalIndex] : "";
+          return hint ? `${n} — تصنيف يدوي مقترح: ${hint}` : n;
         });
-      }
+        if (remaining.length > 0) {
+          userContent.push({
+            type: "text",
+            text: `\nملفات إضافية (أسماء فقط):\n${remainingWithHints.map((n: string, i: number) => `${i + 1}. ${n}`).join("\n")}`,
+          });
+        }
     } else {
       userContent.push({
         type: "text",
