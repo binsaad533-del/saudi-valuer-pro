@@ -129,7 +129,9 @@ export default function NewValuation() {
   // Step 2: AI extracted data (editable)
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
   const [clientFields, setClientFields] = useState<Record<string, string>>({});
-  const [assetFields, setAssetFields] = useState<Record<string, string>>({});
+  const [dynamicAssetFields, setDynamicAssetFields] = useState<AssetField[]>([]);
+  const [assetDescription, setAssetDescription] = useState("");
+  const [locationFields, setLocationFields] = useState<{ city: string; district: string }>({ city: "", district: "" });
 
   // Step 3: purpose & valuation config
   const [purpose, setPurpose] = useState("");
