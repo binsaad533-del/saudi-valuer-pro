@@ -809,7 +809,7 @@ export default function NewValuation() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {dynamicAssetFields
                           .filter(f => f.key !== "city" && f.key !== "district")
-                          .map((field, idx) => {
+                          .map((field) => {
                             const confColor = field.confidence >= 85 ? "text-green-600" : field.confidence >= 70 ? "text-yellow-600" : "text-red-500";
                             const confBg = field.confidence >= 85 ? "bg-green-500" : field.confidence >= 70 ? "bg-yellow-500" : "bg-red-500";
                             return (
