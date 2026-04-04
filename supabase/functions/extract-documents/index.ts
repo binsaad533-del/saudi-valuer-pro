@@ -184,15 +184,23 @@ serve(async (req) => {
                     asset: {
                       type: "object",
                       properties: {
-                        description: { type: "string" },
-                        city: { type: "string" },
-                        district: { type: "string" },
-                        area: { type: "string" },
-                        deedNumber: { type: "string" },
-                        classification: { type: "string" },
-                        machineName: { type: "string" },
-                        manufacturer: { type: "string" },
-                        model: { type: "string" },
+                        description: { type: "string", description: "وصف تفصيلي مهني للأصل باللغة العربية" },
+                      },
+                    },
+                    assetFields: {
+                      type: "array",
+                      description: "حقول ديناميكية مستخرجة من المستندات — تتغير حسب نوع الأصل",
+                      items: {
+                        type: "object",
+                        properties: {
+                          key: { type: "string", description: "Unique field key in English (e.g. area, deedNumber, machineName)" },
+                          label: { type: "string", description: "Arabic label for the field" },
+                          value: { type: "string", description: "Extracted value" },
+                          confidence: { type: "number", description: "Confidence 0-100 for this specific field" },
+                          source: { type: "string", description: "Which document this was extracted from" },
+                          group: { type: "string", enum: ["property", "machinery", "financial", "legal", "general"], description: "Field category group" },
+                        },
+                        required: ["key", "label", "value", "confidence"],
                       },
                     },
                     suggestedPurpose: { type: "string" },
