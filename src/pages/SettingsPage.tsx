@@ -82,6 +82,7 @@ export default function SettingsPage() {
           </TabsList>
         )}
 
+        <TabsContent value="myaccount"><MyAccountSettings /></TabsContent>
         <TabsContent value="valuer"><ValuerSettings isOwnerView={isOwner} /></TabsContent>
         {isOwner && (
           <>
