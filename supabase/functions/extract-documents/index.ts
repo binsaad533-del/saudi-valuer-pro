@@ -207,7 +207,7 @@ serve(async (req) => {
                             type: "string",
                             enum: [
                               "deed", "building_permit", "floor_plan",
-                              "property_photo", "identity_doc", "invoice",
+                              "property_photo", "machinery_photo", "identity_doc", "invoice",
                               "contract", "technical_report", "location_map", "other",
                             ],
                           },
