@@ -31,6 +31,11 @@ const PURPOSES = [
   "تأمين", "أغراض ضريبية", "نقل ملكية", "أخرى",
 ];
 
+// ── Purposes blocked for desktop valuation (require field inspection) ──
+const DESKTOP_BLOCKED_PURPOSES = [
+  "تمويل عقاري", "ضمان بنكي", "نزع ملكية للمنفعة العامة",
+];
+
 const VALUE_BASES = [
   "القيمة السوقية (Market Value)",
   "قيمة الاستثمار (Investment Value)",
