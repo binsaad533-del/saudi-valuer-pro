@@ -278,6 +278,18 @@ serve(async (req) => {
 
     const extracted = JSON.parse(toolCall.function.arguments);
 
+    const docCategories = Array.isArray(extracted.documentCategories) ? extracted.documentCategories.map((doc: { category?: string }) => doc.category) : [];
+    const hasPropertyEvidence = docCategories.some((category: string) => ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].includes(category));
+    const hasMachineryEvidence = docCategories.some((category: string) => ["machinery_photo", "invoice", "technical_report"].includes(category));
+
+    if (hasMachineryEvidence && !hasPropertyEvidence) {
+      extracted.discipline = "machinery";
+      extracted.discipline_label = "تقييم آلات ومعدات";
+    } else if (hasMachineryEvidence && hasPropertyEvidence) {
+      extracted.discipline = "mixed";
+      extracted.discipline_label = "تقييم مختلط";
+    }
+
     // Add metadata about analysis method
     extracted.analysisMethod = fileContents.length > 0 ? "content_analysis" : "filename_only";
     extracted.analyzedFilesCount = fileContents.length;

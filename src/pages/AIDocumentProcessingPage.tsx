@@ -258,10 +258,17 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
       );
     }
     if (cats.has("property_photo")) {
-      const src = files[categorized.findIndex(c => c.category === "property_photo")]?.name || "صورة عقار";
+      const src = files[categorized.findIndex(c => c.category === "property_photo")]?.name || "صورة أصل عقاري";
       numbers.push(
-        { label: "حالة التشطيب", value: "جيدة — سوبر لوكس", source: src },
-        { label: "عدد الطوابق المرئية", value: "طابقين", source: src },
+        { label: "حالة الأصل الظاهرة", value: "جيدة", source: src },
+        { label: "ملاحظة", value: "يلزم تأكيد نوع الأصل من المستندات الداعمة", source: src },
+      );
+    }
+    if (cats.has("machinery_photo")) {
+      const src = files[categorized.findIndex(c => c.category === "machinery_photo")]?.name || "صورة آلة / معدة";
+      numbers.push(
+        { label: "نوع الأصل الظاهر", value: "آلة / معدة", source: src },
+        { label: "الحالة الظاهرة", value: "تعمل ظاهرياً — تحتاج فحص فني", source: src },
       );
     }
 
@@ -273,9 +280,12 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
       );
     }
 
+    const hasPropertyEvidence = ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].some(category => cats.has(category));
+    const hasMachineryEvidence = ["machinery_photo", "invoice", "technical_report"].some(category => cats.has(category));
+
     return {
-      discipline: "real_estate",
-      discipline_label: "تقييم عقاري",
+      discipline: hasMachineryEvidence && hasPropertyEvidence ? "mixed" : hasMachineryEvidence ? "machinery" : "real_estate",
+      discipline_label: hasMachineryEvidence && hasPropertyEvidence ? "تقييم مختلط" : hasMachineryEvidence ? "تقييم آلات ومعدات" : "تقييم عقاري",
       confidence: Math.min(95, 70 + categorized.filter(c => c.relevance === "high").length * 8),
       client: cats.has("deed") || cats.has("identity_doc") ? {
         clientName: "أحمد بن عبدالله المالكي",
@@ -283,7 +293,11 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         phone: "0551234567",
         email: "ahmed.maliki@email.com",
       } : {},
-      asset: cats.has("deed") || cats.has("floor_plan") || cats.has("building_permit") ? {
+      asset: hasMachineryEvidence && !hasPropertyEvidence ? {
+        description: "معدات وآلات مرفوعة ضمن الطلب",
+        classification: "آلات ومعدات",
+        machineName: "معدة تحتاج اعتماد الاسم من المستندات",
+      } : cats.has("deed") || cats.has("floor_plan") || cats.has("building_permit") ? {
         description: "فيلا سكنية دورين مع ملحق",
         city: "الرياض",
         district: "حي النرجس",
@@ -291,12 +305,13 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         deedNumber: cats.has("deed") ? "1234567" : undefined,
         classification: "سكني",
       } : {},
-      suggestedPurpose: cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
+      suggestedPurpose: hasMachineryEvidence && !hasPropertyEvidence ? "تقييم أصول" : cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
       notes: [
         ...(cats.has("deed") ? ["تم التعرف على صك إلكتروني — استُخرج رقم الصك واسم المالك والمساحة والموقع"] : []),
         ...(cats.has("building_permit") ? ["تم اكتشاف رخصة بناء — استُخرج رقم الرخصة وعدد الأدوار المرخصة"] : []),
         ...(cats.has("floor_plan") ? ["تم تحليل المخطط المعماري — استُخرجت مساحة البناء وعدد الغرف"] : []),
-        ...(cats.has("technical_report") ? ["تم اكتشاف تقرير تقييم سابق — استُخرجت القيمة السوقية وسعر المتر"] : []),
+        ...(cats.has("technical_report") ? ["تم اكتشاف تقرير فني/تقييم سابق — استُخرجت بيانات فنية مساندة"] : []),
+        ...(cats.has("machinery_photo") ? ["تم رصد صور آلات/معدات — تم ترجيح نوع التقييم كآلات ومعدات"] : []),
         ...(cats.has("contract") ? ["تم تحليل عقد إيجار — استُخرجت قيمة الإيجار ومدة العقد"] : []),
         ...(cats.has("deed") && cats.has("floor_plan") ? ["✅ المساحة في الصك متطابقة مع المخطط المعماري"] : []),
         ...(cats.has("building_permit") ? ["⚠️ يُنصح بالتحقق من صلاحية رخصة البناء"] : []),
