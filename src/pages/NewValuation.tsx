@@ -320,7 +320,7 @@ export default function NewValuation() {
         break;
     }
     return { valid: errors.length === 0, errors, warnings };
-  }, [uploadedFiles, extracted, clientFields, assetFields, purpose, valuationDate]);
+  }, [uploadedFiles, extracted, clientFields, assetDescription, dynamicAssetFields, purpose, valuationDate]);
 
   const progressPercent = useMemo(() => {
     let total = 0;
