@@ -33,7 +33,7 @@ export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   awaiting_client_info: ["under_ai_review", "client_submitted"],
   priced: ["awaiting_payment_initial"],
   awaiting_payment_initial: ["payment_received_initial"],
-  payment_received_initial: ["inspection_required", "valuation_in_progress"],
+  payment_received_initial: ["inspection_required", "valuation_in_progress"], // desktop mode skips inspection
   inspection_required: ["inspection_assigned"],
   inspection_assigned: ["inspection_in_progress"],
   inspection_in_progress: ["inspection_submitted"],
