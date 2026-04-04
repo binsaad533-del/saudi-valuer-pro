@@ -119,6 +119,7 @@ const App = () => (
             <Route path="/ai-report-generation" element={<AIReportGenerationPage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
             <Route path="/account" element={<UserSettingsPage />} />
+            <Route path="/user-settings" element={<UserSettingsPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
