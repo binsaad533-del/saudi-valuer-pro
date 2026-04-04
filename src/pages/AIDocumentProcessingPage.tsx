@@ -139,6 +139,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
   const generateMockResult = (files: UploadedFile[]): ExtractedData => {
     const guessCategory = (name: string): { category: string; label: string; extractedInfo?: string; relevance: string } => {
       const n = name.toLowerCase();
+      const machineryKeywords = ["آلة", "الات", "معدة", "معدات", "حفار", "شيول", "مولد", "رافعة", "بوكلين", "كمبروسر", "ضاغط", "forklift", "generator", "crane", "excavator", "loader", "bulldozer", "compressor", "equipment", "machinery", "machine"];
       // صكوك ملكية
       if (n.includes("صك") || n.includes("deed") || n.includes("ملكي") || n.includes("title"))
         return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م² — حي النرجس، الرياض — ثقة 96%" };
@@ -156,16 +157,19 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "إيجار سنوي: 85,000 ر.س — المستأجر: شركة الأفق — ثقة 88%" };
       // فواتير
       if (n.includes("فاتور") || n.includes("invoice") || n.includes("سند") || n.includes("إيصال") || n.includes("receipt"))
-        return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة صيانة — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
+        return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة شراء/صيانة معدات — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
       // وثائق هوية
       if (n.includes("هوي") || n.includes("جواز") || n.includes("إقام") || n.includes("id") || n.includes("passport") || n.includes("iqama"))
         return { category: "identity_doc", label: "وثيقة هوية", relevance: "medium", extractedInfo: "هوية وطنية — رقم: 1088456723 — الاسم: أحمد بن عبدالله المالكي" };
       // خرائط مواقع
       if (n.includes("map") || n.includes("خريط") || n.includes("موقع") || n.includes("location") || n.includes("gps"))
         return { category: "location_map", label: "خريطة موقع", relevance: "medium", extractedInfo: "إحداثيات: 24.7136°N, 46.6753°E — حي النرجس، الرياض" };
-      // صور عقارية
+      // صور آلات ومعدات
+      if (machineryKeywords.some(keyword => n.includes(keyword)) || n.includes("واتساب") && n.includes("معدة"))
+        return { category: "machinery_photo", label: "صورة آلة / معدة", relevance: "high", extractedInfo: "صورة معدة تشغيل/إنتاج — يلزم التحقق من الشركة المصنعة والموديل وسنة الصنع" };
+      // صور أصول عقارية
       if (/\.(jpg|jpeg|png|webp|tif|tiff|gif)$/i.test(n) || n.includes("صور") || n.includes("واجه") || n.includes("photo") || n.includes("img"))
-        return { category: "property_photo", label: "صورة عقار", relevance: "medium", extractedInfo: "صورة واجهة رئيسية — حالة التشطيب: جيدة — طابقين" };
+        return { category: "property_photo", label: "صورة أصل عقاري", relevance: "medium", extractedInfo: "صورة أصل عقاري — يلزم تأكيد نوع الأصل من المستخدم" };
       // PDF عام
       if (n.endsWith(".pdf"))
         return { category: "technical_report", label: "مستند PDF", relevance: "medium", extractedInfo: "مستند PDF — يحتوي على بيانات نصية قابلة للاستخراج" };
