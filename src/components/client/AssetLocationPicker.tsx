@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Plus, X, ExternalLink, Navigation } from "lucide-react";
+import { MapPin, Plus, X, ExternalLink, Navigation, Link2, LocateFixed } from "lucide-react";
 
 export interface AssetLocation {
   id: string;
@@ -20,8 +20,9 @@ interface AssetLocationPickerProps {
   onChange: (locations: AssetLocation[]) => void;
 }
 
+type InputMode = "url" | "coords";
+
 function extractCoordsFromUrl(url: string): { lat?: number; lng?: number } {
-  // Try patterns like @24.7136,46.6753 or q=24.7136,46.6753
   const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
   const qMatch = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
@@ -35,12 +36,23 @@ function isValidGoogleMapsUrl(url: string): boolean {
   return /^https?:\/\/(www\.)?(google\.\w+\/maps|maps\.google|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(url);
 }
 
+function isValidCoordinate(lat: number, lng: number): boolean {
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+}
+
+function coordsToGoogleMapsUrl(lat: number, lng: number): string {
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
 export default function AssetLocationPicker({ locations, onChange }: AssetLocationPickerProps) {
   const [showForm, setShowForm] = useState(false);
+  const [inputMode, setInputMode] = useState<InputMode>("url");
   const [form, setForm] = useState({ name: "", city: "", googleMapsUrl: "" });
+  const [coordsForm, setCoordsForm] = useState({ name: "", city: "", latitude: "", longitude: "" });
   const [urlError, setUrlError] = useState("");
+  const [coordsError, setCoordsError] = useState("");
 
-  const handleAdd = () => {
+  const handleAddFromUrl = () => {
     if (!form.name.trim() || !form.googleMapsUrl.trim()) return;
 
     if (!isValidGoogleMapsUrl(form.googleMapsUrl.trim())) {
@@ -64,12 +76,41 @@ export default function AssetLocationPicker({ locations, onChange }: AssetLocati
     setShowForm(false);
   };
 
+  const handleAddFromCoords = () => {
+    if (!coordsForm.name.trim() || !coordsForm.latitude.trim() || !coordsForm.longitude.trim()) return;
+
+    const lat = parseFloat(coordsForm.latitude);
+    const lng = parseFloat(coordsForm.longitude);
+
+    if (isNaN(lat) || isNaN(lng) || !isValidCoordinate(lat, lng)) {
+      setCoordsError("إحداثيات غير صالحة. خط العرض: -90 إلى 90، خط الطول: -180 إلى 180");
+      return;
+    }
+
+    const newLocation: AssetLocation = {
+      id: crypto.randomUUID(),
+      name: coordsForm.name.trim(),
+      city: coordsForm.city.trim(),
+      googleMapsUrl: coordsToGoogleMapsUrl(lat, lng),
+      latitude: lat,
+      longitude: lng,
+    };
+
+    onChange([...locations, newLocation]);
+    setCoordsForm({ name: "", city: "", latitude: "", longitude: "" });
+    setCoordsError("");
+    setShowForm(false);
+  };
+
   const handleRemove = (id: string) => {
     onChange(locations.filter(l => l.id !== id));
   };
 
-  // Group by city for display
-  const cities = [...new Set(locations.map(l => l.city).filter(Boolean))];
+  const resetAndClose = () => {
+    setShowForm(false);
+    setUrlError("");
+    setCoordsError("");
+  };
 
   return (
     <Card className="shadow-card">
@@ -79,67 +120,151 @@ export default function AssetLocationPicker({ locations, onChange }: AssetLocati
           مواقع الأصول
         </CardTitle>
         <p className="text-sm text-muted-foreground mt-1">
-          أضف مواقع الأصول المراد تقييمها عبر روابط خرائط قوقل. يمكنك إضافة موقع واحد أو عدة مواقع.
+          أضف مواقع الأصول المراد تقييمها عبر رابط خرائط قوقل أو إحداثيات GPS مباشرة.
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
         {/* Location chips */}
         {locations.length > 0 && (
           <div className="space-y-2">
-          <div className="flex flex-wrap gap-2">
-            {locations.map(loc => (
-              <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
-            ))}
-          </div>
+            <div className="flex flex-wrap gap-2">
+              {locations.map(loc => (
+                <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
+              ))}
+            </div>
           </div>
         )}
 
         {/* Add form */}
         {showForm ? (
           <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label className="text-xs">اسم الموقع / الأصل <span className="text-destructive">*</span></Label>
-                <Input
-                  value={form.name}
-                  onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
-                  placeholder="مثال: فيلا حي النرجس"
-                  className="text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs">المدينة</Label>
-                <Input
-                  value={form.city}
-                  onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
-                  placeholder="مثال: الرياض"
-                  className="text-sm"
-                />
-              </div>
+            {/* Mode toggle */}
+            <div className="flex gap-1 p-0.5 rounded-lg bg-muted w-fit">
+              <button
+                onClick={() => { setInputMode("url"); setCoordsError(""); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  inputMode === "url" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                رابط خرائط قوقل
+              </button>
+              <button
+                onClick={() => { setInputMode("coords"); setUrlError(""); }}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  inputMode === "coords" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <LocateFixed className="w-3.5 h-3.5" />
+                إحداثيات GPS
+              </button>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">رابط خرائط قوقل <span className="text-destructive">*</span></Label>
-              <Input
-                value={form.googleMapsUrl}
-                onChange={e => { setForm(p => ({ ...p, googleMapsUrl: e.target.value })); setUrlError(""); }}
-                placeholder="https://maps.google.com/..."
-                className="text-sm font-mono"
-                dir="ltr"
-              />
-              {urlError && <p className="text-[11px] text-destructive">{urlError}</p>}
-              <p className="text-[10px] text-muted-foreground">
-                افتح خرائط قوقل → حدد الموقع → اضغط "مشاركة" → انسخ الرابط والصقه هنا
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={handleAdd} disabled={!form.name.trim() || !form.googleMapsUrl.trim()} className="text-xs gap-1">
-                <Plus className="w-3.5 h-3.5" />
-                إضافة الموقع
-              </Button>
-              <Button size="sm" variant="ghost" onClick={() => { setShowForm(false); setUrlError(""); }} className="text-xs">
-                إلغاء
-              </Button>
-            </div>
+
+            {inputMode === "url" ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">اسم الموقع / الأصل <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={form.name}
+                      onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="مثال: فيلا حي النرجس"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">المدينة</Label>
+                    <Input
+                      value={form.city}
+                      onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+                      placeholder="مثال: الرياض"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs">رابط خرائط قوقل <span className="text-destructive">*</span></Label>
+                  <Input
+                    value={form.googleMapsUrl}
+                    onChange={e => { setForm(p => ({ ...p, googleMapsUrl: e.target.value })); setUrlError(""); }}
+                    placeholder="https://maps.google.com/..."
+                    className="text-sm font-mono"
+                    dir="ltr"
+                  />
+                  {urlError && <p className="text-[11px] text-destructive">{urlError}</p>}
+                  <p className="text-[10px] text-muted-foreground">
+                    افتح خرائط قوقل → حدد الموقع → اضغط "مشاركة" → انسخ الرابط والصقه هنا
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAddFromUrl} disabled={!form.name.trim() || !form.googleMapsUrl.trim()} className="text-xs gap-1">
+                    <Plus className="w-3.5 h-3.5" />
+                    إضافة الموقع
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={resetAndClose} className="text-xs">إلغاء</Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">اسم الموقع / الأصل <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={coordsForm.name}
+                      onChange={e => setCoordsForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="مثال: مصنع المنطقة الصناعية"
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">المدينة</Label>
+                    <Input
+                      value={coordsForm.city}
+                      onChange={e => setCoordsForm(p => ({ ...p, city: e.target.value }))}
+                      placeholder="مثال: جدة"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">خط العرض (Latitude) <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={coordsForm.latitude}
+                      onChange={e => { setCoordsForm(p => ({ ...p, latitude: e.target.value })); setCoordsError(""); }}
+                      placeholder="مثال: 24.7136"
+                      className="text-sm font-mono"
+                      dir="ltr"
+                      type="text"
+                      inputMode="decimal"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">خط الطول (Longitude) <span className="text-destructive">*</span></Label>
+                    <Input
+                      value={coordsForm.longitude}
+                      onChange={e => { setCoordsForm(p => ({ ...p, longitude: e.target.value })); setCoordsError(""); }}
+                      placeholder="مثال: 46.6753"
+                      className="text-sm font-mono"
+                      dir="ltr"
+                      type="text"
+                      inputMode="decimal"
+                    />
+                  </div>
+                </div>
+                {coordsError && <p className="text-[11px] text-destructive">{coordsError}</p>}
+                <p className="text-[10px] text-muted-foreground">
+                  يمكنك نسخ الإحداثيات من خرائط قوقل بالضغط مطولاً على الموقع، أو من أي تطبيق GPS
+                </p>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleAddFromCoords} disabled={!coordsForm.name.trim() || !coordsForm.latitude.trim() || !coordsForm.longitude.trim()} className="text-xs gap-1">
+                    <Plus className="w-3.5 h-3.5" />
+                    إضافة الموقع
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={resetAndClose} className="text-xs">إلغاء</Button>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <Button
@@ -169,6 +294,11 @@ function LocationChip({ location, onRemove }: { location: AssetLocation; onRemov
       >
         <Navigation className="w-3.5 h-3.5 text-primary shrink-0" />
         <span className="max-w-[160px] truncate">{location.name}</span>
+        {location.latitude && location.longitude && (
+          <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono">
+            {location.latitude.toFixed(4)},{location.longitude.toFixed(4)}
+          </Badge>
+        )}
         <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
       </a>
       <button
