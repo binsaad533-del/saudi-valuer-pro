@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
 
 import {
   Select,
@@ -26,17 +27,20 @@ import {
   Bot,
   CheckCircle,
   ArrowRight,
-  ArrowLeft,
   Sparkles,
   User as UserIcon,
-  Phone,
-  Mail,
   FileCheck,
   Brain,
   Target,
   MapPin,
   Navigation,
   ExternalLink,
+  Edit3,
+  ShieldCheck,
+  AlertTriangle,
+  Tag,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
@@ -49,26 +53,91 @@ interface UploadedFile {
   path: string;
 }
 
-interface AIExtractedData {
-  valuationType: string;
-  propertyType: string;
-  purpose: string;
-  propertyDescription: string;
-  propertyCity: string;
-  propertyDistrict: string;
-  propertyAddress: string;
-  landArea: string;
-  buildingArea: string;
-  intendedUse: string;
-  intendedUsers: string;
-  assetCount: number;
-  isPortfolio: boolean;
-  assets: any[];
+interface AssetField {
+  key: string;
+  label: string;
+  value: string;
   confidence: number;
-  summary: string;
+  source?: string;
+  group?: string;
+}
+
+interface DocumentCategory {
+  fileName: string;
+  category: string;
+  categoryLabel: string;
+  relevance: string;
+  extractedInfo?: string;
+}
+
+interface ExtractedResult {
+  discipline: string;
+  discipline_label: string;
+  confidence: number;
+  client?: {
+    clientName?: string;
+    idNumber?: string;
+    phone?: string;
+    email?: string;
+  };
+  asset?: {
+    description?: string;
+  };
+  assetFields: AssetField[];
+  suggestedPurpose?: string;
+  notes: string[];
+  documentCategories: DocumentCategory[];
+  extractedNumbers?: { label: string; value: string; source: string }[];
+  analysisMethod?: string;
+  analyzedFilesCount?: number;
+  totalFilesCount?: number;
+  processedFileTypes?: Record<string, number>;
 }
 
 type Step = "upload" | "processing" | "extracted" | "submitted";
+
+const DISCIPLINE_LABELS: Record<string, string> = {
+  real_estate: "🏠 تقييم عقاري",
+  machinery: "⚙️ تقييم آلات ومعدات",
+  mixed: "🏗️ تقييم مختلط",
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  deed: "صك ملكية",
+  building_permit: "رخصة بناء",
+  floor_plan: "مخطط معماري",
+  property_photo: "صورة عقار",
+  machinery_photo: "صورة معدة",
+  identity_doc: "وثيقة هوية",
+  invoice: "فاتورة",
+  contract: "عقد",
+  technical_report: "تقرير فني",
+  location_map: "خريطة موقع",
+  spreadsheet: "جدول بيانات",
+  archive: "ملف مضغوط",
+  other: "أخرى",
+};
+
+const GROUP_LABELS: Record<string, string> = {
+  property: "بيانات العقار",
+  machinery: "بيانات الآلات والمعدات",
+  financial: "بيانات مالية",
+  legal: "بيانات قانونية",
+  general: "بيانات عامة",
+};
+
+const PURPOSE_LABELS: Record<string, string> = {
+  sale_purchase: "بيع / شراء",
+  mortgage: "رهن عقاري",
+  financial_reporting: "تقارير مالية",
+  insurance: "تأمين",
+  taxation: "ضريبي",
+  litigation: "قضائي",
+  investment: "استثمار",
+  zakat: "زكاة",
+  expropriation: "نزع ملكية",
+  other: "أخرى",
+};
 
 export default function NewRequest() {
   const navigate = useNavigate();
@@ -86,11 +155,15 @@ export default function NewRequest() {
   const [dragOver, setDragOver] = useState(false);
 
   // AI extracted
-  const [extractedData, setExtractedData] = useState<AIExtractedData | null>(null);
+  const [extractedResult, setExtractedResult] = useState<ExtractedResult | null>(null);
+  const [editableFields, setEditableFields] = useState<AssetField[]>([]);
+  const [editableDescription, setEditableDescription] = useState("");
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
-  // Report client info (not the logged-in user)
+  // Report client info
   const [clientInfo, setClientInfo] = useState({
     contactName: "",
     contactPhone: "",
@@ -110,6 +183,11 @@ export default function NewRequest() {
   // Asset locations
   const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
+  // New custom field
+  const [showAddField, setShowAddField] = useState(false);
+  const [newFieldLabel, setNewFieldLabel] = useState("");
+  const [newFieldValue, setNewFieldValue] = useState("");
+
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -118,8 +196,6 @@ export default function NewRequest() {
         return;
       }
       setUser(user);
-
-      // No pre-fill - client info is for the report client, not the logged-in user
     };
     checkAuth();
   }, [navigate]);
@@ -180,7 +256,7 @@ export default function NewRequest() {
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
   };
 
-  // AI Processing
+  // ── AI Processing via extract-documents ──
   const processWithAI = async () => {
     if (uploadedFiles.length === 0) {
       toast({ title: "يرجى رفع الوثائق أولاً", variant: "destructive" });
@@ -189,200 +265,115 @@ export default function NewRequest() {
 
     setStep("processing");
     setProcessingProgress(0);
-    setProcessingMessage("جارٍ تحليل الوثائق المرفوعة...");
+    setProcessingMessage("جارٍ تحميل الملفات وقراءة المحتوى...");
 
     try {
-      // Simulate progress stages
       const progressSteps = [
-        { pct: 15, msg: "قراءة الملفات والتعرف على المحتوى..." },
-        { pct: 35, msg: "استخراج بيانات العقار والأصول..." },
-        { pct: 55, msg: "تحديد نوع التقييم والغرض..." },
-        { pct: 75, msg: "تصنيف الوثائق وترتيبها..." },
-        { pct: 90, msg: "إعداد ملخص الطلب..." },
+        { pct: 10, msg: "جارٍ تحميل الملفات وقراءة المحتوى..." },
+        { pct: 25, msg: "تحليل الصور والمستندات بالذكاء الاصطناعي..." },
+        { pct: 40, msg: "استخراج البيانات من الجداول والملفات..." },
+        { pct: 55, msg: "جرد الأصول وتحديد المواصفات الفنية..." },
+        { pct: 70, msg: "تصنيف المستندات وتحديد نوع التقييم..." },
       ];
 
-      for (const ps of progressSteps) {
-        setProcessingProgress(ps.pct);
-        setProcessingMessage(ps.msg);
-        await new Promise(r => setTimeout(r, 600));
+      // Start progress animation
+      let currentStep = 0;
+      const progressInterval = setInterval(() => {
+        if (currentStep < progressSteps.length) {
+          setProcessingProgress(progressSteps[currentStep].pct);
+          setProcessingMessage(progressSteps[currentStep].msg);
+          currentStep++;
+        }
+      }, 1500);
+
+      // Call extract-documents with actual storage paths
+      const resp = await supabase.functions.invoke("extract-documents", {
+        body: {
+          fileNames: uploadedFiles.map(f => f.name),
+          fileDescriptions: uploadedFiles.map(() => ""),
+          storagePaths: uploadedFiles.map(f => ({
+            path: f.path,
+            name: f.name,
+            mimeType: f.type,
+          })),
+        },
+      });
+
+      clearInterval(progressInterval);
+
+      if (resp.error) throw new Error(resp.error.message || "فشل التحليل الذكي");
+
+      const result = resp.data as ExtractedResult & { error?: string };
+
+      if (result.error) throw new Error(result.error);
+
+      // Auto-fill client info from AI extraction
+      if (result.client) {
+        setClientInfo(prev => ({
+          ...prev,
+          contactName: prev.contactName || result.client?.clientName || "",
+          idNumber: prev.idNumber || result.client?.idNumber || "",
+          contactPhone: prev.contactPhone || result.client?.phone || "",
+          contactEmail: prev.contactEmail || result.client?.email || "",
+        }));
       }
 
-      // Call AI extraction
-      const resp = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-intake`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            messages: [
-              {
-                role: "user",
-                content: `قم بتحليل الوثائق التالية واستخرج جميع بيانات طلب التقييم منها.
-الملفات المرفوعة: ${uploadedFiles.map(f => f.name).join(", ")}
-
-أريد منك استخراج البيانات التالية بصيغة JSON فقط بدون أي نص إضافي:
-{
-  "valuationType": "real_estate|machinery|mixed",
-  "propertyType": "residential|commercial|land|industrial|mixed_use|agricultural|hospitality",
-  "purpose": "sale_purchase|mortgage|financial_reporting|insurance|taxation|litigation|investment|other",
-  "propertyDescription": "وصف تفصيلي",
-  "propertyCity": "المدينة",
-  "propertyDistrict": "الحي",
-  "propertyAddress": "العنوان الكامل",
-  "landArea": "المساحة بالأرقام فقط",
-  "buildingArea": "المساحة بالأرقام فقط",
-  "intendedUse": "الاستخدام المقصود",
-  "intendedUsers": "المستخدمون المقصودون",
-  "assetCount": 1,
-  "isPortfolio": false,
-  "assets": [],
-  "confidence": 0.85,
-  "summary": "ملخص شامل لطلب التقييم"
-}
-
-إذا لم تستطع تحديد أي حقل، اتركه فارغاً. لا تكتب أي شيء خارج JSON.`,
-              },
-            ],
-            systemPrompt: `أنت محرك استخراج بيانات لشركة تقييم عقاري في السعودية. 
-حلل الوثائق المرفوعة واستخرج جميع المعلومات المطلوبة.
-أجب بصيغة JSON فقط بدون أي نص إضافي أو markdown.
-إذا كانت الوثائق تحتوي على عدة أصول، اضبط isPortfolio=true واملأ مصفوفة assets.
-كل أصل في المصفوفة يحتوي: asset_name_ar, asset_type, asset_category, city_ar, description_ar.`,
-            valuationType: "real_estate",
-            formData: {},
-            files: uploadedFiles.map(f => ({ name: f.name, type: f.type })),
-          }),
-        }
-      );
-
-      if (!resp.ok || !resp.body) throw new Error("فشل التحليل الذكي");
-
-      // Read the streaming response
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = "";
-      let buffer = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-
-        let newlineIndex: number;
-        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-          let line = buffer.slice(0, newlineIndex);
-          buffer = buffer.slice(newlineIndex + 1);
-          if (line.endsWith("\r")) line = line.slice(0, -1);
-          if (!line.startsWith("data: ") || line.trim() === "") continue;
-          const jsonStr = line.slice(6).trim();
-          if (jsonStr === "[DONE]") break;
-          try {
-            const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) fullContent += content;
-          } catch { /* partial chunk */ }
-        }
+      if (result.suggestedPurpose && !clientInfo.purpose) {
+        setClientInfo(prev => ({ ...prev, purpose: result.suggestedPurpose || prev.purpose }));
       }
 
-      // Parse AI response
-      let extracted: AIExtractedData;
-      try {
-        // Try to find JSON in the response
-        const jsonMatch = fullContent.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          extracted = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error("لم يتم العثور على بيانات");
-        }
-      } catch {
-        // Fallback with defaults
-        extracted = {
-          valuationType: "real_estate",
-          propertyType: "",
-          purpose: "",
-          propertyDescription: "",
-          propertyCity: "",
-          propertyDistrict: "",
-          propertyAddress: "",
-          landArea: "",
-          buildingArea: "",
-          intendedUse: "",
-          intendedUsers: "",
-          assetCount: 1,
-          isPortfolio: false,
-          assets: [],
-          confidence: 0.5,
-          summary: "تم رفع الوثائق بنجاح. يرجى مراجعة البيانات المستخرجة.",
-        };
-      }
+      setExtractedResult(result);
+      setEditableFields(result.assetFields || []);
+      setEditableDescription(result.asset?.description || "");
 
-      setExtractedData(extracted);
       setProcessingProgress(100);
       setProcessingMessage("تم الاستخراج بنجاح!");
-
       await new Promise(r => setTimeout(r, 500));
       setStep("extracted");
     } catch (err: any) {
+      console.error("Extract error:", err);
       toast({ title: "خطأ في التحليل", description: err.message, variant: "destructive" });
       setStep("upload");
     }
   };
 
+  // ── Submit ──
   const handleSubmitRequest = async () => {
-    if (!user || !extractedData) return;
+    if (!user || !extractedResult) return;
     setLoading(true);
 
     try {
+      // Build asset_data from editable fields
+      const assetData: Record<string, any> = {};
+      for (const f of editableFields) {
+        assetData[f.key] = { value: f.value, confidence: f.confidence, label: f.label, group: f.group };
+      }
+
       const { data, error } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
-          valuation_type: (extractedData.valuationType || "real_estate") as any,
-          property_type: (extractedData.propertyType || null) as any,
-          property_description_ar: extractedData.propertyDescription || null,
-          property_address_ar: extractedData.propertyAddress || null,
-          property_city_ar: extractedData.propertyCity || null,
-          property_district_ar: extractedData.propertyDistrict || null,
-          land_area: extractedData.landArea ? parseFloat(extractedData.landArea) : null,
-          building_area: extractedData.buildingArea ? parseFloat(extractedData.buildingArea) : null,
-          purpose: (clientInfo.purpose || extractedData.purpose || null) as any,
-          intended_use_ar: extractedData.intendedUse || null,
-          intended_users_ar: extractedData.intendedUsers || null,
+          valuation_type: (extractedResult.discipline || "real_estate") as any,
+          property_description_ar: editableDescription || null,
+          purpose: (clientInfo.purpose || extractedResult.suggestedPurpose || null) as any,
+          intended_users_ar: clientInfo.intendedUsers || null,
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
-          is_portfolio: extractedData.isPortfolio || false,
-          portfolio_asset_count: extractedData.isPortfolio ? extractedData.assets?.length || 0 : 0,
           ai_intake_summary: {
-            extractedData,
+            extractedResult,
+            editableFields,
+            editableDescription,
             files: uploadedFiles,
             clientInfo,
             assetLocations,
+            documentCategories: extractedResult.documentCategories,
           },
+          asset_data: assetData,
         } as any)
         .select()
         .single();
 
       if (error) throw error;
-
-      // Save portfolio assets
-      if (extractedData.isPortfolio && extractedData.assets?.length > 0 && data) {
-        const reqData = data as any;
-        const assets = extractedData.assets.map((a: any, i: number) => ({
-          request_id: reqData.id,
-          asset_type: a.asset_type || "real_estate",
-          asset_category: a.asset_category || "other",
-          asset_name_ar: a.asset_name_ar || `أصل ${i + 1}`,
-          city_ar: a.city_ar || null,
-          description_ar: a.description_ar || null,
-          ai_extracted: true,
-          ai_confidence: extractedData.confidence || 0.85,
-          sort_order: i,
-        }));
-        await supabase.from("portfolio_assets" as any).insert(assets);
-      }
 
       // Save documents
       if (uploadedFiles.length > 0 && data) {
@@ -408,23 +399,37 @@ export default function NewRequest() {
     }
   };
 
-  const VALUATION_TYPE_LABELS: Record<string, string> = {
-    real_estate: "🏠 تقييم عقاري",
-    machinery: "⚙️ تقييم آلات ومعدات",
-    mixed: "🏗️ تقييم مختلط",
+  // ── Field editing helpers ──
+  const updateField = (key: string, newValue: string) => {
+    setEditableFields(prev => prev.map(f => f.key === key ? { ...f, value: newValue } : f));
   };
 
-  const PROPERTY_TYPE_LABELS: Record<string, string> = {
-    residential: "سكني", commercial: "تجاري", land: "أرض",
-    industrial: "صناعي", mixed_use: "متعدد الاستخدام",
-    agricultural: "زراعي", hospitality: "فندقي",
+  const removeField = (key: string) => {
+    setEditableFields(prev => prev.filter(f => f.key !== key));
   };
 
-  const PURPOSE_LABELS: Record<string, string> = {
-    sale_purchase: "بيع / شراء", mortgage: "رهن عقاري",
-    financial_reporting: "تقارير مالية", insurance: "تأمين",
-    taxation: "ضريبي", litigation: "قضائي",
-    investment: "استثمار", other: "أخرى",
+  const addCustomField = () => {
+    if (!newFieldLabel.trim() || !newFieldValue.trim()) return;
+    const key = `custom_${Date.now()}`;
+    setEditableFields(prev => [
+      ...prev,
+      { key, label: newFieldLabel.trim(), value: newFieldValue.trim(), confidence: 100, source: "إدخال يدوي", group: "general" },
+    ]);
+    setNewFieldLabel("");
+    setNewFieldValue("");
+    setShowAddField(false);
+  };
+
+  const getConfidenceColor = (c: number) => {
+    if (c >= 80) return "text-emerald-600 dark:text-emerald-400";
+    if (c >= 50) return "text-amber-600 dark:text-amber-400";
+    return "text-red-500 dark:text-red-400";
+  };
+
+  const getConfidenceBg = (c: number) => {
+    if (c >= 80) return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800";
+    if (c >= 50) return "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800";
+    return "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800";
   };
 
   // Step indicators
@@ -434,7 +439,7 @@ export default function NewRequest() {
     { key: "extracted", label: "مراجعة وإرسال", icon: FileCheck },
   ];
 
-    const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
+  const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
 
   // === SUBMITTED ===
   if (step === "submitted") {
@@ -534,16 +539,9 @@ export default function NewRequest() {
                         <SelectValue placeholder="اختر الغرض" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="sale_purchase">بيع / شراء</SelectItem>
-                        <SelectItem value="mortgage">رهن عقاري</SelectItem>
-                        <SelectItem value="financial_reporting">تقارير مالية</SelectItem>
-                        <SelectItem value="insurance">تأمين</SelectItem>
-                        <SelectItem value="taxation">ضريبي</SelectItem>
-                        <SelectItem value="litigation">قضائي</SelectItem>
-                        <SelectItem value="investment">استثمار</SelectItem>
-                        <SelectItem value="zakat">زكاة</SelectItem>
-                        <SelectItem value="expropriation">نزع ملكية</SelectItem>
-                        <SelectItem value="other">أخرى</SelectItem>
+                        {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
+                          <SelectItem key={k} value={k}>{v}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -625,7 +623,7 @@ export default function NewRequest() {
                   الوثائق المتعلقة بالتقييم
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  ارفع صكوك الملكية، المخططات، التقارير، الصور، أو أي مستندات ذات صلة.
+                  ارفع صكوك الملكية، المخططات، التقارير، الصور، جداول البيانات، أو أي مستندات ذات صلة. سيقوم الذكاء الاصطناعي بتحليل محتواها واستخراج كافة البيانات تلقائياً.
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -645,7 +643,7 @@ export default function NewRequest() {
                     {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات هنا أو اضغط للاختيار"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, صور, Word, Excel
+                    PDF, صور, Word, Excel, CSV, ZIP
                   </p>
                   {uploading && (
                     <div className="mt-2 flex items-center justify-center gap-2 text-primary">
@@ -660,7 +658,7 @@ export default function NewRequest() {
                   multiple
                   className="hidden"
                   onChange={handleInputChange}
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.txt,.tif,.tiff"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.txt,.tif,.tiff,.zip,.rar,.7z,.gz,.webp"
                 />
 
                 {uploadedFiles.length > 0 && (
@@ -696,7 +694,7 @@ export default function NewRequest() {
               disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
             >
               <Sparkles className="w-4 h-4" />
-              تحليل الوثائق والمتابعة
+              تحليل الوثائق بالذكاء الاصطناعي
             </Button>
           </div>
         )}
@@ -708,16 +706,10 @@ export default function NewRequest() {
               <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <Brain className="w-10 h-10 text-primary-foreground" />
               </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">جارٍ التحليل الذكي</h3>
+              <h3 className="text-lg font-bold text-foreground mb-2">جارٍ التحليل الذكي للمستندات</h3>
               <p className="text-sm text-muted-foreground mb-6">{processingMessage}</p>
 
-              {/* Progress bar */}
-              <div className="w-full bg-muted rounded-full h-2 mb-2 overflow-hidden">
-                <div
-                  className="h-full gradient-primary rounded-full transition-all duration-500"
-                  style={{ width: `${processingProgress}%` }}
-                />
-              </div>
+              <Progress value={processingProgress} className="mb-2" />
               <p className="text-xs text-muted-foreground">{processingProgress}%</p>
 
               <div className="mt-6 space-y-2 text-right">
@@ -734,89 +726,239 @@ export default function NewRequest() {
         )}
 
         {/* === STEP 3: Extracted Data Review === */}
-        {step === "extracted" && extractedData && (
+        {step === "extracted" && extractedResult && (
           <div className="space-y-4">
+            {/* Analysis Summary */}
             <Card className="shadow-card">
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
-                    <FileCheck className="w-5 h-5 text-primary" />
-                    البيانات المستخرجة
+                    <Bot className="w-5 h-5 text-primary" />
+                    نتائج التحليل الذكي
                   </CardTitle>
-                  {extractedData.confidence > 0 && (
-                    <Badge variant={extractedData.confidence > 0.7 ? "default" : "secondary"} className="text-xs">
-                      دقة {Math.round(extractedData.confidence * 100)}%
+                  <Badge variant="outline" className={`text-xs ${getConfidenceColor(extractedResult.confidence * 100)}`}>
+                    <ShieldCheck className="w-3 h-3 ml-1" />
+                    دقة {Math.round(extractedResult.confidence * 100)}%
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {/* Discipline */}
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <Target className="w-5 h-5 text-primary shrink-0" />
+                  <div>
+                    <p className="text-xs text-muted-foreground">نوع التقييم المحدد</p>
+                    <p className="text-sm font-bold text-foreground">{DISCIPLINE_LABELS[extractedResult.discipline] || extractedResult.discipline_label}</p>
+                  </div>
+                  {extractedResult.analyzedFilesCount != null && (
+                    <Badge variant="secondary" className="mr-auto text-[10px]">
+                      تم تحليل {extractedResult.analyzedFilesCount} ملف
                     </Badge>
                   )}
                 </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  تم استخراج البيانات التالية من وثائقك. راجعها ثم انتقل للخطوة التالية.
-                </p>
-              </CardHeader>
-              <CardContent>
-                {extractedData.summary && (
-                  <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4">
-                    <div className="flex items-start gap-2">
-                      <Bot className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <p className="text-sm text-foreground">{extractedData.summary}</p>
-                    </div>
-                  </div>
-                )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {extractedData.valuationType && (
-                    <InfoItem label="نوع التقييم" value={VALUATION_TYPE_LABELS[extractedData.valuationType] || extractedData.valuationType} />
-                  )}
-                  {extractedData.propertyType && (
-                    <InfoItem label="نوع العقار" value={PROPERTY_TYPE_LABELS[extractedData.propertyType] || extractedData.propertyType} />
-                  )}
-                  {extractedData.purpose && (
-                    <InfoItem label="الغرض" value={PURPOSE_LABELS[extractedData.purpose] || extractedData.purpose} />
-                  )}
-                  {extractedData.propertyCity && (
-                    <InfoItem label="المدينة" value={extractedData.propertyCity} />
-                  )}
-                  {extractedData.propertyDistrict && (
-                    <InfoItem label="الحي" value={extractedData.propertyDistrict} />
-                  )}
-                  {extractedData.propertyAddress && (
-                    <InfoItem label="العنوان" value={extractedData.propertyAddress} />
-                  )}
-                  {extractedData.landArea && (
-                    <InfoItem label="مساحة الأرض" value={`${extractedData.landArea} م²`} />
-                  )}
-                  {extractedData.buildingArea && (
-                    <InfoItem label="مساحة البناء" value={`${extractedData.buildingArea} م²`} />
-                  )}
-                </div>
-
-                {extractedData.propertyDescription && (
-                  <div className="mt-3 p-3 rounded-lg bg-muted/50">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">وصف العقار</p>
-                    <p className="text-sm text-foreground">{extractedData.propertyDescription}</p>
-                  </div>
-                )}
-
-                {extractedData.isPortfolio && extractedData.assets?.length > 0 && (
-                  <div className="mt-4">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2">
-                      أصول المحفظة ({extractedData.assets.length})
-                    </p>
-                    <div className="space-y-2">
-                      {extractedData.assets.map((asset: any, i: number) => (
-                        <div key={i} className="p-3 rounded-lg border border-border bg-card">
-                          <p className="text-sm font-medium text-foreground">{asset.asset_name_ar || `أصل ${i + 1}`}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {asset.city_ar && `${asset.city_ar} • `}
-                            {asset.asset_type === "machinery" ? "آلات ومعدات" : "عقار"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                {/* AI Notes */}
+                {extractedResult.notes?.length > 0 && (
+                  <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground mb-1">ملاحظات التحليل</p>
+                    {extractedResult.notes.map((note, i) => (
+                      <p key={i} className="text-sm text-foreground flex items-start gap-1.5">
+                        <span className="text-primary mt-0.5">•</span>
+                        {note}
+                      </p>
+                    ))}
                   </div>
                 )}
               </CardContent>
             </Card>
+
+            {/* Asset Description */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <FileText className="w-4 h-4 text-primary" />
+                    وصف الأصل
+                  </CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingDescription(!editingDescription)}
+                    className="text-xs gap-1"
+                  >
+                    <Edit3 className="w-3 h-3" />
+                    {editingDescription ? "حفظ" : "تعديل"}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editingDescription ? (
+                  <Textarea
+                    value={editableDescription}
+                    onChange={(e) => setEditableDescription(e.target.value)}
+                    rows={6}
+                    className="text-sm leading-relaxed"
+                  />
+                ) : (
+                  <div className="p-3 rounded-lg bg-muted/30 border border-border">
+                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
+                      {editableDescription || "لم يتم استخراج وصف"}
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Dynamic Asset Fields */}
+            <Card className="shadow-card">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    البيانات المستخرجة
+                  </CardTitle>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAddField(!showAddField)}
+                    className="text-xs gap-1"
+                  >
+                    <Plus className="w-3 h-3" />
+                    إضافة حقل
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  تم استخراج {editableFields.length} حقل — اضغط على أي قيمة لتعديلها
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Add custom field */}
+                {showAddField && (
+                  <div className="p-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        value={newFieldLabel}
+                        onChange={(e) => setNewFieldLabel(e.target.value)}
+                        placeholder="اسم الحقل"
+                        className="text-sm"
+                      />
+                      <Input
+                        value={newFieldValue}
+                        onChange={(e) => setNewFieldValue(e.target.value)}
+                        placeholder="القيمة"
+                        className="text-sm"
+                      />
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <Button size="sm" variant="ghost" onClick={() => setShowAddField(false)} className="text-xs">إلغاء</Button>
+                      <Button size="sm" onClick={addCustomField} className="text-xs" disabled={!newFieldLabel.trim() || !newFieldValue.trim()}>إضافة</Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Group fields by group */}
+                {Object.entries(
+                  editableFields.reduce((acc, f) => {
+                    const g = f.group || "general";
+                    if (!acc[g]) acc[g] = [];
+                    acc[g].push(f);
+                    return acc;
+                  }, {} as Record<string, AssetField[]>)
+                ).map(([group, fields]) => (
+                  <div key={group}>
+                    <p className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <Tag className="w-3 h-3" />
+                      {GROUP_LABELS[group] || group}
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {fields.map((field) => (
+                        <div
+                          key={field.key}
+                          className={`p-2.5 rounded-lg border transition-all ${getConfidenceBg(field.confidence)}`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-[11px] font-medium text-muted-foreground">{field.label}</p>
+                            <div className="flex items-center gap-1">
+                              <span className={`text-[10px] font-mono ${getConfidenceColor(field.confidence)}`}>
+                                {field.confidence}%
+                              </span>
+                              <button
+                                onClick={() => removeField(field.key)}
+                                className="text-muted-foreground/40 hover:text-destructive p-0.5"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                          {editingFieldKey === field.key ? (
+                            <Input
+                              value={field.value}
+                              onChange={(e) => updateField(field.key, e.target.value)}
+                              onBlur={() => setEditingFieldKey(null)}
+                              onKeyDown={(e) => e.key === "Enter" && setEditingFieldKey(null)}
+                              className="h-7 text-sm"
+                              autoFocus
+                            />
+                          ) : (
+                            <p
+                              className="text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
+                              onClick={() => setEditingFieldKey(field.key)}
+                            >
+                              {field.value}
+                            </p>
+                          )}
+                          {field.source && (
+                            <p className="text-[9px] text-muted-foreground/60 mt-0.5">المصدر: {field.source}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {editableFields.length === 0 && (
+                  <div className="text-center py-6 text-muted-foreground">
+                    <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-sm">لم يتم استخراج حقول بيانات. يمكنك إضافة حقول يدوياً.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Document Categories */}
+            {extractedResult.documentCategories?.length > 0 && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <FileCheck className="w-4 h-4 text-primary" />
+                    تصنيف المستندات ({extractedResult.documentCategories.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1.5">
+                    {extractedResult.documentCategories.map((doc, i) => (
+                      <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50">
+                        <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-sm text-foreground truncate flex-1">{doc.fileName}</span>
+                        <Badge variant="secondary" className="text-[10px] shrink-0">
+                          {CATEGORY_LABELS[doc.category] || doc.categoryLabel}
+                        </Badge>
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] shrink-0 ${
+                            doc.relevance === "high" ? "border-emerald-300 text-emerald-600" :
+                            doc.relevance === "medium" ? "border-amber-300 text-amber-600" :
+                            "border-border text-muted-foreground"
+                          }`}
+                        >
+                          {doc.relevance === "high" ? "عالي" : doc.relevance === "medium" ? "متوسط" : "منخفض"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Asset Locations Summary */}
             {assetLocations.length > 0 && (
@@ -943,15 +1085,6 @@ export default function NewRequest() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function InfoItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="p-2.5 rounded-lg bg-muted/50">
-      <p className="text-[11px] text-muted-foreground mb-0.5">{label}</p>
-      <p className="text-sm font-medium text-foreground">{value}</p>
     </div>
   );
 }
