@@ -790,11 +790,62 @@ export default function NewValuation() {
               </div>
 
               <div className="space-y-4">
+                {/* Valuation Mode Selector */}
+                <div className="p-4 rounded-lg border-2 border-border space-y-3">
+                  <label className="block text-sm font-semibold text-foreground">نوع التقييم <span className="text-destructive">*</span></label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      onClick={() => { setValuationMode("field"); setDesktopDisclaimerAccepted(false); }}
+                      className={`p-4 rounded-lg border-2 text-center transition-all ${valuationMode === "field" ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"}`}
+                    >
+                      <MapPin className={`w-6 h-6 mx-auto mb-2 ${valuationMode === "field" ? "text-primary" : "text-muted-foreground"}`} />
+                      <p className={`text-sm font-medium ${valuationMode === "field" ? "text-primary" : "text-foreground"}`}>تقييم ميداني</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">يشمل معاينة مادية للأصل</p>
+                    </button>
+                    <button
+                      onClick={() => setValuationMode("desktop")}
+                      className={`p-4 rounded-lg border-2 text-center transition-all ${valuationMode === "desktop" ? "border-accent bg-accent/10" : "border-border hover:border-accent/30"}`}
+                    >
+                      <FileSearch className={`w-6 h-6 mx-auto mb-2 ${valuationMode === "desktop" ? "text-accent-foreground" : "text-muted-foreground"}`} />
+                      <p className={`text-sm font-medium ${valuationMode === "desktop" ? "text-accent-foreground" : "text-foreground"}`}>تقييم مكتبي</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">بدون معاينة ميدانية — IVS متوافق</p>
+                    </button>
+                  </div>
+
+                  {/* Desktop Valuation Warning & Disclaimer */}
+                  {valuationMode === "desktop" && (
+                    <div className="space-y-3 animate-fade-in">
+                      <div className="p-3 rounded-lg bg-warning/10 border border-warning/30">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />
+                          <div className="text-xs text-warning space-y-1">
+                            <p className="font-medium">ضوابط التقييم المكتبي (IVS / تقييم)</p>
+                            <ul className="list-disc list-inside space-y-0.5 text-warning/80">
+                              <li>سيُنص في التقرير على عدم إجراء معاينة مادية</li>
+                              <li>يجب توفير أدلة بديلة كافية (صكوك، مخططات، بيانات سوقية)</li>
+                              <li>المقيّم يتحمل مسؤولية كفاية الأدلة بحكمه المهني</li>
+                              <li>غير متاح لأغراض: التمويل العقاري، الضمان البنكي، نزع الملكية</li>
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                      <label className="flex items-start gap-2 cursor-pointer p-3 rounded-lg border border-border hover:bg-muted/30 transition-colors">
+                        <input type="checkbox" checked={desktopDisclaimerAccepted} onChange={(e) => setDesktopDisclaimerAccepted(e.target.checked)}
+                          className="mt-1 rounded border-input" />
+                        <span className="text-xs text-foreground leading-relaxed">
+                          أقر بعلمي أن هذا التقييم سيتم بدون معاينة ميدانية، وأن التقرير سيتضمن بيان إفصاح بذلك وفقاً لمعايير التقييم الدولية (IVS) ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم).
+                        </span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 {/* Scope */}
                 <div className="p-4 rounded-lg bg-muted/50 border border-border">
                   <h4 className="text-sm font-semibold text-foreground mb-3">نطاق العمل</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between"><span className="text-muted-foreground">نوع التقييم</span><span className="font-medium text-foreground flex items-center gap-1"><Sparkles className="w-3 h-3 text-primary" />{extracted?.discipline_label || "-"}</span></div>
+                    <div className="flex justify-between"><span className="text-muted-foreground">طريقة التقييم</span><span className={`font-medium flex items-center gap-1 ${valuationMode === "desktop" ? "text-accent-foreground" : "text-foreground"}`}>{valuationMode === "desktop" ? "📋 مكتبي" : "🏗️ ميداني"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">العميل</span><span className="font-medium text-foreground">{clientFields.clientName || "-"}</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">الوثائق</span><span className="font-medium text-foreground">{uploadedFiles.length} ملف ({classifiedCount} مُصنَّف)</span></div>
                     <div className="flex justify-between"><span className="text-muted-foreground">وصف الأصل</span><span className="font-medium text-foreground text-left max-w-[60%] truncate">{assetFields.description || "-"}</span></div>
@@ -806,13 +857,25 @@ export default function NewValuation() {
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-2">غرض التقييم <span className="text-destructive">*</span></label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {PURPOSES.map((p) => (
-                        <button key={p} onClick={() => setPurpose(p)}
-                          className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${purpose === p ? "border-primary bg-primary/5 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/30"}`}>
-                          {p}
-                        </button>
-                      ))}
+                      {PURPOSES.map((p) => {
+                        const isBlocked = valuationMode === "desktop" && DESKTOP_BLOCKED_PURPOSES.includes(p);
+                        return (
+                          <button key={p}
+                            onClick={() => !isBlocked && setPurpose(p)}
+                            disabled={isBlocked}
+                            title={isBlocked ? "يتطلب معاينة ميدانية" : undefined}
+                            className={`px-3 py-2.5 rounded-lg border text-sm transition-all ${
+                              isBlocked ? "border-border bg-muted/30 text-muted-foreground/40 cursor-not-allowed line-through" :
+                              purpose === p ? "border-primary bg-primary/5 text-primary font-medium" : "border-border text-muted-foreground hover:border-primary/30"
+                            }`}>
+                            {p}
+                          </button>
+                        );
+                      })}
                     </div>
+                    {valuationMode === "desktop" && purpose && DESKTOP_BLOCKED_PURPOSES.includes(purpose) && (
+                      <p className="text-xs text-destructive mt-2 flex items-center gap-1"><AlertCircle className="w-3 h-3" />هذا الغرض يتطلب معاينة ميدانية — يرجى اختيار غرض آخر أو التحويل للتقييم الميداني</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground mb-1.5">أساس القيمة</label>
@@ -834,8 +897,15 @@ export default function NewValuation() {
                   <ul className="space-y-1.5 text-sm text-muted-foreground list-disc list-inside">
                     <li>يفترض أن المعلومات المقدمة صحيحة ودقيقة</li>
                     <li>يفترض عدم وجود تلوث بيئي أو تعديات نظامية</li>
-                    <li>التقييم مبني على الوضع الراهن وقت المعاينة</li>
+                    {valuationMode === "field" ? (
+                      <li>التقييم مبني على الوضع الراهن وقت المعاينة</li>
+                    ) : (
+                      <li>التقييم مبني على المستندات والأدلة المكتبية المتوفرة دون معاينة مادية</li>
+                    )}
                     <li>لا يشمل التقييم أي أصول غير مذكورة في النطاق</li>
+                    {valuationMode === "desktop" && (
+                      <li className="text-warning font-medium">لم يتم إجراء معاينة مادية للأصل — قد تؤثر هذه القيود على دقة النتائج</li>
+                    )}
                   </ul>
                 </div>
 
