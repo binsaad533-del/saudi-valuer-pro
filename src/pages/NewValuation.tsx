@@ -5,7 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  ChevronLeft, ChevronRight, Upload, FileText, CheckCircle2,
+  ChevronLeft, ChevronRight, FileText, CheckCircle2,
   AlertTriangle, AlertCircle, Eye, Send, Loader2, Sparkles, X,
   FolderUp, Brain, FileSearch, Tag, Hash, Calendar, MapPin,
   Building2, User, Phone, Mail, Ruler, FileCheck, ShieldCheck,
