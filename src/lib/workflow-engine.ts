@@ -33,7 +33,7 @@ export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   awaiting_client_info: ["under_ai_review", "client_submitted"],
   priced: ["awaiting_payment_initial"],
   awaiting_payment_initial: ["payment_received_initial"],
-  payment_received_initial: ["inspection_required", "valuation_in_progress"],
+  payment_received_initial: ["inspection_required", "valuation_in_progress"], // desktop mode skips inspection
   inspection_required: ["inspection_assigned"],
   inspection_assigned: ["inspection_in_progress"],
   inspection_in_progress: ["inspection_submitted"],
@@ -202,30 +202,41 @@ export async function transitionStatus(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
 
-  // ── Inspection enforcement: block valuation without completed inspection ──
+  // ── Inspection enforcement: block valuation without completed inspection (field mode only) ──
   if (toStatus === "valuation_in_progress") {
-    const { data: inspections } = await supabase
-      .from("inspections")
-      .select("id, status, completed, submitted_at")
-      .eq("assignment_id", assignmentId)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    // Check if this is a desktop valuation
+    const { data: assignmentData } = await supabase
+      .from("valuation_assignments")
+      .select("valuation_mode")
+      .eq("id", assignmentId)
+      .single();
 
-    const inspection = inspections?.[0];
-    if (!inspection) {
-      return { success: false, error: "لا يمكن بدء التقييم بدون معاينة ميدانية." };
-    }
-    if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
-      return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
-    }
+    const isDesktop = assignmentData?.valuation_mode === "desktop";
 
-    const { count: photoCount } = await supabase
-      .from("inspection_photos")
-      .select("id", { count: "exact", head: true })
-      .eq("inspection_id", inspection.id);
+    if (!isDesktop) {
+      const { data: inspections } = await supabase
+        .from("inspections")
+        .select("id, status, completed, submitted_at")
+        .eq("assignment_id", assignmentId)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    if (!photoCount || photoCount === 0) {
-      return { success: false, error: "لا يمكن بدء التقييم بدون صور المعاينة." };
+      const inspection = inspections?.[0];
+      if (!inspection) {
+        return { success: false, error: "لا يمكن بدء التقييم بدون معاينة ميدانية." };
+      }
+      if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
+        return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
+      }
+
+      const { count: photoCount } = await supabase
+        .from("inspection_photos")
+        .select("id", { count: "exact", head: true })
+        .eq("inspection_id", inspection.id);
+
+      if (!photoCount || photoCount === 0) {
+        return { success: false, error: "لا يمكن بدء التقييم بدون صور المعاينة." };
+      }
     }
   }
 
@@ -369,29 +380,37 @@ export async function triggerAutomationPipeline(assignmentId: string) {
     // 2. Call AI intake function
     await supabase.functions.invoke("ai-intake", { body: { assignment_id: assignmentId } });
 
-    // 3. Move to inspection required
-    await transitionStatus(assignmentId, "under_ai_review", "inspection_required", undefined, "المراجعة الذكية مكتملة");
-
-    // 4. Auto-assign inspector
-    const { data: assignment } = await supabase
+    // Check if desktop valuation — skip inspection
+    const { data: assignmentInfo } = await supabase
       .from("valuation_assignments")
-      .select("id, subjects(city_ar, district_ar, latitude, longitude)")
+      .select("valuation_mode, id, subjects(city_ar, district_ar, latitude, longitude)")
       .eq("id", assignmentId)
       .single();
 
-    const subject = (assignment as any)?.subjects?.[0];
-    const { data: inspectorResult } = await supabase.functions.invoke("smart-inspector-assignment", {
-      body: {
-        assignment_id: assignmentId,
-        property_city_ar: subject?.city_ar || "",
-        property_district_ar: subject?.district_ar || "",
-        property_latitude: subject?.latitude,
-        property_longitude: subject?.longitude,
-      },
-    });
+    const isDesktop = assignmentInfo?.valuation_mode === "desktop";
 
-    if (inspectorResult?.assigned) {
-      await transitionStatus(assignmentId, "inspection_required", "inspection_assigned", undefined, "تعيين معاين تلقائي");
+    if (isDesktop) {
+      // Desktop: skip inspection → go directly to valuation
+      await transitionStatus(assignmentId, "under_ai_review", "valuation_in_progress", undefined, "تقييم مكتبي — تخطي المعاينة الميدانية");
+    } else {
+      // Field: normal flow with inspection
+      await transitionStatus(assignmentId, "under_ai_review", "inspection_required", undefined, "المراجعة الذكية مكتملة");
+
+      // 4. Auto-assign inspector
+      const subject = (assignmentInfo as any)?.subjects?.[0];
+      const { data: inspectorResult } = await supabase.functions.invoke("smart-inspector-assignment", {
+        body: {
+          assignment_id: assignmentId,
+          property_city_ar: subject?.city_ar || "",
+          property_district_ar: subject?.district_ar || "",
+          property_latitude: subject?.latitude,
+          property_longitude: subject?.longitude,
+        },
+      });
+
+      if (inspectorResult?.assigned) {
+        await transitionStatus(assignmentId, "inspection_required", "inspection_assigned", undefined, "تعيين معاين تلقائي");
+      }
     }
   } catch (err) {
     console.error("Automation pipeline error:", err);

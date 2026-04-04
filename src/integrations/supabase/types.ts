@@ -3735,6 +3735,7 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string
+          desktop_evidence_notes: string | null
           engagement_date: string
           fee_amount: number | null
           fee_currency: string | null
@@ -3768,6 +3769,7 @@ export type Database = {
           status: Database["public"]["Enums"]["assignment_status"]
           updated_at: string
           valuation_date: string | null
+          valuation_mode: string
           valuation_type: Database["public"]["Enums"]["valuation_type"]
         }
         Insert: {
@@ -3781,6 +3783,7 @@ export type Database = {
           client_id: string
           created_at?: string
           created_by: string
+          desktop_evidence_notes?: string | null
           engagement_date?: string
           fee_amount?: number | null
           fee_currency?: string | null
@@ -3814,6 +3817,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
           valuation_date?: string | null
+          valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"]
         }
         Update: {
@@ -3827,6 +3831,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           created_by?: string
+          desktop_evidence_notes?: string | null
           engagement_date?: string
           fee_amount?: number | null
           fee_currency?: string | null
@@ -3860,6 +3865,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["assignment_status"]
           updated_at?: string
           valuation_date?: string | null
+          valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"]
         }
         Relationships: [
@@ -4014,6 +4020,7 @@ export type Database = {
           client_user_id: string
           completed_at: string | null
           created_at: string
+          desktop_disclaimer_accepted: boolean | null
           draft_report_url: string | null
           fees_breakdown: Json | null
           final_report_url: string | null
@@ -4062,6 +4069,7 @@ export type Database = {
           terms_en: string | null
           total_fees: number | null
           updated_at: string
+          valuation_mode: string
           valuation_type: Database["public"]["Enums"]["valuation_type"] | null
         }
         Insert: {
@@ -4079,6 +4087,7 @@ export type Database = {
           client_user_id: string
           completed_at?: string | null
           created_at?: string
+          desktop_disclaimer_accepted?: boolean | null
           draft_report_url?: string | null
           fees_breakdown?: Json | null
           final_report_url?: string | null
@@ -4127,6 +4136,7 @@ export type Database = {
           terms_en?: string | null
           total_fees?: number | null
           updated_at?: string
+          valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
         }
         Update: {
@@ -4144,6 +4154,7 @@ export type Database = {
           client_user_id?: string
           completed_at?: string | null
           created_at?: string
+          desktop_disclaimer_accepted?: boolean | null
           draft_report_url?: string | null
           fees_breakdown?: Json | null
           final_report_url?: string | null
@@ -4192,6 +4203,7 @@ export type Database = {
           terms_en?: string | null
           total_fees?: number | null
           updated_at?: string
+          valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
         }
         Relationships: [
