@@ -303,9 +303,9 @@ export default function NewRequest() {
 
       if (resp.error) throw new Error(resp.error.message || "فشل التحليل الذكي");
 
-      const result = resp.data as ExtractedResult;
+      const result = resp.data as ExtractedResult & { error?: string };
 
-      if (result.error) throw new Error((result as any).error);
+      if (result.error) throw new Error(result.error);
 
       // Auto-fill client info from AI extraction
       if (result.client) {
