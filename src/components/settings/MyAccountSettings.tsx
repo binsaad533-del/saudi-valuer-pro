@@ -160,15 +160,19 @@ export default function MyAccountSettings() {
 
           <div className="space-y-2">
             <Label>نوع الحساب</Label>
-            <Select value={userType} onValueChange={setUserType}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="external">فرد</SelectItem>
-                <SelectItem value="corporate">شركة / مؤسسة</SelectItem>
-              </SelectContent>
-            </Select>
+            {isOwner ? (
+              <Input value="مالك المنصة" readOnly className="bg-muted font-medium text-primary" />
+            ) : (
+              <Select value={userType} onValueChange={setUserType}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="external">فرد</SelectItem>
+                  <SelectItem value="corporate">شركة / مؤسسة</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
 
           <Separator />
