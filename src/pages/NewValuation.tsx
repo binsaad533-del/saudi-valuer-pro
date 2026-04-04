@@ -232,17 +232,23 @@ export default function NewValuation() {
         phone: result.client?.phone || "",
         email: result.client?.email || "",
       });
-      setAssetFields({
-        description: result.asset?.description || "",
-        city: result.asset?.city || "",
-        district: result.asset?.district || "",
-        area: result.asset?.area || "",
-        deedNumber: result.asset?.deedNumber || "",
-        classification: result.asset?.classification || "",
-        machineName: result.asset?.machineName || "",
-        manufacturer: result.asset?.manufacturer || "",
-        model: result.asset?.model || "",
-      });
+      setAssetDescription(result.asset?.description || "");
+      // Set dynamic asset fields from AI
+      if (result.assetFields && result.assetFields.length > 0) {
+        setDynamicAssetFields(result.assetFields);
+      } else {
+        // Fallback: no dynamic fields returned
+        setDynamicAssetFields([]);
+      }
+      // Extract location if present in dynamic fields
+      const cityField = result.assetFields?.find(f => f.key === "city");
+      const districtField = result.assetFields?.find(f => f.key === "district");
+      if (cityField || districtField) {
+        setLocationFields({
+          city: cityField?.value || "",
+          district: districtField?.value || "",
+        });
+      }
       if (result.suggestedPurpose) setPurpose(result.suggestedPurpose);
 
       // Update file categories from AI
