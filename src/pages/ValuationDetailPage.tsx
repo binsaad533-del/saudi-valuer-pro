@@ -292,6 +292,9 @@ export default function ValuationDetailPage() {
           {/* Risk Detection */}
           <RiskDetectionPanel context={riskCtx} />
 
+          {/* Decision */}
+          <DecisionPanel context={riskCtx} compliancePassed={true} />
+
           {/* Team */}
           <Card>
             <CardHeader className="pb-3">
