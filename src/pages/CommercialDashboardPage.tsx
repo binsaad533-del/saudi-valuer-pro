@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { CurrencyDisplay } from "@/components/ui/saudi-riyal";
 import {
   Wallet, FileText, Clock, CheckCircle, AlertTriangle,
-  TrendingUp, Ticket, ArrowRight, Receipt, Loader2,
+  TrendingUp, Ticket, ArrowRight, Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
@@ -90,8 +90,8 @@ export default function CommercialDashboardPage() {
     { label: "بانتظار الدفع", value: stats.awaitingPayment, icon: Clock, color: "text-amber-600" },
     { label: "طلبات مدفوعة", value: stats.paidRequests, icon: CheckCircle, color: "text-emerald-600" },
     { label: "مدفوعات متأخرة", value: stats.overduePayments, icon: AlertTriangle, color: "text-destructive" },
-    { label: "إجمالي الإيرادات", value: <SAR amount={stats.totalRevenue} />, icon: TrendingUp, color: "text-primary" },
-    { label: "خصومات مستخدمة", value: <SAR amount={stats.totalDiscounts} />, icon: Ticket, color: "text-violet-600" },
+    { label: "إجمالي الإيرادات", value: <CurrencyDisplay amount={stats.totalRevenue} />, icon: TrendingUp, color: "text-primary" },
+    { label: "خصومات مستخدمة", value: <CurrencyDisplay amount={stats.totalDiscounts} />, icon: Ticket, color: "text-violet-600" },
   ];
 
   return (
@@ -149,7 +149,7 @@ export default function CommercialDashboardPage() {
                       <TableRow key={a.id}>
                         <TableCell className="font-mono text-xs">{a.reference_number}</TableCell>
                         <TableCell className="text-sm">{a.client_name_ar || "—"}</TableCell>
-                        <TableCell><SAR amount={a.quotation_amount || a.total_fees || 0} /></TableCell>
+                        <TableCell><CurrencyDisplay amount={a.quotation_amount || a.total_fees || 0} /></TableCell>
                         <TableCell>
                           <Badge className={`text-[10px] ${ps.color} border-0`}>{ps.ar}</Badge>
                         </TableCell>
@@ -200,10 +200,10 @@ export default function CommercialDashboardPage() {
                     return (
                       <TableRow key={inv.id}>
                         <TableCell className="font-mono text-xs">{inv.invoice_number}</TableCell>
-                        <TableCell><SAR amount={inv.subtotal} /></TableCell>
-                        <TableCell className="text-destructive"><SAR amount={inv.discount_amount} /></TableCell>
-                        <TableCell><SAR amount={inv.vat_amount} /></TableCell>
-                        <TableCell className="font-semibold"><SAR amount={inv.total_amount} /></TableCell>
+                        <TableCell><CurrencyDisplay amount={inv.subtotal} /></TableCell>
+                        <TableCell className="text-destructive"><CurrencyDisplay amount={inv.discount_amount} /></TableCell>
+                        <TableCell><CurrencyDisplay amount={inv.vat_amount} /></TableCell>
+                        <TableCell className="font-semibold"><CurrencyDisplay amount={inv.total_amount} /></TableCell>
                         <TableCell>
                           <Badge className={`text-[10px] ${ps.color} border-0`}>{ps.ar}</Badge>
                         </TableCell>
@@ -248,7 +248,7 @@ export default function CommercialDashboardPage() {
                           {format(new Date(u.used_at), "yyyy/MM/dd")}
                         </span>
                       </div>
-                      <span className="text-sm font-semibold text-destructive">-<SAR amount={u.discount_applied} /></span>
+                      <span className="text-sm font-semibold text-destructive">-<CurrencyDisplay amount={u.discount_applied} /></span>
                     </div>
                   ))}
                 </div>
