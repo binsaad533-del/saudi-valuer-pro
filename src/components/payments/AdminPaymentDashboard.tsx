@@ -14,6 +14,7 @@ import {
   AlertTriangle, FileText,
 } from "lucide-react";
 import { SAR } from "@/components/ui/saudi-riyal";
+import PaymentProofReview from "./PaymentProofReview";
 
 export default function AdminPaymentDashboard() {
   const { toast } = useToast();
@@ -109,13 +110,18 @@ export default function AdminPaymentDashboard() {
         ))}
       </div>
 
-      <Tabs defaultValue="all" dir="rtl">
-        <TabsList className="grid w-full grid-cols-4">
+      <Tabs defaultValue="review" dir="rtl">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="review">مراجعة الإيصالات</TabsTrigger>
           <TabsTrigger value="all">الكل ({payments.length})</TabsTrigger>
           <TabsTrigger value="pending">معلقة ({stats.pending})</TabsTrigger>
           <TabsTrigger value="paid">مدفوعة ({stats.paid})</TabsTrigger>
-          <TabsTrigger value="logs">سجل Webhook ({webhookLogs.length})</TabsTrigger>
+          <TabsTrigger value="logs">سجل ({webhookLogs.length})</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="review" className="mt-4">
+          <PaymentProofReview />
+        </TabsContent>
 
         {["all", "pending", "paid"].map(tab => (
           <TabsContent key={tab} value={tab} className="space-y-3 mt-4">
