@@ -337,59 +337,92 @@ export default function KnowledgeBasePage() {
               يتم تطبيقها تلقائياً عبر الذكاء الاصطناعي
             </span>
           </div>
-          <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+          <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
             {rules.map((rule) => (
               <div
                 key={rule.id}
-                className={`flex items-center gap-3 px-4 py-2 transition-colors
+                className={`px-4 py-2.5 transition-colors
                   ${!rule.is_active ? "opacity-40" : "hover:bg-muted/30"}`}
               >
-                {rule.severity === "blocking" ? (
-                  <ShieldAlert className="w-3.5 h-3.5 text-destructive shrink-0" />
-                ) : (
-                  <ShieldCheck className="w-3.5 h-3.5 text-success shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-foreground truncate">{rule.rule_title_ar}</p>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[10px] text-muted-foreground">
-                      {CATEGORY_LABELS[rule.category] || rule.category}
-                    </span>
-                    {rule.enforcement_stage?.length > 0 && (
-                      <>
-                        <span className="text-[10px] text-muted-foreground/40">•</span>
-                        <span className="text-[10px] text-muted-foreground">
-                          {rule.enforcement_stage.map((s) => STAGE_LABELS[s] || s).join("، ")}
-                        </span>
-                      </>
-                    )}
+                <div className="flex items-center gap-3">
+                  {rule.severity === "blocking" ? (
+                    <ShieldAlert className="w-3.5 h-3.5 text-destructive shrink-0" />
+                  ) : (
+                    <ShieldCheck className="w-3.5 h-3.5 text-success shrink-0" />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium text-foreground truncate">{rule.rule_title_ar}</p>
+                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                      <span className="text-[10px] text-muted-foreground">
+                        {CATEGORY_LABELS[rule.category] || rule.category}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/40">•</span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {ASSET_TYPE_LABELS[rule.applicable_asset_type] || "الكل"}
+                      </span>
+                      {rule.enforcement_stage?.length > 0 && (
+                        <>
+                          <span className="text-[10px] text-muted-foreground/40">•</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {rule.enforcement_stage.map((s) => STAGE_LABELS[s] || s).join("، ")}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <button
-                  onClick={() => toggleSeverity(rule.id, rule.severity)}
-                  title="اضغط لتغيير المستوى"
-                >
+                  {/* Impact badge */}
                   <Badge
                     variant="outline"
-                    className={`text-[9px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${
-                      rule.severity === "blocking"
-                        ? "border-destructive text-destructive"
-                        : "border-warning text-warning"
+                    className={`text-[9px] shrink-0 ${
+                      IMPACT_LABELS[rule.impact_type]?.cls || "border-muted text-muted-foreground"
                     }`}
                   >
-                    {rule.severity === "blocking" ? "حرج — يمنع" : "تحذير"}
+                    {IMPACT_LABELS[rule.impact_type]?.ar || rule.impact_type}
                   </Badge>
-                </button>
-                <button
-                  onClick={() => toggleRule(rule.id, rule.is_active)}
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {rule.is_active ? (
-                    <ToggleRight className="w-4.5 h-4.5 text-success" />
-                  ) : (
-                    <ToggleLeft className="w-4.5 h-4.5" />
-                  )}
-                </button>
+                  {/* Severity toggle */}
+                  <button
+                    onClick={() => toggleSeverity(rule.id, rule.severity)}
+                    title="اضغط لتغيير المستوى"
+                  >
+                    <Badge
+                      variant="outline"
+                      className={`text-[9px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${
+                        rule.severity === "blocking"
+                          ? "border-destructive text-destructive"
+                          : "border-warning text-warning"
+                      }`}
+                    >
+                      {rule.severity === "blocking" ? "حرج" : "تحذير"}
+                    </Badge>
+                  </button>
+                  <button
+                    onClick={() => toggleRule(rule.id, rule.is_active)}
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {rule.is_active ? (
+                      <ToggleRight className="w-4.5 h-4.5 text-success" />
+                    ) : (
+                      <ToggleLeft className="w-4.5 h-4.5" />
+                    )}
+                  </button>
+                </div>
+                {/* Condition & Requirement (structured details) */}
+                {(rule.condition_text || rule.requirement_text) && rule.is_active && (
+                  <div className="mr-7 mt-1.5 space-y-1 text-[10px]">
+                    {rule.condition_text && (
+                      <p className="text-muted-foreground">
+                        <span className="font-medium text-foreground/70">متى: </span>
+                        {rule.condition_text}
+                      </p>
+                    )}
+                    {rule.requirement_text && (
+                      <p className="text-muted-foreground">
+                        <span className="font-medium text-foreground/70">المتطلب: </span>
+                        {rule.requirement_text}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>
