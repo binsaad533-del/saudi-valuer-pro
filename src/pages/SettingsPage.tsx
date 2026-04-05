@@ -1,4 +1,4 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight, User, DollarSign, Wallet } from "lucide-react";
+import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight, User, DollarSign, Wallet, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -12,6 +12,7 @@ import DiscountCodesSettings from "@/components/settings/DiscountCodesSettings";
 import MyAccountSettings from "@/components/settings/MyAccountSettings";
 import CommercialSettingsPanel from "@/components/settings/CommercialSettings";
 import PricingMatrixManager from "@/components/pricing/PricingMatrixManager";
+import PaymentGatewaySettings from "@/components/settings/PaymentGatewaySettings";
 import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -46,6 +47,7 @@ export default function SettingsPage() {
     { value: "integrations", label: t("integrations"), icon: Plug },
     { value: "discounts", label: "أكواد الخصم", icon: Ticket },
     { value: "pricing", label: "مصفوفة التسعير", icon: DollarSign },
+    { value: "payment-gateway", label: "بوابة الدفع", icon: CreditCard },
     { value: "commercial", label: "الإعدادات التجارية", icon: Wallet },
   ];
   const defaultTab = "myaccount";
@@ -97,6 +99,7 @@ export default function SettingsPage() {
             <TabsContent value="integrations"><IntegrationSettings /></TabsContent>
             <TabsContent value="discounts"><DiscountCodesSettings /></TabsContent>
             <TabsContent value="pricing"><PricingMatrixManager /></TabsContent>
+            <TabsContent value="payment-gateway"><PaymentGatewaySettings /></TabsContent>
             <TabsContent value="commercial"><CommercialSettingsPanel /></TabsContent>
           </>
         )}

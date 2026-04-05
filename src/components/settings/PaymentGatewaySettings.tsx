@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Save, CreditCard, Shield, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, Save, CreditCard, Shield, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 interface GatewaySettings {

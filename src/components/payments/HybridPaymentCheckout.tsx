@@ -31,7 +31,7 @@ export default function HybridPaymentCheckout({
   const [mode, setMode] = useState<PaymentMode>("select");
   const [checkoutId, setCheckoutId] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
-  const [scriptUrl, setScriptUrl] = useState<string | null>(null);
+  const [_scriptUrl, setScriptUrl] = useState<string | null>(null);
   const [preparing, setPreparing] = useState(false);
   const [checkingResult, setCheckingResult] = useState(false);
   const [paymentResult, setPaymentResult] = useState<"success" | "failed" | null>(null);
