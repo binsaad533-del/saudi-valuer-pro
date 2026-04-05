@@ -3,7 +3,7 @@
  * Controls who can perform which operations across the platform.
  */
 
-export type PlatformRole = "owner" | "admin_coordinator" | "financial_manager" | "inspector" | "client";
+export type PlatformRole = "owner" | "admin_coordinator" | "financial_manager" | "valuation_manager" | "valuer" | "inspector" | "client";
 
 export type PlatformAction =
   // Request lifecycle
@@ -33,6 +33,7 @@ export type PlatformAction =
 
 /**
  * Permission matrix: role → allowed actions
+ * CRITICAL: issue_final_report is allowed for owner, admin_coordinator, AND valuation_manager
  */
 const PERMISSION_MATRIX: Record<PlatformRole, Set<PlatformAction>> = {
   owner: new Set([
@@ -66,9 +67,35 @@ const PERMISSION_MATRIX: Record<PlatformRole, Set<PlatformAction>> = {
     "edit_assumptions",
     "edit_report_draft",
     "approve_report_draft",
+    "issue_final_report",
     "create_report_version",
     "manage_inspectors",
     "manage_clients",
+    "view_audit_logs",
+  ]),
+  valuation_manager: new Set([
+    "create_request",
+    "edit_request_data",
+    "approve_asset_review",
+    "edit_extracted_assets",
+    "run_valuation",
+    "edit_assumptions",
+    "override_value",
+    "approve_final_value",
+    "edit_report_draft",
+    "approve_report_draft",
+    "issue_final_report",
+    "create_report_version",
+    "create_revaluation",
+    "manage_inspectors",
+    "view_audit_logs",
+  ]),
+  valuer: new Set([
+    "run_valuation",
+    "edit_assumptions",
+    "approve_final_value",
+    "edit_report_draft",
+    "edit_extracted_assets",
     "view_audit_logs",
   ]),
   financial_manager: new Set([
@@ -85,23 +112,22 @@ const PERMISSION_MATRIX: Record<PlatformRole, Set<PlatformAction>> = {
 };
 
 /**
+ * Roles allowed to issue final reports
+ */
+export const ISSUANCE_ROLES: PlatformRole[] = ["owner", "admin_coordinator", "valuation_manager"];
+
+/**
+ * Roles allowed to approve final value
+ */
+export const VALUE_APPROVAL_ROLES: PlatformRole[] = ["owner", "valuation_manager", "valuer"];
+
+/**
  * Actions that require written justification when performed
  */
 export const JUSTIFICATION_REQUIRED: PlatformAction[] = [
   "override_value",
   "cancel_request",
   "create_revaluation",
-];
-
-/**
- * Actions exclusively reserved for the owner role
- */
-export const OWNER_EXCLUSIVE: PlatformAction[] = [
-  "approve_final_value",
-  "issue_final_report",
-  "create_revaluation",
-  "override_value",
-  "manage_settings",
 ];
 
 export function hasPermission(role: string | null, action: PlatformAction): boolean {
@@ -111,12 +137,18 @@ export function hasPermission(role: string | null, action: PlatformAction): bool
   return perms.has(action);
 }
 
-export function requiresJustification(action: PlatformAction): boolean {
-  return JUSTIFICATION_REQUIRED.includes(action);
+export function canIssueReport(role: string | null): boolean {
+  if (!role) return false;
+  return ISSUANCE_ROLES.includes(role as PlatformRole);
 }
 
-export function isOwnerExclusive(action: PlatformAction): boolean {
-  return OWNER_EXCLUSIVE.includes(action);
+export function canApproveValue(role: string | null): boolean {
+  if (!role) return false;
+  return VALUE_APPROVAL_ROLES.includes(role as PlatformRole);
+}
+
+export function requiresJustification(action: PlatformAction): boolean {
+  return JUSTIFICATION_REQUIRED.includes(action);
 }
 
 export function getAllowedActions(role: string | null): PlatformAction[] {
