@@ -164,6 +164,22 @@ export default function NewRequest() {
 
   // ── Start AI Processing via Orchestrator ──
   const startProcessing = async () => {
+    if (!clientInfo.purpose) {
+      toast({ title: "يرجى اختيار الغرض من التقييم", variant: "destructive" });
+      return;
+    }
+    if (clientInfo.purpose === "other" && !clientInfo.purposeOther.trim()) {
+      toast({ title: "يرجى تحديد الغرض من التقييم", variant: "destructive" });
+      return;
+    }
+    if (!clientInfo.intendedUsers) {
+      toast({ title: "يرجى اختيار مستخدم التقرير", variant: "destructive" });
+      return;
+    }
+    if (clientInfo.intendedUsers === "other" && !clientInfo.intendedUsersOther.trim()) {
+      toast({ title: "يرجى تحديد مستخدم التقرير", variant: "destructive" });
+      return;
+    }
     if (uploadedFiles.length === 0) {
       toast({ title: "يرجى رفع الوثائق أولاً", variant: "destructive" });
       return;
