@@ -56,17 +56,37 @@ export default function UnifiedLogin() {
     return "/client/dashboard";
   };
 
+  const logLoginAttempt = async (email: string, userId: string | null, success: boolean, reason?: string) => {
+    try {
+      await supabase.functions.invoke("security-monitor", {
+        body: {
+          action: "log_login",
+          payload: {
+            email,
+            user_id: userId,
+            user_agent: navigator.userAgent,
+            success,
+            failure_reason: reason || null,
+          },
+        },
+      });
+    } catch { /* non-blocking */ }
+  };
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
+      await logLoginAttempt(email, authData.user.id, true);
       const path = await resolveRedirect(authData.user.id);
       if (path) navigate(path, { replace: true });
     } catch (err: any) {
       const message = typeof err?.message === "string" ? err.message.toLowerCase() : "";
       const isEmailNotConfirmed = err?.code === "email_not_confirmed" || message.includes("email not confirmed");
+
+      await logLoginAttempt(email, null, false, isEmailNotConfirmed ? "email_not_confirmed" : "invalid_credentials");
 
       toast({
         title: isEmailNotConfirmed ? "البريد الإلكتروني غير مؤكد" : "خطأ في تسجيل الدخول",

@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      active_sessions: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          id: string
+          ip_address: string | null
+          last_active_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          last_active_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          id?: string
+          ip_address?: string | null
+          last_active_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       archived_reports: {
         Row: {
           ai_confidence: number | null
@@ -532,6 +559,7 @@ export type Database = {
           cr_number: string | null
           created_at: string
           created_by: string | null
+          deleted_at: string | null
           email: string | null
           id: string
           id_number: string | null
@@ -557,6 +585,7 @@ export type Database = {
           cr_number?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           email?: string | null
           id?: string
           id_number?: string | null
@@ -582,6 +611,7 @@ export type Database = {
           cr_number?: string | null
           created_at?: string
           created_by?: string | null
+          deleted_at?: string | null
           email?: string | null
           id?: string
           id_number?: string | null
@@ -2259,6 +2289,39 @@ export type Database = {
           total_rules_extracted?: number
           total_rules_inserted?: number
           warning_rules?: number
+        }
+        Relationships: []
+      }
+      login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          failure_reason: string | null
+          id: string
+          ip_address: string | null
+          success: boolean
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          failure_reason?: string | null
+          id?: string
+          ip_address?: string | null
+          success?: boolean
+          user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -4332,6 +4395,48 @@ export type Database = {
           },
         ]
       }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          description: string | null
+          id: string
+          is_read: boolean
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          title: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_read?: boolean
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       status_history: {
         Row: {
           assignment_id: string
@@ -4771,6 +4876,7 @@ export type Database = {
           client_id: string
           created_at: string
           created_by: string
+          deleted_at: string | null
           desktop_evidence_notes: string | null
           engagement_date: string
           fee_amount: number | null
@@ -4819,6 +4925,7 @@ export type Database = {
           client_id: string
           created_at?: string
           created_by: string
+          deleted_at?: string | null
           desktop_evidence_notes?: string | null
           engagement_date?: string
           fee_amount?: number | null
@@ -4867,6 +4974,7 @@ export type Database = {
           client_id?: string
           created_at?: string
           created_by?: string
+          deleted_at?: string | null
           desktop_evidence_notes?: string | null
           engagement_date?: string
           fee_amount?: number | null
