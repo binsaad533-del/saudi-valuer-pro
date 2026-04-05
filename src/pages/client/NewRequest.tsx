@@ -94,7 +94,9 @@ export default function NewRequest() {
     clientType: "",
     additionalNotes: "",
     purpose: "",
+    purposeOther: "",
     intendedUsers: "",
+    intendedUsersOther: "",
   });
 
   // Discount code
