@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import AssetInventoryTable, { type InventoryAsset } from "@/components/client/AssetInventoryTable";
 
 import {
   Select,
@@ -31,16 +31,10 @@ import {
   User as UserIcon,
   FileCheck,
   Brain,
-  Target,
   MapPin,
   Navigation,
   ExternalLink,
-  Edit3,
   ShieldCheck,
-  AlertTriangle,
-  Tag,
-  Plus,
-  Trash2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
@@ -51,15 +45,6 @@ interface UploadedFile {
   size: number;
   type: string;
   path: string;
-}
-
-interface AssetField {
-  key: string;
-  label: string;
-  value: string;
-  confidence: number;
-  source?: string;
-  group?: string;
 }
 
 interface DocumentCategory {
@@ -80,18 +65,21 @@ interface ExtractedResult {
     phone?: string;
     email?: string;
   };
-  asset?: {
-    description?: string;
+  description?: string;
+  inventory?: InventoryAsset[];
+  summary?: {
+    total: number;
+    by_type?: Record<string, number>;
+    by_condition?: Record<string, number>;
   };
-  assetFields: AssetField[];
+  // Legacy flat fields fallback
+  asset?: { description?: string };
+  assetFields?: { key: string; label: string; value: string; confidence: number; source?: string; group?: string }[];
   suggestedPurpose?: string;
   notes: string[];
   documentCategories: DocumentCategory[];
-  extractedNumbers?: { label: string; value: string; source: string }[];
-  analysisMethod?: string;
   analyzedFilesCount?: number;
   totalFilesCount?: number;
-  processedFileTypes?: Record<string, number>;
 }
 
 type Step = "upload" | "processing" | "extracted" | "submitted";
