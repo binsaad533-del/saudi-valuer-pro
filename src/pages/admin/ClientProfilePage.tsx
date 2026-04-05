@@ -288,8 +288,7 @@ export default function ClientProfilePage() {
                     <TableRow>
                       <TableHead className="text-right">رقم الطلب</TableHead>
                       <TableHead className="text-right">الحالة</TableHead>
-                      <TableHead className="text-right">نسبة الثقة</TableHead>
-                      <TableHead className="text-right">حالة القرار</TableHead>
+                      <TableHead className="text-right">نوع العقار</TableHead>
                       <TableHead className="text-right">إجراء</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -298,16 +297,7 @@ export default function ClientProfilePage() {
                       <TableRow key={a.id}>
                         <TableCell className="font-medium text-sm">{a.reference_number || a.id.slice(0, 8)}</TableCell>
                         <TableCell>{statusBadge(a.status)}</TableCell>
-                        <TableCell>
-                          {a.confidence_score != null ? (
-                            <span className="text-sm font-medium">{a.confidence_score}%</span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="text-sm">{a.decision_status || "—"}</span>
-                        </TableCell>
+                        <TableCell className="text-sm">{a.property_type || "—"}</TableCell>
                         <TableCell>
                           <Button variant="ghost" size="sm" className="h-7 text-xs gap-1"
                             onClick={() => navigate(`/valuations/${a.id}`)}>
