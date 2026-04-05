@@ -413,7 +413,7 @@ export default function NewRequest() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                    <Select value={clientInfo.purpose} onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}>
+                    <Select value={clientInfo.purpose} onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val, purposeOther: val !== "other" ? "" : p.purposeOther }))}>
                       <SelectTrigger><SelectValue placeholder="اختر الغرض" /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
@@ -421,6 +421,14 @@ export default function NewRequest() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {clientInfo.purpose === "other" && (
+                      <Input
+                        value={clientInfo.purposeOther}
+                        onChange={(e) => setClientInfo(p => ({ ...p, purposeOther: e.target.value }))}
+                        placeholder="حدد الغرض من التقييم"
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">نوع العميل <span className="text-destructive">*</span></Label>
