@@ -29,6 +29,10 @@ interface RuleRow {
   severity: string;
   enforcement_stage: string[];
   is_active: boolean;
+  applicable_asset_type: string;
+  condition_text: string | null;
+  requirement_text: string | null;
+  impact_type: string;
 }
 
 const UPLOAD_CATEGORIES = [
