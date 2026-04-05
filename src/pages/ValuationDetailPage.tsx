@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import ConfidenceScoreCard from "@/components/valuation/ConfidenceScoreCard";
+import type { ValuationContext } from "@/lib/confidence-scoring";
 
 const MOCK = {
   id: "VA-2026-0042",
