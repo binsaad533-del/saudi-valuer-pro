@@ -358,8 +358,10 @@ export type Database = {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
           assignment_id: string | null
+          client_id: string | null
           created_at: string
           description: string | null
+          entity_type: string | null
           id: string
           ip_address: string | null
           new_data: Json | null
@@ -368,12 +370,16 @@ export type Database = {
           table_name: string
           user_agent: string | null
           user_id: string | null
+          user_name: string | null
+          user_role: string | null
         }
         Insert: {
           action: Database["public"]["Enums"]["audit_action"]
           assignment_id?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
+          entity_type?: string | null
           id?: string
           ip_address?: string | null
           new_data?: Json | null
@@ -382,12 +388,16 @@ export type Database = {
           table_name: string
           user_agent?: string | null
           user_id?: string | null
+          user_name?: string | null
+          user_role?: string | null
         }
         Update: {
           action?: Database["public"]["Enums"]["audit_action"]
           assignment_id?: string | null
+          client_id?: string | null
           created_at?: string
           description?: string | null
+          entity_type?: string | null
           id?: string
           ip_address?: string | null
           new_data?: Json | null
@@ -396,6 +406,8 @@ export type Database = {
           table_name?: string
           user_agent?: string | null
           user_id?: string | null
+          user_name?: string | null
+          user_role?: string | null
         }
         Relationships: [
           {
@@ -410,6 +422,13 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "audit_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]
@@ -5083,6 +5102,11 @@ export type Database = {
         | "export"
         | "login"
         | "logout"
+        | "upload"
+        | "merge"
+        | "link"
+        | "generate"
+        | "override"
       basis_of_value:
         | "market_value"
         | "fair_value"
@@ -5393,6 +5417,11 @@ export const Constants = {
         "export",
         "login",
         "logout",
+        "upload",
+        "merge",
+        "link",
+        "generate",
+        "override",
       ],
       basis_of_value: [
         "market_value",
