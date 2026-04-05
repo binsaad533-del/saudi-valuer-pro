@@ -84,12 +84,6 @@ interface ExtractedResult {
 
 type Step = "upload" | "processing" | "extracted" | "submitted";
 
-const DISCIPLINE_LABELS: Record<string, string> = {
-  real_estate: "🏠 تقييم عقاري",
-  machinery: "⚙️ تقييم آلات ومعدات",
-  mixed: "🏗️ تقييم مختلط",
-};
-
 const CATEGORY_LABELS: Record<string, string> = {
   deed: "صك ملكية",
   building_permit: "رخصة بناء",
@@ -104,14 +98,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   spreadsheet: "جدول بيانات",
   archive: "ملف مضغوط",
   other: "أخرى",
-};
-
-const GROUP_LABELS: Record<string, string> = {
-  property: "بيانات العقار",
-  machinery: "بيانات الآلات والمعدات",
-  financial: "بيانات مالية",
-  legal: "بيانات قانونية",
-  general: "بيانات عامة",
 };
 
 const PURPOSE_LABELS: Record<string, string> = {
