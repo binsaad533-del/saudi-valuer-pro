@@ -2569,6 +2569,7 @@ export type Database = {
           phone: string | null
           taqeem_registration: string | null
           updated_at: string
+          vat_number: string | null
           website: string | null
         }
         Insert: {
@@ -2588,6 +2589,7 @@ export type Database = {
           phone?: string | null
           taqeem_registration?: string | null
           updated_at?: string
+          vat_number?: string | null
           website?: string | null
         }
         Update: {
@@ -2607,6 +2609,7 @@ export type Database = {
           phone?: string | null
           taqeem_registration?: string | null
           updated_at?: string
+          vat_number?: string | null
           website?: string | null
         }
         Relationships: []
