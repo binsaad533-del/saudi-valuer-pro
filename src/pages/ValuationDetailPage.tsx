@@ -13,6 +13,8 @@ import ConfidenceScoreCard from "@/components/valuation/ConfidenceScoreCard";
 import RiskDetectionPanel from "@/components/valuation/RiskDetectionPanel";
 import DecisionPanel from "@/components/valuation/DecisionPanel";
 import type { RiskContext } from "@/lib/risk-detection";
+import JustificationWriter from "@/components/valuation/JustificationWriter";
+import { calculateConfidence } from "@/lib/confidence-scoring";
 
 const MOCK = {
   id: "VA-2026-0042",
@@ -254,6 +256,16 @@ export default function ValuationDetailPage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Justification Writer */}
+          <JustificationWriter
+            context={riskCtx}
+            asset={d.property as unknown as Record<string, unknown>}
+            valuation={d.valuation as unknown as Record<string, unknown>}
+            confidenceScore={calculateConfidence(riskCtx).overall}
+            confidenceLevel={calculateConfidence(riskCtx).level}
+            compliancePassed={true}
+          />
         </div>
 
         {/* Left column – timeline & team */}
