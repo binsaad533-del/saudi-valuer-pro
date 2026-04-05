@@ -456,6 +456,7 @@ export type Database = {
           address_en: string | null
           city_ar: string | null
           city_en: string | null
+          client_status: string
           client_type: string
           contact_person_ar: string | null
           contact_person_en: string | null
@@ -472,6 +473,7 @@ export type Database = {
           notes: string | null
           organization_id: string
           phone: string | null
+          portal_user_id: string | null
           updated_at: string
         }
         Insert: {
@@ -479,6 +481,7 @@ export type Database = {
           address_en?: string | null
           city_ar?: string | null
           city_en?: string | null
+          client_status?: string
           client_type?: string
           contact_person_ar?: string | null
           contact_person_en?: string | null
@@ -495,6 +498,7 @@ export type Database = {
           notes?: string | null
           organization_id: string
           phone?: string | null
+          portal_user_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -502,6 +506,7 @@ export type Database = {
           address_en?: string | null
           city_ar?: string | null
           city_en?: string | null
+          client_status?: string
           client_type?: string
           contact_person_ar?: string | null
           contact_person_en?: string | null
@@ -518,6 +523,7 @@ export type Database = {
           notes?: string | null
           organization_id?: string
           phone?: string | null
+          portal_user_id?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -4765,6 +4771,15 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      find_duplicate_clients: {
+        Args: { _org_id: string }
+        Returns: {
+          client_id_1: string
+          client_id_2: string
+          match_field: string
+          match_value: string
+        }[]
+      }
       get_user_org_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -4776,6 +4791,30 @@ export type Database = {
       haversine_distance: {
         Args: { lat1: number; lat2: number; lon1: number; lon2: number }
         Returns: number
+      }
+      link_portal_user_to_client: {
+        Args: {
+          _email?: string
+          _name_ar?: string
+          _org_id?: string
+          _phone?: string
+          _user_id: string
+        }
+        Returns: string
+      }
+      match_client_record: {
+        Args: {
+          _cr_number?: string
+          _email?: string
+          _name_ar?: string
+          _org_id?: string
+          _phone?: string
+        }
+        Returns: string
+      }
+      merge_client_records: {
+        Args: { _source_id: string; _target_id: string }
+        Returns: boolean
       }
       move_to_dlq: {
         Args: {
