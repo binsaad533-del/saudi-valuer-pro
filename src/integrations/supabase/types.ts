@@ -2115,15 +2115,96 @@ export type Database = {
           },
         ]
       }
+      notification_delivery_log: {
+        Row: {
+          channel: string
+          created_at: string
+          error_message: string | null
+          id: string
+          notification_id: string | null
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          notification_id?: string | null
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_delivery_log_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_preferences: {
+        Row: {
+          category: string
+          created_at: string
+          email_enabled: boolean
+          id: string
+          in_app_enabled: boolean
+          notification_type: string
+          sms_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type: string
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          email_enabled?: boolean
+          id?: string
+          in_app_enabled?: boolean
+          notification_type?: string
+          sms_enabled?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
           body_ar: string | null
           body_en: string | null
           category: string
+          channel: string | null
           created_at: string
+          delivery_error: string | null
+          delivery_status: string | null
           id: string
           is_read: boolean
+          notification_type: string | null
           priority: string
           related_assignment_id: string | null
           related_request_id: string | null
@@ -2136,9 +2217,13 @@ export type Database = {
           body_ar?: string | null
           body_en?: string | null
           category?: string
+          channel?: string | null
           created_at?: string
+          delivery_error?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean
+          notification_type?: string | null
           priority?: string
           related_assignment_id?: string | null
           related_request_id?: string | null
@@ -2151,9 +2236,13 @@ export type Database = {
           body_ar?: string | null
           body_en?: string | null
           category?: string
+          channel?: string | null
           created_at?: string
+          delivery_error?: string | null
+          delivery_status?: string | null
           id?: string
           is_read?: boolean
+          notification_type?: string | null
           priority?: string
           related_assignment_id?: string | null
           related_request_id?: string | null
