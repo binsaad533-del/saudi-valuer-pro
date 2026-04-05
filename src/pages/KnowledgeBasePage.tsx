@@ -81,7 +81,6 @@ export default function KnowledgeBasePage() {
       supabase
         .from("raqeem_rules")
         .select("id, rule_title_ar, category, severity, enforcement_stage, is_active")
-        .eq("is_active", true)
         .order("created_at", { ascending: false })
         .limit(200),
     ]);
@@ -165,10 +164,18 @@ export default function KnowledgeBasePage() {
     }
   };
 
-  /* ── Toggle Rule ── */
+  /* ── Toggle Rule Active/Inactive ── */
   const toggleRule = async (ruleId: string, active: boolean) => {
     await supabase.from("raqeem_rules").update({ is_active: !active }).eq("id", ruleId);
     setRules((prev) => prev.map((r) => r.id === ruleId ? { ...r, is_active: !active } : r));
+  };
+
+  /* ── Toggle Rule Severity (warning ↔ blocking) ── */
+  const toggleSeverity = async (ruleId: string, currentSeverity: string) => {
+    const newSeverity = currentSeverity === "blocking" ? "warning" : "blocking";
+    await supabase.from("raqeem_rules").update({ severity: newSeverity }).eq("id", ruleId);
+    setRules((prev) => prev.map((r) => r.id === ruleId ? { ...r, severity: newSeverity } : r));
+    toast.success(newSeverity === "blocking" ? "تم تحويل القاعدة إلى حرجة (تمنع المتابعة)" : "تم تحويل القاعدة إلى تحذيرية");
   };
 
   /* ── Delete Doc ── */
