@@ -605,6 +605,36 @@ export type Database = {
           },
         ]
       }
+      commercial_settings: {
+        Row: {
+          allow_partial_payment: boolean
+          default_payment_terms_ar: string | null
+          default_validity_days: number
+          id: number
+          report_release_policy: string
+          updated_at: string
+          vat_percentage: number
+        }
+        Insert: {
+          allow_partial_payment?: boolean
+          default_payment_terms_ar?: string | null
+          default_validity_days?: number
+          id?: number
+          report_release_policy?: string
+          updated_at?: string
+          vat_percentage?: number
+        }
+        Update: {
+          allow_partial_payment?: boolean
+          default_payment_terms_ar?: string | null
+          default_validity_days?: number
+          id?: number
+          report_release_policy?: string
+          updated_at?: string
+          vat_percentage?: number
+        }
+        Relationships: []
+      }
       comparable_adjustments: {
         Row: {
           adjustment_amount: number | null
@@ -992,45 +1022,130 @@ export type Database = {
       }
       discount_codes: {
         Row: {
+          applicable_services: string[] | null
+          client_id: string | null
           code: string
           created_at: string
           created_by: string | null
           current_uses: number
           description: string | null
           discount_percentage: number
+          discount_type: string
           expires_at: string | null
+          first_time_only: boolean | null
+          fixed_amount: number | null
           id: string
           is_active: boolean
           max_uses: number | null
+          max_uses_per_client: number | null
+          min_order_amount: number | null
           updated_at: string
         }
         Insert: {
+          applicable_services?: string[] | null
+          client_id?: string | null
           code: string
           created_at?: string
           created_by?: string | null
           current_uses?: number
           description?: string | null
           discount_percentage: number
+          discount_type?: string
           expires_at?: string | null
+          first_time_only?: boolean | null
+          fixed_amount?: number | null
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          max_uses_per_client?: number | null
+          min_order_amount?: number | null
           updated_at?: string
         }
         Update: {
+          applicable_services?: string[] | null
+          client_id?: string | null
           code?: string
           created_at?: string
           created_by?: string | null
           current_uses?: number
           description?: string | null
           discount_percentage?: number
+          discount_type?: string
           expires_at?: string | null
+          first_time_only?: boolean | null
+          fixed_amount?: number | null
           id?: string
           is_active?: boolean
           max_uses?: number | null
+          max_uses_per_client?: number | null
+          min_order_amount?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "discount_codes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_usage_log: {
+        Row: {
+          assignment_id: string | null
+          client_id: string | null
+          discount_applied: number
+          discount_code_id: string
+          id: string
+          used_at: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          client_id?: string | null
+          discount_applied?: number
+          discount_code_id: string
+          id?: string
+          used_at?: string
+        }
+        Update: {
+          assignment_id?: string | null
+          client_id?: string | null
+          discount_applied?: number
+          discount_code_id?: string
+          id?: string
+          used_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_usage_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_usage_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_usage_log_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_usage_log_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       districts: {
         Row: {
@@ -1949,6 +2064,114 @@ export type Database = {
           },
         ]
       }
+      invoices: {
+        Row: {
+          assignment_id: string | null
+          client_id: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          discount_amount: number
+          discount_code_id: string | null
+          due_date: string | null
+          id: string
+          invoice_number: string | null
+          notes_ar: string | null
+          notes_en: string | null
+          organization_id: string | null
+          paid_at: string | null
+          payment_status: string
+          sent_at: string | null
+          subtotal: number
+          total_amount: number
+          updated_at: string
+          vat_amount: number
+          vat_percentage: number
+        }
+        Insert: {
+          assignment_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          discount_amount?: number
+          discount_code_id?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes_ar?: string | null
+          notes_en?: string | null
+          organization_id?: string | null
+          paid_at?: string | null
+          payment_status?: string
+          sent_at?: string | null
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string
+          vat_amount?: number
+          vat_percentage?: number
+        }
+        Update: {
+          assignment_id?: string | null
+          client_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          discount_amount?: number
+          discount_code_id?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_number?: string | null
+          notes_ar?: string | null
+          notes_en?: string | null
+          organization_id?: string | null
+          paid_at?: string | null
+          payment_status?: string
+          sent_at?: string | null
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string
+          vat_amount?: number
+          vat_percentage?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_discount_code_id_fkey"
+            columns: ["discount_code_id"]
+            isOneToOne: false
+            referencedRelation: "discount_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       knowledge_rebuild_jobs: {
         Row: {
           completed_at: string | null
@@ -2664,6 +2887,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_rules: {
+        Row: {
+          base_fee: number
+          complexity_multiplier: number
+          created_at: string
+          description_ar: string | null
+          id: string
+          income_analysis_fee: number
+          inspection_fee: number
+          is_active: boolean
+          label_ar: string
+          label_en: string | null
+          service_type: string
+          updated_at: string
+        }
+        Insert: {
+          base_fee?: number
+          complexity_multiplier?: number
+          created_at?: string
+          description_ar?: string | null
+          id?: string
+          income_analysis_fee?: number
+          inspection_fee?: number
+          is_active?: boolean
+          label_ar: string
+          label_en?: string | null
+          service_type: string
+          updated_at?: string
+        }
+        Update: {
+          base_fee?: number
+          complexity_multiplier?: number
+          created_at?: string
+          description_ar?: string | null
+          id?: string
+          income_analysis_fee?: number
+          inspection_fee?: number
+          is_active?: boolean
+          label_ar?: string
+          label_en?: string | null
+          service_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       processing_jobs: {
         Row: {
@@ -5010,6 +5278,22 @@ export type Database = {
           message: Json
           msg_id: number
           read_ct: number
+        }[]
+      }
+      validate_discount_code: {
+        Args: {
+          _client_id?: string
+          _code: string
+          _order_amount?: number
+          _service_type?: string
+        }
+        Returns: {
+          calculated_discount: number
+          discount_id: string
+          discount_type: string
+          discount_value: number
+          is_valid: boolean
+          rejection_reason: string
         }[]
       }
     }
