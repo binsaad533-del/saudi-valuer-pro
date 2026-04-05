@@ -4,16 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  Brain, FileText, FolderUp, Loader2, X, Sparkles, Tag, Hash,
+  Brain, FileText, FolderUp, Loader2, X, Sparkles, Tag,
   FileSearch, File, FileCheck, ShieldCheck, Ruler, User, MapPin,
   Building2, Phone, Mail, Image as ImageIcon, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, Copy, Upload, Home, ArrowLeft,
+  CheckCircle2, AlertTriangle, Upload, ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { SAR } from "@/components/ui/saudi-riyal";
+import AssetInventoryTable, { InventoryAsset } from "@/components/client/AssetInventoryTable";
 
 const DOC_CATEGORIES = [
   { value: "deed", label: "صك ملكية", icon: FileCheck },
@@ -44,12 +44,6 @@ interface UploadedFile {
   storagePath?: string;
 }
 
-interface ExtractedNumber {
-  label: string;
-  value: string;
-  source: string;
-}
-
 interface ExtractedData {
   discipline: string;
   discipline_label: string;
@@ -60,44 +54,31 @@ interface ExtractedData {
     phone?: string;
     email?: string;
   };
-  asset: {
-    description?: string;
-    city?: string;
-    district?: string;
-    area?: string;
-    deedNumber?: string;
-    classification?: string;
-    machineName?: string;
-    manufacturer?: string;
-    model?: string;
+  description: string;
+  inventory: InventoryAsset[];
+  summary?: {
+    total: number;
+    by_type?: Record<string, number>;
+    by_condition?: Record<string, number>;
   };
   suggestedPurpose?: string;
   notes: string[];
   documentCategories: { fileName: string; category: string; categoryLabel?: string; relevance: string; extractedInfo?: string }[];
-  extractedNumbers?: ExtractedNumber[];
   analysisMethod?: string;
   analyzedFilesCount?: number;
   totalFilesCount?: number;
 }
 
-const DEMO_FILES: UploadedFile[] = [
-  { file: {} as any, name: "صك_ملكية_1234567.pdf", size: 2_450_000, status: "uploaded" },
-  { file: {} as any, name: "رخصة_بناء_RB-2024-789.pdf", size: 1_120_000, status: "uploaded" },
-  { file: {} as any, name: "مخطط_الدور_الأرضي.png", size: 3_780_000, status: "uploaded" },
-  { file: {} as any, name: "عقد_إيجار_شركة_الأفق.pdf", size: 1_950_000, status: "uploaded" },
-];
-
 export default function AIDocumentProcessingPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>(DEMO_FILES);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [extracted, setExtracted] = useState<ExtractedData | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractionPhase, setExtractionPhase] = useState("");
   const [extractionProgress, setExtractionProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
-  const [useMock, setUseMock] = useState(true);
-  const [autoAnalyzePending, setAutoAnalyzePending] = useState(true);
+  const [useMock, setUseMock] = useState(false);
 
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -105,8 +86,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
       file: f, name: f.name, size: f.size, status: "pending" as FileStatus,
     }));
     setUploadedFiles(prev => [...prev, ...newFiles]);
-    if (useMock) setAutoAnalyzePending(true);
-  }, [useMock]);
+  }, []);
 
   const removeFile = useCallback((index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
@@ -136,187 +116,125 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
 
   const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
+  // ── Mock: generates inventory array matching edge function output ──
   const generateMockResult = (files: UploadedFile[]): ExtractedData => {
     const guessCategory = (name: string): { category: string; label: string; extractedInfo?: string; relevance: string } => {
       const n = name.toLowerCase();
-      const machineryKeywords = ["آلة", "الات", "معدة", "معدات", "حفار", "شيول", "مولد", "رافعة", "بوكلين", "كمبروسر", "ضاغط", "forklift", "generator", "crane", "excavator", "loader", "bulldozer", "compressor", "equipment", "machinery", "machine"];
-      // صكوك ملكية
-      if (n.includes("صك") || n.includes("deed") || n.includes("ملكي") || n.includes("title"))
-        return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م² — حي النرجس، الرياض — ثقة 96%" };
-      // رخص بناء
-      if (n.includes("رخص") || n.includes("permit") || n.includes("بناء") || n.includes("building"))
-        return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: RB-2024-789 — مساحة البناء: 320 م² — طابقين — ثقة 91%" };
-      // مخططات معمارية
-      if (n.includes("مخطط") || n.includes("plan") || n.includes("كروكي") || n.includes("layout") || n.includes("floor"))
-        return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "3 غرف نوم + صالة + مطبخ — ثقة 73% ⚠️ يحتاج تأكيد" };
-      // تقارير تقييم سابقة
-      if (n.includes("تقرير") || n.includes("تقييم") || n.includes("report") || n.includes("valuation") || n.includes("appraisal"))
-        return { category: "technical_report", label: "تقرير تقييم سابق", relevance: "high", extractedInfo: "تقرير تقييم بتاريخ 1444/09/20 — القيمة السوقية: 2,350,000 ر.س" };
-      // عقود إيجار
-      if (n.includes("عقد") || n.includes("إيجار") || n.includes("contract") || n.includes("lease") || n.includes("rent") || n.includes("اتفاق"))
-        return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "إيجار سنوي: 85,000 ر.س — المستأجر: شركة الأفق — ثقة 88%" };
-      // فواتير
-      if (n.includes("فاتور") || n.includes("invoice") || n.includes("سند") || n.includes("إيصال") || n.includes("receipt"))
-        return { category: "invoice", label: "فاتورة / سند", relevance: "low", extractedInfo: "فاتورة شراء/صيانة معدات — المبلغ: 12,500 ر.س — التاريخ: 2024/03/15" };
-      // وثائق هوية
-      if (n.includes("هوي") || n.includes("جواز") || n.includes("إقام") || n.includes("id") || n.includes("passport") || n.includes("iqama"))
-        return { category: "identity_doc", label: "وثيقة هوية", relevance: "medium", extractedInfo: "هوية وطنية — رقم: 1088456723 — الاسم: أحمد بن عبدالله المالكي" };
-      // خرائط مواقع
-      if (n.includes("map") || n.includes("خريط") || n.includes("موقع") || n.includes("location") || n.includes("gps"))
-        return { category: "location_map", label: "خريطة موقع", relevance: "medium", extractedInfo: "إحداثيات: 24.7136°N, 46.6753°E — حي النرجس، الرياض" };
-      // صور آلات ومعدات
-      if (machineryKeywords.some(keyword => n.includes(keyword)) || n.includes("واتساب") && n.includes("معدة"))
-        return { category: "machinery_photo", label: "صورة آلة / معدة", relevance: "high", extractedInfo: "صورة معدة تشغيل/إنتاج — يلزم التحقق من الشركة المصنعة والموديل وسنة الصنع" };
-      // صور أصول عقارية
-      if (/\.(jpg|jpeg|png|webp|tif|tiff|gif)$/i.test(n) || n.includes("صور") || n.includes("واجه") || n.includes("photo") || n.includes("img"))
-        return { category: "property_photo", label: "صورة أصل عقاري", relevance: "medium", extractedInfo: "صورة أصل عقاري — يلزم تأكيد نوع الأصل من المستخدم" };
-      // PDF عام
-      if (n.endsWith(".pdf"))
-        return { category: "technical_report", label: "مستند PDF", relevance: "medium", extractedInfo: "مستند PDF — يحتوي على بيانات نصية قابلة للاستخراج" };
-      // Word/Excel
-      if (/\.(doc|docx)$/i.test(n))
-        return { category: "technical_report", label: "مستند Word", relevance: "medium", extractedInfo: "مستند نصي — قد يحتوي على جداول وبيانات تفصيلية" };
-      if (/\.(xls|xlsx)$/i.test(n))
-        return { category: "invoice", label: "جدول بيانات", relevance: "medium", extractedInfo: "ملف Excel — قد يحتوي على بيانات مالية أو جداول مقارنة" };
+      if (n.includes("صك") || n.includes("deed")) return { category: "deed", label: "صك ملكية", relevance: "high", extractedInfo: "رقم الصك: 1234567 — المالك: أحمد المالكي — المساحة: 450 م²" };
+      if (n.includes("رخص") || n.includes("permit")) return { category: "building_permit", label: "رخصة بناء", relevance: "high", extractedInfo: "رخصة رقم: RB-2024-789 — مساحة البناء: 320 م²" };
+      if (n.includes("مخطط") || n.includes("plan")) return { category: "floor_plan", label: "مخطط معماري", relevance: "medium", extractedInfo: "3 غرف نوم + صالة + مطبخ" };
+      if (n.includes("آلة") || n.includes("معد") || n.includes("حفار") || n.includes("مولد") || n.includes("generator") || n.includes("excavator"))
+        return { category: "machinery_photo", label: "صورة آلة / معدة", relevance: "high", extractedInfo: "صورة معدة — يلزم التحقق من البيانات" };
+      if (n.includes("عقد") || n.includes("إيجار")) return { category: "contract", label: "عقد إيجار", relevance: "medium", extractedInfo: "إيجار سنوي: 85,000 ر.س" };
+      if (/\.(jpg|jpeg|png|webp|tif|tiff|gif)$/i.test(n)) return { category: "property_photo", label: "صورة عقار", relevance: "medium" };
+      if (/\.(xls|xlsx)$/i.test(n)) return { category: "spreadsheet", label: "جدول بيانات", relevance: "high", extractedInfo: "ملف Excel — قد يحتوي على جرد أصول" };
+      if (n.endsWith(".pdf")) return { category: "technical_report", label: "مستند PDF", relevance: "medium" };
       return { category: "other", label: "أخرى", relevance: "low" };
     };
 
     const categorized = files.map(f => guessCategory(f.name));
     const cats = new Set(categorized.map(c => c.category));
+    const hasMach = cats.has("machinery_photo") || cats.has("spreadsheet");
+    const hasProp = cats.has("deed") || cats.has("building_permit") || cats.has("floor_plan") || cats.has("property_photo");
 
-    // بناء البيانات المستخرجة ديناميكياً حسب أنواع المستندات المكتشفة
-    const numbers: ExtractedNumber[] = [];
+    const discipline = hasMach && hasProp ? "mixed" : hasMach ? "machinery_equipment" : "real_estate";
 
-    if (cats.has("deed")) {
-      const deedSrc = files[categorized.findIndex(c => c.category === "deed")]?.name || "صك ملكية";
-      numbers.push(
-        { label: "رقم الصك", value: "1234567", source: deedSrc },
-        { label: "مساحة الأرض", value: "450 م²", source: deedSrc },
-        { label: "اسم المالك", value: "أحمد بن عبدالله المالكي", source: deedSrc },
-        { label: "الموقع", value: "حي النرجس — الرياض", source: deedSrc },
-        { label: "تاريخ إصدار الصك", value: "1445/03/15 هـ", source: deedSrc },
-        { label: "نوع الاستخدام", value: "سكني", source: deedSrc },
-        { label: "نسبة ثقة الاستخراج", value: "96%", source: deedSrc },
-      );
+    // Build mock inventory
+    const inventory: InventoryAsset[] = [];
+    let nextId = 1;
+
+    if (hasProp) {
+      inventory.push({
+        id: nextId++,
+        name: "فيلا سكنية دورين مع ملحق",
+        type: "real_estate",
+        category: "فيلا",
+        subcategory: "سكني",
+        quantity: 1,
+        condition: "good",
+        fields: [
+          { key: "deed_number", label: "رقم الصك", value: "1234567", confidence: 96 },
+          { key: "area_sqm", label: "المساحة م²", value: "450", confidence: 96 },
+          { key: "city", label: "المدينة", value: "الرياض", confidence: 95 },
+          { key: "district", label: "الحي", value: "النرجس", confidence: 95 },
+          { key: "classification", label: "التصنيف", value: "سكني", confidence: 90 },
+          { key: "floors_count", label: "عدد الطوابق", value: "2", confidence: 91 },
+          { key: "building_area_sqm", label: "مساحة البناء م²", value: "320", confidence: 91 },
+          { key: "rooms_count", label: "عدد الغرف", value: "6", confidence: 73 },
+          { key: "building_age", label: "عمر المبنى", value: "5 سنوات", confidence: 70 },
+        ],
+        source: "صك_ملكية + رخصة_بناء",
+      });
     }
-    if (cats.has("building_permit")) {
-      const permitSrc = files[categorized.findIndex(c => c.category === "building_permit")]?.name || "رخصة بناء";
-      numbers.push(
-        { label: "رقم الرخصة", value: "RB-2024-789", source: permitSrc },
-        { label: "مساحة البناء المرخصة", value: "320 م²", source: permitSrc },
-        { label: "عدد الطوابق", value: "طابقين", source: permitSrc },
-        { label: "تاريخ الرخصة", value: "1445/02/10 هـ", source: permitSrc },
-        { label: "نسبة ثقة الاستخراج", value: "91%", source: permitSrc },
-      );
-    }
-    if (cats.has("floor_plan")) {
-      const planSrc = files[categorized.findIndex(c => c.category === "floor_plan")]?.name || "مخطط معماري";
-      numbers.push(
-        { label: "غرف النوم", value: "3 غرف", source: planSrc },
-        { label: "الصالات", value: "صالة واحدة", source: planSrc },
-        { label: "المطبخ", value: "1 مطبخ", source: planSrc },
-        { label: "نسبة ثقة الاستخراج", value: "73% ⚠️", source: planSrc },
-      );
-    }
-    if (cats.has("technical_report")) {
-      const src = files[categorized.findIndex(c => c.category === "technical_report")]?.name || "تقرير تقييم";
-      numbers.push(
-        { label: "القيمة السوقية السابقة", value: "2,350,000 ر.س", source: src },
-        { label: "تاريخ التقييم السابق", value: "1444/09/20 هـ", source: src },
-        { label: "سعر المتر المربع", value: "3,760 ر.س/م²", source: src },
-      );
-    }
-    if (cats.has("contract")) {
-      const contractSrc = files[categorized.findIndex(c => c.category === "contract")]?.name || "عقد إيجار";
-      numbers.push(
-        { label: "قيمة الإيجار السنوي", value: "85,000 ر.س", source: contractSrc },
-        { label: "اسم المستأجر", value: "شركة الأفق", source: contractSrc },
-        { label: "مدة العقد", value: "سنة واحدة — قابل للتجديد", source: contractSrc },
-        { label: "نسبة ثقة الاستخراج", value: "88%", source: contractSrc },
-      );
-    }
-    if (cats.has("identity_doc")) {
-      const src = files[categorized.findIndex(c => c.category === "identity_doc")]?.name || "وثيقة هوية";
-      numbers.push(
-        { label: "رقم الهوية", value: "1088456723", source: src },
-        { label: "الاسم الكامل", value: "أحمد بن عبدالله المالكي", source: src },
-        { label: "تاريخ الانتهاء", value: "1450/02/28 هـ", source: src },
-      );
-    }
-    if (cats.has("invoice")) {
-      const src = files[categorized.findIndex(c => c.category === "invoice")]?.name || "فاتورة";
-      numbers.push(
-        { label: "مبلغ الفاتورة", value: "12,500 ر.س", source: src },
-        { label: "تاريخ الفاتورة", value: "2024/03/15", source: src },
-      );
-    }
-    if (cats.has("location_map")) {
-      const src = files[categorized.findIndex(c => c.category === "location_map")]?.name || "خريطة موقع";
-      numbers.push(
-        { label: "خط العرض", value: "24.7136°N", source: src },
-        { label: "خط الطول", value: "46.6753°E", source: src },
-      );
-    }
-    if (cats.has("property_photo")) {
-      const src = files[categorized.findIndex(c => c.category === "property_photo")]?.name || "صورة أصل عقاري";
-      numbers.push(
-        { label: "حالة الأصل الظاهرة", value: "جيدة", source: src },
-        { label: "ملاحظة", value: "يلزم تأكيد نوع الأصل من المستندات الداعمة", source: src },
-      );
-    }
-    if (cats.has("machinery_photo")) {
-      const src = files[categorized.findIndex(c => c.category === "machinery_photo")]?.name || "صورة آلة / معدة";
-      numbers.push(
-        { label: "نوع الأصل الظاهر", value: "آلة / معدة", source: src },
-        { label: "الحالة الظاهرة", value: "تعمل ظاهرياً — تحتاج فحص فني", source: src },
+
+    if (hasMach) {
+      inventory.push(
+        {
+          id: nextId++,
+          name: "حفار هيدروليكي كاتربيلر 320",
+          type: "machinery_equipment",
+          category: "حفار",
+          subcategory: "معدات ثقيلة",
+          quantity: 1,
+          condition: "good",
+          fields: [
+            { key: "manufacturer", label: "الشركة المصنعة", value: "Caterpillar", confidence: 95 },
+            { key: "model", label: "الموديل", value: "320 GC", confidence: 92 },
+            { key: "year_manufactured", label: "سنة الصنع", value: "2021", confidence: 90 },
+            { key: "serial_number", label: "الرقم التسلسلي", value: "CAT0320GC21A4567", confidence: 88 },
+            { key: "operating_hours", label: "ساعات التشغيل", value: "4,200", confidence: 85 },
+            { key: "operational_status", label: "الحالة التشغيلية", value: "تعمل", confidence: 90 },
+            { key: "country_of_origin", label: "بلد المنشأ", value: "الولايات المتحدة", confidence: 95 },
+          ],
+          source: "صورة_معدة + فاتورة",
+        },
+        {
+          id: nextId++,
+          name: "مولد كهربائي كمنز 500 كيلوواط",
+          type: "machinery_equipment",
+          category: "مولد كهربائي",
+          subcategory: "معدات طاقة",
+          quantity: 2,
+          condition: "fair",
+          fields: [
+            { key: "manufacturer", label: "الشركة المصنعة", value: "Cummins", confidence: 90 },
+            { key: "model", label: "الموديل", value: "C500D5", confidence: 85 },
+            { key: "year_manufactured", label: "سنة الصنع", value: "2019", confidence: 80 },
+            { key: "capacity", label: "القدرة", value: "500 كيلوواط", confidence: 92 },
+            { key: "fuel_type", label: "نوع الوقود", value: "ديزل", confidence: 95 },
+            { key: "operating_hours", label: "ساعات التشغيل", value: "8,500", confidence: 75 },
+            { key: "operational_status", label: "الحالة التشغيلية", value: "تحتاج صيانة", confidence: 70 },
+          ],
+          source: "جدول_بيانات صف 3",
+        },
       );
     }
 
-    // إذا لم يتم اكتشاف أي نوع معروف
-    if (numbers.length === 0) {
-      numbers.push(
-        { label: "عدد المستندات", value: `${files.length} ملف`, source: "النظام" },
-        { label: "حالة التحليل", value: "لم يتم اكتشاف بيانات محددة", source: "النظام" },
-      );
-    }
-
-    const hasPropertyEvidence = ["deed", "building_permit", "floor_plan", "property_photo", "location_map"].some(category => cats.has(category));
-    const hasMachineryEvidence = ["machinery_photo", "invoice", "technical_report"].some(category => cats.has(category));
+    const reCount = inventory.filter(a => a.type === "real_estate").length;
+    const meCount = inventory.filter(a => a.type === "machinery_equipment").length;
 
     return {
-      discipline: hasMachineryEvidence && hasPropertyEvidence ? "mixed" : hasMachineryEvidence ? "machinery" : "real_estate",
-      discipline_label: hasMachineryEvidence && hasPropertyEvidence ? "تقييم مختلط" : hasMachineryEvidence ? "تقييم آلات ومعدات" : "تقييم عقاري",
-      confidence: Math.min(95, 70 + categorized.filter(c => c.relevance === "high").length * 8),
-      client: cats.has("deed") || cats.has("identity_doc") ? {
-        clientName: "أحمد بن عبدالله المالكي",
-        idNumber: "1088456723",
-        phone: "0551234567",
-        email: "ahmed.maliki@email.com",
-      } : {},
-      asset: hasMachineryEvidence && !hasPropertyEvidence ? {
-        description: "معدات وآلات مرفوعة ضمن الطلب",
-        classification: "آلات ومعدات",
-        machineName: "معدة تحتاج اعتماد الاسم من المستندات",
-      } : cats.has("deed") || cats.has("floor_plan") || cats.has("building_permit") ? {
-        description: "فيلا سكنية دورين مع ملحق",
-        city: "الرياض",
-        district: "حي النرجس",
-        area: "450",
-        deedNumber: cats.has("deed") ? "1234567" : undefined,
-        classification: "سكني",
-      } : {},
-      suggestedPurpose: hasMachineryEvidence && !hasPropertyEvidence ? "تقييم أصول" : cats.has("deed") ? "تمويل عقاري — بنك الراجحي" : "تقييم أصول",
+      discipline,
+      discipline_label: discipline === "mixed" ? "تقييم مختلط" : discipline === "machinery_equipment" ? "تقييم آلات ومعدات" : "تقييم عقاري",
+      confidence: 88,
+      client: hasProp ? { clientName: "أحمد بن عبدالله المالكي", idNumber: "1088456723", phone: "0551234567", email: "ahmed@email.com" } : {},
+      description: discipline === "real_estate"
+        ? "فيلا سكنية من دورين مع ملحق علوي تقع في حي النرجس شمال الرياض. مساحة الأرض 450 م² ومساحة البناء 320 م². المبنى بحالة جيدة وعمره 5 سنوات تقريباً. يتكون من 6 غرف نوم وصالتين ومطبخ و4 دورات مياه. التشطيبات ممتازة مع نظام تكييف مركزي."
+        : discipline === "machinery_equipment"
+        ? "مجموعة من المعدات الثقيلة ومعدات الطاقة تشمل حفار هيدروليكي كاتربيلر موديل 320 GC بحالة تشغيلية جيدة (4,200 ساعة تشغيل)، ومولدين كهربائيين كمنز بقدرة 500 كيلوواط لكل منهما بحالة مقبولة تحتاج صيانة (8,500 ساعة تشغيل)."
+        : "محفظة أصول مختلطة تشمل فيلا سكنية في حي النرجس بالرياض (450 م²) بالإضافة إلى معدات ثقيلة ومعدات طاقة تشمل حفار كاتربيلر 320 ومولدات كمنز 500 كيلوواط.",
+      inventory,
+      summary: {
+        total: inventory.length,
+        by_type: { real_estate: reCount, machinery_equipment: meCount },
+        by_condition: inventory.reduce((acc, a) => { acc[a.condition || "unknown"] = (acc[a.condition || "unknown"] || 0) + 1; return acc; }, {} as Record<string, number>),
+      },
+      suggestedPurpose: hasProp ? "تمويل عقاري" : "تقييم أصول",
       notes: [
-        ...(cats.has("deed") ? ["تم التعرف على صك إلكتروني — استُخرج رقم الصك واسم المالك والمساحة والموقع"] : []),
-        ...(cats.has("building_permit") ? ["تم اكتشاف رخصة بناء — استُخرج رقم الرخصة وعدد الأدوار المرخصة"] : []),
-        ...(cats.has("floor_plan") ? ["تم تحليل المخطط المعماري — استُخرجت مساحة البناء وعدد الغرف"] : []),
-        ...(cats.has("technical_report") ? ["تم اكتشاف تقرير فني/تقييم سابق — استُخرجت بيانات فنية مساندة"] : []),
-        ...(cats.has("machinery_photo") ? ["تم رصد صور آلات/معدات — تم ترجيح نوع التقييم كآلات ومعدات"] : []),
-        ...(cats.has("contract") ? ["تم تحليل عقد إيجار — استُخرجت قيمة الإيجار ومدة العقد"] : []),
-        ...(cats.has("deed") && cats.has("floor_plan") ? ["✅ المساحة في الصك متطابقة مع المخطط المعماري"] : []),
-        ...(cats.has("building_permit") ? ["⚠️ يُنصح بالتحقق من صلاحية رخصة البناء"] : []),
-        `📊 تم تصنيف ${files.length} مستند: ${categorized.filter(c => c.relevance === "high").length} مهم، ${categorized.filter(c => c.relevance === "medium").length} متوسط`,
-        "⚠️ هذه بيانات تجريبية (Mock) للعرض التوضيحي",
+        `📊 تم تحليل ${files.length} مستند واستخراج ${inventory.length} أصل`,
+        ...(hasProp ? ["✅ تم استخراج بيانات الصك والرخصة بنجاح"] : []),
+        ...(hasMach ? ["⚙️ تم جرد المعدات مع البيانات الفنية التفصيلية"] : []),
+        "⚠️ هذه بيانات تجريبية (Mock) — أوقف الوضع التجريبي للتحليل الحقيقي",
       ],
       documentCategories: files.map((f, i) => ({
         fileName: f.name,
@@ -325,7 +243,6 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         relevance: categorized[i].relevance,
         extractedInfo: categorized[i].extractedInfo,
       })),
-      extractedNumbers: numbers,
       analysisMethod: "mock_simulation",
       analyzedFilesCount: files.length,
       totalFilesCount: files.length,
@@ -352,20 +269,18 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
 
     try {
       if (useMock) {
-        // Mock simulation with animated progress
         for (const phase of phases) {
           setExtractionPhase(phase.label);
           const steps = 5;
           const startProg = phase.target - 20;
           for (let s = 0; s < steps; s++) {
-            await delay(300 + Math.random() * 200);
+            await delay(200 + Math.random() * 150);
             setExtractionProgress(Math.min(startProg + ((phase.target - startProg) * (s + 1)) / steps, phase.target));
           }
         }
-
         setExtractionProgress(100);
         setExtractionPhase("اكتمل التحليل!");
-        await delay(400);
+        await delay(300);
 
         const result = generateMockResult(uploadedFiles);
         setExtracted(result);
@@ -373,19 +288,12 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         if (result.documentCategories) {
           setUploadedFiles(prev => prev.map(f => {
             const cat = result.documentCategories.find(dc => dc.fileName === f.name);
-            return cat ? {
-              ...f, status: "uploaded" as FileStatus,
-              category: cat.category,
-              categoryLabel: cat.categoryLabel || DOC_CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
-              relevance: cat.relevance,
-              extractedInfo: cat.extractedInfo,
-            } : { ...f, status: "uploaded" as FileStatus };
+            return cat ? { ...f, status: "uploaded" as FileStatus, category: cat.category, categoryLabel: cat.categoryLabel, relevance: cat.relevance, extractedInfo: cat.extractedInfo } : { ...f, status: "uploaded" as FileStatus };
           }));
         }
-
-        toast.success(`تم تحليل ${result.analyzedFilesCount} مستند بنجاح (وضع تجريبي)`);
+        toast.success(`تم تحليل ${result.analyzedFilesCount} مستند واستخراج ${result.inventory.length} أصل (وضع تجريبي)`);
       } else {
-        // Real extraction
+        // Real extraction — upload then call edge function
         setExtractionPhase(phases[0].label);
         setExtractionProgress(5);
         const tempId = `ai_${Date.now()}`;
@@ -417,27 +325,36 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
         });
 
         setExtractionProgress(90);
-
         if (error) throw error;
 
-        const result = data as ExtractedData;
+        // Normalize the response — ensure inventory exists
+        const result: ExtractedData = {
+          discipline: data.discipline || "real_estate",
+          discipline_label: data.discipline_label || "تقييم عقاري",
+          confidence: data.confidence || 50,
+          client: data.client || {},
+          description: data.description || "",
+          inventory: Array.isArray(data.inventory) ? data.inventory : [],
+          summary: data.summary || { total: 0 },
+          suggestedPurpose: data.suggestedPurpose,
+          notes: Array.isArray(data.notes) ? data.notes : [],
+          documentCategories: Array.isArray(data.documentCategories) ? data.documentCategories : [],
+          analysisMethod: data.analysisMethod,
+          analyzedFilesCount: data.analyzedFilesCount,
+          totalFilesCount: data.totalFilesCount,
+        };
+
         setExtractionProgress(100);
         setExtracted(result);
 
         if (result.documentCategories) {
           setUploadedFiles(prev => prev.map(f => {
             const cat = result.documentCategories.find(dc => dc.fileName === f.name);
-            return cat ? {
-              ...f,
-              category: cat.category,
-              categoryLabel: cat.categoryLabel || DOC_CATEGORIES.find(c => c.value === cat.category)?.label || cat.category,
-              relevance: cat.relevance,
-              extractedInfo: cat.extractedInfo,
-            } : f;
+            return cat ? { ...f, category: cat.category, categoryLabel: cat.categoryLabel, relevance: cat.relevance, extractedInfo: cat.extractedInfo } : f;
           }));
         }
 
-        toast.success(`تم تحليل ${result.analyzedFilesCount || uploadedFiles.length} مستند بنجاح`);
+        toast.success(`تم تحليل ${result.analyzedFilesCount || uploadedFiles.length} مستند واستخراج ${result.inventory.length} أصل`);
       }
     } catch (err: any) {
       if (err?.message?.includes("429") || err?.status === 429) {
@@ -454,34 +371,33 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
     }
   }, [uploadedFiles, useMock]);
 
-  // Auto-trigger mock analysis when files are added in mock mode
-  useEffect(() => {
-    if (autoAnalyzePending && uploadedFiles.length > 0 && !extracting) {
-      setAutoAnalyzePending(false);
-      runExtraction();
-    }
-  }, [autoAnalyzePending, uploadedFiles, extracting, runExtraction]);
+  // ── Inventory state handlers ──
+  const handleInventoryChange = useCallback((inv: InventoryAsset[]) => {
+    if (!extracted) return;
+    setExtracted(prev => prev ? { ...prev, inventory: inv, summary: { ...prev.summary!, total: inv.length, by_type: { real_estate: inv.filter(a => a.type === "real_estate").length, machinery_equipment: inv.filter(a => a.type === "machinery_equipment").length } } } : prev);
+  }, [extracted]);
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success("تم النسخ");
-  };
+  const handleDescriptionChange = useCallback((desc: string) => {
+    setExtracted(prev => prev ? { ...prev, description: desc } : prev);
+  }, []);
 
-  const classifiedCount = uploadedFiles.filter(f => f.category).length;
-  const highRelevanceCount = uploadedFiles.filter(f => f.relevance === "high").length;
+  const handleDisciplineChange = useCallback((d: string) => {
+    const labels: Record<string, string> = { real_estate: "تقييم عقاري", machinery_equipment: "تقييم آلات ومعدات", mixed: "تقييم مختلط" };
+    setExtracted(prev => prev ? { ...prev, discipline: d, discipline_label: labels[d] || d } : prev);
+  }, []);
 
   return (
     <div className={embedded ? "" : "min-h-screen"}>
       {!embedded && <TopBar />}
-      <div className={embedded ? "space-y-6" : "p-6 max-w-5xl mx-auto space-y-6"}>
+      <div className={embedded ? "space-y-6" : "p-6 max-w-6xl mx-auto space-y-6"}>
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <Brain className="w-6 h-6 text-primary" />
-              <h1 className="text-xl font-bold text-foreground">نظام استخراج وتصنيف المستندات الذكي</h1>
+              <h1 className="text-xl font-bold text-foreground">نظام استخراج وجرد الأصول الذكي</h1>
             </div>
-            <p className="text-sm text-muted-foreground">ارفع المستندات وسيقوم الذكاء الاصطناعي بتحليل المحتوى واستخراج البيانات وتصنيف كل وثيقة تلقائياً</p>
+            <p className="text-sm text-muted-foreground">ارفع المستندات وسيقوم الذكاء الاصطناعي باستخراج جرد كامل للأصول مع الوصف والتصنيف</p>
           </div>
           {extracted && (
             <div className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 text-primary shrink-0">
@@ -509,12 +425,12 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                 type="file"
                 multiple
                 className="hidden"
-                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.tif,.tiff,.webp"
+                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.tif,.tiff,.webp,.zip,.rar"
                 onChange={(e) => handleFilesSelected(e.target.files)}
               />
               <FolderUp className={`w-10 h-10 mx-auto mb-2 ${dragOver ? "text-primary" : "text-muted-foreground"}`} />
               <p className="text-sm font-medium text-foreground mb-0.5">اسحب الملفات هنا</p>
-              <p className="text-[11px] text-muted-foreground">PDF, صور, Word, Excel</p>
+              <p className="text-[11px] text-muted-foreground">PDF, صور, Word, Excel, CSV, ZIP</p>
             </div>
 
             {/* File list */}
@@ -591,7 +507,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
               <div className="bg-card rounded-lg border border-border p-12 text-center">
                 <FileSearch className="w-16 h-16 mx-auto mb-4 text-muted-foreground/30" />
                 <h3 className="text-lg font-semibold text-muted-foreground mb-1">لم يتم التحليل بعد</h3>
-                <p className="text-sm text-muted-foreground/60">ارفع المستندات واضغط "تحليل بالذكاء الاصطناعي" لبدء الاستخراج</p>
+                <p className="text-sm text-muted-foreground/60">ارفع المستندات واضغط "تحليل بالذكاء الاصطناعي" لبدء الاستخراج والجرد</p>
               </div>
             )}
 
@@ -602,7 +518,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                     <Loader2 className="w-5 h-5 text-primary animate-spin" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground">جارٍ التحليل...</h3>
+                    <h3 className="text-sm font-semibold text-foreground">جارٍ التحليل والجرد...</h3>
                     <p className="text-xs text-muted-foreground">{extractionPhase}</p>
                   </div>
                 </div>
@@ -612,83 +528,13 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                     <span className="font-medium text-foreground">{Math.round(extractionProgress)}%</span>
                   </div>
                   <Progress value={extractionProgress} className="h-2" />
-                  <div className="flex justify-between text-[10px] text-muted-foreground/60">
-                    {phases.map((p, i) => (
-                      <span key={i} className={extractionProgress >= p.target ? "text-primary font-medium" : ""}>
-                        {i + 1}
-                      </span>
-                    ))}
-                  </div>
                 </div>
               </div>
             )}
 
             {extracted && !extracting && (
               <div className="space-y-4">
-                {/* Summary bar */}
-                <div className="bg-card rounded-lg border border-border p-4">
-                  <div className="flex items-center justify-between flex-wrap gap-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
-                        <Sparkles className="w-5 h-5 text-primary-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-foreground">{extracted.discipline_label}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          {extracted.analysisMethod === "content_analysis" ? "تحليل محتوى فعلي" : "تحليل أسماء الملفات"}
-                          {" — "}{extracted.analyzedFilesCount}/{extracted.totalFilesCount} ملف
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={extracted.confidence >= 80 ? "default" : "secondary"} className="text-xs">
-                        ثقة {extracted.confidence}%
-                      </Badge>
-                      <Badge variant="outline" className="text-xs">{classifiedCount} مُصنَّف</Badge>
-                      {highRelevanceCount > 0 && (
-                        <Badge variant="outline" className="text-xs border-success/30 text-success">{highRelevanceCount} مهم</Badge>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Low confidence warning */}
-                {extracted.confidence < 80 && (
-                  <div className="bg-yellow-50 dark:bg-yellow-950/30 rounded-lg border border-yellow-300 dark:border-yellow-700 p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-                      <div className="flex-1 space-y-2">
-                        <div>
-                          <p className="text-sm font-semibold text-yellow-800 dark:text-yellow-300">نسبة الثقة منخفضة ({extracted.confidence}%)</p>
-                          <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-0.5">
-                            لم يتمكن النظام من التأكد بشكل كافٍ من البيانات المستخرجة. يرجى مراجعة المعلومات أدناه والتأكد من صحتها.
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2 pt-1">
-                          <button
-                            onClick={() => {
-                              toast.info("تم فتح جميع الأقسام للمراجعة — عدّل البيانات غير الصحيحة");
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-yellow-200 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 hover:bg-yellow-300 dark:hover:bg-yellow-700 transition-colors"
-                          >
-                            <FileSearch className="w-3.5 h-3.5" />
-                            مراجعة وتعديل البيانات
-                          </button>
-                          <button
-                            onClick={() => {
-                              toast.success("تم تأكيد صحة البيانات");
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/60 transition-colors"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            نعم، البيانات صحيحة
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
+                {/* AI Notes */}
                 {extracted.notes.length > 0 && (
                   <div className="bg-accent/50 rounded-lg border border-accent p-4">
                     <div className="flex items-center gap-2 mb-2 text-accent-foreground font-medium text-sm">
@@ -700,11 +546,48 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                   </div>
                 )}
 
+                {/* Client Info (if found) */}
+                {(extracted.client?.clientName || extracted.client?.idNumber) && (
+                  <div className="bg-card rounded-lg border border-border p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <User className="w-4 h-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">بيانات العميل المستخرجة</h3>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {extracted.client.clientName && (
+                        <div className="p-2 rounded-lg bg-muted/30 border border-border/50">
+                          <p className="text-[10px] text-muted-foreground">الاسم</p>
+                          <p className="text-xs font-semibold text-foreground">{extracted.client.clientName}</p>
+                        </div>
+                      )}
+                      {extracted.client.idNumber && (
+                        <div className="p-2 rounded-lg bg-muted/30 border border-border/50">
+                          <p className="text-[10px] text-muted-foreground">رقم الهوية</p>
+                          <p className="text-xs font-semibold text-foreground">{extracted.client.idNumber}</p>
+                        </div>
+                      )}
+                      {extracted.client.phone && (
+                        <div className="p-2 rounded-lg bg-muted/30 border border-border/50">
+                          <p className="text-[10px] text-muted-foreground">الجوال</p>
+                          <p className="text-xs font-semibold text-foreground">{extracted.client.phone}</p>
+                        </div>
+                      )}
+                      {extracted.client.email && (
+                        <div className="p-2 rounded-lg bg-muted/30 border border-border/50">
+                          <p className="text-[10px] text-muted-foreground">البريد</p>
+                          <p className="text-xs font-semibold text-foreground">{extracted.client.email}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Document Classification */}
                 <div className="bg-card rounded-lg border border-border">
                   <div className="p-4 border-b border-border flex items-center gap-2">
                     <Tag className="w-4 h-4 text-primary" />
                     <h3 className="text-sm font-semibold text-foreground">تصنيف المستندات</h3>
+                    <Badge variant="secondary" className="text-[9px]">{uploadedFiles.length} ملف</Badge>
                   </div>
                   <div className="divide-y divide-border">
                     {uploadedFiles.map((f, i) => {
@@ -727,8 +610,8 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <Badge variant="outline" className={`text-[9px] px-1.5 ${
-                                f.relevance === "high" ? "border-success/50 text-success" :
-                                f.relevance === "medium" ? "border-warning/50 text-warning" :
+                                f.relevance === "high" ? "border-green-300 text-green-600 dark:text-green-400" :
+                                f.relevance === "medium" ? "border-yellow-300 text-yellow-600 dark:text-yellow-400" :
                                 "text-muted-foreground"
                               }`}>
                                 {f.relevance === "high" ? "مهم" : f.relevance === "medium" ? "متوسط" : "منخفض"}
@@ -757,254 +640,42 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                   </div>
                 </div>
 
-                {/* البيانات المستخرجة الموحدة */}
-                {extracted && (() => {
-                  const nums = extracted.extractedNumbers || [];
-                  const getNum = (label: string) => nums.find(n => n.label === label);
-                  
-                  // Get confidence level for a source document
-                  const getConfLevel = (source: string): "high" | "medium" | "low" | null => {
-                    const conf = nums.find(n => n.label.includes("ثقة") && n.source === source);
-                    if (!conf) return null;
-                    const val = parseInt(conf.value);
-                    if (val >= 85) return "high";
-                    if (val >= 70) return "medium";
-                    return "low";
-                  };
+                {/* ★ Asset Inventory Table — the core component ★ */}
+                <AssetInventoryTable
+                  discipline={extracted.discipline}
+                  inventory={extracted.inventory}
+                  description={extracted.description}
+                  summary={extracted.summary}
+                  onInventoryChange={handleInventoryChange}
+                  onDescriptionChange={handleDescriptionChange}
+                  onDisciplineChange={handleDisciplineChange}
+                  onReanalyze={runExtraction}
+                />
 
-                  const confStyles = {
-                    high: {
-                      bg: "bg-emerald-50 dark:bg-emerald-950/20",
-                      border: "border-emerald-200 dark:border-emerald-800",
-                      icon: "text-emerald-600 dark:text-emerald-400",
-                      text: "text-emerald-700 dark:text-emerald-300",
-                      badge: "border-emerald-300 text-emerald-600 dark:text-emerald-400",
-                      label: "مؤكد",
-                    },
-                    medium: {
-                      bg: "bg-yellow-50 dark:bg-yellow-950/20",
-                      border: "border-yellow-200 dark:border-yellow-700",
-                      icon: "text-yellow-600 dark:text-yellow-400",
-                      text: "text-yellow-700 dark:text-yellow-300",
-                      badge: "border-yellow-400 text-yellow-600 dark:text-yellow-400",
-                      label: "يحتاج تأكيد",
-                    },
-                    low: {
-                      bg: "bg-red-50 dark:bg-red-950/20",
-                      border: "border-red-200 dark:border-red-800",
-                      icon: "text-red-600 dark:text-red-400",
-                      text: "text-red-700 dark:text-red-300",
-                      badge: "border-red-300 text-red-600 dark:text-red-400",
-                      label: "غير موثوق",
-                    },
-                  };
-
-                  const fieldCard = (label: string, value: string | undefined, icon: React.ElementType, conf?: "high" | "medium" | "low" | null) => {
-                    if (!value) return null;
-                    const Icon = icon;
-                    const style = conf && conf !== "high" ? confStyles[conf] : null;
-                    return (
-                      <div dir="rtl" className={`flex items-center gap-3 p-2.5 rounded-lg border group transition-colors ${
-                        style ? `${style.bg} ${style.border}` : "bg-muted/30 border-border/50"
-                      }`}>
-                        <div className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 ${
-                          style ? style.bg : "bg-primary/10"
-                        }`}>
-                          <Icon className={`w-3.5 h-3.5 ${style ? style.icon : "text-primary"}`} />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[10px] text-muted-foreground leading-relaxed">{label}</p>
-                          <p className={`text-xs font-semibold leading-relaxed ${style ? style.text : "text-foreground"}`}>{value}</p>
-                        </div>
-                        {style && (
-                          <Badge variant="outline" className={`text-[8px] h-4 px-1.5 shrink-0 ${style.badge}`}>
-                            {conf === "low" ? <AlertTriangle className="w-2 h-2 ml-1" /> : <AlertTriangle className="w-2 h-2 ml-1" />}
-                            {style.label}
-                          </Badge>
-                        )}
-                        {conf === "high" && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        )}
-                        <button onClick={() => copyToClipboard(value)}
-                          className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-muted transition-all text-muted-foreground shrink-0">
-                          <Copy className="w-3 h-3" />
-                        </button>
+                {/* Purpose */}
+                {extracted.suggestedPurpose && (
+                  <div className="bg-card rounded-lg border border-border p-4">
+                    <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
                       </div>
-                    );
-                  };
-
-                  const deedConf = getConfLevel(nums.find(n => n.source?.includes("صك"))?.source || "");
-                  const permitConf = getConfLevel(nums.find(n => n.source?.includes("رخصة"))?.source || "");
-                  const planConf = getConfLevel(nums.find(n => n.source?.includes("مخطط"))?.source || "");
-                  const contractConf = getConfLevel(nums.find(n => n.source?.includes("إيجار") || n.source?.includes("عقد"))?.source || "");
-
-                  const hasPropertyInfo = extracted.asset?.description || extracted.asset?.city || extracted.asset?.area;
-                  const hasOwnership = extracted.client?.clientName || extracted.asset?.deedNumber;
-                  const hasBuildingInfo = getNum("مساحة البناء المرخصة") || getNum("عدد الطوابق") || getNum("غرف النوم");
-                  const hasRentalInfo = getNum("قيمة الإيجار السنوي");
-
-                  // Confidence summary
-                  const allConfs = [deedConf, permitConf, planConf, contractConf].filter(Boolean) as ("high" | "medium" | "low")[];
-                  const highCount = allConfs.filter(c => c === "high").length;
-                  const medCount = allConfs.filter(c => c === "medium").length;
-                  const lowCount = allConfs.filter(c => c === "low").length;
-
-                  return (
-                    <div className="space-y-3" dir="rtl">
-                      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
-                        {/* Header */}
-                        <div className="p-4 border-b border-border bg-gradient-to-l from-primary/5 to-transparent">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2.5">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                <Sparkles className="w-4 h-4 text-primary" />
-                              </div>
-                              <div>
-                                <h3 className="text-sm font-bold text-foreground">البيانات المستخرجة الموحدة</h3>
-                                <p className="text-[11px] text-muted-foreground">تم تجميع البيانات من {extracted.totalFilesCount} مستند</p>
-                              </div>
-                            </div>
-                            <Badge variant="outline" className="text-[10px]">
-                              {nums.length + Object.values(extracted.client || {}).filter(Boolean).length + Object.values(extracted.asset || {}).filter(Boolean).length} حقل
-                            </Badge>
-                          </div>
-
-                          {/* Confidence Summary Bar */}
-                          {allConfs.length > 0 && (
-                            <div className="flex items-center gap-3 mt-3 p-2 rounded-lg bg-muted/30 border border-border/50">
-                              <span className="text-[10px] text-muted-foreground shrink-0">مستوى الثقة:</span>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                {highCount > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                    {highCount} عالي
-                                  </span>
-                                )}
-                                {medCount > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-yellow-600 dark:text-yellow-400 font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                                    {medCount} متوسط
-                                  </span>
-                                )}
-                                {lowCount > 0 && (
-                                  <span className="flex items-center gap-1 text-[10px] text-red-600 dark:text-red-400 font-medium">
-                                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                                    {lowCount} منخفض
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="divide-y divide-border">
-                          {/* 1. معلومات العقار */}
-                          {hasPropertyInfo && (
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                                  <Building2 className="w-3.5 h-3.5 text-primary" />
-                                </div>
-                                <h4 className="text-xs font-bold text-foreground">معلومات العقار</h4>
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">النوع والموقع والمساحة</Badge>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("نوع العقار", extracted.asset?.description, Home, deedConf)}
-                                {fieldCard("التصنيف", extracted.asset?.classification, Tag, deedConf)}
-                                {fieldCard("المدينة", extracted.asset?.city, MapPin, deedConf)}
-                                {fieldCard("الحي", extracted.asset?.district, MapPin, deedConf)}
-                                {fieldCard("مساحة الأرض", extracted.asset?.area ? `${extracted.asset.area} م²` : undefined, Ruler, deedConf)}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 2. معلومات الملكية */}
-                          {hasOwnership && (
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                                  <FileCheck className="w-3.5 h-3.5 text-primary" />
-                                </div>
-                                <h4 className="text-xs font-bold text-foreground">معلومات الملكية</h4>
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الصك والهوية</Badge>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("اسم المالك", extracted.client?.clientName, User, deedConf)}
-                                {fieldCard("رقم الهوية", extracted.client?.idNumber, Hash, deedConf)}
-                                {fieldCard("رقم الصك", extracted.asset?.deedNumber, FileCheck, deedConf)}
-                                {fieldCard("الجوال", extracted.client?.phone, Phone)}
-                                {fieldCard("البريد الإلكتروني", extracted.client?.email, Mail)}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 3. معلومات البناء */}
-                          {hasBuildingInfo && (
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                                  <Home className="w-3.5 h-3.5 text-primary" />
-                                </div>
-                                <h4 className="text-xs font-bold text-foreground">معلومات البناء</h4>
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من الرخصة والمخطط</Badge>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("مساحة البناء", getNum("مساحة البناء المرخصة")?.value, Ruler, permitConf)}
-                                {fieldCard("عدد الطوابق", getNum("عدد الطوابق")?.value, Building2, permitConf)}
-                                {fieldCard("غرف النوم", getNum("غرف النوم")?.value, Home, planConf)}
-                                {fieldCard("الصالات", getNum("الصالات")?.value, Home, planConf)}
-                                {fieldCard("المطبخ", getNum("المطبخ")?.value, Home, planConf)}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* 4. معلومات الإيجار */}
-                          {hasRentalInfo && (
-                            <div className="p-4">
-                              <div className="flex items-center gap-2 mb-3">
-                                <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center">
-                                  <FileText className="w-3.5 h-3.5 text-primary" />
-                                </div>
-                                <h4 className="text-xs font-bold text-foreground">معلومات الإيجار</h4>
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">من عقد الإيجار</Badge>
-                              </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                {fieldCard("الإيجار السنوي", getNum("قيمة الإيجار السنوي")?.value, Hash, contractConf)}
-                                {fieldCard("المستأجر", getNum("اسم المستأجر")?.value, User, contractConf)}
-                                {fieldCard("مدة العقد", getNum("مدة العقد")?.value, FileText, contractConf)}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* غرض التقييم */}
-                          {extracted.suggestedPurpose && (
-                            <div className="p-4">
-                              <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/15">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                                  <CheckCircle2 className="w-4 h-4 text-primary" />
-                                </div>
-                                <div>
-                                  <p className="text-[10px] text-muted-foreground">غرض التقييم المقترح</p>
-                                  <p className="text-sm font-bold text-foreground">{extracted.suggestedPurpose}</p>
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">غرض التقييم المقترح</p>
+                        <p className="text-sm font-bold text-foreground">{extracted.suggestedPurpose}</p>
                       </div>
-
-                      {/* زر المتابعة */}
-                      <Button
-                        className="w-full gap-2 text-sm py-5 rounded-xl shadow-sm"
-                        size="lg"
-                        onClick={() => navigate("/scope-and-pricing", { state: { extractedData: extracted } })}
-                      >
-                        <ArrowLeft className="w-4 h-4" />
-                        متابعة لتحديد نطاق العمل
-                      </Button>
                     </div>
-                  );
-                })()}
+                  </div>
+                )}
+
+                {/* Continue button */}
+                <Button
+                  className="w-full gap-2 text-sm py-5 rounded-xl shadow-sm"
+                  size="lg"
+                  onClick={() => navigate("/scope-and-pricing", { state: { extractedData: extracted } })}
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  متابعة لتحديد نطاق العمل ({extracted.inventory.length} أصل)
+                </Button>
               </div>
             )}
           </div>
