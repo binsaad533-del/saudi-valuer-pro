@@ -18,7 +18,6 @@ import ClientRequests from "@/pages/admin/ClientRequests";
 import ValuationProduction from "@/pages/admin/ValuationProduction";
 import ReviewPage from "@/pages/ReviewPage";
 import SearchPage from "@/pages/SearchPage";
-import CompliancePage from "@/pages/CompliancePage";
 import SettingsPage from "@/pages/SettingsPage";
 import ReportsListPage from "@/pages/ReportsListPage";
 import ValuationDetailPage from "@/pages/ValuationDetailPage";
@@ -32,7 +31,13 @@ import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
 import InspectorsListPage from "@/pages/admin/InspectorsListPage";
 import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
-import RaqeemPage from "@/pages/RaqeemPage";
+import MarketDataPage from "@/pages/MarketDataPage";
+import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
+import CFODashboardPage from "@/pages/CFODashboardPage";
+import AssignmentHubPage from "@/pages/AssignmentHubPage";
+import ValuationWorkspacePage from "@/pages/ValuationWorkspacePage";
+import UnsubscribePage from "@/pages/UnsubscribePage";
+import UserSettingsPage from "@/pages/UserSettingsPage";
 
 // Client Portal
 import ClientRegister from "@/pages/client/ClientRegister";
@@ -49,12 +54,6 @@ import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
-import CFODashboardPage from "@/pages/CFODashboardPage";
-import AssignmentHubPage from "@/pages/AssignmentHubPage";
-import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
-import MarketDataPage from "@/pages/MarketDataPage";
-import UnsubscribePage from "@/pages/UnsubscribePage";
-import UserSettingsPage from "@/pages/UserSettingsPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -84,9 +83,7 @@ const App = () => (
             <Route path="/valuations/new" element={<NewValuation />} />
             <Route path="/valuations/:id" element={<ValuationDetailPage />} />
             <Route path="/assignment/:id" element={<AssignmentHubPage />} />
-            <Route path="/valuations/review" element={<ValuationsList />} />
-            <Route path="/valuations/completed" element={<ValuationsList />} />
-            <Route path="/comparables" element={<MarketDataPage />} />
+            <Route path="/workspace" element={<ValuationWorkspacePage />} />
             <Route path="/market-data" element={<MarketDataPage />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/archive" element={<ArchivePage />} />
@@ -97,8 +94,6 @@ const App = () => (
             <Route path="/client-requests" element={<ClientRequests />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
-            <Route path="/compliance" element={<CompliancePage />} />
-            <Route path="/raqeem" element={<RaqeemPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/clients-management" element={<ClientsManagementPage />} />
             <Route path="/inspectors" element={<InspectorsListPage />} />
