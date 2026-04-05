@@ -74,6 +74,7 @@ function ConfidenceBadge({ score }: { score: number }) {
 
 export default function ClientIdentityPanel() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
