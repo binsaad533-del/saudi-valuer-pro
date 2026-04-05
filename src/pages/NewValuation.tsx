@@ -70,12 +70,6 @@ interface UploadedFile {
   storagePath?: string;
 }
 
-interface ExtractedNumber {
-  label: string;
-  value: string;
-  source: string;
-}
-
 interface AssetField {
   key: string;
   label: string;
@@ -83,6 +77,19 @@ interface AssetField {
   confidence: number;
   source?: string;
   group?: string;
+}
+
+interface InventoryItem {
+  id: number;
+  name: string;
+  type: "real_estate" | "machinery_equipment";
+  category?: string;
+  subcategory?: string;
+  quantity: number;
+  condition?: string;
+  fields: AssetField[];
+  source?: string;
+  confidence?: number;
 }
 
 interface ExtractedData {
@@ -95,14 +102,12 @@ interface ExtractedData {
     phone?: string;
     email?: string;
   };
-  asset: {
-    description?: string;
-  };
-  assetFields?: AssetField[];
+  description?: string;
+  inventory?: InventoryItem[];
+  summary?: { total: number; by_type?: Record<string, number>; by_condition?: Record<string, number> };
   suggestedPurpose?: string;
   notes: string[];
   documentCategories: { fileName: string; category: string; categoryLabel?: string; relevance: string; extractedInfo?: string }[];
-  extractedNumbers?: ExtractedNumber[];
   analysisMethod?: string;
   analyzedFilesCount?: number;
   totalFilesCount?: number;
@@ -232,17 +237,28 @@ export default function NewValuation() {
         phone: result.client?.phone || "",
         email: result.client?.email || "",
       });
-      setAssetDescription(result.asset?.description || "");
-      // Set dynamic asset fields from AI
-      if (result.assetFields && result.assetFields.length > 0) {
-        setDynamicAssetFields(result.assetFields);
-      } else {
-        // Fallback: no dynamic fields returned
-        setDynamicAssetFields([]);
+      // Use top-level description from edge function
+      setAssetDescription(result.description || "");
+      
+      // Build dynamic asset fields from inventory items
+      const allFields: AssetField[] = [];
+      if (Array.isArray(result.inventory) && result.inventory.length > 0) {
+        for (const item of result.inventory) {
+          if (Array.isArray(item.fields)) {
+            for (const f of item.fields) {
+              allFields.push({
+                ...f,
+                source: f.source || item.source || `أصل #${item.id}: ${item.name}`,
+              });
+            }
+          }
+        }
       }
-      // Extract location if present in dynamic fields
-      const cityField = result.assetFields?.find(f => f.key === "city");
-      const districtField = result.assetFields?.find(f => f.key === "district");
+      setDynamicAssetFields(allFields);
+      
+      // Extract location if present in inventory fields
+      const cityField = allFields.find(f => f.key === "city");
+      const districtField = allFields.find(f => f.key === "district");
       if (cityField || districtField) {
         setLocationFields({
           city: cityField?.value || "",
@@ -386,10 +402,10 @@ export default function NewValuation() {
             description: assetDescription,
             fields: dynamicAssetFields,
             location: locationFields,
+            inventory: extracted?.inventory,
             ai_extracted: true,
             ai_confidence: extracted?.confidence,
             analysis_method: extracted?.analysisMethod,
-            extracted_numbers: extracted?.extractedNumbers,
           } as any,
         })
         .select("id")
@@ -693,20 +709,24 @@ export default function NewValuation() {
                 </div>
               </div>
 
-              {/* Extracted Numbers */}
-              {extracted.extractedNumbers && extracted.extractedNumbers.length > 0 && (
+              {/* Inventory Summary */}
+              {Array.isArray(extracted.inventory) && extracted.inventory.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-foreground mb-3 border-b border-border pb-2 flex items-center gap-2">
                     <Hash className="w-4 h-4 text-primary" />
-                    بيانات مستخرجة من المحتوى
+                    جرد الأصول المستخرجة ({extracted.inventory.length} أصل)
                   </h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {extracted.extractedNumbers.map((en, i) => (
-                      <div key={i} className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
+                    {extracted.inventory.map((item) => (
+                      <div key={item.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-primary/5 border border-primary/10">
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-muted-foreground">{en.label}</p>
-                          <p className="text-sm font-semibold text-foreground">{en.value}</p>
-                          <p className="text-[10px] text-muted-foreground/60">من: {en.source}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            {item.type === "real_estate" ? <Building2 className="w-3 h-3" /> : <Sparkles className="w-3 h-3" />}
+                            {item.category || (item.type === "real_estate" ? "عقار" : "آلة/معدة")}
+                            {item.quantity > 1 && <span className="text-primary font-medium">×{item.quantity}</span>}
+                          </p>
+                          <p className="text-sm font-semibold text-foreground">{item.name}</p>
+                          {item.source && <p className="text-[10px] text-muted-foreground/60">من: {item.source}</p>}
                         </div>
                       </div>
                     ))}
