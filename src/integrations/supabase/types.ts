@@ -2888,8 +2888,54 @@ export type Database = {
           },
         ]
       }
+      price_overrides: {
+        Row: {
+          assignment_id: string
+          created_at: string
+          id: string
+          original_amount: number
+          override_amount: number
+          override_by: string
+          reason_ar: string | null
+        }
+        Insert: {
+          assignment_id: string
+          created_at?: string
+          id?: string
+          original_amount: number
+          override_amount: number
+          override_by: string
+          reason_ar?: string | null
+        }
+        Update: {
+          assignment_id?: string
+          created_at?: string
+          id?: string
+          original_amount?: number
+          override_amount?: number
+          override_by?: string
+          reason_ar?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "price_overrides_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "price_overrides_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pricing_rules: {
         Row: {
+          auto_discount_percentage: number | null
           base_fee: number
           complexity_multiplier: number
           created_at: string
@@ -2900,10 +2946,18 @@ export type Database = {
           is_active: boolean
           label_ar: string
           label_en: string | null
+          per_unit_fee: number | null
           service_type: string
+          sort_order: number | null
+          subcategory: string | null
+          surcharge_percentage: number | null
+          tier_label_ar: string | null
+          tier_max_units: number | null
+          tier_min_units: number | null
           updated_at: string
         }
         Insert: {
+          auto_discount_percentage?: number | null
           base_fee?: number
           complexity_multiplier?: number
           created_at?: string
@@ -2914,10 +2968,18 @@ export type Database = {
           is_active?: boolean
           label_ar: string
           label_en?: string | null
+          per_unit_fee?: number | null
           service_type: string
+          sort_order?: number | null
+          subcategory?: string | null
+          surcharge_percentage?: number | null
+          tier_label_ar?: string | null
+          tier_max_units?: number | null
+          tier_min_units?: number | null
           updated_at?: string
         }
         Update: {
+          auto_discount_percentage?: number | null
           base_fee?: number
           complexity_multiplier?: number
           created_at?: string
@@ -2928,7 +2990,14 @@ export type Database = {
           is_active?: boolean
           label_ar?: string
           label_en?: string | null
+          per_unit_fee?: number | null
           service_type?: string
+          sort_order?: number | null
+          subcategory?: string | null
+          surcharge_percentage?: number | null
+          tier_label_ar?: string | null
+          tier_max_units?: number | null
+          tier_min_units?: number | null
           updated_at?: string
         }
         Relationships: []

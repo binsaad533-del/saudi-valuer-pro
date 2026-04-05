@@ -5,27 +5,37 @@ import { supabase } from "@/integrations/supabase/client";
 export interface PricingRule {
   id: string;
   service_type: string;
+  subcategory: string | null;
   label_ar: string;
   label_en: string | null;
   base_fee: number;
   inspection_fee: number;
   complexity_multiplier: number;
   income_analysis_fee: number;
+  per_unit_fee: number;
+  surcharge_percentage: number;
+  auto_discount_percentage: number;
+  tier_min_units: number;
+  tier_max_units: number | null;
   description_ar: string | null;
   is_active: boolean;
+  sort_order: number;
 }
 
 export interface PricingBreakdown {
   baseFee: number;
   inspectionFee: number;
   incomeAnalysisFee: number;
-  complexityMultiplier: number;
+  perUnitTotal: number;
+  surchargeAmount: number;
+  autoDiscountAmount: number;
   subtotal: number;
   discountAmount: number;
   discountCodeId: string | null;
   vatPercentage: number;
   vatAmount: number;
   totalAmount: number;
+  ruleUsed: PricingRule | null;
 }
 
 export interface DiscountValidation {
@@ -52,51 +62,64 @@ export async function getPricingRules(): Promise<PricingRule[]> {
     .from("pricing_rules" as any)
     .select("*")
     .eq("is_active", true)
-    .order("service_type");
+    .order("sort_order");
   return (data as unknown as PricingRule[]) || [];
+}
+
+export function pickPricingRule(
+  rules: PricingRule[],
+  serviceType: string,
+  subcategory?: string,
+  unitCount: number = 1
+): PricingRule | null {
+  const typeRules = rules.filter((r) => r.service_type === serviceType);
+  if (subcategory) {
+    const match = typeRules.find((r) => r.subcategory === subcategory);
+    if (match) return match;
+  }
+  // For machinery, pick by tier
+  if (serviceType === "machinery") {
+    const tierMatch = typeRules.find(
+      (r) => unitCount >= r.tier_min_units && (r.tier_max_units === null || unitCount <= r.tier_max_units)
+    );
+    if (tierMatch) return tierMatch;
+  }
+  return typeRules[0] || null;
 }
 
 export async function calculatePricing(
   serviceType: string,
   options: {
+    subcategory?: string;
+    unitCount?: number;
     includeInspection?: boolean;
     includeIncomeAnalysis?: boolean;
-    complexityLevel?: number; // 1-3
     discountCode?: string;
     clientId?: string;
   } = {}
 ): Promise<PricingBreakdown> {
-  // Get pricing rule
-  const { data: rules } = await supabase
-    .from("pricing_rules" as any)
-    .select("*")
-    .eq("service_type", serviceType)
-    .eq("is_active", true)
-    .limit(1);
+  const allRules = await getPricingRules();
+  const rule = pickPricingRule(allRules, serviceType, options.subcategory, options.unitCount || 1);
 
-  const rule = (rules as unknown as PricingRule[])?.[0];
   const baseFee = rule?.base_fee || 3500;
   const inspectionFee = options.includeInspection !== false ? (rule?.inspection_fee || 500) : 0;
   const incomeAnalysisFee = options.includeIncomeAnalysis ? (rule?.income_analysis_fee || 0) : 0;
-  const complexityMultiplier = options.complexityLevel === 3 ? 1.5 : options.complexityLevel === 2 ? 1.2 : 1.0;
+  const unitCount = options.unitCount || 1;
+  const perUnitTotal = unitCount > 1 ? (unitCount - 1) * (rule?.per_unit_fee || 0) : 0;
 
-  const subtotal = Math.round((baseFee * complexityMultiplier) + inspectionFee + incomeAnalysisFee);
+  const rawSubtotal = baseFee + inspectionFee + incomeAnalysisFee + perUnitTotal;
+  const surchargeAmount = rule?.surcharge_percentage ? Math.round(rawSubtotal * rule.surcharge_percentage / 100) : 0;
+  const autoDiscountAmount = rule?.auto_discount_percentage ? Math.round(rawSubtotal * rule.auto_discount_percentage / 100) : 0;
+  const subtotal = rawSubtotal + surchargeAmount - autoDiscountAmount;
 
-  // Get commercial settings for VAT
   const settings = await getCommercialSettings();
   const vatPct = settings.vat_percentage;
 
-  // Validate discount
   let discountAmount = 0;
   let discountCodeId: string | null = null;
 
   if (options.discountCode) {
-    const validation = await validateDiscountCode(
-      options.discountCode,
-      options.clientId,
-      serviceType,
-      subtotal
-    );
+    const validation = await validateDiscountCode(options.discountCode, options.clientId, serviceType, subtotal);
     if (validation.is_valid) {
       discountAmount = validation.calculated_discount;
       discountCodeId = validation.discount_id;
@@ -111,13 +134,16 @@ export async function calculatePricing(
     baseFee,
     inspectionFee,
     incomeAnalysisFee,
-    complexityMultiplier,
+    perUnitTotal,
+    surchargeAmount,
+    autoDiscountAmount,
     subtotal,
     discountAmount,
     discountCodeId,
     vatPercentage: vatPct,
     vatAmount,
     totalAmount,
+    ruleUsed: rule,
   };
 }
 
@@ -238,4 +264,5 @@ export const SERVICE_TYPE_LABELS: Record<string, string> = {
   mixed: "تقييم مختلط",
   revaluation: "إعادة تقييم",
   report_copy: "نسخة تقرير / تحديث",
+  urgent: "خدمة عاجلة",
 };
