@@ -39,6 +39,7 @@ const translations: Record<string, Record<Language, string>> = {
   raqeem: { ar: "رقيم", en: "Raqeem" },
   coordinatorPanel: { ar: "واجهة المنسق", en: "Coordinator Panel" },
   knowledgeBase: { ar: "المعرفة المهنية", en: "Knowledge Base" },
+  auditLog: { ar: "سجل التدقيق", en: "Audit Log" },
 
   // Valuation section
   valuationSection: { ar: "التقييم", en: "Valuation" },
