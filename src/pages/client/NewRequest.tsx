@@ -466,7 +466,6 @@ export default function NewRequest() {
                 </div>
 
                 <div className="space-y-1.5">
-                <div className="space-y-1.5">
                   <Label className="text-sm">مستخدمو التقرير <span className="text-destructive">*</span></Label>
                   <Select value={clientInfo.intendedUsers} onValueChange={(val) => setClientInfo(p => ({ ...p, intendedUsers: val, intendedUsersOther: val !== "other" ? "" : p.intendedUsersOther }))}>
                     <SelectTrigger><SelectValue placeholder="اختر مستخدم التقرير" /></SelectTrigger>
