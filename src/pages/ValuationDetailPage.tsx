@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ConfidenceScoreCard from "@/components/valuation/ConfidenceScoreCard";
 import RiskDetectionPanel from "@/components/valuation/RiskDetectionPanel";
+import DecisionPanel from "@/components/valuation/DecisionPanel";
 import type { RiskContext } from "@/lib/risk-detection";
 
 const MOCK = {
@@ -290,6 +291,9 @@ export default function ValuationDetailPage() {
 
           {/* Risk Detection */}
           <RiskDetectionPanel context={riskCtx} />
+
+          {/* Decision */}
+          <DecisionPanel context={riskCtx} compliancePassed={true} />
 
           {/* Team */}
           <Card>
