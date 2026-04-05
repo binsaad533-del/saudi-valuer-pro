@@ -130,10 +130,9 @@ export default function NewRequest() {
 
   // AI extracted
   const [extractedResult, setExtractedResult] = useState<ExtractedResult | null>(null);
-  const [editableFields, setEditableFields] = useState<AssetField[]>([]);
+  const [inventoryAssets, setInventoryAssets] = useState<InventoryAsset[]>([]);
   const [editableDescription, setEditableDescription] = useState("");
-  const [editingDescription, setEditingDescription] = useState(false);
-  const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
+  const [currentDiscipline, setCurrentDiscipline] = useState("real_estate");
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
