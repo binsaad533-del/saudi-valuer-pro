@@ -560,12 +560,27 @@ function ClientArchivedReports({ userId }: { userId: string }) {
   useEffect(() => {
     if (!userId) return;
     const load = async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.email) return;
-      const { data } = await supabase
+      // First try to find client record linked to this portal user
+      const { data: clientRecord } = await supabase
+        .from("clients")
+        .select("id")
+        .eq("portal_user_id", userId)
+        .maybeSingle();
+
+      let query = supabase
         .from("archived_reports")
         .select("*")
         .order("created_at", { ascending: false });
+
+      if (clientRecord) {
+        // Show all reports linked to the client record
+        query = query.eq("client_id", clientRecord.id);
+      } else {
+        // Fallback: no linked client record, show nothing meaningful
+        query = query.eq("uploaded_by", userId);
+      }
+
+      const { data } = await query;
       setArchives(data || []);
       setLoadingArchives(false);
     };

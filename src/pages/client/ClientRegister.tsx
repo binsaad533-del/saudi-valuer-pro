@@ -78,6 +78,19 @@ export default function ClientRegister() {
           user_id: data.user.id,
           role: "client" as any,
         });
+
+        // Auto-link to existing client record if found
+        try {
+          await supabase.rpc("link_portal_user_to_client", {
+            _user_id: data.user.id,
+            _phone: formatPhone(phone),
+            _email: email,
+            _name_ar: getDisplayName(),
+            _org_id: null,
+          });
+        } catch {
+          // Non-critical: linking can happen later
+        }
       }
 
       // Send phone OTP via Twilio
