@@ -53,7 +53,7 @@ export async function getPricingRules(): Promise<PricingRule[]> {
     .select("*")
     .eq("is_active", true)
     .order("service_type");
-  return (data as PricingRule[]) || [];
+  return (data as unknown as PricingRule[]) || [];
 }
 
 export async function calculatePricing(
@@ -74,7 +74,7 @@ export async function calculatePricing(
     .eq("is_active", true)
     .limit(1);
 
-  const rule = (rules as PricingRule[])?.[0];
+  const rule = (rules as unknown as PricingRule[])?.[0];
   const baseFee = rule?.base_fee || 3500;
   const inspectionFee = options.includeInspection !== false ? (rule?.inspection_fee || 500) : 0;
   const incomeAnalysisFee = options.includeIncomeAnalysis ? (rule?.income_analysis_fee || 0) : 0;
@@ -167,12 +167,14 @@ export async function getCommercialSettings(): Promise<CommercialSettings> {
     .eq("id", 1)
     .maybeSingle();
 
+  const d = data as unknown as Record<string, any> | null;
+
   return {
-    report_release_policy: data?.report_release_policy || "anytime",
-    vat_percentage: data?.vat_percentage ?? 15,
-    allow_partial_payment: data?.allow_partial_payment || false,
-    default_payment_terms_ar: data?.default_payment_terms_ar || "الدفع مطلوب خلال 7 أيام",
-    default_validity_days: data?.default_validity_days || 14,
+    report_release_policy: d?.report_release_policy || "anytime",
+    vat_percentage: d?.vat_percentage ?? 15,
+    allow_partial_payment: d?.allow_partial_payment || false,
+    default_payment_terms_ar: d?.default_payment_terms_ar || "الدفع مطلوب خلال 7 أيام",
+    default_validity_days: d?.default_validity_days || 14,
   };
 }
 
