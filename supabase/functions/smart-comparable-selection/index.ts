@@ -36,8 +36,8 @@ Deno.serve(async (req) => {
       subject_district_ar,
       subject_property_type,
       subject_area_sqm,
-      subject_age_years,
-      subject_condition,
+      subject_age_years: _subject_age_years,
+      subject_condition: _subject_condition,
       max_results = 6,
       area_tolerance = 0.2,
     } = body;

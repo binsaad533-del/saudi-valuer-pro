@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  Brain, Loader2, CheckCircle2, AlertTriangle, TrendingUp,
+  Brain, Loader2, CheckCircle2, TrendingUp,
   MapPin, BarChart3, Scale, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -82,11 +82,6 @@ export default function ComparableSelectionEngine({
     return "text-destructive";
   };
 
-  const confidenceBg = (score: number) => {
-    if (score >= 70) return "bg-emerald-500";
-    if (score >= 40) return "bg-amber-500";
-    return "bg-destructive";
-  };
 
   return (
     <div className="space-y-4">
