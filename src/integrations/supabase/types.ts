@@ -2715,8 +2715,10 @@ export type Database = {
         Row: {
           amount: number
           assignment_id: string | null
+          bank_transfer_ref: string | null
           callback_url: string | null
           checkout_url: string | null
+          client_notes: string | null
           created_at: string
           created_by: string | null
           currency: string
@@ -2727,18 +2729,25 @@ export type Database = {
           notes: string | null
           paid_at: string | null
           payment_method: string | null
+          payment_proof_path: string | null
           payment_reference: string | null
           payment_stage: string
           payment_status: string
+          payment_type: string
           request_id: string
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           transaction_id: string | null
           updated_at: string
         }
         Insert: {
           amount: number
           assignment_id?: string | null
+          bank_transfer_ref?: string | null
           callback_url?: string | null
           checkout_url?: string | null
+          client_notes?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -2749,18 +2758,25 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          payment_proof_path?: string | null
           payment_reference?: string | null
           payment_stage?: string
           payment_status?: string
+          payment_type?: string
           request_id: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           transaction_id?: string | null
           updated_at?: string
         }
         Update: {
           amount?: number
           assignment_id?: string | null
+          bank_transfer_ref?: string | null
           callback_url?: string | null
           checkout_url?: string | null
+          client_notes?: string | null
           created_at?: string
           created_by?: string | null
           currency?: string
@@ -2771,10 +2787,15 @@ export type Database = {
           notes?: string | null
           paid_at?: string | null
           payment_method?: string | null
+          payment_proof_path?: string | null
           payment_reference?: string | null
           payment_stage?: string
           payment_status?: string
+          payment_type?: string
           request_id?: string
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           transaction_id?: string | null
           updated_at?: string
         }
