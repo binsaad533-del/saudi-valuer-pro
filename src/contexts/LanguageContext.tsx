@@ -46,7 +46,7 @@ const translations: Record<string, Record<Language, string>> = {
   valuationSection: { ar: "التقييم", en: "Valuation" },
   valuations: { ar: "التقييمات", en: "Valuations" },
   reports: { ar: "التقارير", en: "Reports" },
-  marketData: { ar: "بيانات السوق", en: "Market Data" },
+  marketData: { ar: "المصادر المعتمدة", en: "Approved Sources" },
   marketComparables: { ar: "المقارنات السوقية", en: "Market Comparables" },
 
   // Operations section
