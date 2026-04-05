@@ -45,6 +45,7 @@ import NotificationsPage from "@/pages/NotificationsPage";
 import NotificationSettingsPage from "@/pages/NotificationSettingsPage";
 import AuditLogPage from "@/pages/AuditLogPage";
 import CommercialDashboardPage from "@/pages/CommercialDashboardPage";
+import SystemMonitoringPage from "@/pages/SystemMonitoringPage";
 
 // Client Portal
 import ClientRegister from "@/pages/client/ClientRegister";
@@ -115,6 +116,7 @@ const App = () => (
             <Route path="/notification-settings" element={<NotificationSettingsPage />} />
             <Route path="/audit-log" element={<AuditLogPage />} />
             <Route path="/commercial" element={<CommercialDashboardPage />} />
+            <Route path="/system-monitoring" element={<SystemMonitoringPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}

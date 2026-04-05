@@ -4829,6 +4829,81 @@ export type Database = {
         }
         Relationships: []
       }
+      system_events: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          title: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          title?: string
+        }
+        Relationships: []
+      }
+      system_health_checks: {
+        Row: {
+          check_type: string
+          checked_at: string
+          details: Json | null
+          id: string
+          response_time_ms: number | null
+          status: string
+        }
+        Insert: {
+          check_type: string
+          checked_at?: string
+          details?: Json | null
+          id?: string
+          response_time_ms?: number | null
+          status?: string
+        }
+        Update: {
+          check_type?: string
+          checked_at?: string
+          details?: Json | null
+          id?: string
+          response_time_ms?: number | null
+          status?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           granted_at: string
