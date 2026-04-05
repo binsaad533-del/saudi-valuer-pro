@@ -18,11 +18,19 @@ function supabaseAdmin() {
 // ADJUSTMENT RULES (deterministic, not AI)
 // ============================================================
 const ADJUSTMENT_RULES: Record<string, { min: number; max: number }> = {
+  // Real Estate adjustment rules
   location: { min: -0.20, max: 0.20 },
   size:     { min: -0.15, max: 0.15 },
   age:      { min: -0.30, max: 0.00 },
   condition:{ min: -0.20, max: 0.10 },
   time:     { min: -0.10, max: 0.15 },
+  // Machinery & Equipment adjustment rules
+  equipment_age:            { min: -0.50, max: 0.00 },
+  operating_hours:          { min: -0.40, max: 0.00 },
+  mechanical_condition:     { min: -0.30, max: 0.10 },
+  market_demand:            { min: -0.20, max: 0.25 },
+  maintenance_history:      { min: -0.15, max: 0.10 },
+  technology_obsolescence:  { min: -0.35, max: 0.00 },
 };
 
 function clampAdjustment(type: string, value: number): number {
