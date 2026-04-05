@@ -372,7 +372,7 @@ export async function superAdminFinalApproval(assignmentId: string): Promise<{ s
 
   const userRole = roleData?.role || "client";
   if (!hasPermission(userRole, "issue_final_report")) {
-    return { success: false, error: "ليس لديك صلاحية إصدار التقرير النهائي. هذا الإجراء مخصص للمالك فقط." };
+    return { success: false, error: "ليس لديك صلاحية إصدار التقرير النهائي. مطلوب دور: مالك أو منسق إداري أو مدير تقييم." };
   }
 
   const { data } = await supabase
