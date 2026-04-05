@@ -4,11 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import AssetInventoryTable, { type InventoryAsset } from "@/components/client/AssetInventoryTable";
 
 import {
   Select,
@@ -31,16 +31,10 @@ import {
   User as UserIcon,
   FileCheck,
   Brain,
-  Target,
   MapPin,
   Navigation,
   ExternalLink,
-  Edit3,
   ShieldCheck,
-  AlertTriangle,
-  Tag,
-  Plus,
-  Trash2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
@@ -51,15 +45,6 @@ interface UploadedFile {
   size: number;
   type: string;
   path: string;
-}
-
-interface AssetField {
-  key: string;
-  label: string;
-  value: string;
-  confidence: number;
-  source?: string;
-  group?: string;
 }
 
 interface DocumentCategory {
@@ -80,27 +65,24 @@ interface ExtractedResult {
     phone?: string;
     email?: string;
   };
-  asset?: {
-    description?: string;
+  description?: string;
+  inventory?: InventoryAsset[];
+  summary?: {
+    total: number;
+    by_type?: Record<string, number>;
+    by_condition?: Record<string, number>;
   };
-  assetFields: AssetField[];
+  // Legacy flat fields fallback
+  asset?: { description?: string };
+  assetFields?: { key: string; label: string; value: string; confidence: number; source?: string; group?: string }[];
   suggestedPurpose?: string;
   notes: string[];
   documentCategories: DocumentCategory[];
-  extractedNumbers?: { label: string; value: string; source: string }[];
-  analysisMethod?: string;
   analyzedFilesCount?: number;
   totalFilesCount?: number;
-  processedFileTypes?: Record<string, number>;
 }
 
 type Step = "upload" | "processing" | "extracted" | "submitted";
-
-const DISCIPLINE_LABELS: Record<string, string> = {
-  real_estate: "🏠 تقييم عقاري",
-  machinery: "⚙️ تقييم آلات ومعدات",
-  mixed: "🏗️ تقييم مختلط",
-};
 
 const CATEGORY_LABELS: Record<string, string> = {
   deed: "صك ملكية",
@@ -116,14 +98,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   spreadsheet: "جدول بيانات",
   archive: "ملف مضغوط",
   other: "أخرى",
-};
-
-const GROUP_LABELS: Record<string, string> = {
-  property: "بيانات العقار",
-  machinery: "بيانات الآلات والمعدات",
-  financial: "بيانات مالية",
-  legal: "بيانات قانونية",
-  general: "بيانات عامة",
 };
 
 const PURPOSE_LABELS: Record<string, string> = {
@@ -156,10 +130,9 @@ export default function NewRequest() {
 
   // AI extracted
   const [extractedResult, setExtractedResult] = useState<ExtractedResult | null>(null);
-  const [editableFields, setEditableFields] = useState<AssetField[]>([]);
+  const [inventoryAssets, setInventoryAssets] = useState<InventoryAsset[]>([]);
   const [editableDescription, setEditableDescription] = useState("");
-  const [editingDescription, setEditingDescription] = useState(false);
-  const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
+  const [currentDiscipline, setCurrentDiscipline] = useState("real_estate");
   const [processingProgress, setProcessingProgress] = useState(0);
   const [processingMessage, setProcessingMessage] = useState("");
 
@@ -183,10 +156,20 @@ export default function NewRequest() {
   // Asset locations
   const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
-  // New custom field
-  const [showAddField, setShowAddField] = useState(false);
-  const [newFieldLabel, setNewFieldLabel] = useState("");
-  const [newFieldValue, setNewFieldValue] = useState("");
+  // Legacy conversion helper: convert flat assetFields to inventory format
+  const convertFieldsToInventory = (fields: any[], disc: string): InventoryAsset[] => {
+    if (!fields || fields.length === 0) return [];
+    return [{
+      id: 1,
+      name: "أصل مستخرج",
+      type: disc === "machinery_equipment" ? "machinery_equipment" : "real_estate",
+      category: disc === "machinery_equipment" ? "معدة" : "عقار",
+      quantity: 1,
+      condition: "good",
+      fields: fields.map(f => ({ key: f.key, label: f.label, value: f.value, confidence: f.confidence })),
+      source: fields[0]?.source || "تحليل ذكي",
+    }];
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -323,8 +306,11 @@ export default function NewRequest() {
       }
 
       setExtractedResult(result);
-      setEditableFields(result.assetFields || []);
-      setEditableDescription(result.asset?.description || "");
+      // Build inventory from result
+      const inv = result.inventory || convertFieldsToInventory(result.assetFields || [], result.discipline);
+      setInventoryAssets(inv);
+      setCurrentDiscipline(result.discipline || "real_estate");
+      setEditableDescription(result.description || result.asset?.description || "");
 
       setProcessingProgress(100);
       setProcessingMessage("تم الاستخراج بنجاح!");
@@ -343,17 +329,24 @@ export default function NewRequest() {
     setLoading(true);
 
     try {
-      // Build asset_data from editable fields
-      const assetData: Record<string, any> = {};
-      for (const f of editableFields) {
-        assetData[f.key] = { value: f.value, confidence: f.confidence, label: f.label, group: f.group };
-      }
+      const assetData = {
+        discipline: currentDiscipline,
+        inventory: inventoryAssets,
+        summary: {
+          total: inventoryAssets.length,
+          by_type: {
+            real_estate: inventoryAssets.filter(a => a.type === "real_estate").length,
+            machinery_equipment: inventoryAssets.filter(a => a.type === "machinery_equipment").length,
+          },
+        },
+        description: editableDescription,
+      };
 
       const { data, error } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
-          valuation_type: (extractedResult.discipline || "real_estate") as any,
+          valuation_type: (currentDiscipline || "real_estate") as any,
           property_description_ar: editableDescription || null,
           purpose: (clientInfo.purpose || extractedResult.suggestedPurpose || null) as any,
           intended_users_ar: clientInfo.intendedUsers || null,
@@ -361,7 +354,7 @@ export default function NewRequest() {
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
             extractedResult,
-            editableFields,
+            inventoryAssets,
             editableDescription,
             files: uploadedFiles,
             clientInfo,
@@ -375,7 +368,6 @@ export default function NewRequest() {
 
       if (error) throw error;
 
-      // Save documents
       if (uploadedFiles.length > 0 && data) {
         const reqData = data as any;
         const docs = uploadedFiles.map(f => ({
@@ -399,38 +391,8 @@ export default function NewRequest() {
     }
   };
 
-  // ── Field editing helpers ──
-  const updateField = (key: string, newValue: string) => {
-    setEditableFields(prev => prev.map(f => f.key === key ? { ...f, value: newValue } : f));
-  };
 
-  const removeField = (key: string) => {
-    setEditableFields(prev => prev.filter(f => f.key !== key));
-  };
 
-  const addCustomField = () => {
-    if (!newFieldLabel.trim() || !newFieldValue.trim()) return;
-    const key = `custom_${Date.now()}`;
-    setEditableFields(prev => [
-      ...prev,
-      { key, label: newFieldLabel.trim(), value: newFieldValue.trim(), confidence: 100, source: "إدخال يدوي", group: "general" },
-    ]);
-    setNewFieldLabel("");
-    setNewFieldValue("");
-    setShowAddField(false);
-  };
-
-  const getConfidenceColor = (c: number) => {
-    if (c >= 80) return "text-emerald-600 dark:text-emerald-400";
-    if (c >= 50) return "text-amber-600 dark:text-amber-400";
-    return "text-red-500 dark:text-red-400";
-  };
-
-  const getConfidenceBg = (c: number) => {
-    if (c >= 80) return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800";
-    if (c >= 50) return "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800";
-    return "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800";
-  };
 
   // Step indicators
   const steps = [
@@ -728,39 +690,23 @@ export default function NewRequest() {
         {/* === STEP 3: Extracted Data Review === */}
         {step === "extracted" && extractedResult && (
           <div className="space-y-4">
-            {/* Analysis Summary */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Bot className="w-5 h-5 text-primary" />
-                    نتائج التحليل الذكي
-                  </CardTitle>
-                  <Badge variant="outline" className={`text-xs ${getConfidenceColor(extractedResult.confidence * 100)}`}>
-                    <ShieldCheck className="w-3 h-3 ml-1" />
-                    دقة {Math.round(extractedResult.confidence * 100)}%
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Discipline */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <Target className="w-5 h-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">نوع التقييم المحدد</p>
-                    <p className="text-sm font-bold text-foreground">{DISCIPLINE_LABELS[extractedResult.discipline] || extractedResult.discipline_label}</p>
-                  </div>
-                  {extractedResult.analyzedFilesCount != null && (
-                    <Badge variant="secondary" className="mr-auto text-[10px]">
-                      تم تحليل {extractedResult.analyzedFilesCount} ملف
+            {/* AI Notes */}
+            {extractedResult.notes?.length > 0 && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Bot className="w-4 h-4 text-primary" />
+                      ملاحظات التحليل الذكي
+                    </CardTitle>
+                    <Badge variant="outline" className="text-xs">
+                      <ShieldCheck className="w-3 h-3 ml-1" />
+                      دقة {Math.round(extractedResult.confidence * 100)}%
                     </Badge>
-                  )}
-                </div>
-
-                {/* AI Notes */}
-                {extractedResult.notes?.length > 0 && (
-                  <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">ملاحظات التحليل</p>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
                     {extractedResult.notes.map((note, i) => (
                       <p key={i} className="text-sm text-foreground flex items-start gap-1.5">
                         <span className="text-primary mt-0.5">•</span>
@@ -768,162 +714,23 @@ export default function NewRequest() {
                       </p>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Asset Description */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <FileText className="w-4 h-4 text-primary" />
-                    وصف الأصل
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingDescription(!editingDescription)}
-                    className="text-xs gap-1"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    {editingDescription ? "حفظ" : "تعديل"}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {editingDescription ? (
-                  <Textarea
-                    value={editableDescription}
-                    onChange={(e) => setEditableDescription(e.target.value)}
-                    rows={6}
-                    className="text-sm leading-relaxed"
-                  />
-                ) : (
-                  <div className="p-3 rounded-lg bg-muted/30 border border-border">
-                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                      {editableDescription || "لم يتم استخراج وصف"}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Dynamic Asset Fields */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    البيانات المستخرجة
-                  </CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddField(!showAddField)}
-                    className="text-xs gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    إضافة حقل
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  تم استخراج {editableFields.length} حقل — اضغط على أي قيمة لتعديلها
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Add custom field */}
-                {showAddField && (
-                  <div className="p-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        value={newFieldLabel}
-                        onChange={(e) => setNewFieldLabel(e.target.value)}
-                        placeholder="اسم الحقل"
-                        className="text-sm"
-                      />
-                      <Input
-                        value={newFieldValue}
-                        onChange={(e) => setNewFieldValue(e.target.value)}
-                        placeholder="القيمة"
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button size="sm" variant="ghost" onClick={() => setShowAddField(false)} className="text-xs">إلغاء</Button>
-                      <Button size="sm" onClick={addCustomField} className="text-xs" disabled={!newFieldLabel.trim() || !newFieldValue.trim()}>إضافة</Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Group fields by group */}
-                {Object.entries(
-                  editableFields.reduce((acc, f) => {
-                    const g = f.group || "general";
-                    if (!acc[g]) acc[g] = [];
-                    acc[g].push(f);
-                    return acc;
-                  }, {} as Record<string, AssetField[]>)
-                ).map(([group, fields]) => (
-                  <div key={group}>
-                    <p className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
-                      <Tag className="w-3 h-3" />
-                      {GROUP_LABELS[group] || group}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {fields.map((field) => (
-                        <div
-                          key={field.key}
-                          className={`p-2.5 rounded-lg border transition-all ${getConfidenceBg(field.confidence)}`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-[11px] font-medium text-muted-foreground">{field.label}</p>
-                            <div className="flex items-center gap-1">
-                              <span className={`text-[10px] font-mono ${getConfidenceColor(field.confidence)}`}>
-                                {field.confidence}%
-                              </span>
-                              <button
-                                onClick={() => removeField(field.key)}
-                                className="text-muted-foreground/40 hover:text-destructive p-0.5"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                          {editingFieldKey === field.key ? (
-                            <Input
-                              value={field.value}
-                              onChange={(e) => updateField(field.key, e.target.value)}
-                              onBlur={() => setEditingFieldKey(null)}
-                              onKeyDown={(e) => e.key === "Enter" && setEditingFieldKey(null)}
-                              className="h-7 text-sm"
-                              autoFocus
-                            />
-                          ) : (
-                            <p
-                              className="text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
-                              onClick={() => setEditingFieldKey(field.key)}
-                            >
-                              {field.value}
-                            </p>
-                          )}
-                          {field.source && (
-                            <p className="text-[9px] text-muted-foreground/60 mt-0.5">المصدر: {field.source}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                {editableFields.length === 0 && (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                    <p className="text-sm">لم يتم استخراج حقول بيانات. يمكنك إضافة حقول يدوياً.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Asset Inventory Table */}
+            <AssetInventoryTable
+              discipline={currentDiscipline}
+              inventory={inventoryAssets}
+              description={editableDescription}
+              summary={extractedResult.summary}
+              onInventoryChange={setInventoryAssets}
+              onDescriptionChange={setEditableDescription}
+              onDisciplineChange={setCurrentDiscipline}
+              onReanalyze={() => {
+                setStep("upload");
+              }}
+            />
 
             {/* Document Categories */}
             {extractedResult.documentCategories?.length > 0 && (
