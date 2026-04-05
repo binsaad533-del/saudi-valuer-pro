@@ -23,9 +23,9 @@ serve(async (req) => {
   );
 
   try {
-    const { action, jobId, files, userId } = await req.json();
+    const { action, jobId, files, userId, requestId } = await req.json();
 
-    // ── ACTION: create ── Create a new processing job
+    // ── ACTION: create ──
     if (action === "create") {
       if (!userId || !files?.length) return err("userId and files required", 400);
 
@@ -33,16 +33,13 @@ serve(async (req) => {
         .from("processing_jobs")
         .insert({
           user_id: userId,
+          request_id: requestId || null,
           status: "pending",
           total_files: files.length,
           processed_files: 0,
           current_message: "تم استلام الملفات — جارٍ تجهيز المعالجة...",
           file_manifest: files.map((f: any) => ({
-            name: f.name,
-            path: f.path,
-            size: f.size,
-            mimeType: f.mimeType,
-            status: "pending",
+            name: f.name, path: f.path, size: f.size, mimeType: f.mimeType, status: "pending",
           })),
           started_at: new Date().toISOString(),
         })
@@ -51,7 +48,7 @@ serve(async (req) => {
 
       if (jobErr) return err(jobErr.message);
 
-      // Insert file classifications as pending
+      // Insert file classifications
       const classifications = files.map((f: any) => ({
         job_id: job.id,
         file_name: f.name,
@@ -62,7 +59,7 @@ serve(async (req) => {
       }));
       await supabase.from("file_classifications").insert(classifications);
 
-      // Trigger processing asynchronously by calling process action
+      // Fire-and-forget processing
       const processUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/asset-extraction-orchestrator`;
       fetch(processUrl, {
         method: "POST",
@@ -71,12 +68,12 @@ serve(async (req) => {
           Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
         },
         body: JSON.stringify({ action: "process", jobId: job.id }),
-      }).catch(console.error); // Fire and forget
+      }).catch(console.error);
 
       return ok({ jobId: job.id, status: "pending" });
     }
 
-    // ── ACTION: process ── Run the extraction pipeline
+    // ── ACTION: process ──
     if (action === "process") {
       if (!jobId) return err("jobId required", 400);
 
@@ -90,31 +87,60 @@ serve(async (req) => {
       if (job.status === "ready" || job.status === "cancelled") return ok({ status: job.status });
 
       const manifest = (job.file_manifest as any[]) || [];
-      const CHUNK_SIZE = 15; // files per AI call
-      const chunks: any[][] = [];
-      for (let i = 0; i < manifest.length; i += CHUNK_SIZE) {
-        chunks.push(manifest.slice(i, i + CHUNK_SIZE));
+
+      // ── Smart chunking: separate by file type ──
+      const imageFiles: any[] = [];
+      const textFiles: any[] = [];
+
+      for (const f of manifest) {
+        const mime = f.mimeType || "";
+        if (mime.startsWith("image/") || mime === "application/pdf") {
+          imageFiles.push(f);
+        } else {
+          textFiles.push(f);
+        }
       }
 
-      // Update status to classifying
+      // Chunk sizes: smaller for images (heavy), larger for text
+      const IMAGE_CHUNK = 10;
+      const TEXT_CHUNK = 20;
+
+      const chunks: { files: any[]; type: string }[] = [];
+      for (let i = 0; i < imageFiles.length; i += IMAGE_CHUNK) {
+        chunks.push({ files: imageFiles.slice(i, i + IMAGE_CHUNK), type: "vision" });
+      }
+      for (let i = 0; i < textFiles.length; i += TEXT_CHUNK) {
+        chunks.push({ files: textFiles.slice(i, i + TEXT_CHUNK), type: "text" });
+      }
+
+      if (chunks.length === 0) {
+        await updateJob(supabase, jobId, {
+          status: "ready",
+          current_message: "لا توجد ملفات قابلة للمعالجة",
+          completed_at: new Date().toISOString(),
+        });
+        return ok({ status: "ready", totalAssets: 0 });
+      }
+
       await updateJob(supabase, jobId, {
         status: "classifying",
-        current_message: `جارٍ تصنيف ${manifest.length} ملف...`,
+        current_message: `جارٍ تصنيف ${manifest.length} ملف (${imageFiles.length} صورة/PDF، ${textFiles.length} مستند نصي)...`,
       });
 
       let allAssets: any[] = [];
       let allCategories: any[] = [];
       let globalDescription = "";
       let processedCount = 0;
+      let failedChunks = 0;
 
-      // Process each chunk via extract-documents
+      // Process each chunk
       for (let ci = 0; ci < chunks.length; ci++) {
         const chunk = chunks[ci];
-        const chunkNames = chunk.map((f: any) => f.name);
+        const chunkFiles = chunk.files;
 
         await updateJob(supabase, jobId, {
           status: "extracting",
-          current_message: `جارٍ تحليل الدفعة ${ci + 1} من ${chunks.length} (${chunkNames.length} ملف)...`,
+          current_message: `جارٍ تحليل الدفعة ${ci + 1} من ${chunks.length} (${chunkFiles.length} ملف ${chunk.type === "vision" ? "بصري" : "نصي"})...`,
           processed_files: processedCount,
         });
 
@@ -127,12 +153,10 @@ serve(async (req) => {
               Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
             },
             body: JSON.stringify({
-              fileNames: chunk.map((f: any) => f.name),
-              fileDescriptions: chunk.map(() => ""),
-              storagePaths: chunk.map((f: any) => ({
-                path: f.path,
-                name: f.name,
-                mimeType: f.mimeType,
+              fileNames: chunkFiles.map((f: any) => f.name),
+              fileDescriptions: chunkFiles.map(() => ""),
+              storagePaths: chunkFiles.map((f: any) => ({
+                path: f.path, name: f.name, mimeType: f.mimeType,
               })),
             }),
           });
@@ -140,30 +164,27 @@ serve(async (req) => {
           if (!resp.ok) {
             const t = await resp.text();
             console.error(`Chunk ${ci} failed:`, t);
-            // Mark failed files
-            for (const f of chunk) {
+            failedChunks++;
+            for (const f of chunkFiles) {
               await supabase.from("file_classifications")
                 .update({ processing_status: "failed", error_message: t.substring(0, 500) })
-                .eq("job_id", jobId)
-                .eq("file_name", f.name);
+                .eq("job_id", jobId).eq("file_name", f.name);
             }
-            processedCount += chunk.length;
+            processedCount += chunkFiles.length;
             continue;
           }
 
           const result = await resp.json();
           if (result.error) {
             console.error(`Chunk ${ci} error:`, result.error);
-            processedCount += chunk.length;
+            failedChunks++;
+            processedCount += chunkFiles.length;
             continue;
           }
 
           // Collect inventory
           if (result.inventory?.length) {
-            allAssets.push(...result.inventory.map((a: any) => ({
-              ...a,
-              _chunkIndex: ci,
-            })));
+            allAssets.push(...result.inventory.map((a: any) => ({ ...a, _chunkIndex: ci })));
           }
 
           // Collect document categories
@@ -187,14 +208,19 @@ serve(async (req) => {
                 processing_status: "completed",
                 confidence: Math.round((result.confidence || 50) * 100) / 100,
               })
-              .eq("job_id", jobId)
-              .eq("file_name", cat.fileName);
+              .eq("job_id", jobId).eq("file_name", cat.fileName);
           }
 
-          processedCount += chunk.length;
+          processedCount += chunkFiles.length;
         } catch (e) {
           console.error(`Chunk ${ci} exception:`, e);
-          processedCount += chunk.length;
+          failedChunks++;
+          processedCount += chunkFiles.length;
+        }
+
+        // Small delay between chunks to avoid rate limits
+        if (ci < chunks.length - 1) {
+          await new Promise(r => setTimeout(r, 1000));
         }
       }
 
@@ -212,13 +238,12 @@ serve(async (req) => {
       const hasME = deduplicated.some((a: any) => a.type === "machinery_equipment");
       const discipline = hasRE && hasME ? "mixed" : hasME ? "machinery_equipment" : "real_estate";
 
-      // ── MERGING PHASE: Store assets in DB ──
+      // ── STORE ASSETS ──
       await updateJob(supabase, jobId, {
         status: "merging",
         current_message: `جارٍ بناء سجل الأصول النهائي (${deduplicated.length} أصل)...`,
       });
 
-      // Analyze missing fields and confidence
       let lowConfidenceCount = 0;
       let missingFieldsCount = 0;
 
@@ -229,7 +254,7 @@ serve(async (req) => {
         const requiredFields = asset.type === "machinery_equipment" ? REQUIRED_FIELDS_ME : REQUIRED_FIELDS_RE;
         const fieldKeys = (asset.fields || []).map((f: any) => f.key);
         const missing = requiredFields.filter(rf => !fieldKeys.includes(rf) || !(asset.fields || []).find((f: any) => f.key === rf && f.value));
-        
+
         if (asset.confidence < 60) lowConfidenceCount++;
         if (missing.length > 0) missingFieldsCount++;
 
@@ -244,10 +269,7 @@ serve(async (req) => {
           quantity: asset.quantity || 1,
           condition: asset.condition || "unknown",
           confidence: Math.min(100, Math.max(0, asset.confidence || 50)),
-          asset_data: {
-            fields: asset.fields || [],
-            original_name: asset.name,
-          },
+          asset_data: { fields: asset.fields || [], original_name: asset.name },
           source_files: asset._sources || [{ file: asset.source }],
           source_evidence: asset.source || "تحليل ذكي",
           duplicate_group: asset._duplicateGroup || null,
@@ -267,7 +289,7 @@ serve(async (req) => {
       // ── FINALIZE ──
       await updateJob(supabase, jobId, {
         status: "ready",
-        current_message: "اكتمل التحليل — سجل الأصول جاهز للمراجعة",
+        current_message: `اكتمل التحليل — ${deduplicated.length} أصل جاهز للمراجعة${failedChunks > 0 ? ` (${failedChunks} دفعة فشلت)` : ""}`,
         total_assets_found: deduplicated.length,
         duplicates_found: duplicatesFound,
         low_confidence_count: lowConfidenceCount,
@@ -277,10 +299,14 @@ serve(async (req) => {
         completed_at: new Date().toISOString(),
         ai_summary: {
           totalChunks: chunks.length,
+          failedChunks,
           totalFilesProcessed: manifest.length,
+          imageFiles: imageFiles.length,
+          textFiles: textFiles.length,
           categoriesFound: [...new Set(allCategories.map((c: any) => c.category))],
           assetsBeforeDedup: allAssets.length,
           assetsAfterDedup: deduplicated.length,
+          modelUsed: "gemini-2.5-pro",
         },
       });
 
@@ -291,37 +317,27 @@ serve(async (req) => {
         lowConfidenceCount,
         missingFieldsCount,
         discipline,
+        failedChunks,
       });
     }
 
-    // ── ACTION: status ── Get current job status
+    // ── ACTION: status ──
     if (action === "status") {
       if (!jobId) return err("jobId required", 400);
-      
-      const { data: job } = await supabase
-        .from("processing_jobs")
-        .select("*")
-        .eq("id", jobId)
-        .single();
-
+      const { data: job } = await supabase.from("processing_jobs").select("*").eq("id", jobId).single();
       if (!job) return err("Job not found", 404);
       return ok(job);
     }
 
-    // ── ACTION: reprocess ── Add new files to existing job
+    // ── ACTION: reprocess ──
     if (action === "reprocess") {
       if (!jobId || !files?.length) return err("jobId and files required", 400);
 
-      const { data: job } = await supabase
-        .from("processing_jobs")
-        .select("*")
-        .eq("id", jobId)
-        .single();
-
+      const { data: job } = await supabase.from("processing_jobs").select("*").eq("id", jobId).single();
       if (!job) return err("Job not found", 404);
 
       const existingManifest = (job.file_manifest as any[]) || [];
-      const newFiles = files.filter((f: any) => 
+      const newFiles = files.filter((f: any) =>
         !existingManifest.some((ef: any) => ef.path === f.path || ef.name === f.name)
       );
 
@@ -335,21 +351,15 @@ serve(async (req) => {
         file_manifest: updatedManifest,
         total_files: updatedManifest.length,
         status: "pending",
-        current_message: `تم إضافة ${newFiles.length} ملف جديد — جارٍ المعالجة الإضافية...`,
+        current_message: `تم إضافة ${newFiles.length} ملف جديد — جارٍ المعالجة...`,
       }).eq("id", jobId);
 
-      // Insert new file classifications
       const newClassifications = newFiles.map((f: any) => ({
-        job_id: jobId,
-        file_name: f.name,
-        file_path: f.path,
-        file_size: f.size,
-        mime_type: f.mimeType,
-        processing_status: "pending",
+        job_id: jobId, file_name: f.name, file_path: f.path,
+        file_size: f.size, mime_type: f.mimeType, processing_status: "pending",
       }));
       await supabase.from("file_classifications").insert(newClassifications);
 
-      // Trigger re-processing
       const processUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/asset-extraction-orchestrator`;
       fetch(processUrl, {
         method: "POST",
@@ -388,6 +398,7 @@ function generateProfessionalDescription(asset: any): string {
     const serial = getField("serial_number");
     const capacity = getField("capacity");
     const status = getField("operational_status");
+    const hours = getField("operating_hours");
 
     parts.push(asset.name || asset.category || "آلة/معدة");
     if (manufacturer) parts.push(`الشركة المصنعة: ${manufacturer}`);
@@ -395,6 +406,7 @@ function generateProfessionalDescription(asset: any): string {
     if (year) parts.push(`سنة الصنع: ${year}`);
     if (serial) parts.push(`رقم تسلسلي: ${serial}`);
     if (capacity) parts.push(`السعة/القدرة: ${capacity}`);
+    if (hours) parts.push(`ساعات التشغيل: ${hours}`);
     if (status) parts.push(`الحالة التشغيلية: ${status}`);
   } else {
     const area = getField("area_sqm");
@@ -402,6 +414,8 @@ function generateProfessionalDescription(asset: any): string {
     const deed = getField("deed_number");
     const floors = getField("floors_count");
     const finishing = getField("finishing_level");
+    const city = getField("city");
+    const district = getField("district");
 
     parts.push(asset.name || asset.category || "عقار");
     if (classification) parts.push(`التصنيف: ${classification}`);
@@ -409,11 +423,12 @@ function generateProfessionalDescription(asset: any): string {
     if (deed) parts.push(`رقم الصك: ${deed}`);
     if (floors) parts.push(`عدد الطوابق: ${floors}`);
     if (finishing) parts.push(`مستوى التشطيب: ${finishing}`);
+    if (city) parts.push(`المدينة: ${city}`);
+    if (district) parts.push(`الحي: ${district}`);
   }
 
   const source = asset.source || "تحليل ذكي";
   parts.push(`المصدر: ${source}`);
-
   return parts.join("؛ ") + ".";
 }
 
@@ -426,11 +441,8 @@ function deduplicateAssets(assets: any[]): { deduplicated: any[]; duplicatesFoun
   for (const asset of assets) {
     const key = generateDedupKey(asset);
     const existing = groups.get(key);
-    if (existing) {
-      existing.push(asset);
-    } else {
-      groups.set(key, [asset]);
-    }
+    if (existing) existing.push(asset);
+    else groups.set(key, [asset]);
   }
 
   const deduplicated: any[] = [];
@@ -442,9 +454,7 @@ function deduplicateAssets(assets: any[]): { deduplicated: any[]; duplicatesFoun
     } else {
       groupId++;
       duplicatesFound += group.length - 1;
-      // Merge: pick the one with highest confidence, merge fields from others
-      const merged = mergeAssetGroup(group, `dup_group_${groupId}`);
-      deduplicated.push(merged);
+      deduplicated.push(mergeAssetGroup(group, `dup_group_${groupId}`));
     }
   }
 
@@ -455,32 +465,41 @@ function generateDedupKey(asset: any): string {
   const fields = asset.fields || [];
   const getField = (key: string) => (fields.find((f: any) => f.key === key)?.value || "").trim().toLowerCase();
 
+  // Priority 1: Serial number
   const serial = getField("serial_number");
   if (serial && serial.length > 3) return `serial:${serial}`;
 
+  // Priority 2: Deed number
   const deed = getField("deed_number");
   if (deed && deed.length > 3) return `deed:${deed}`;
 
-  // Name-based dedup: normalize name
-  const name = (asset.name || "").trim().toLowerCase()
-    .replace(/[^\u0600-\u06FFa-z0-9\s]/g, "")
-    .replace(/\s+/g, " ");
+  // Priority 3: Chassis number
+  const chassis = getField("chassis_number");
+  if (chassis && chassis.length > 3) return `chassis:${chassis}`;
 
+  // Priority 4: Plate number
+  const plate = getField("plate_number");
+  if (plate && plate.length > 2) return `plate:${plate}`;
+
+  // Priority 5: Manufacturer + Model + Year
   const manufacturer = getField("manufacturer");
   const model = getField("model");
+  const year = getField("year_manufactured");
+  if (manufacturer && model) return `mfg:${manufacturer}:${model}${year ? `:${year}` : ""}`;
 
-  if (manufacturer && model) return `mfg:${manufacturer}:${model}`;
-  if (name.length > 5) return `name:${name.substring(0, 40)}:${asset.type}`;
+  // Priority 6: Normalized name
+  const name = (asset.name || "").trim().toLowerCase()
+    .replace(/[^\u0600-\u06FFa-z0-9\s]/g, "").replace(/\s+/g, " ");
+  if (name.length > 5) return `name:${name.substring(0, 50)}:${asset.type}`;
 
+  // Unique
   return `unique:${crypto.randomUUID()}`;
 }
 
 function mergeAssetGroup(group: any[], groupLabel: string): any {
-  // Sort by confidence descending
   group.sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
   const primary = { ...group[0] };
 
-  // Merge fields from other members
   const allFields: Map<string, any> = new Map();
   for (const asset of group) {
     for (const field of (asset.fields || [])) {
@@ -496,6 +515,5 @@ function mergeAssetGroup(group: any[], groupLabel: string): any {
   primary._duplicateGroup = groupLabel;
   primary._isDuplicate = false;
   primary._sources = group.map((a: any) => ({ file: a.source, chunk: a._chunkIndex }));
-
   return primary;
 }
