@@ -21,6 +21,7 @@ import {
   X,
   FolderOpen,
   Wallet,
+  BookOpen,
 } from "lucide-react";
 
 const logo = "/favicon.png";
@@ -58,6 +59,7 @@ const ownerNav: NavGroup[] = [
   {
     separator: true,
     items: [
+      { labelKey: "knowledgeBase", icon: BookOpen, path: "/knowledge" },
       { labelKey: "analytics", icon: BarChart3, path: "/analytics" },
       { labelKey: "settings", icon: Settings, path: "/settings" },
     ],
