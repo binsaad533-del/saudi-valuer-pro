@@ -10,9 +10,7 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 
-function sb() {
-  return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-}
+function sb() { return createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY); }
 
 async function callAI(systemPrompt: string, userPrompt: string, tools: any[], toolChoice: any) {
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -20,18 +18,13 @@ async function callAI(systemPrompt: string, userPrompt: string, tools: any[], to
     headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      tools,
-      tool_choice: toolChoice,
+      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+      tools, tool_choice: toolChoice,
     }),
   });
   if (!resp.ok) {
     const t = await resp.text();
-    console.error("AI error:", resp.status, t);
-    if (resp.status === 429) throw new Error("Rate limited, please try again later");
+    if (resp.status === 429) throw new Error("Rate limited");
     if (resp.status === 402) throw new Error("Credits exhausted");
     throw new Error(`AI error ${resp.status}`);
   }
@@ -41,99 +34,124 @@ async function callAI(systemPrompt: string, userPrompt: string, tools: any[], to
   return JSON.parse(tc.function.arguments);
 }
 
-const ANALYSIS_TOOL = [{
-  type: "function",
-  function: {
-    name: "inspection_analysis",
-    description: "Analyze inspection data and photos to extract structured property condition data",
-    parameters: {
+// Shared analysis output fields
+const BASE_FIELDS = {
+  condition_rating: { type: "string", enum: ["excellent", "good", "fair", "poor"] },
+  condition_score: { type: "number" },
+  quality_score: { type: "number" },
+  maintenance_level: { type: "string", enum: ["excellent", "good", "average", "poor", "neglected"] },
+  visible_defects: {
+    type: "array",
+    items: {
       type: "object",
       properties: {
-        condition_rating: { type: "string", enum: ["excellent", "good", "fair", "poor"], description: "Overall property condition" },
-        condition_score: { type: "number", description: "1-10 score" },
-        finishing_level: { type: "string", enum: ["luxury", "high", "standard", "basic", "unfinished"] },
-        quality_score: { type: "number", description: "1-10 score" },
-        maintenance_level: { type: "string", enum: ["excellent", "good", "average", "poor", "neglected"] },
-        environment_quality: { type: "string", enum: ["excellent", "good", "average", "poor"] },
-        visible_defects: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              type: { type: "string" },
-              severity: { type: "string", enum: ["minor", "moderate", "major", "critical"] },
-              location_ar: { type: "string" },
-              description_ar: { type: "string" },
-              description_en: { type: "string" },
-              estimated_repair_impact_pct: { type: "number" },
-            },
-            required: ["type", "severity", "description_ar"],
-          },
-        },
-        risk_flags: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              flag: { type: "string" },
-              description_ar: { type: "string" },
-              description_en: { type: "string" },
-              impact: { type: "string", enum: ["low", "medium", "high"] },
-            },
-            required: ["flag", "description_ar", "impact"],
-          },
-        },
-        physical_depreciation_pct: { type: "number", description: "Physical depreciation 0-1" },
-        functional_obsolescence_pct: { type: "number", description: "Functional obsolescence 0-1" },
-        external_obsolescence_pct: { type: "number", description: "External obsolescence 0-1" },
-        condition_adjustment_pct: { type: "number", description: "Condition adjustment for comparables -0.20 to +0.10" },
-        adjustment_factors: {
-          type: "object",
-          properties: {
-            condition_adj: { type: "number" },
-            finishing_adj: { type: "number" },
-            maintenance_adj: { type: "number" },
-            environment_adj: { type: "number" },
-          },
-        },
-        reasoning_ar: { type: "string", description: "Detailed reasoning in Arabic" },
-        reasoning_en: { type: "string", description: "Detailed reasoning in English" },
-        photo_insights: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              category: { type: "string" },
-              observation_ar: { type: "string" },
-              observation_en: { type: "string" },
-              condition: { type: "string", enum: ["excellent", "good", "fair", "poor"] },
-            },
-            required: ["category", "observation_ar", "condition"],
-          },
-        },
+        type: { type: "string" }, severity: { type: "string", enum: ["minor", "moderate", "major", "critical"] },
+        location_ar: { type: "string" }, description_ar: { type: "string" }, description_en: { type: "string" },
+        estimated_repair_impact_pct: { type: "number" },
       },
-      required: ["condition_rating", "condition_score", "finishing_level", "quality_score",
-        "maintenance_level", "physical_depreciation_pct", "condition_adjustment_pct",
-        "reasoning_ar", "visible_defects", "risk_flags"],
-      additionalProperties: false,
+      required: ["type", "severity", "description_ar"],
     },
   },
-}];
+  risk_flags: {
+    type: "array",
+    items: {
+      type: "object",
+      properties: { flag: { type: "string" }, description_ar: { type: "string" }, description_en: { type: "string" }, impact: { type: "string", enum: ["low", "medium", "high"] } },
+      required: ["flag", "description_ar", "impact"],
+    },
+  },
+  physical_depreciation_pct: { type: "number" },
+  functional_obsolescence_pct: { type: "number" },
+  external_obsolescence_pct: { type: "number" },
+  condition_adjustment_pct: { type: "number" },
+  reasoning_ar: { type: "string" },
+  reasoning_en: { type: "string" },
+};
+
+const RE_EXTRA = {
+  finishing_level: { type: "string", enum: ["luxury", "high", "standard", "basic", "unfinished"] },
+  environment_quality: { type: "string", enum: ["excellent", "good", "average", "poor"] },
+  adjustment_factors: {
+    type: "object",
+    properties: { condition_adj: { type: "number" }, finishing_adj: { type: "number" }, maintenance_adj: { type: "number" }, environment_adj: { type: "number" } },
+  },
+};
+
+const ME_EXTRA = {
+  mechanical_condition: { type: "string", enum: ["excellent", "good", "fair", "poor", "non_operational"] },
+  electrical_condition: { type: "string", enum: ["excellent", "good", "fair", "poor", "not_applicable"] },
+  structural_condition: { type: "string", enum: ["excellent", "good", "fair", "poor"] },
+  operational_status: { type: "string", enum: ["operational", "operational_issues", "stopped", "needs_repair", "scrap"] },
+  estimated_remaining_life_years: { type: "number" },
+  technology_obsolescence_pct: { type: "number" },
+};
+
+function buildTool(discipline: string) {
+  const extra = discipline === "machinery_equipment" ? ME_EXTRA : discipline === "mixed" ? { ...RE_EXTRA, ...ME_EXTRA } : RE_EXTRA;
+  return [{
+    type: "function",
+    function: {
+      name: "inspection_analysis",
+      description: "Analyze inspection data",
+      parameters: {
+        type: "object",
+        properties: { ...BASE_FIELDS, ...extra },
+        required: ["condition_rating", "condition_score", "quality_score", "maintenance_level", "physical_depreciation_pct", "condition_adjustment_pct", "reasoning_ar", "visible_defects", "risk_flags"],
+        additionalProperties: false,
+      },
+    },
+  }];
+}
+
+function buildPrompt(discipline: string): string {
+  if (discipline === "machinery_equipment") {
+    return `أنت مهندس ميكانيكي وخبير تقييم آلات ومعدات. حلل بيانات المعاينة الميدانية واستخرج بيانات هيكلية عن حالة الآلة/المعدة.
+
+القواعد:
+- condition_score: 1-10 (10 = ممتاز)
+- quality_score: 1-10 (10 = أعلى جودة)
+- physical_depreciation_pct: 0-1 (0 = جديد)
+- functional_obsolescence_pct: 0-0.3
+- external_obsolescence_pct: 0-0.2
+- technology_obsolescence_pct: 0-0.35
+- condition_adjustment_pct: -0.30 to +0.10
+- قيّم الحالة الميكانيكية والكهربائية والهيكلية
+- حدد الحالة التشغيلية والعمر الإنتاجي المتبقي`;
+  }
+  if (discipline === "mixed") {
+    return `أنت خبير تقييم متعدد التخصصات (عقارات + آلات ومعدات). حلل بيانات المعاينة واستخرج بيانات شاملة تغطي الجزء العقاري والآلات.
+
+القواعد:
+- condition_score: 1-10
+- physical_depreciation_pct: 0-1
+- قدّم تقييماً شاملاً يغطي العقار والمعدات معاً
+- حدد finishing_level للعقار و mechanical/electrical/structural للمعدات`;
+  }
+  return `أنت خبير فحص عقاري وتقييم حالة المباني. حلل بيانات المعاينة الميدانية واستخرج بيانات هيكلية عن حالة العقار.
+
+القواعد:
+- condition_score: 1-10 (10 = ممتاز)
+- quality_score: 1-10 (10 = فاخر)
+- physical_depreciation_pct: 0-1
+- functional_obsolescence_pct: 0-0.3
+- external_obsolescence_pct: 0-0.2
+- condition_adjustment_pct: -0.20 to +0.10
+- كن دقيقاً ومحافظاً في التقديرات`;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
-
     const { inspection_id } = await req.json();
     if (!inspection_id) throw new Error("inspection_id required");
 
     const admin = sb();
-
-    // Fetch inspection + related data
     const { data: inspection, error: iErr } = await admin.from("inspections").select("*").eq("id", inspection_id).single();
     if (iErr || !inspection) throw new Error("Inspection not found");
+
+    const discipline: string = (inspection as any).type || "real_estate";
 
     const [photosRes, checklistRes, subjectRes] = await Promise.all([
       admin.from("inspection_photos").select("*").eq("inspection_id", inspection_id),
@@ -145,96 +163,88 @@ serve(async (req) => {
     const checklist = checklistRes.data || [];
     const subject = subjectRes.data?.[0] || {};
 
-    // Build photo descriptions for AI (we pass metadata, not actual images)
-    const photoDescriptions = photos.map(p => ({
-      category: p.category,
-      caption: p.caption_ar || p.caption_en || "",
-      has_gps: !!(p.latitude && p.longitude),
-      file_name: p.file_name,
-    }));
-
-    // Build checklist summary
     const checklistSummary = {
       total: checklist.length,
       checked: checklist.filter((c: any) => c.is_checked).length,
-      required_passed: checklist.filter((c: any) => c.is_required && c.is_checked).length,
-      required_total: checklist.filter((c: any) => c.is_required).length,
-      categories: {} as Record<string, { total: number; checked: number }>,
-      items: checklist.map((c: any) => ({
-        category: c.category,
-        label: c.label_ar,
-        checked: c.is_checked,
-        required: c.is_required,
-        notes: c.notes,
-        value: c.value,
-      })),
+      items: checklist.map((c: any) => ({ category: c.category, label: c.label_ar, checked: c.is_checked, notes: c.notes })),
     };
-    for (const c of checklist) {
-      const cat = (c as any).category;
-      if (!checklistSummary.categories[cat]) checklistSummary.categories[cat] = { total: 0, checked: 0 };
-      checklistSummary.categories[cat].total++;
-      if ((c as any).is_checked) checklistSummary.categories[cat].checked++;
-    }
 
-    // Call AI
-    const systemPrompt = `أنت خبير فحص عقاري وتقييم حالة المباني. حلل بيانات المعاينة الميدانية واستخرج بيانات هيكلية عن حالة العقار.
+    // Get auto_saved_data for machinery fields
+    const autoSaved = (inspection as any).auto_saved_data || {};
+    const meData = autoSaved.meFormData || {};
 
-القواعد:
-- condition_score: مقياس 1-10 (10 = ممتاز)
-- quality_score: مقياس 1-10 (10 = فاخر)
-- physical_depreciation_pct: نسبة 0 إلى 1 (0 = جديد، 1 = مهلك)
-- functional_obsolescence_pct: نسبة 0 إلى 0.3
-- external_obsolescence_pct: نسبة 0 إلى 0.2
-- condition_adjustment_pct: تعديل المقارنات -0.20 إلى +0.10
-- كن دقيقاً ومحافظاً في التقديرات
-- اعتمد على قائمة الفحص والملاحظات المكتوبة`;
+    const userPrompt = discipline === "machinery_equipment" || discipline === "mixed"
+      ? `بيانات المعاينة:
 
-    const userPrompt = `بيانات المعاينة:
+ملاحظات: ${inspection.notes_ar || "لا توجد"}
+نتائج: ${inspection.findings_ar || "لا توجد"}
 
-الملاحظات: ${inspection.notes_ar || "لا توجد"}
-النتائج: ${inspection.findings_ar || "لا توجد"}
+بيانات الآلة/المعدة:
+- الاسم: ${meData.machine_name || "غير محدد"}
+- الشركة المصنعة: ${meData.manufacturer || "غير محدد"}
+- الموديل: ${meData.model_number || "غير محدد"}
+- سنة الصنع: ${meData.year_manufactured || "غير محدد"}
+- حالة المحرك: ${meData.engine_condition || "غير محدد"}
+- ناقل الحركة: ${meData.transmission_condition || "غير محدد"}
+- النظام الهيدروليكي: ${meData.hydraulic_condition || "غير محدد"}
+- ساعات التشغيل: ${meData.operating_hours || "غير محدد"}
+- الحالة التشغيلية: ${meData.operational_status || "غير محدد"}
+- حالة الشاسيه: ${meData.chassis_condition || "غير محدد"}
+- الصدأ: ${meData.rust_level || "غير محدد"}
+
+${discipline === "mixed" ? `
+بيانات العقار:
+- النوع: ${subject.property_type || "غير محدد"}
+- المساحة: ${subject.land_area || "غير محدد"} م²
+- سنة البناء: ${subject.year_built || "غير محدد"}
+` : ""}
+
+الصور (${photos.length}):
+${photos.map((p: any) => `${p.category}: ${p.caption_ar || p.file_name}`).join("\n")}
+
+قائمة الفحص:
+${JSON.stringify(checklistSummary, null, 2)}`
+      : `بيانات المعاينة:
+
+ملاحظات: ${inspection.notes_ar || "لا توجد"}
+نتائج: ${inspection.findings_ar || "لا توجد"}
 
 بيانات العقار:
 - النوع: ${subject.property_type || "غير محدد"}
 - المساحة: ${subject.land_area || "غير محدد"} م²
 - مساحة البناء: ${subject.building_area || "غير محدد"} م²
 - سنة البناء: ${subject.year_built || "غير محدد"}
-- الحالة المسجلة: ${subject.building_condition || "غير محدد"}
 - عدد الطوابق: ${subject.number_of_floors || "غير محدد"}
 
-الصور الملتقطة (${photos.length} صورة):
-${JSON.stringify(photoDescriptions, null, 2)}
+الصور (${photos.length}):
+${photos.map((p: any) => `${p.category}: ${p.caption_ar || p.file_name}`).join("\n")}
 
 قائمة الفحص:
 ${JSON.stringify(checklistSummary, null, 2)}`;
 
-    console.log("Calling AI for inspection analysis...");
-    const aiResult = await callAI(systemPrompt, userPrompt, ANALYSIS_TOOL,
-      { type: "function", function: { name: "inspection_analysis" } });
+    const aiResult = await callAI(buildPrompt(discipline), userPrompt, buildTool(discipline), { type: "function", function: { name: "inspection_analysis" } });
 
-    // Clamp values
     const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
     aiResult.condition_score = clamp(aiResult.condition_score || 5, 1, 10);
     aiResult.quality_score = clamp(aiResult.quality_score || 5, 1, 10);
     aiResult.physical_depreciation_pct = clamp(aiResult.physical_depreciation_pct || 0, 0, 1);
     aiResult.functional_obsolescence_pct = clamp(aiResult.functional_obsolescence_pct || 0, 0, 0.3);
     aiResult.external_obsolescence_pct = clamp(aiResult.external_obsolescence_pct || 0, 0, 0.2);
-    aiResult.condition_adjustment_pct = clamp(aiResult.condition_adjustment_pct || 0, -0.20, 0.10);
+    aiResult.condition_adjustment_pct = clamp(aiResult.condition_adjustment_pct || 0, -0.30, 0.10);
 
-    // Save to DB
     const { data: analysis, error: saveErr } = await admin.from("inspection_analysis").upsert({
       inspection_id,
       assignment_id: inspection.assignment_id,
       condition_rating: aiResult.condition_rating,
       condition_score: aiResult.condition_score,
-      finishing_level: aiResult.finishing_level,
+      finishing_level: aiResult.finishing_level || null,
       quality_score: aiResult.quality_score,
       maintenance_level: aiResult.maintenance_level || "average",
-      environment_quality: aiResult.environment_quality || "good",
+      environment_quality: aiResult.environment_quality || null,
       visible_defects: aiResult.visible_defects || [],
       risk_flags: aiResult.risk_flags || [],
       adjustment_factors: aiResult.adjustment_factors || {},
-      photo_analysis: aiResult.photo_insights || [],
+      photo_analysis: [],
       checklist_summary: checklistSummary,
       inspector_notes_summary: inspection.notes_ar || null,
       ai_reasoning_ar: aiResult.reasoning_ar,
@@ -249,52 +259,35 @@ ${JSON.stringify(checklistSummary, null, 2)}`;
       processed_at: new Date().toISOString(),
     }, { onConflict: "inspection_id" }).select().single();
 
-    if (saveErr) {
-      console.error("Save error:", saveErr);
-      throw new Error("Failed to save analysis");
-    }
+    if (saveErr) throw new Error("Failed to save analysis");
 
-    // Update assignment status to valuation_in_progress
-    await admin.from("valuation_assignments").update({
-      status: "valuation_in_progress",
-    }).eq("id", inspection.assignment_id);
+    await admin.from("valuation_assignments").update({ status: "valuation_in_progress" }).eq("id", inspection.assignment_id);
 
-    // Audit log
     await admin.from("audit_logs").insert({
-      table_name: "inspection_analysis",
-      action: "create",
-      record_id: analysis?.id,
+      table_name: "inspection_analysis", action: "create", record_id: analysis?.id,
       assignment_id: inspection.assignment_id,
-      description: `AI inspection analysis completed. Condition: ${aiResult.condition_rating}, Score: ${aiResult.condition_score}/10`,
-      new_data: {
-        condition_rating: aiResult.condition_rating,
-        condition_score: aiResult.condition_score,
-        defects_count: (aiResult.visible_defects || []).length,
-        risk_flags_count: (aiResult.risk_flags || []).length,
-        depreciation: aiResult.physical_depreciation_pct,
-      },
+      description: `AI ${discipline} inspection analysis. Condition: ${aiResult.condition_rating}, Score: ${aiResult.condition_score}/10`,
+      new_data: { condition_rating: aiResult.condition_rating, condition_score: aiResult.condition_score, discipline },
     });
 
     return new Response(JSON.stringify({
-      success: true,
-      analysis_id: analysis?.id,
+      success: true, analysis_id: analysis?.id,
+      discipline,
       condition_rating: aiResult.condition_rating,
       condition_score: aiResult.condition_score,
       quality_score: aiResult.quality_score,
       defects_count: (aiResult.visible_defects || []).length,
       risk_flags_count: (aiResult.risk_flags || []).length,
-      depreciation: {
-        physical: aiResult.physical_depreciation_pct,
-        functional: aiResult.functional_obsolescence_pct,
-        external: aiResult.external_obsolescence_pct,
-      },
+      ...(discipline !== "real_estate" ? {
+        mechanical_condition: aiResult.mechanical_condition,
+        operational_status: aiResult.operational_status,
+      } : {}),
     }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
   } catch (e) {
     console.error("analyze-inspection error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
