@@ -124,18 +124,25 @@ interface PricingData {
 }
 
 const MOCK_EXTRACTED_DATA = {
-  asset: {
-    description: "فيلا سكنية",
-    city: "الرياض",
-    district: "حي النرجس",
-    area: 625,
-    buildingArea: 480,
-    floors: 2,
-    yearBuilt: 2021,
-    address: "حي النرجس، شارع الأمير محمد بن سلمان",
-  },
+  discipline: "real_estate",
+  discipline_label: "تقييم عقاري",
+  confidence: 88,
+  description: "فيلا سكنية من دورين في حي النرجس بالرياض، مساحة الأرض 625 م²",
+  inventory: [
+    {
+      id: 1, name: "فيلا سكنية دورين", type: "real_estate", category: "فيلا", quantity: 1, condition: "good",
+      fields: [
+        { key: "area_sqm", label: "المساحة م²", value: "625", confidence: 96 },
+        { key: "city", label: "المدينة", value: "الرياض", confidence: 95 },
+        { key: "district", label: "الحي", value: "حي النرجس", confidence: 95 },
+        { key: "building_area_sqm", label: "مساحة البناء م²", value: "480", confidence: 91 },
+        { key: "floors_count", label: "عدد الطوابق", value: "2", confidence: 91 },
+        { key: "classification", label: "التصنيف", value: "سكني", confidence: 90 },
+      ],
+    },
+  ],
+  client: { clientName: "شركة الرياض للتطوير العقاري" },
   suggestedPurpose: "تمويل بنكي",
-  clientName: "شركة الرياض للتطوير العقاري",
 };
 
 const MOCK_SCOPE: ScopeData = {
@@ -413,28 +420,42 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
           </div>
         </div>
 
-        {/* Property Summary */}
+        {/* Property/Asset Summary */}
         <div className="bg-card rounded-xl border border-border p-4">
           <div className="flex items-center gap-2 mb-3">
             <Building2 className="w-4 h-4 text-primary" />
-            <h3 className="text-xs font-bold text-foreground">ملخص العقار</h3>
+            <h3 className="text-xs font-bold text-foreground">ملخص الأصول</h3>
+            {extractedData.inventory?.length > 0 && (
+              <Badge variant="secondary" className="text-[9px]">{extractedData.inventory.length} أصل</Badge>
+            )}
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: "النوع", value: extractedData.asset?.description || "—", icon: Building2 },
-              { label: "المدينة", value: extractedData.asset?.city || "—", icon: MapPin },
-              { label: "المساحة", value: extractedData.asset?.area ? `${extractedData.asset.area} م²` : "—", icon: Ruler },
-              { label: "الغرض", value: extractedData.suggestedPurpose || "—", icon: FileText },
-            ].map((item) => (
-              <div key={item.label} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50">
-                <item.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                <div className="min-w-0">
-                  <p className="text-[10px] text-muted-foreground">{item.label}</p>
-                  <p className="text-xs font-medium text-foreground truncate">{item.value}</p>
-                </div>
+          {(() => {
+            // Extract summary from inventory or fallback to old asset format
+            const inv = extractedData.inventory || [];
+            const firstItem = inv[0];
+            const getField = (key: string) => firstItem?.fields?.find((f: any) => f.key === key)?.value;
+            const desc = extractedData.description || extractedData.asset?.description || firstItem?.name || "—";
+            const city = getField("city") || extractedData.asset?.city || "—";
+            const area = getField("area_sqm") || (extractedData.asset?.area ? String(extractedData.asset.area) : null);
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "النوع", value: desc, icon: Building2 },
+                  { label: "المدينة", value: city, icon: MapPin },
+                  { label: "المساحة", value: area ? `${area} م²` : "—", icon: Ruler },
+                  { label: "الغرض", value: extractedData.suggestedPurpose || "—", icon: FileText },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50">
+                    <item.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{item.value}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            );
+          })()}
         </div>
 
         {/* Discipline Analysis — System Decision, Approval Only */}
