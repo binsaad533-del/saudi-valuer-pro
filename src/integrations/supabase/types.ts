@@ -979,6 +979,157 @@ export type Database = {
         }
         Relationships: []
       }
+      extracted_assets: {
+        Row: {
+          asset_data: Json
+          asset_index: number
+          asset_type: string
+          category: string | null
+          condition: string | null
+          confidence: number
+          created_at: string
+          description: string | null
+          duplicate_group: string | null
+          duplicate_status: string | null
+          id: string
+          job_id: string
+          missing_fields: string[] | null
+          name: string
+          quantity: number
+          review_notes: string | null
+          review_status: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_evidence: string | null
+          source_files: Json | null
+          subcategory: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_data?: Json
+          asset_index?: number
+          asset_type?: string
+          category?: string | null
+          condition?: string | null
+          confidence?: number
+          created_at?: string
+          description?: string | null
+          duplicate_group?: string | null
+          duplicate_status?: string | null
+          id?: string
+          job_id: string
+          missing_fields?: string[] | null
+          name: string
+          quantity?: number
+          review_notes?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_evidence?: string | null
+          source_files?: Json | null
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_data?: Json
+          asset_index?: number
+          asset_type?: string
+          category?: string | null
+          condition?: string | null
+          confidence?: number
+          created_at?: string
+          description?: string | null
+          duplicate_group?: string | null
+          duplicate_status?: string | null
+          id?: string
+          job_id?: string
+          missing_fields?: string[] | null
+          name?: string
+          quantity?: number
+          review_notes?: string | null
+          review_status?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_evidence?: string | null
+          source_files?: Json | null
+          subcategory?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "extracted_assets_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "processing_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_classifications: {
+        Row: {
+          confidence: number | null
+          contains_assets: boolean | null
+          created_at: string
+          document_category: string
+          document_purpose: string | null
+          error_message: string | null
+          extracted_info: string | null
+          file_name: string
+          file_path: string | null
+          file_size: number | null
+          id: string
+          job_id: string
+          language: string | null
+          mime_type: string | null
+          processing_status: string | null
+          relevance: string | null
+        }
+        Insert: {
+          confidence?: number | null
+          contains_assets?: boolean | null
+          created_at?: string
+          document_category?: string
+          document_purpose?: string | null
+          error_message?: string | null
+          extracted_info?: string | null
+          file_name: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          job_id: string
+          language?: string | null
+          mime_type?: string | null
+          processing_status?: string | null
+          relevance?: string | null
+        }
+        Update: {
+          confidence?: number | null
+          contains_assets?: boolean | null
+          created_at?: string
+          document_category?: string
+          document_purpose?: string | null
+          error_message?: string | null
+          extracted_info?: string | null
+          file_name?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          job_id?: string
+          language?: string | null
+          mime_type?: string | null
+          processing_status?: string | null
+          relevance?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_classifications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "processing_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       glossary_terms: {
         Row: {
           category: string | null
@@ -2192,6 +2343,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      processing_jobs: {
+        Row: {
+          ai_summary: Json | null
+          completed_at: string | null
+          created_at: string
+          current_message: string | null
+          description: string | null
+          discipline: string | null
+          duplicates_found: number
+          error_message: string | null
+          file_manifest: Json | null
+          id: string
+          low_confidence_count: number
+          missing_fields_count: number
+          processed_files: number
+          processing_log: Json | null
+          request_id: string | null
+          started_at: string | null
+          status: string
+          total_assets_found: number
+          total_files: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          current_message?: string | null
+          description?: string | null
+          discipline?: string | null
+          duplicates_found?: number
+          error_message?: string | null
+          file_manifest?: Json | null
+          id?: string
+          low_confidence_count?: number
+          missing_fields_count?: number
+          processed_files?: number
+          processing_log?: Json | null
+          request_id?: string | null
+          started_at?: string | null
+          status?: string
+          total_assets_found?: number
+          total_files?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_summary?: Json | null
+          completed_at?: string | null
+          created_at?: string
+          current_message?: string | null
+          description?: string | null
+          discipline?: string | null
+          duplicates_found?: number
+          error_message?: string | null
+          file_manifest?: Json | null
+          id?: string
+          low_confidence_count?: number
+          missing_fields_count?: number
+          processed_files?: number
+          processing_log?: Json | null
+          request_id?: string | null
+          started_at?: string | null
+          status?: string
+          total_assets_found?: number
+          total_files?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
-import AssetInventoryTable, { type InventoryAsset } from "@/components/client/AssetInventoryTable";
+import ProcessingStatusTracker from "@/components/client/ProcessingStatusTracker";
+import AssetReviewWorkspace from "@/components/client/AssetReviewWorkspace";
 
 import {
   Select,
@@ -24,7 +24,6 @@ import {
   File,
   X,
   Loader2,
-  Bot,
   CheckCircle,
   ArrowRight,
   Sparkles,
@@ -34,7 +33,6 @@ import {
   MapPin,
   Navigation,
   ExternalLink,
-  ShieldCheck,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
@@ -47,58 +45,7 @@ interface UploadedFile {
   path: string;
 }
 
-interface DocumentCategory {
-  fileName: string;
-  category: string;
-  categoryLabel: string;
-  relevance: string;
-  extractedInfo?: string;
-}
-
-interface ExtractedResult {
-  discipline: string;
-  discipline_label: string;
-  confidence: number;
-  client?: {
-    clientName?: string;
-    idNumber?: string;
-    phone?: string;
-    email?: string;
-  };
-  description?: string;
-  inventory?: InventoryAsset[];
-  summary?: {
-    total: number;
-    by_type?: Record<string, number>;
-    by_condition?: Record<string, number>;
-  };
-  // Legacy flat fields fallback
-  asset?: { description?: string };
-  assetFields?: { key: string; label: string; value: string; confidence: number; source?: string; group?: string }[];
-  suggestedPurpose?: string;
-  notes: string[];
-  documentCategories: DocumentCategory[];
-  analyzedFilesCount?: number;
-  totalFilesCount?: number;
-}
-
-type Step = "upload" | "processing" | "extracted" | "submitted";
-
-const CATEGORY_LABELS: Record<string, string> = {
-  deed: "صك ملكية",
-  building_permit: "رخصة بناء",
-  floor_plan: "مخطط معماري",
-  property_photo: "صورة عقار",
-  machinery_photo: "صورة معدة",
-  identity_doc: "وثيقة هوية",
-  invoice: "فاتورة",
-  contract: "عقد",
-  technical_report: "تقرير فني",
-  location_map: "خريطة موقع",
-  spreadsheet: "جدول بيانات",
-  archive: "ملف مضغوط",
-  other: "أخرى",
-};
+type Step = "upload" | "processing" | "review" | "submitted";
 
 const PURPOSE_LABELS: Record<string, string> = {
   sale_purchase: "بيع / شراء",
@@ -128,15 +75,10 @@ export default function NewRequest() {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  // AI extracted
-  const [extractedResult, setExtractedResult] = useState<ExtractedResult | null>(null);
-  const [inventoryAssets, setInventoryAssets] = useState<InventoryAsset[]>([]);
-  const [editableDescription, setEditableDescription] = useState("");
-  const [currentDiscipline, setCurrentDiscipline] = useState("real_estate");
-  const [processingProgress, setProcessingProgress] = useState(0);
-  const [processingMessage, setProcessingMessage] = useState("");
+  // Processing job
+  const [jobId, setJobId] = useState<string | null>(null);
 
-  // Report client info
+  // Client info
   const [clientInfo, setClientInfo] = useState({
     contactName: "",
     contactPhone: "",
@@ -156,28 +98,10 @@ export default function NewRequest() {
   // Asset locations
   const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
-  // Legacy conversion helper: convert flat assetFields to inventory format
-  const convertFieldsToInventory = (fields: any[], disc: string): InventoryAsset[] => {
-    if (!fields || fields.length === 0) return [];
-    return [{
-      id: 1,
-      name: "أصل مستخرج",
-      type: disc === "machinery_equipment" ? "machinery_equipment" : "real_estate",
-      category: disc === "machinery_equipment" ? "معدة" : "عقار",
-      quantity: 1,
-      condition: "good",
-      fields: fields.map(f => ({ key: f.key, label: f.label, value: f.value, confidence: f.confidence })),
-      source: fields[0]?.source || "تحليل ذكي",
-    }];
-  };
-
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        navigate("/login");
-        return;
-      }
+      if (!user) { navigate("/login"); return; }
       setUser(user);
     };
     checkAuth();
@@ -202,22 +126,12 @@ export default function NewRequest() {
 
     for (const file of Array.from(fileList)) {
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
-      const { error } = await supabase.storage
-        .from("client-uploads")
-        .upload(filePath, file);
-
+      const { error } = await supabase.storage.from("client-uploads").upload(filePath, file);
       if (error) {
         toast({ title: `خطأ في رفع ${file.name}`, description: error.message, variant: "destructive" });
         continue;
       }
-
-      newFiles.push({
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        path: filePath,
-      });
+      newFiles.push({ id: crypto.randomUUID(), name: file.name, size: file.size, type: file.type, path: filePath });
     }
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
@@ -239,127 +153,98 @@ export default function NewRequest() {
     setUploadedFiles(prev => prev.filter(f => f.id !== id));
   };
 
-  // ── AI Processing via extract-documents ──
-  const processWithAI = async () => {
+  // ── Start AI Processing via Orchestrator ──
+  const startProcessing = async () => {
     if (uploadedFiles.length === 0) {
       toast({ title: "يرجى رفع الوثائق أولاً", variant: "destructive" });
       return;
     }
+    if (!user) return;
 
     setStep("processing");
-    setProcessingProgress(0);
-    setProcessingMessage("جارٍ تحميل الملفات وقراءة المحتوى...");
 
     try {
-      const progressSteps = [
-        { pct: 10, msg: "جارٍ تحميل الملفات وقراءة المحتوى..." },
-        { pct: 25, msg: "تحليل الصور والمستندات بالذكاء الاصطناعي..." },
-        { pct: 40, msg: "استخراج البيانات من الجداول والملفات..." },
-        { pct: 55, msg: "جرد الأصول وتحديد المواصفات الفنية..." },
-        { pct: 70, msg: "تصنيف المستندات وتحديد نوع التقييم..." },
-      ];
-
-      // Start progress animation
-      let currentStep = 0;
-      const progressInterval = setInterval(() => {
-        if (currentStep < progressSteps.length) {
-          setProcessingProgress(progressSteps[currentStep].pct);
-          setProcessingMessage(progressSteps[currentStep].msg);
-          currentStep++;
-        }
-      }, 1500);
-
-      // Call extract-documents with actual storage paths
-      const resp = await supabase.functions.invoke("extract-documents", {
+      const { data, error } = await supabase.functions.invoke("asset-extraction-orchestrator", {
         body: {
-          fileNames: uploadedFiles.map(f => f.name),
-          fileDescriptions: uploadedFiles.map(() => ""),
-          storagePaths: uploadedFiles.map(f => ({
-            path: f.path,
+          action: "create",
+          userId: user.id,
+          files: uploadedFiles.map(f => ({
             name: f.name,
+            path: f.path,
+            size: f.size,
             mimeType: f.type,
           })),
         },
       });
 
-      clearInterval(progressInterval);
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
 
-      if (resp.error) throw new Error(resp.error.message || "فشل التحليل الذكي");
-
-      const result = resp.data as ExtractedResult & { error?: string };
-
-      if (result.error) throw new Error(result.error);
-
-      // Auto-fill client info from AI extraction
-      if (result.client) {
-        setClientInfo(prev => ({
-          ...prev,
-          contactName: prev.contactName || result.client?.clientName || "",
-          idNumber: prev.idNumber || result.client?.idNumber || "",
-          contactPhone: prev.contactPhone || result.client?.phone || "",
-          contactEmail: prev.contactEmail || result.client?.email || "",
-        }));
-      }
-
-      if (result.suggestedPurpose && !clientInfo.purpose) {
-        setClientInfo(prev => ({ ...prev, purpose: result.suggestedPurpose || prev.purpose }));
-      }
-
-      setExtractedResult(result);
-      // Build inventory from result
-      const inv = result.inventory || convertFieldsToInventory(result.assetFields || [], result.discipline);
-      setInventoryAssets(inv);
-      setCurrentDiscipline(result.discipline || "real_estate");
-      setEditableDescription(result.description || result.asset?.description || "");
-
-      setProcessingProgress(100);
-      setProcessingMessage("تم الاستخراج بنجاح!");
-      await new Promise(r => setTimeout(r, 500));
-      setStep("extracted");
+      setJobId(data.jobId);
     } catch (err: any) {
-      console.error("Extract error:", err);
-      toast({ title: "خطأ في التحليل", description: err.message, variant: "destructive" });
+      console.error("Processing error:", err);
+      toast({ title: "خطأ في بدء المعالجة", description: err.message, variant: "destructive" });
       setStep("upload");
     }
   };
 
-  // ── Submit ──
-  const handleSubmitRequest = async () => {
-    if (!user || !extractedResult) return;
+  const handleProcessingReady = useCallback((readyJobId: string) => {
+    setJobId(readyJobId);
+    setStep("review");
+  }, []);
+
+  const handleProcessingCancel = useCallback(() => {
+    setStep("upload");
+    setJobId(null);
+  }, []);
+
+  // ── Submit from review workspace ──
+  const handleSubmitFromReview = async (assets: any[], discipline: string, description: string) => {
+    if (!user) return;
     setLoading(true);
 
     try {
       const assetData = {
-        discipline: currentDiscipline,
-        inventory: inventoryAssets,
+        discipline,
+        inventory: assets.filter(a => a.review_status !== "rejected").map(a => ({
+          id: a.asset_index,
+          name: a.name,
+          type: a.asset_type,
+          category: a.category,
+          subcategory: a.subcategory,
+          quantity: a.quantity,
+          condition: a.condition,
+          fields: a.asset_data?.fields || [],
+          source: a.source_evidence,
+          confidence: a.confidence,
+        })),
         summary: {
-          total: inventoryAssets.length,
+          total: assets.filter(a => a.review_status !== "rejected").length,
           by_type: {
-            real_estate: inventoryAssets.filter(a => a.type === "real_estate").length,
-            machinery_equipment: inventoryAssets.filter(a => a.type === "machinery_equipment").length,
+            real_estate: assets.filter(a => a.asset_type === "real_estate" && a.review_status !== "rejected").length,
+            machinery_equipment: assets.filter(a => a.asset_type === "machinery_equipment" && a.review_status !== "rejected").length,
           },
         },
-        description: editableDescription,
+        description,
+        jobId,
       };
 
       const { data, error } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
-          valuation_type: (currentDiscipline || "real_estate") as any,
-          property_description_ar: editableDescription || null,
-          purpose: (clientInfo.purpose || extractedResult.suggestedPurpose || null) as any,
+          valuation_type: (discipline || "real_estate") as any,
+          property_description_ar: description || null,
+          purpose: (clientInfo.purpose || null) as any,
           intended_users_ar: clientInfo.intendedUsers || null,
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
-            extractedResult,
-            inventoryAssets,
-            editableDescription,
+            jobId,
             files: uploadedFiles,
             clientInfo,
             assetLocations,
-            documentCategories: extractedResult.documentCategories,
+            totalAssets: assetData.inventory.length,
           },
           asset_data: assetData,
         } as any)
@@ -368,10 +253,17 @@ export default function NewRequest() {
 
       if (error) throw error;
 
+      // Link request to processing job
+      if (jobId && data) {
+        await supabase.from("processing_jobs")
+          .update({ request_id: (data as any).id })
+          .eq("id", jobId);
+      }
+
+      // Insert request_documents
       if (uploadedFiles.length > 0 && data) {
-        const reqData = data as any;
         const docs = uploadedFiles.map(f => ({
-          request_id: reqData.id,
+          request_id: (data as any).id,
           uploaded_by: user.id,
           file_name: f.name,
           file_path: f.path,
@@ -391,14 +283,33 @@ export default function NewRequest() {
     }
   };
 
+  // Discount code handler
+  const handleApplyDiscount = async () => {
+    if (!clientDiscountCode.trim()) return;
+    setClientCheckingDiscount(true);
+    try {
+      const { data, error } = await supabase
+        .from("discount_codes")
+        .select("*")
+        .eq("code", clientDiscountCode.trim().toUpperCase())
+        .eq("is_active", true)
+        .maybeSingle();
 
-
+      if (error || !data) {
+        toast({ title: "كود غير صالح", variant: "destructive" });
+      } else {
+        setClientDiscountApplied({ code: data.code, percentage: data.discount_percentage });
+        toast({ title: `تم تطبيق خصم ${data.discount_percentage}%` });
+      }
+    } catch { /* ignore */ }
+    setClientCheckingDiscount(false);
+  };
 
   // Step indicators
   const steps = [
     { key: "upload", label: "البيانات والوثائق", icon: Upload },
     { key: "processing", label: "تحليل ذكي", icon: Brain },
-    { key: "extracted", label: "مراجعة وإرسال", icon: FileCheck },
+    { key: "review", label: "مراجعة الأصول", icon: FileCheck },
   ];
 
   const currentStepIndex = step === "submitted" ? steps.length : steps.findIndex(s => s.key === step);
@@ -493,13 +404,8 @@ export default function NewRequest() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                    <Select
-                      value={clientInfo.purpose}
-                      onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="اختر الغرض" />
-                      </SelectTrigger>
+                    <Select value={clientInfo.purpose} onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}>
+                      <SelectTrigger><SelectValue placeholder="اختر الغرض" /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
                           <SelectItem key={k} value={k}>{v}</SelectItem>
@@ -509,13 +415,8 @@ export default function NewRequest() {
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">نوع العميل <span className="text-destructive">*</span></Label>
-                    <Select
-                      value={clientInfo.clientType}
-                      onValueChange={(val) => setClientInfo(p => ({ ...p, clientType: val }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="فرد أو جهة" />
-                      </SelectTrigger>
+                    <Select value={clientInfo.clientType} onValueChange={(val) => setClientInfo(p => ({ ...p, clientType: val }))}>
+                      <SelectTrigger><SelectValue placeholder="فرد أو جهة" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="individual">فرد</SelectItem>
                         <SelectItem value="company">شركة / مؤسسة</SelectItem>
@@ -528,51 +429,28 @@ export default function NewRequest() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">اسم عميل التقرير <span className="text-destructive">*</span></Label>
-                    <Input
-                      value={clientInfo.contactName}
-                      onChange={(e) => setClientInfo(p => ({ ...p, contactName: e.target.value }))}
-                      placeholder="اسم الشخص أو الجهة"
-                    />
+                    <Input value={clientInfo.contactName} onChange={(e) => setClientInfo(p => ({ ...p, contactName: e.target.value }))} placeholder="اسم الشخص أو الجهة" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">رقم الهوية / السجل التجاري</Label>
-                    <Input
-                      value={clientInfo.idNumber}
-                      onChange={(e) => setClientInfo(p => ({ ...p, idNumber: e.target.value }))}
-                      placeholder="رقم الهوية أو السجل"
-                      dir="ltr"
-                    />
+                    <Input value={clientInfo.idNumber} onChange={(e) => setClientInfo(p => ({ ...p, idNumber: e.target.value }))} placeholder="رقم الهوية أو السجل" dir="ltr" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">رقم الجوال <span className="text-destructive">*</span></Label>
-                    <Input
-                      value={clientInfo.contactPhone}
-                      onChange={(e) => setClientInfo(p => ({ ...p, contactPhone: e.target.value }))}
-                      placeholder="05XXXXXXXX"
-                      dir="ltr"
-                    />
+                    <Input value={clientInfo.contactPhone} onChange={(e) => setClientInfo(p => ({ ...p, contactPhone: e.target.value }))} placeholder="05XXXXXXXX" dir="ltr" />
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">البريد الإلكتروني</Label>
-                    <Input
-                      value={clientInfo.contactEmail}
-                      onChange={(e) => setClientInfo(p => ({ ...p, contactEmail: e.target.value }))}
-                      placeholder="example@email.com"
-                      dir="ltr"
-                    />
+                    <Input value={clientInfo.contactEmail} onChange={(e) => setClientInfo(p => ({ ...p, contactEmail: e.target.value }))} placeholder="example@email.com" dir="ltr" />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
                   <Label className="text-sm">مستخدمو التقرير <span className="text-destructive">*</span></Label>
-                  <Input
-                    value={clientInfo.intendedUsers}
-                    onChange={(e) => setClientInfo(p => ({ ...p, intendedUsers: e.target.value }))}
-                    placeholder="مثال: البنك، المستثمر، الجهة الحكومية..."
-                  />
+                  <Input value={clientInfo.intendedUsers} onChange={(e) => setClientInfo(p => ({ ...p, intendedUsers: e.target.value }))} placeholder="مثال: البنك، المستثمر، الجهة الحكومية..." />
                 </div>
               </CardContent>
             </Card>
@@ -591,9 +469,7 @@ export default function NewRequest() {
               <CardContent className="space-y-3">
                 <div
                   className={`border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
-                    dragOver
-                      ? "border-primary bg-primary/5 scale-[1.01]"
-                      : "border-border hover:border-primary/40 hover:bg-muted/30"
+                    dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/40 hover:bg-muted/30"
                   }`}
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -605,7 +481,7 @@ export default function NewRequest() {
                     {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات هنا أو اضغط للاختيار"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, صور, Word, Excel, CSV, ZIP
+                    PDF, صور, Word, Excel, CSV, ZIP — بأي عدد وحجم
                   </p>
                   {uploading && (
                     <div className="mt-2 flex items-center justify-center gap-2 text-primary">
@@ -620,7 +496,7 @@ export default function NewRequest() {
                   multiple
                   className="hidden"
                   onChange={handleInputChange}
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.txt,.tif,.tiff,.zip,.rar,.7z,.gz,.webp"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.txt,.tif,.tiff,.zip,.rar,.7z,.gz,.webp,.heic,.ppt,.pptx,.xml,.json"
                 />
 
                 {uploadedFiles.length > 0 && (
@@ -628,18 +504,20 @@ export default function NewRequest() {
                     <p className="text-xs font-semibold text-muted-foreground">
                       الملفات المرفوعة ({uploadedFiles.length})
                     </p>
-                    {uploadedFiles.map(file => (
-                      <div key={file.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/50">
-                        {getFileIcon(file.type)}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm text-foreground truncate">{file.name}</p>
-                          <p className="text-[11px] text-muted-foreground">{formatFileSize(file.size)}</p>
+                    <div className="max-h-[200px] overflow-y-auto space-y-1">
+                      {uploadedFiles.map(file => (
+                        <div key={file.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                          {getFileIcon(file.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm text-foreground truncate">{file.name}</p>
+                            <p className="text-[11px] text-muted-foreground">{formatFileSize(file.size)}</p>
+                          </div>
+                          <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
+                            <X className="w-4 h-4" />
+                          </button>
                         </div>
-                        <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -650,175 +528,31 @@ export default function NewRequest() {
 
             {/* Next button */}
             <Button
-              onClick={processWithAI}
+              onClick={startProcessing}
               className="w-full gap-2"
               size="lg"
               disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
             >
               <Sparkles className="w-4 h-4" />
-              تحليل الوثائق بالذكاء الاصطناعي
+              تحليل الوثائق بالذكاء الاصطناعي ({uploadedFiles.length} ملف)
             </Button>
           </div>
         )}
 
         {/* === STEP 2: Processing === */}
         {step === "processing" && (
-          <Card className="shadow-card">
-            <CardContent className="p-10 text-center">
-              <div className="w-20 h-20 rounded-full gradient-primary flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <Brain className="w-10 h-10 text-primary-foreground" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground mb-2">جارٍ التحليل الذكي للمستندات</h3>
-              <p className="text-sm text-muted-foreground mb-6">{processingMessage}</p>
-
-              <Progress value={processingProgress} className="mb-2" />
-              <p className="text-xs text-muted-foreground">{processingProgress}%</p>
-
-              <div className="mt-6 space-y-2 text-right">
-                {uploadedFiles.map(file => (
-                  <div key={file.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {getFileIcon(file.type)}
-                    <span className="truncate">{file.name}</span>
-                    <CheckCircle className="w-3 h-3 text-success mr-auto" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          <ProcessingStatusTracker
+            jobId={jobId}
+            onReady={handleProcessingReady}
+            onCancel={handleProcessingCancel}
+          />
         )}
 
-        {/* === STEP 3: Extracted Data Review === */}
-        {step === "extracted" && extractedResult && (
+        {/* === STEP 3: Review Workspace === */}
+        {step === "review" && jobId && (
           <div className="space-y-4">
-            {/* AI Notes */}
-            {extractedResult.notes?.length > 0 && (
-              <Card className="shadow-card">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2 text-sm">
-                      <Bot className="w-4 h-4 text-primary" />
-                      ملاحظات التحليل الذكي
-                    </CardTitle>
-                    <Badge variant="outline" className="text-xs">
-                      <ShieldCheck className="w-3 h-3 ml-1" />
-                      دقة {Math.round(extractedResult.confidence * 100)}%
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1">
-                    {extractedResult.notes.map((note, i) => (
-                      <p key={i} className="text-sm text-foreground flex items-start gap-1.5">
-                        <span className="text-primary mt-0.5">•</span>
-                        {note}
-                      </p>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Asset Inventory Table */}
-            <AssetInventoryTable
-              discipline={currentDiscipline}
-              inventory={inventoryAssets}
-              description={editableDescription}
-              summary={extractedResult.summary}
-              onInventoryChange={setInventoryAssets}
-              onDescriptionChange={setEditableDescription}
-              onDisciplineChange={setCurrentDiscipline}
-              onReanalyze={() => {
-                setStep("upload");
-              }}
-            />
-
-            {/* Document Categories */}
-            {extractedResult.documentCategories?.length > 0 && (
-              <Card className="shadow-card">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <FileCheck className="w-4 h-4 text-primary" />
-                    تصنيف المستندات ({extractedResult.documentCategories.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-1.5">
-                    {extractedResult.documentCategories.map((doc, i) => (
-                      <div key={i} className="flex items-center gap-2 p-2 rounded-lg bg-muted/30 border border-border/50">
-                        <FileText className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span className="text-sm text-foreground truncate flex-1">{doc.fileName}</span>
-                        <Badge variant="secondary" className="text-[10px] shrink-0">
-                          {CATEGORY_LABELS[doc.category] || doc.categoryLabel}
-                        </Badge>
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] shrink-0 ${
-                            doc.relevance === "high" ? "border-emerald-300 text-emerald-600" :
-                            doc.relevance === "medium" ? "border-amber-300 text-amber-600" :
-                            "border-border text-muted-foreground"
-                          }`}
-                        >
-                          {doc.relevance === "high" ? "عالي" : doc.relevance === "medium" ? "متوسط" : "منخفض"}
-                        </Badge>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Asset Locations Summary */}
-            {assetLocations.length > 0 && (
-              <Card className="shadow-card">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary" />
-                    مواقع الأصول ({assetLocations.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {assetLocations.map(loc => (
-                      <a
-                        key={loc.id}
-                        href={loc.googleMapsUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors shadow-sm text-sm font-medium text-foreground hover:text-primary"
-                      >
-                        <Navigation className="w-3.5 h-3.5 text-primary shrink-0" />
-                        <span className="max-w-[160px] truncate">{loc.name}</span>
-                        <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                      </a>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Files summary */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" />
-                  المستندات المرفوعة ({uploadedFiles.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-1.5">
-                  {uploadedFiles.map(file => (
-                    <div key={file.id} className="flex items-center gap-2 text-xs">
-                      {getFileIcon(file.type)}
-                      <span className="text-foreground truncate">{file.name}</span>
-                      <span className="text-muted-foreground mr-auto">{formatFileSize(file.size)}</span>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Discount Code */}
-            <Card>
+            <Card className="shadow-card">
               <CardContent className="p-4 space-y-2">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-primary" />
@@ -844,51 +578,43 @@ export default function NewRequest() {
                       className="font-mono tracking-wider text-sm"
                       dir="ltr"
                     />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="shrink-0 text-xs"
-                      disabled={!clientDiscountCode.trim() || clientCheckingDiscount}
-                      onClick={async () => {
-                        setClientCheckingDiscount(true);
-                        const { data, error } = await supabase
-                          .from("discount_codes")
-                          .select("*")
-                          .eq("code", clientDiscountCode.toUpperCase().trim())
-                          .eq("is_active", true)
-                          .maybeSingle();
-                        if (error || !data) {
-                          toast({ title: "كود الخصم غير صالح", variant: "destructive" });
-                        } else if (data.expires_at && new Date(data.expires_at) < new Date()) {
-                          toast({ title: "كود الخصم منتهي الصلاحية", variant: "destructive" });
-                        } else if (data.max_uses && data.current_uses >= data.max_uses) {
-                          toast({ title: "تم استنفاد عدد مرات استخدام هذا الكود", variant: "destructive" });
-                        } else {
-                          setClientDiscountApplied({ code: data.code, percentage: Number(data.discount_percentage) });
-                          toast({ title: `تم تطبيق خصم ${data.discount_percentage}%` });
-                        }
-                        setClientCheckingDiscount(false);
-                      }}
-                    >
-                      {clientCheckingDiscount ? <Loader2 className="w-3 h-3 animate-spin" /> : "تطبيق"}
+                    <Button variant="outline" size="sm" onClick={handleApplyDiscount} disabled={clientCheckingDiscount || !clientDiscountCode.trim()}>
+                      {clientCheckingDiscount ? <Loader2 className="w-4 h-4 animate-spin" /> : "تطبيق"}
                     </Button>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep("upload")} className="gap-2">
-                <ArrowRight className="w-4 h-4" />
-                رجوع
-              </Button>
-              <Button onClick={handleSubmitRequest} className="flex-1 gap-2" size="lg"
-                disabled={loading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                إرسال طلب التقييم
-              </Button>
-            </div>
+            {/* Asset Locations Summary */}
+            {assetLocations.length > 0 && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-primary" />
+                    مواقع الأصول ({assetLocations.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {assetLocations.map(loc => (
+                      <a key={loc.id} href={loc.googleMapsUrl} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors shadow-sm text-sm font-medium text-foreground hover:text-primary">
+                        <Navigation className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span className="max-w-[160px] truncate">{loc.name}</span>
+                        <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                      </a>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <AssetReviewWorkspace
+              jobId={jobId}
+              onSubmit={handleSubmitFromReview}
+              onBack={() => setStep("upload")}
+            />
           </div>
         )}
       </div>
