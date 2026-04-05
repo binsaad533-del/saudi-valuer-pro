@@ -335,7 +335,7 @@ export default function ValuationDetailPage() {
                 "البيانات المقدمة من العميل صحيحة ودقيقة",
                 "ظروف السوق مستقرة وقت التقييم",
               ],
-              inspector: d.inspection,
+              inspector: { ...d.inspection, name: d.inspection.inspector },
               valuer: d.valuer,
               reviewer: d.reviewer,
               evaluatorCredentials: {
