@@ -14,6 +14,7 @@ import {
   AlertTriangle, FileText,
 } from "lucide-react";
 import { SAR } from "@/components/ui/saudi-riyal";
+import PaymentProofReview from "./PaymentProofReview";
 
 export default function AdminPaymentDashboard() {
   const { toast } = useToast();
