@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { hasPermission } from "./permissions-engine";
+import { runIssuanceGate } from "./issuance-gate";
 
 // ── All 19 statuses in order ──
 export const WORKFLOW_STATUSES = [
