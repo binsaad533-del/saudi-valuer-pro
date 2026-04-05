@@ -42,7 +42,7 @@ export default function ValuationWorkspacePage() {
   const [progress, setProgress] = useState(0);
   const [dragOver, setDragOver] = useState(false);
   const [assets, setAssets] = useState<ExtractedAsset[]>([]);
-  const [jobId, setJobId] = useState<string | null>(null);
+  const [_jobId, setJobId] = useState<string | null>(null);
   const [aiAlerts, setAiAlerts] = useState<string[]>([]);
 
   const formatSize = (bytes: number) => {
@@ -129,7 +129,7 @@ export default function ValuationWorkspacePage() {
     const poll = async () => {
       const { data } = await supabase
         .from("processing_jobs")
-        .select("status, result_summary")
+        .select("status, ai_summary")
         .eq("id", jid)
         .single();
 
@@ -193,14 +193,14 @@ export default function ValuationWorkspacePage() {
   };
 
   const confidenceBadge = (score: number) => {
-    if (score >= 80) return <Badge variant="default" className="bg-green-600 text-[10px] px-1.5">{score}%</Badge>;
-    if (score >= 60) return <Badge variant="secondary" className="bg-yellow-500 text-white text-[10px] px-1.5">{score}%</Badge>;
+    if (score >= 80) return <Badge variant="default" className="bg-success text-success-foreground text-[10px] px-1.5">{score}%</Badge>;
+    if (score >= 60) return <Badge variant="secondary" className="bg-warning text-warning-foreground text-[10px] px-1.5">{score}%</Badge>;
     return <Badge variant="destructive" className="text-[10px] px-1.5">{score}%</Badge>;
   };
 
   return (
     <div>
-      <TopBar title="مساحة العمل" showBack />
+      <TopBar />
 
       <div className="p-4 md:p-6 max-w-6xl mx-auto space-y-4">
         {/* ── Files Section ── */}
