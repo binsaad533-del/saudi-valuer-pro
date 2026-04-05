@@ -1,11 +1,10 @@
 import { useState, useCallback, useRef } from "react";
 import TopBar from "@/components/layout/TopBar";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
-  Brain, FileText, FolderUp, Loader2, X, Sparkles,
-  FileSearch, File, FileCheck, ShieldCheck, Ruler, User, MapPin,
-  Image as ImageIcon, FileSpreadsheet, CheckCircle2, AlertTriangle, Upload,
+  Brain, FileText, FolderUp, Loader2, X,
+  File, Image as ImageIcon, FileSpreadsheet,
+  CheckCircle2, AlertTriangle, Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
