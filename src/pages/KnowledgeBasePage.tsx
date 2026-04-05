@@ -348,16 +348,21 @@ export default function KnowledgeBasePage() {
                     )}
                   </div>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`text-[9px] shrink-0 ${
-                    rule.severity === "blocking"
-                      ? "border-destructive text-destructive"
-                      : "border-warning text-warning"
-                  }`}
+                <button
+                  onClick={() => toggleSeverity(rule.id, rule.severity)}
+                  title="اضغط لتغيير المستوى"
                 >
-                  {rule.severity === "blocking" ? "حرج" : "تحذير"}
-                </Badge>
+                  <Badge
+                    variant="outline"
+                    className={`text-[9px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${
+                      rule.severity === "blocking"
+                        ? "border-destructive text-destructive"
+                        : "border-warning text-warning"
+                    }`}
+                  >
+                    {rule.severity === "blocking" ? "حرج — يمنع" : "تحذير"}
+                  </Badge>
+                </button>
                 <button
                   onClick={() => toggleRule(rule.id, rule.is_active)}
                   className="text-muted-foreground hover:text-foreground transition-colors"
