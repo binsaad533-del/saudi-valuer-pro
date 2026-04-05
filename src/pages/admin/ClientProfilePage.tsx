@@ -92,7 +92,7 @@ export default function ClientProfilePage() {
     if (!clientId) return;
     const { data } = await supabase
       .from("valuation_assignments")
-      .select("id, reference_number, status, confidence_score, decision_status, created_at, property_type")
+      .select("id, reference_number, status, created_at, property_type")
       .eq("client_id", clientId)
       .order("created_at", { ascending: false });
     const all = data || [];
