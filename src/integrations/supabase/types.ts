@@ -1874,6 +1874,57 @@ export type Database = {
           },
         ]
       }
+      knowledge_rebuild_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          critical_rules: number
+          duplicates_removed: number
+          error_message: string | null
+          id: string
+          processed_documents: number
+          started_at: string | null
+          status: string
+          total_documents: number
+          total_rules_extracted: number
+          total_rules_inserted: number
+          warning_rules: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          critical_rules?: number
+          duplicates_removed?: number
+          error_message?: string | null
+          id?: string
+          processed_documents?: number
+          started_at?: string | null
+          status?: string
+          total_documents?: number
+          total_rules_extracted?: number
+          total_rules_inserted?: number
+          warning_rules?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          critical_rules?: number
+          duplicates_removed?: number
+          error_message?: string | null
+          id?: string
+          processed_documents?: number
+          started_at?: string | null
+          status?: string
+          total_documents?: number
+          total_rules_extracted?: number
+          total_rules_inserted?: number
+          warning_rules?: number
+        }
+        Relationships: []
+      }
       machinery_valuations: {
         Row: {
           approach: string

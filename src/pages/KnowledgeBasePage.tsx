@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ingestKnowledgeDocument } from "@/lib/compliance-engine";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import KnowledgeRebuildPanel from "@/components/compliance/KnowledgeRebuildPanel";
 
 /* ── Types ── */
 interface KnowledgeDoc {
@@ -222,6 +223,9 @@ export default function KnowledgeBasePage() {
           ارفع معايير التقييم المهنية — سيقوم الذكاء الاصطناعي باتباعها تلقائياً في كل مراحل العمل
         </p>
       </div>
+
+      {/* Bulk Rebuild */}
+      <KnowledgeRebuildPanel />
 
       {/* Quick Stats */}
       <div className="flex items-center gap-4 text-xs">
