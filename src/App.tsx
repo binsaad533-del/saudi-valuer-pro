@@ -8,6 +8,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import AppLayout from "@/components/layout/AppLayout";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
+import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
 import ValuationsList from "@/pages/ValuationsList";
 import NewValuation from "@/pages/NewValuation";
 
@@ -79,7 +80,8 @@ const App = () => (
               <AppLayout />
             </ProtectedRoute>
           }>
-            <Route path="/" element={<Dashboard />} />
+            <Route path="/" element={<ExecutiveDashboard />} />
+            <Route path="/dashboard-legacy" element={<Dashboard />} />
             <Route path="/valuations" element={<ValuationsList />} />
             <Route path="/valuations/new" element={<NewValuation />} />
             <Route path="/valuations/:id" element={<ValuationDetailPage />} />
