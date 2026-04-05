@@ -1,122 +1,287 @@
-import { useState } from "react";
-import { Search, SlidersHorizontal, FileText, Building2, MapPin } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import TopBar from "@/components/layout/TopBar";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Search, Loader2, Users, FileText, Archive, ClipboardList,
+  ArrowRight, User, Building2, Phone,
+} from "lucide-react";
 
-const mockResults = [
-  { id: "1", ref: "VAL-2026-0042", type: "فيلا سكنية", city: "الرياض", district: "حي النرجس", client: "شركة الراجحي للتطوير", status: "قيد التنفيذ", date: "2026-03-25" },
-  { id: "2", ref: "VAL-2026-0041", type: "مبنى تجاري", city: "جدة", district: "حي الروضة", client: "مؤسسة البناء المتقدم", status: "مراجعة", date: "2026-03-22" },
-  { id: "3", ref: "VAL-2026-0040", type: "أرض خام", city: "الدمام", district: "حي الشاطئ", client: "صندوق الاستثمارات العامة", status: "مكتمل", date: "2026-03-20" },
-  { id: "4", ref: "VAL-2026-0039", type: "خط إنتاج", city: "الرياض", district: "حي العليا", client: "شركة دار الأركان", status: "جديد", date: "2026-03-18" },
-  { id: "5", ref: "VAL-2026-0038", type: "عقار مدر للدخل", city: "مكة المكرمة", district: "حي العزيزية", client: "وزارة المالية", status: "مكتمل", date: "2026-03-15" },
-];
+interface ClientResult {
+  id: string;
+  name_ar: string;
+  phone: string | null;
+  email: string | null;
+  client_type: string;
+  client_status: string;
+}
+
+interface AssignmentResult {
+  id: string;
+  reference_number: string;
+  status: string;
+  property_type: string | null;
+  created_at: string;
+  client_name?: string;
+}
+
+interface ArchivedResult {
+  id: string;
+  report_number: string | null;
+  report_title_ar: string | null;
+  report_date: string | null;
+  client_name_ar: string | null;
+}
+
+type ResultCategory = "clients" | "requests" | "reports" | "archived";
+
+const STATUS_LABELS: Record<string, string> = {
+  draft: "مسودة", submitted: "مقدم", processing: "قيد المعالجة",
+  inspection: "معاينة", under_review: "مراجعة", approved: "معتمد",
+  issued: "صادر", rejected: "مرفوض", cancelled: "ملغي",
+  potential: "محتمل", verified: "مؤكد", portal: "لديه حساب",
+};
 
 export default function SearchPage() {
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [clients, setClients] = useState<ClientResult[]>([]);
+  const [activeRequests, setActiveRequests] = useState<AssignmentResult[]>([]);
+  const [completedReports, setCompletedReports] = useState<AssignmentResult[]>([]);
+  const [archivedReports, setArchivedReports] = useState<ArchivedResult[]>([]);
+  const [searched, setSearched] = useState(false);
 
-  const filtered = mockResults.filter((r) =>
-    !query || r.ref.includes(query) || r.client.includes(query) || r.city.includes(query) || r.type.includes(query)
-  );
+  const performSearch = useCallback(async (q: string) => {
+    if (q.trim().length < 2) {
+      setClients([]); setActiveRequests([]); setCompletedReports([]); setArchivedReports([]);
+      setSearched(false);
+      return;
+    }
+    setLoading(true);
+    setSearched(true);
+    const term = `%${q.trim()}%`;
+
+    const [clientsRes, assignmentsRes, archivedRes] = await Promise.all([
+      supabase
+        .from("clients")
+        .select("id, name_ar, phone, email, client_type, client_status")
+        .eq("is_active", true)
+        .or(`name_ar.ilike.${term},phone.ilike.${term},email.ilike.${term},cr_number.ilike.${term},contact_person_ar.ilike.${term}`)
+        .limit(15),
+      supabase
+        .from("valuation_assignments")
+        .select("id, reference_number, status, property_type, created_at, clients!inner(name_ar)")
+        .or(`reference_number.ilike.${term},clients.name_ar.ilike.${term}`)
+        .order("created_at", { ascending: false })
+        .limit(20),
+      supabase
+        .from("archived_reports")
+        .select("id, report_number, report_title_ar, report_date, client_name_ar")
+        .or(`report_number.ilike.${term},client_name_ar.ilike.${term},report_title_ar.ilike.${term}`)
+        .order("report_date", { ascending: false })
+        .limit(15),
+    ]);
+
+    setClients(clientsRes.data || []);
+
+    const allAssignments = (assignmentsRes.data || []).map((a: any) => ({
+      ...a,
+      client_name: a.clients?.name_ar || "",
+    }));
+    setActiveRequests(allAssignments.filter((a: AssignmentResult) => !["approved", "issued"].includes(a.status)));
+    setCompletedReports(allAssignments.filter((a: AssignmentResult) => ["approved", "issued"].includes(a.status)));
+    setArchivedReports(archivedRes.data || []);
+    setLoading(false);
+  }, []);
+
+  // Debounced search
+  useEffect(() => {
+    const timer = setTimeout(() => performSearch(query), 350);
+    return () => clearTimeout(timer);
+  }, [query, performSearch]);
+
+  const totalResults = clients.length + activeRequests.length + completedReports.length + archivedReports.length;
+
+  const sections: {
+    key: ResultCategory;
+    label: string;
+    icon: React.ElementType;
+    count: number;
+    color: string;
+  }[] = [
+    { key: "clients", label: "العملاء", icon: Users, count: clients.length, color: "text-primary" },
+    { key: "requests", label: "الطلبات النشطة", icon: ClipboardList, count: activeRequests.length, color: "text-warning" },
+    { key: "reports", label: "التقارير المكتملة", icon: FileText, count: completedReports.length, color: "text-success" },
+    { key: "archived", label: "التقارير الأرشيفية", icon: Archive, count: archivedReports.length, color: "text-muted-foreground" },
+  ];
 
   return (
     <div className="min-h-screen">
       <TopBar />
-      <div className="p-6 space-y-5">
-        {/* Search Bar */}
-        <div className="flex gap-3">
-          <div className="relative flex-1">
-            <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="ابحث برقم المرجع، اسم العميل، المدينة، أو نوع العقار..."
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full pr-11 pl-4 py-3 rounded-lg border border-border bg-card text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 text-sm"
-            />
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-4 py-3 rounded-lg border text-sm font-medium transition-colors flex items-center gap-2
-              ${showFilters ? "bg-primary text-primary-foreground border-primary" : "bg-card border-border text-muted-foreground hover:bg-muted"}`}
-          >
-            <SlidersHorizontal className="w-4 h-4" />
-            فلاتر
-          </button>
+      <div className="p-6 max-w-5xl mx-auto space-y-6">
+        {/* Search Input */}
+        <div className="relative">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="ابحث باسم عميل / رقم جوال / رقم تقرير / رقم طلب"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            className="pr-12 py-6 text-base rounded-xl border-border"
+            autoFocus
+          />
+          {loading && <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 animate-spin text-primary" />}
         </div>
 
-        {/* Filters Panel */}
-        {showFilters && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-lg border border-border bg-card animate-fade-in">
-            <select className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm">
-              <option value="">نوع العقار - الكل</option>
-              <option>فيلا سكنية</option>
-              <option>مبنى تجاري</option>
-              <option>أرض خام</option>
-              <option>آلات ومعدات</option>
-            </select>
-            <select className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm">
-              <option value="">المدينة - الكل</option>
-              <option>الرياض</option>
-              <option>جدة</option>
-              <option>الدمام</option>
-              <option>مكة المكرمة</option>
-            </select>
-            <select className="px-3 py-2 rounded-lg border border-border bg-background text-foreground text-sm">
-              <option value="">الحالة - الكل</option>
-              <option>جديد</option>
-              <option>قيد التنفيذ</option>
-              <option>مراجعة</option>
-              <option>مكتمل</option>
-            </select>
+        {/* Results summary */}
+        {searched && !loading && (
+          <div className="flex items-center gap-4 flex-wrap">
+            <span className="text-sm text-muted-foreground">
+              <span className="font-semibold text-foreground">{totalResults}</span> نتيجة
+            </span>
+            {sections.filter(s => s.count > 0).map(s => (
+              <span key={s.key} className="flex items-center gap-1 text-xs text-muted-foreground">
+                <s.icon className={`w-3.5 h-3.5 ${s.color}`} />
+                {s.label}: {s.count}
+              </span>
+            ))}
           </div>
         )}
 
-        {/* Results Count */}
-        <div className="text-sm text-muted-foreground">
-          عرض <span className="font-semibold text-foreground">{filtered.length}</span> نتيجة
-        </div>
+        {/* Empty state */}
+        {searched && !loading && totalResults === 0 && (
+          <div className="text-center py-16 text-muted-foreground">
+            <Search className="w-10 h-10 mx-auto mb-3 opacity-40" />
+            <p className="text-sm">لا توجد نتائج مطابقة</p>
+            <p className="text-xs mt-1">حاول البحث باسم مختلف أو رقم آخر</p>
+          </div>
+        )}
 
-        {/* Results */}
-        <div className="space-y-2">
-          {filtered.map((r) => (
-            <div key={r.id} className="flex items-center gap-4 p-4 rounded-lg border border-border bg-card hover:bg-muted/30 transition-colors cursor-pointer">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                {r.type.includes("خط") || r.type.includes("معدات") ? (
-                  <Building2 className="w-5 h-5 text-primary" />
-                ) : (
-                  <FileText className="w-5 h-5 text-primary" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-foreground">{r.ref}</span>
-                  <span className="text-xs text-muted-foreground">•</span>
-                  <span className="text-xs text-muted-foreground">{r.type}</span>
-                </div>
-                <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                  <span>{r.client}</span>
-                  <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{r.city} - {r.district}</span>
-                </div>
-              </div>
-              <div className="text-left shrink-0">
-                <span className={`text-[11px] px-2 py-0.5 rounded-full font-medium
-                  ${r.status === "مكتمل" ? "bg-accent/10 text-accent" :
-                    r.status === "قيد التنفيذ" ? "bg-warning/10 text-warning" :
-                    r.status === "مراجعة" ? "bg-primary/10 text-primary" :
-                    "bg-muted text-muted-foreground"}`}>
-                  {r.status}
-                </span>
-                <div className="text-[11px] text-muted-foreground mt-1">{r.date}</div>
-              </div>
-            </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="text-center py-12 text-muted-foreground text-sm">
-              لا توجد نتائج مطابقة
-            </div>
-          )}
-        </div>
+        {/* Clients */}
+        {clients.length > 0 && (
+          <Section title="العملاء" icon={Users} count={clients.length} color="text-primary">
+            {clients.map(c => (
+              <ResultRow
+                key={c.id}
+                icon={c.client_type === "company" ? Building2 : User}
+                title={c.name_ar}
+                subtitle={c.phone ? <span dir="ltr" className="flex items-center gap-1"><Phone className="w-3 h-3" />{c.phone}</span> : c.email || "—"}
+                badge={STATUS_LABELS[c.client_status] || c.client_status}
+                badgeVariant={c.client_status === "portal" ? "default" : "outline"}
+                onClick={() => navigate(`/clients/${c.id}`)}
+              />
+            ))}
+          </Section>
+        )}
+
+        {/* Active Requests */}
+        {activeRequests.length > 0 && (
+          <Section title="الطلبات النشطة" icon={ClipboardList} count={activeRequests.length} color="text-warning">
+            {activeRequests.map(a => (
+              <ResultRow
+                key={a.id}
+                icon={ClipboardList}
+                title={a.reference_number || a.id.slice(0, 8)}
+                subtitle={a.client_name || a.property_type || "—"}
+                badge={STATUS_LABELS[a.status] || a.status}
+                badgeVariant={a.status === "under_review" ? "default" : "secondary"}
+                onClick={() => navigate(`/valuations/${a.id}`)}
+              />
+            ))}
+          </Section>
+        )}
+
+        {/* Completed Reports */}
+        {completedReports.length > 0 && (
+          <Section title="التقارير المكتملة" icon={FileText} count={completedReports.length} color="text-success">
+            {completedReports.map(r => (
+              <ResultRow
+                key={r.id}
+                icon={FileText}
+                title={r.reference_number || r.id.slice(0, 8)}
+                subtitle={r.client_name || "—"}
+                badge={STATUS_LABELS[r.status] || r.status}
+                badgeVariant="default"
+                onClick={() => navigate(`/valuations/${r.id}`)}
+              />
+            ))}
+          </Section>
+        )}
+
+        {/* Archived Reports */}
+        {archivedReports.length > 0 && (
+          <Section title="التقارير الأرشيفية" icon={Archive} count={archivedReports.length} color="text-muted-foreground">
+            {archivedReports.map(r => (
+              <ResultRow
+                key={r.id}
+                icon={Archive}
+                title={r.report_number || "—"}
+                subtitle={r.client_name_ar || r.report_title_ar || "—"}
+                badge={r.report_date ? new Date(r.report_date).toLocaleDateString("ar-SA") : "—"}
+                badgeVariant="outline"
+                onClick={() => navigate("/archive")}
+              />
+            ))}
+          </Section>
+        )}
+
+        {/* Idle state */}
+        {!searched && (
+          <div className="text-center py-20 text-muted-foreground">
+            <Search className="w-12 h-12 mx-auto mb-4 opacity-20" />
+            <p className="text-sm">ابدأ بكتابة اسم العميل أو رقم الجوال أو رقم التقرير</p>
+          </div>
+        )}
       </div>
     </div>
+  );
+}
+
+function Section({ title, icon: Icon, count, color, children }: {
+  title: string;
+  icon: React.ElementType;
+  count: number;
+  color: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-2">
+        <Icon className={`w-4 h-4 ${color}`} />
+        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+        <span className="text-xs text-muted-foreground">({count})</span>
+      </div>
+      <div className="space-y-1">{children}</div>
+    </div>
+  );
+}
+
+function ResultRow({ icon: Icon, title, subtitle, badge, badgeVariant, onClick }: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: React.ReactNode;
+  badge: string;
+  badgeVariant: "default" | "secondary" | "outline" | "destructive";
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-muted/40 transition-colors text-right"
+    >
+      <div className="w-9 h-9 rounded-lg bg-primary/5 flex items-center justify-center shrink-0">
+        <Icon className="w-4 h-4 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground truncate">{title}</p>
+        <p className="text-xs text-muted-foreground truncate">{subtitle}</p>
+      </div>
+      <Badge variant={badgeVariant} className="text-[10px] shrink-0">{badge}</Badge>
+      <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
+    </button>
   );
 }
