@@ -156,10 +156,20 @@ export default function NewRequest() {
   // Asset locations
   const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
-  // New custom field
-  const [showAddField, setShowAddField] = useState(false);
-  const [newFieldLabel, setNewFieldLabel] = useState("");
-  const [newFieldValue, setNewFieldValue] = useState("");
+  // Legacy conversion helper: convert flat assetFields to inventory format
+  const convertFieldsToInventory = (fields: any[], disc: string): InventoryAsset[] => {
+    if (!fields || fields.length === 0) return [];
+    return [{
+      id: 1,
+      name: "أصل مستخرج",
+      type: disc === "machinery_equipment" ? "machinery_equipment" : "real_estate",
+      category: disc === "machinery_equipment" ? "معدة" : "عقار",
+      quantity: 1,
+      condition: "good",
+      fields: fields.map(f => ({ key: f.key, label: f.label, value: f.value, confidence: f.confidence })),
+      source: fields[0]?.source || "تحليل ذكي",
+    }];
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
