@@ -391,11 +391,8 @@ export default function NewRequest() {
     }
   };
 
-  const getConfidenceBg = (c: number) => {
-    if (c >= 80) return "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800";
-    if (c >= 50) return "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800";
-    return "bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800";
-  };
+
+
 
   // Step indicators
   const steps = [
