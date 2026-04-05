@@ -2772,13 +2772,17 @@ export type Database = {
       }
       raqeem_rules: {
         Row: {
+          applicable_asset_type: string
           category: string
+          condition_text: string | null
           created_at: string
           created_by: string
           enforcement_stage: string[]
           id: string
+          impact_type: string
           is_active: boolean
           priority: number
+          requirement_text: string | null
           rule_content: string
           rule_title_ar: string
           rule_title_en: string | null
@@ -2788,13 +2792,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          applicable_asset_type?: string
           category?: string
+          condition_text?: string | null
           created_at?: string
           created_by: string
           enforcement_stage?: string[]
           id?: string
+          impact_type?: string
           is_active?: boolean
           priority?: number
+          requirement_text?: string | null
           rule_content: string
           rule_title_ar: string
           rule_title_en?: string | null
@@ -2804,13 +2812,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          applicable_asset_type?: string
           category?: string
+          condition_text?: string | null
           created_at?: string
           created_by?: string
           enforcement_stage?: string[]
           id?: string
+          impact_type?: string
           is_active?: boolean
           priority?: number
+          requirement_text?: string | null
           rule_content?: string
           rule_title_ar?: string
           rule_title_en?: string | null
