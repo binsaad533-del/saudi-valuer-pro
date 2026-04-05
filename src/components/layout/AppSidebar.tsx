@@ -65,6 +65,7 @@ const ownerNav: NavGroup[] = [
       { labelKey: "knowledgeBase", icon: BookOpen, path: "/knowledge" },
       { labelKey: "analytics", icon: BarChart3, path: "/analytics" },
       { labelKey: "auditLog", icon: Shield, path: "/audit-log" },
+      { labelKey: "systemMonitoring", icon: Activity, path: "/system-monitoring" },
       { labelKey: "notifications", icon: Bell, path: "/notifications" },
       { labelKey: "settings", icon: Settings, path: "/settings" },
     ],
