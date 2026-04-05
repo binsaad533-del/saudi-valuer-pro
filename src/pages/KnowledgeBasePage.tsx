@@ -97,7 +97,7 @@ export default function KnowledgeBasePage() {
         .limit(100),
       supabase
         .from("raqeem_rules")
-        .select("id, rule_title_ar, category, severity, enforcement_stage, is_active")
+        .select("id, rule_title_ar, category, severity, enforcement_stage, is_active, applicable_asset_type, condition_text, requirement_text, impact_type")
         .order("created_at", { ascending: false })
         .limit(200),
     ]);
