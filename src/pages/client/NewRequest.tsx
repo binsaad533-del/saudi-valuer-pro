@@ -306,8 +306,11 @@ export default function NewRequest() {
       }
 
       setExtractedResult(result);
-      setEditableFields(result.assetFields || []);
-      setEditableDescription(result.asset?.description || "");
+      // Build inventory from result
+      const inv = result.inventory || convertFieldsToInventory(result.assetFields || [], result.discipline);
+      setInventoryAssets(inv);
+      setCurrentDiscipline(result.discipline || "real_estate");
+      setEditableDescription(result.description || result.asset?.description || "");
 
       setProcessingProgress(100);
       setProcessingMessage("تم الاستخراج بنجاح!");
@@ -326,17 +329,24 @@ export default function NewRequest() {
     setLoading(true);
 
     try {
-      // Build asset_data from editable fields
-      const assetData: Record<string, any> = {};
-      for (const f of editableFields) {
-        assetData[f.key] = { value: f.value, confidence: f.confidence, label: f.label, group: f.group };
-      }
+      const assetData = {
+        discipline: currentDiscipline,
+        inventory: inventoryAssets,
+        summary: {
+          total: inventoryAssets.length,
+          by_type: {
+            real_estate: inventoryAssets.filter(a => a.type === "real_estate").length,
+            machinery_equipment: inventoryAssets.filter(a => a.type === "machinery_equipment").length,
+          },
+        },
+        description: editableDescription,
+      };
 
       const { data, error } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
-          valuation_type: (extractedResult.discipline || "real_estate") as any,
+          valuation_type: (currentDiscipline || "real_estate") as any,
           property_description_ar: editableDescription || null,
           purpose: (clientInfo.purpose || extractedResult.suggestedPurpose || null) as any,
           intended_users_ar: clientInfo.intendedUsers || null,
@@ -344,7 +354,7 @@ export default function NewRequest() {
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
             extractedResult,
-            editableFields,
+            inventoryAssets,
             editableDescription,
             files: uploadedFiles,
             clientInfo,
@@ -358,7 +368,6 @@ export default function NewRequest() {
 
       if (error) throw error;
 
-      // Save documents
       if (uploadedFiles.length > 0 && data) {
         const reqData = data as any;
         const docs = uploadedFiles.map(f => ({
@@ -380,33 +389,6 @@ export default function NewRequest() {
     } finally {
       setLoading(false);
     }
-  };
-
-  // ── Field editing helpers ──
-  const updateField = (key: string, newValue: string) => {
-    setEditableFields(prev => prev.map(f => f.key === key ? { ...f, value: newValue } : f));
-  };
-
-  const removeField = (key: string) => {
-    setEditableFields(prev => prev.filter(f => f.key !== key));
-  };
-
-  const addCustomField = () => {
-    if (!newFieldLabel.trim() || !newFieldValue.trim()) return;
-    const key = `custom_${Date.now()}`;
-    setEditableFields(prev => [
-      ...prev,
-      { key, label: newFieldLabel.trim(), value: newFieldValue.trim(), confidence: 100, source: "إدخال يدوي", group: "general" },
-    ]);
-    setNewFieldLabel("");
-    setNewFieldValue("");
-    setShowAddField(false);
-  };
-
-  const getConfidenceColor = (c: number) => {
-    if (c >= 80) return "text-emerald-600 dark:text-emerald-400";
-    if (c >= 50) return "text-amber-600 dark:text-amber-400";
-    return "text-red-500 dark:text-red-400";
   };
 
   const getConfidenceBg = (c: number) => {
