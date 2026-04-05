@@ -8,6 +8,8 @@ import {
   ClipboardCheck, Scale, Shield, Sparkles, ExternalLink,
 } from "lucide-react";
 import ComparableSelectionEngine from "@/components/valuation/ComparableSelectionEngine";
+import JustificationWriter from "@/components/valuation/JustificationWriter";
+import type { RiskContext } from "@/lib/risk-detection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
