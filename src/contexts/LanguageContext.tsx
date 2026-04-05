@@ -70,6 +70,7 @@ const translations: Record<string, Record<Language, string>> = {
   analytics: { ar: "التحليلات", en: "Analytics" },
   compliance: { ar: "الامتثال", en: "Compliance" },
   myProfile: { ar: "حسابي", en: "My Account" },
+  notifications: { ar: "الإشعارات", en: "Notifications" },
 
   // Quick actions
   quickActions: { ar: "إجراءات سريعة", en: "Quick Actions" },
