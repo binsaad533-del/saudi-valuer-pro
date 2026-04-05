@@ -79,8 +79,25 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 export default function ValuationDetailPage() {
-  const { id } = useParams();
+  const { id: _id } = useParams();
   const d = MOCK;
+
+  const confidenceCtx: ValuationContext = {
+    requiredFields: ["type", "category", "city", "district", "landArea", "buildingArea", "yearBuilt"],
+    assetFields: d.property as unknown as Record<string, unknown>,
+    extractionConfidence: 0.85,
+    missingFieldsCount: 0,
+    approachesApplied: 2,
+    methodsUsed: ["market_comparison", "cost"],
+    hasJustification: true,
+    criticalRulesPassed: 6,
+    criticalRulesTotal: 7,
+    hasAssumptions: true,
+    hasScopeOfWork: true,
+    hasBlockingIssues: false,
+    methodValues: [2_850_000, 2_720_000],
+    finalValue: d.valuation.estimatedValue,
+  };
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -254,6 +271,9 @@ export default function ValuationDetailPage() {
               </ol>
             </CardContent>
           </Card>
+
+          {/* Confidence Score */}
+          <ConfidenceScoreCard context={confidenceCtx} />
 
           {/* Team */}
           <Card>
