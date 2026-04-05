@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sparkles,
   Search,
   Plus,
   Trash2,
@@ -34,12 +33,9 @@ import {
   Package,
   RefreshCw,
   FileText,
-  ShieldCheck,
   AlertTriangle,
-  CheckCircle,
   X,
   Copy,
-  Scissors,
 } from "lucide-react";
 
 export interface InventoryAsset {
