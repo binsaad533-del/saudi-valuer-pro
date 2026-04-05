@@ -117,6 +117,11 @@ serve(async (req) => {
         inspectionDate?: string;
         valuationDate?: string;
         referenceNumber?: string;
+        discipline?: string;
+        machineryInventory?: Array<{ name: string; type: string; value?: number; condition?: string }>;
+        realEstateValue?: number;
+        machineryValue?: number;
+        totalValue?: number;
       };
     };
 
@@ -127,8 +132,32 @@ serve(async (req) => {
     // Fetch relevant knowledge from the knowledge base
     const knowledgeContext = await fetchRelevantKnowledge(context);
 
-    const systemPrompt = `أنت "رقيم" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم العقاري باللغة العربية وفقاً لمعايير IVS 2025 والهيئة السعودية للمقيمين المعتمدين (تقييم).
+    // Determine discipline
+    const discipline = context.discipline || "real_estate";
+    const isMixed = discipline === "mixed";
+    const isMachinery = discipline === "machinery_equipment";
 
+    // Build discipline-aware system prompt
+    let disciplineInstructions = "";
+    if (isMachinery) {
+      disciplineInstructions = `
+هذا تقرير تقييم آلات ومعدات. استخدم المصطلحات الهندسية والميكانيكية المناسبة:
+- تكلفة الإحلال الجديد (RCN)، الإهلاك المادي، التقادم الوظيفي، التقادم الاقتصادي
+- أساليب التقييم: التكلفة المستبدلة مع الاستهلاك، المقارنة السوقية للمعدات، القيمة الدفترية
+- صف الحالة الميكانيكية والكهربائية والهيكلية لكل أصل
+- اذكر ساعات التشغيل وسنة الصنع والشركة المصنعة عند توفرها`;
+    } else if (isMixed) {
+      disciplineInstructions = `
+هذا تقرير تقييم مختلط يشمل عقارات وآلات ومعدات معاً.
+يجب أن يتضمن التقرير:
+1. قسم كامل لتقييم العقارات (أساليب المقارنة/التكلفة/الدخل)
+2. قسم كامل لتقييم الآلات والمعدات (التكلفة المستبدلة مع الاستهلاك)
+3. ملخص موحد يجمع القيمة الإجمالية = قيمة العقارات + قيمة الآلات والمعدات
+- اعرض كل قسم بشكل مستقل مع تفاصيله الكاملة ثم اختم بالقيمة الإجمالية الموحدة`;
+    }
+
+    const systemPrompt = `أنت "رقيم" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم باللغة العربية وفقاً لمعايير IVS 2025 والهيئة السعودية للمقيمين المعتمدين (تقييم).
+${disciplineInstructions}
 قواعد صارمة:
 - اكتب بالعربية الفصحى المهنية فقط
 - استخدم مصطلحات التقييم المعتمدة (القيمة السوقية، أسلوب المقارنة، التدفقات النقدية المخصومة، إلخ)
@@ -139,14 +168,25 @@ serve(async (req) => {
 - عند طلب JSON أعد JSON فقط بدون أي نص إضافي
 - استند في كتابتك إلى المراجع المهنية والمعايير المرفقة أدناه عند توفرها، واستشهد بالمعايير ذات الصلة${knowledgeContext}`;
 
+    // Build machinery inventory block if applicable
+    let machineryBlock = "";
+    if ((isMixed || isMachinery) && context.machineryInventory?.length) {
+      machineryBlock = `\n- جرد الآلات والمعدات:\n${context.machineryInventory.map((m, i) => `  ${i + 1}. ${m.name} — الحالة: ${m.condition || "غير محددة"}${m.value ? ` — القيمة: ${m.value.toLocaleString()} ر.س` : ""}`).join("\n")}`;
+    }
+    let valuesSummary = "";
+    if (isMixed && context.realEstateValue && context.machineryValue) {
+      valuesSummary = `\n- قيمة العقارات: ${context.realEstateValue.toLocaleString()} ر.س\n- قيمة الآلات والمعدات: ${context.machineryValue.toLocaleString()} ر.س\n- القيمة الإجمالية الموحدة: ${(context.totalValue || (context.realEstateValue + context.machineryValue)).toLocaleString()} ر.س`;
+    }
+
     const contextBlock = `بيانات التقييم:
+- التخصص: ${discipline === "real_estate" ? "تقييم عقاري" : discipline === "machinery_equipment" ? "آلات ومعدات" : "مختلط (عقاري + آلات ومعدات)"}
 - نوع الأصل: ${context.assetType || "عقاري"}
 - الوصف: ${context.assetDescription || "غير محدد"}
 - الموقع: ${context.assetLocation || "غير محدد"}
 - المدينة: ${context.assetCity || "غير محددة"}
 - نوع العقار: ${context.propertyType || "سكني"}
 - المنهجية: ${context.methodology || "أسلوب المقارنة"}
-- القيمة المقدرة: ${context.estimatedValue ? context.estimatedValue.toLocaleString() + " ر.س" : "غير محددة"}
+- القيمة المقدرة: ${context.estimatedValue ? context.estimatedValue.toLocaleString() + " ر.س" : "غير محددة"}${valuesSummary}
 - العميل: ${context.clientName || "غير محدد"}
 - رقم الهوية: ${context.clientIdNumber || "غير محدد"}
 - غرض التقييم: ${context.purposeOfValuation || "تقدير القيمة السوقية"}
@@ -155,7 +195,7 @@ serve(async (req) => {
 - نوع الملكية: ${context.ownershipType || "ملكية حرة"}
 - تاريخ المعاينة: ${context.inspectionDate || "غير محدد"}
 - تاريخ التقييم: ${context.valuationDate || "غير محدد"}
-- الرقم المرجعي: ${context.referenceNumber || "غير محدد"}
+- الرقم المرجعي: ${context.referenceNumber || "غير محدد"}${machineryBlock}
 ${context.inspectionSummary ? "- ملخص المعاينة: " + context.inspectionSummary : ""}
 ${context.comparables?.length ? "- المقارنات:\n" + context.comparables.map((c, i) => `  ${i + 1}. ${c.description} — ${c.value.toLocaleString()} ر.س${c.source ? " (المصدر: " + c.source + ")" : ""}${c.reference_number ? " [رقم المرجع: " + c.reference_number + "]" : ""}${c.source_date ? " [تاريخ المصدر: " + c.source_date + "]" : ""}`).join("\n") : ""}\n\nملاحظة مهمة: يجب ذكر مصدر كل مقارنة بوضوح في التقرير وفقاً لمتطلبات IVS 2025 ومعايير تقييم. عند الإشارة إلى المقارنات في قسم التحليل والحسابات، اذكر اسم المصدر وتاريخ الحصول على البيانات ورقم المرجع إن وُجد.`;
 
@@ -164,20 +204,90 @@ ${context.comparables?.length ? "- المقارنات:\n" + context.comparables.
 
     if (mode === "structured_sections") {
       useToolCalling = true;
-      const requestedKeys = sectionKeys || [
-        "purpose", "scope", "property_desc", "market", "hbu",
-        "approaches", "calculations", "reconciliation", "assumptions", "compliance"
-      ];
+      let requestedKeys: string[];
+      if (isMachinery) {
+        requestedKeys = sectionKeys || [
+          "purpose", "scope", "machinery_inventory", "market", 
+          "machinery_approaches", "machinery_calculations", "reconciliation", "assumptions", "compliance"
+        ];
+      } else if (isMixed) {
+        requestedKeys = sectionKeys || [
+          "purpose", "scope", "property_desc", "market", "hbu",
+          "approaches", "calculations",
+          "machinery_inventory", "machinery_approaches", "machinery_calculations",
+          "unified_summary", "reconciliation", "assumptions", "compliance"
+        ];
+      } else {
+        requestedKeys = sectionKeys || [
+          "purpose", "scope", "property_desc", "market", "hbu",
+          "approaches", "calculations", "reconciliation", "assumptions", "compliance"
+        ];
+      }
+
+      let extraInstructions = "";
+      if (isMixed) {
+        extraInstructions = `\nمهم: قسم unified_summary يجب أن يتضمن جدولاً يجمع: قيمة العقارات + قيمة الآلات والمعدات = القيمة الإجمالية الموحدة.`;
+      }
+
       userPrompt = `بناءً على البيانات التالية، قم بتوليد محتوى مهني كامل لأقسام تقرير التقييم المطلوبة.
 
 ${contextBlock}
 
 الأقسام المطلوبة: ${requestedKeys.join(", ")}
-
+${extraInstructions}
 لكل قسم، اكتب محتوى مهنياً مفصلاً باللغة العربية والإنجليزية.
 استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
     } else if (mode === "full_report") {
-      userPrompt = `قم بتوليد تقرير تقييم كامل يشمل جميع الأقسام:
+      if (isMixed) {
+        userPrompt = `قم بتوليد تقرير تقييم مختلط (عقاري + آلات ومعدات) يشمل الأقسام التالية:
+
+**القسم الأول: تقييم العقارات**
+1. الملخص التنفيذي للعقارات
+2. وصف العقار والموقع
+3. تحليل السوق العقاري
+4. الاستخدام الأعلى والأفضل
+5. أساليب التقييم العقاري (المقارنة / التكلفة / الدخل)
+6. التحليل والحسابات العقارية
+7. رأي القيمة للعقارات
+
+**القسم الثاني: تقييم الآلات والمعدات**
+1. ملخص جرد الآلات والمعدات
+2. وصف تفصيلي لكل أصل (الشركة المصنعة، الموديل، سنة الصنع، الحالة)
+3. أساليب التقييم المستخدمة (التكلفة المستبدلة مع الاستهلاك)
+4. حسابات الإهلاك والتقادم لكل أصل
+5. رأي القيمة للآلات والمعدات
+
+**القسم الثالث: الملخص الموحد**
+1. جدول ملخص القيم (عقارات + آلات = الإجمالي)
+2. التسوية والمطابقة النهائية
+3. الرأي النهائي في القيمة الإجمالية
+4. الافتراضات والشروط المقيّدة
+5. بيان الامتثال
+6. التوصيات
+
+${contextBlock}
+
+اكتب كل قسم بعنوان واضح ومحتوى مهني مفصّل. اختم بالقيمة الإجمالية الموحدة.
+استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
+      } else if (isMachinery) {
+        userPrompt = `قم بتوليد تقرير تقييم آلات ومعدات كامل يشمل جميع الأقسام:
+1. الملخص التنفيذي
+2. جرد ووصف الآلات والمعدات (جدول تفصيلي: الاسم، الشركة المصنعة، الموديل، سنة الصنع، الرقم التسلسلي، الحالة)
+3. تحليل السوق للمعدات المماثلة
+4. المنهجية المتبعة (التكلفة المستبدلة مع الاستهلاك / المقارنة السوقية / القيمة الدفترية)
+5. حسابات الإهلاك: المادي والوظيفي والاقتصادي لكل أصل
+6. التسوية والمطابقة
+7. الرأي النهائي في القيمة
+8. الافتراضات والشروط المقيّدة
+9. بيان الامتثال
+10. التوصيات
+
+${contextBlock}
+
+اكتب كل قسم بعنوان واضح ومحتوى مهني مفصّل ومتسق.
+استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
+      } else {
+        userPrompt = `قم بتوليد تقرير تقييم عقاري كامل يشمل جميع الأقسام:
 1. الملخص التنفيذي
 2. وصف الأصل والعقار
 3. تحليل الموقع والسوق
@@ -194,6 +304,7 @@ ${contextBlock}
 
 اكتب كل قسم بعنوان واضح ومحتوى مهني مفصّل ومتسق.
 استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
+      }
     } else if (mode === "section") {
       const sectionNames: Record<string, string> = {
         executive_summary: "الملخص التنفيذي",

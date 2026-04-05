@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { assignment_id, property_city_ar, property_district_ar, property_latitude, property_longitude } = await req.json();
+    const { assignment_id, property_city_ar, property_district_ar, property_latitude, property_longitude, discipline } = await req.json();
 
     if (!assignment_id) {
       return new Response(JSON.stringify({ error: "assignment_id is required" }), {
@@ -40,10 +40,23 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Determine required specialization based on discipline
+    const requestDiscipline = discipline || "real_estate";
+    const allowedSpecializations: string[][] = [];
+    if (requestDiscipline === "real_estate") {
+      allowedSpecializations.push(["عقارات"], ["عقارات وآلات ومعدات"]);
+    } else if (requestDiscipline === "machinery_equipment") {
+      allowedSpecializations.push(["آلات ومعدات"], ["عقارات وآلات ومعدات"]);
+    } else {
+      // mixed — only inspectors who can do both
+      allowedSpecializations.push(["عقارات وآلات ومعدات"]);
+    }
+    const flatAllowed = allowedSpecializations.flat();
+
     // 1. Get all active inspector profiles with their coverage
     const { data: inspectorProfiles } = await supabase
       .from("inspector_profiles")
-      .select("id, user_id, availability_status, current_workload, max_concurrent_tasks, quality_score, total_completed, home_latitude, home_longitude")
+      .select("id, user_id, availability_status, current_workload, max_concurrent_tasks, quality_score, total_completed, home_latitude, home_longitude, specializations")
       .eq("is_active", true);
 
     if (!inspectorProfiles || inspectorProfiles.length === 0) {
@@ -86,10 +99,14 @@ Deno.serve(async (req) => {
     const targetLat = property_latitude || targetCity?.latitude || targetDistrict?.latitude;
     const targetLon = property_longitude || targetCity?.longitude || targetDistrict?.longitude;
 
-    // 5. Score each inspector
+    // 5. Score each inspector (filter by discipline/specialization)
     const matches: InspectorMatch[] = [];
 
     for (const insp of inspectorProfiles) {
+      // Filter by specialization match
+      const inspSpecs = insp.specializations || [];
+      const specMatch = flatAllowed.some(s => inspSpecs.includes(s));
+      if (!specMatch && inspSpecs.length > 0) continue; // skip if specialization doesn't match (allow if no specializations set)
       const inspCoverage = (coverageAreas || []).filter(ca => ca.inspector_profile_id === insp.id);
       const inspCityIds = inspCoverage.map(ca => ca.city_id);
       const inspDistrictIds = inspCoverage.filter(ca => ca.district_id).map(ca => ca.district_id);
