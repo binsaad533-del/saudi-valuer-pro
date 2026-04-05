@@ -20,7 +20,6 @@ import {
   MapPin,
   Sparkles,
   LogOut,
-  Brain,
   BarChart3,
   UserCircle,
 } from "lucide-react";
@@ -50,7 +49,6 @@ const navSections: NavSection[] = [
     items: [
       { labelKey: "raqeem", icon: Sparkles, path: "/raqeem", roles: ["owner"] },
       { labelKey: "dashboard", icon: LayoutDashboard, path: "/", roles: ["owner", "admin_coordinator"] },
-      { labelKey: "coordinatorPanel", icon: ClipboardCheck, path: "/coordinator-dashboard", roles: ["admin_coordinator", "owner"] },
     ],
   },
   {
@@ -67,13 +65,6 @@ const navSections: NavSection[] = [
       { labelKey: "clientRequests", icon: ClipboardCheck, path: "/client-requests", roles: ["owner", "admin_coordinator"] },
       { labelKey: "inspections", icon: MapPin, path: "/inspectors", roles: ["owner", "admin_coordinator"] },
       { labelKey: "clients", icon: Users, path: "/clients-management", roles: ["owner", "admin_coordinator"] },
-    ],
-    roles: ["owner", "admin_coordinator"],
-  },
-  {
-    titleKey: "aiSection",
-    items: [
-      { labelKey: "smartTools", icon: Brain, path: "/smart-tools", roles: ["owner", "admin_coordinator"] },
     ],
     roles: ["owner", "admin_coordinator"],
   },

@@ -20,7 +20,6 @@ import ReviewPage from "@/pages/ReviewPage";
 import SearchPage from "@/pages/SearchPage";
 import CompliancePage from "@/pages/CompliancePage";
 import SettingsPage from "@/pages/SettingsPage";
-import ValuationProductionList from "@/pages/ValuationProductionList";
 import ReportsListPage from "@/pages/ReportsListPage";
 import ValuationDetailPage from "@/pages/ValuationDetailPage";
 import NotFound from "./pages/NotFound.tsx";
@@ -51,11 +50,6 @@ import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
 import CFODashboardPage from "@/pages/CFODashboardPage";
-import CoordinatorDashboard from "@/pages/coordinator/CoordinatorDashboard";
-import AIDocumentProcessingPage from "@/pages/AIDocumentProcessingPage";
-import ScopeAndPricingPage from "@/pages/ScopeAndPricingPage";
-import AIReportGenerationPage from "@/pages/AIReportGenerationPage";
-import SmartToolsPage from "@/pages/SmartToolsPage";
 import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import MarketDataPage from "@/pages/MarketDataPage";
@@ -101,7 +95,6 @@ const App = () => (
             <Route path="/reports/generate" element={<ReportGenerator />} />
             <Route path="/reports/generate/:id" element={<ReportGenerator />} />
             <Route path="/client-requests" element={<ClientRequests />} />
-            <Route path="/valuation-production" element={<ValuationProductionList />} />
             <Route path="/valuation-production/:assignmentId" element={<ValuationProduction />} />
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
             <Route path="/compliance" element={<CompliancePage />} />
@@ -111,15 +104,8 @@ const App = () => (
             <Route path="/inspectors" element={<InspectorsListPage />} />
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
-            <Route path="/coordinator-dashboard" element={<CoordinatorDashboard />} />
-            <Route path="/smart-tools" element={<SmartToolsPage />} />
-            <Route path="/ai-document-processing" element={<AIDocumentProcessingPage />} />
-            <Route path="/scope-and-pricing" element={<ScopeAndPricingPage />} />
-            <Route path="/ai-scope-pricing" element={<ScopeAndPricingPage />} />
-            <Route path="/ai-report-generation" element={<AIReportGenerationPage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
             <Route path="/account" element={<UserSettingsPage />} />
-            <Route path="/user-settings" element={<UserSettingsPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}

@@ -1,9 +1,7 @@
 /**
  * Report Issuance Gate — بوابة الإصدار النهائي
  * Validates ALL technical prerequisites before allowing final report issuance.
- * 
- * CRITICAL: Payment status is SEPARATE from technical readiness.
- * This gate checks ONLY technical/professional requirements.
+ * Payment is COMPLETELY decoupled — never blocks issuance.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -15,14 +13,13 @@ export interface IssuanceCheck {
   label_en: string;
   passed: boolean;
   mandatory: boolean;
-  category: "authorization" | "technical" | "compliance" | "financial";
+  category: "authorization" | "technical" | "compliance";
   details?: string;
 }
 
 export interface IssuanceGateResult {
   can_issue: boolean;
   technically_ready: boolean;
-  payment_pending: boolean;
   checks: IssuanceCheck[];
   passed_count: number;
   failed_mandatory: number;
@@ -59,7 +56,6 @@ export async function runIssuanceGate(
     return {
       can_issue: false,
       technically_ready: false,
-      payment_pending: false,
       checks: [{ code: "NO_ASSIGNMENT", label_ar: "المهمة غير موجودة", label_en: "Assignment not found", passed: false, mandatory: true, category: "technical" }],
       passed_count: 0,
       failed_mandatory: 1,
@@ -188,47 +184,13 @@ export async function runIssuanceGate(
     category: "technical",
   });
 
-  // 9. Final value approval — explicit approval step logged in audit
-  const { data: valueApprovalLog } = await supabase
-    .from("audit_logs")
-    .select("id")
-    .eq("assignment_id", assignmentId)
-    .eq("table_name", "valuation_assignments")
-    .like("description", "%اعتماد القيمة النهائية%")
-    .limit(1);
-
-  const valueApproved = (valueApprovalLog?.length || 0) > 0;
-  checks.push({
-    code: "VALUE_APPROVAL",
-    label_ar: "اعتماد القيمة النهائية من مقيّم/مدير معتمد",
-    label_en: "Final value approved by authorized valuer/manager",
-    passed: valueApproved,
-    mandatory: true,
-    category: "authorization",
-    details: valueApproved ? undefined : "يجب اعتماد القيمة النهائية صراحةً قبل الإصدار",
-  });
-
-  // 10. Payment status — INFORMATIONAL ONLY, does NOT block issuance
-  const paymentPending = ["awaiting_payment_initial", "awaiting_final_payment"].includes((assignment as any).status);
-  checks.push({
-    code: "PAYMENT_STATUS",
-    label_ar: "حالة الدفع",
-    label_en: "Payment status",
-    passed: !paymentPending,
-    mandatory: false, // Payment does NOT block technical issuance
-    category: "financial",
-    details: paymentPending ? "الدفع معلق — لا يمنع الإصدار الفني" : undefined,
-  });
-
-  // Calculate results — only mandatory technical/authorization checks block
-  const technicalChecks = checks.filter(c => c.category !== "financial");
-  const failedMandatory = technicalChecks.filter(c => c.mandatory && !c.passed);
+  // Calculate results
+  const failedMandatory = checks.filter(c => c.mandatory && !c.passed);
   const passedCount = checks.filter(c => c.passed).length;
 
   return {
     can_issue: failedMandatory.length === 0,
     technically_ready: failedMandatory.length === 0,
-    payment_pending: paymentPending,
     checks,
     passed_count: passedCount,
     failed_mandatory: failedMandatory.length,
@@ -259,7 +221,6 @@ export async function approveFinalValue(
     return { success: false, error: "ليس لديك صلاحية اعتماد القيمة النهائية" };
   }
 
-  // Log explicit approval
   await supabase.from("audit_logs").insert({
     user_id: user.id,
     action: "update" as any,
