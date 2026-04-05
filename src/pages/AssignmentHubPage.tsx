@@ -7,6 +7,7 @@ import {
   FileText, CheckCircle2, AlertTriangle, ChevronLeft, Loader2,
   ClipboardCheck, Scale, Shield, Sparkles, ExternalLink,
 } from "lucide-react";
+import ComparableSelectionEngine from "@/components/valuation/ComparableSelectionEngine";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -315,6 +316,16 @@ export default function AssignmentHubPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Comparable Selection Engine */}
+      <ComparableSelectionEngine
+        assignmentId={id!}
+        subjectCity={subject?.city_ar}
+        subjectDistrict={subject?.district_ar}
+        subjectPropertyType={subject?.property_type}
+        subjectArea={subject?.land_area}
+        onResultReady={() => loadAssignmentData()}
+      />
 
       {/* Compliance Summary */}
       {complianceChecks.length > 0 && (
