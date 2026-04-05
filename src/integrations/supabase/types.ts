@@ -2064,6 +2064,45 @@ export type Database = {
           },
         ]
       }
+      intelligence_source_links: {
+        Row: {
+          asset_type: string
+          auto_linked: boolean
+          created_at: string
+          id: string
+          is_active: boolean
+          linked_by: string | null
+          source_id: string
+          source_name_ar: string
+          source_type: string
+          valuation_method: string
+        }
+        Insert: {
+          asset_type?: string
+          auto_linked?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          linked_by?: string | null
+          source_id: string
+          source_name_ar: string
+          source_type: string
+          valuation_method: string
+        }
+        Update: {
+          asset_type?: string
+          auto_linked?: boolean
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          linked_by?: string | null
+          source_id?: string
+          source_name_ar?: string
+          source_type?: string
+          valuation_method?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           assignment_id: string | null

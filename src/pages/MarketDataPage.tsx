@@ -440,9 +440,9 @@ export default function MarketDataIntegration() {
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Database className="h-6 w-6 text-primary" />
-          بيانات السوق والمقارنات
+          المصادر المعتمدة
         </h1>
-        <p className="text-sm text-muted-foreground mt-1">استيراد وإدارة بيانات السوق العقاري ومراجع الآلات والمعدات</p>
+        <p className="text-sm text-muted-foreground mt-1">المراجع والمصادر المعتمدة للمقارنات السوقية وبيانات التقييم</p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
