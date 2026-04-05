@@ -48,28 +48,6 @@ const CATEGORY_LABELS: Record<string, string> = {
   methodology: "منهجيات", data_quality: "جودة البيانات",
 };
 
-const STAGE_LABELS: Record<string, string> = {
-  asset_extraction: "استخراج الأصول",
-  asset_review: "مراجعة الأصول",
-  valuation_calculation: "حسابات التقييم",
-  reconciliation: "المصالحة",
-  report_generation: "إعداد التقرير",
-  report_issuance: "إصدار التقرير",
-};
-
-const IMPACT_LABELS: Record<string, { ar: string; cls: string }> = {
-  warning: { ar: "تحذير", cls: "bg-amber-500/10 text-amber-600 border-amber-200" },
-  risk: { ar: "خطر", cls: "bg-orange-500/10 text-orange-600 border-orange-200" },
-  confidence_reduction: { ar: "تخفيض ثقة", cls: "bg-blue-500/10 text-blue-600 border-blue-200" },
-  blocking: { ar: "حجب", cls: "bg-red-500/10 text-red-600 border-red-200" },
-};
-
-const ASSET_TYPE_LABELS: Record<string, string> = {
-  real_estate: "عقارات",
-  machinery: "آلات",
-  both: "الكل",
-};
-
 function formatBytes(bytes: number | null) {
   if (!bytes) return "";
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
