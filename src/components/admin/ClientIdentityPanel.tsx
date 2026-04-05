@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -73,6 +74,7 @@ function ConfidenceBadge({ score }: { score: number }) {
 
 export default function ClientIdentityPanel() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [clients, setClients] = useState<ClientRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -303,7 +305,7 @@ export default function ClientIdentityPanel() {
                     const cfg = STATUS_CONFIG[c.client_status] || STATUS_CONFIG.potential;
                     const Icon = cfg.icon;
                     return (
-                      <TableRow key={c.id}>
+                      <TableRow key={c.id} className="cursor-pointer" onClick={() => navigate(`/clients/${c.id}`)}>
                         <TableCell className="font-medium">
                           {c.name_ar}
                           {c.contact_person_ar && (
