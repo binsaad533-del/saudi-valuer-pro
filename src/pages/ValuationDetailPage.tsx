@@ -15,6 +15,8 @@ import DecisionPanel from "@/components/valuation/DecisionPanel";
 import type { RiskContext } from "@/lib/risk-detection";
 import JustificationWriter from "@/components/valuation/JustificationWriter";
 import { calculateConfidence } from "@/lib/confidence-scoring";
+import ReportGeneratorPanel from "@/components/reports/ReportGeneratorPanel";
+import type { FullReportData } from "@/services/fullReportGenerator";
 
 const MOCK = {
   id: "VA-2026-0042",
@@ -306,6 +308,46 @@ export default function ValuationDetailPage() {
 
           {/* Decision */}
           <DecisionPanel context={riskCtx} compliancePassed={true} />
+
+          {/* Report Generator */}
+          <ReportGeneratorPanel
+            reportData={{
+              reportNumber: d.id,
+              reportDate: d.createdAt,
+              valuationDate: d.createdAt,
+              isDraft: true,
+              client: d.client,
+              property: d.property,
+              valuation: {
+                purpose: d.valuation.purpose,
+                basisOfValue: d.valuation.basis,
+                approach: d.valuation.approach,
+                estimatedValue: d.valuation.estimatedValue,
+                currency: d.valuation.currency,
+                pricePerSqm: d.valuation.pricePerSqm,
+                methodValues: [
+                  { method: "المقارنة السوقية", value: 2_850_000 },
+                  { method: "التكلفة", value: 2_720_000 },
+                ],
+              },
+              assumptions: [
+                "العقار خالٍ من الرهون والنزاعات القانونية",
+                "البيانات المقدمة من العميل صحيحة ودقيقة",
+                "ظروف السوق مستقرة وقت التقييم",
+              ],
+              inspector: d.inspection,
+              valuer: d.valuer,
+              reviewer: d.reviewer,
+              evaluatorCredentials: {
+                saudiAuthority: "عضو الهيئة السعودية للمقيمين المعتمدين",
+                rics: "MRICS",
+                asa: "ASA",
+              },
+              verificationToken: "VRF-2026-XXXXX",
+            } satisfies FullReportData}
+            riskContext={riskCtx}
+            compliancePassed={true}
+          />
 
           {/* Team */}
           <Card>
