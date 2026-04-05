@@ -463,7 +463,7 @@ export default function NewRequest() {
                   الوثائق المتعلقة بالتقييم
                 </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
-                  ارفع صكوك الملكية، المخططات، التقارير، الصور، جداول البيانات، أو أي مستندات ذات صلة. سيقوم الذكاء الاصطناعي بتحليل محتواها واستخراج كافة البيانات تلقائياً.
+                  ارفع صكوك الملكية، المخططات، التقارير، الصور، جداول البيانات، أو أي مستندات ذات صلة. سيتم تحليل محتواها واستخراج كافة البيانات تلقائياً.
                 </p>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -534,7 +534,7 @@ export default function NewRequest() {
               disabled={uploadedFiles.length === 0 || uploading || !clientInfo.contactName.trim() || !clientInfo.purpose || !clientInfo.clientType || !clientInfo.contactPhone.trim() || !clientInfo.intendedUsers.trim()}
             >
               <Sparkles className="w-4 h-4" />
-              تحليل الوثائق بالذكاء الاصطناعي ({uploadedFiles.length} ملف)
+              تحليل الوثائق واستخراج البيانات ({uploadedFiles.length} ملف)
             </Button>
           </div>
         )}
