@@ -7,8 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { CurrencyDisplay, SAR } from "@/components/ui/saudi-riyal";
+import { CurrencyDisplay } from "@/components/ui/saudi-riyal";
 import {
   Calculator, Ticket, Lock, Unlock, CheckCircle, XCircle, AlertTriangle, Loader2, Save,
 } from "lucide-react";
@@ -221,7 +220,6 @@ export default function PricingCalculator({
   }
 
   const afterDiscount = subtotal - discountAmount;
-  const effectiveBase = overrideEnabled ? overrideAmount : afterDiscount;
 
   return (
     <Card>
