@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
+import { Checkbox } from "@/components/ui/checkbox";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
@@ -14,7 +14,7 @@ import {
   Search, Plus, Trash2, Edit3, ChevronDown, ChevronUp,
   Building2, Wrench, Package, FileText, AlertTriangle, X, Copy,
   ShieldCheck, Eye, CheckCircle, XCircle, RefreshCw, Filter, Layers,
-  LayoutGrid, List, History, Merge,
+  LayoutGrid, List, History, Merge, Download,
 } from "lucide-react";
 
 interface ExtractedAsset {
@@ -109,6 +109,8 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
   const [showAuditLog, setShowAuditLog] = useState(false);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [userId, setUserId] = useState<string | null>(null);
+  // Bulk selection
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUserId(data.user?.id || null));
@@ -132,29 +134,20 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
     setLoading(false);
   };
 
-  // Audit log helper
   const logEdit = useCallback(async (assetId: string, action: string, fieldName?: string, oldVal?: string, newVal?: string) => {
     if (!userId) return;
     try {
       await supabase.from("asset_edit_logs" as any).insert({
-        asset_id: assetId,
-        job_id: jobId,
-        user_id: userId,
-        action,
-        field_name: fieldName || null,
-        old_value: oldVal || null,
-        new_value: newVal || null,
+        asset_id: assetId, job_id: jobId, user_id: userId, action,
+        field_name: fieldName || null, old_value: oldVal || null, new_value: newVal || null,
       });
     } catch { /* silent */ }
   }, [userId, jobId]);
 
   const loadAuditLogs = async () => {
     const { data } = await supabase
-      .from("asset_edit_logs" as any)
-      .select("*")
-      .eq("job_id", jobId)
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .from("asset_edit_logs" as any).select("*").eq("job_id", jobId)
+      .order("created_at", { ascending: false }).limit(100);
     if (data) setAuditLogs(data);
     setShowAuditLog(true);
   };
@@ -169,14 +162,8 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
     const missingCriticalFields = assets.filter(a => (a.missing_fields?.length || 0) > 0 && a.review_status !== "rejected").length;
     const lowConfidenceItems = assets.filter(a => a.confidence < 60 && a.review_status !== "rejected").length;
     return {
-      totalAssets: assets.length,
-      approvedCount,
-      needsReviewCount,
-      pendingCount,
-      rejectedCount,
-      duplicatesUnresolved,
-      missingCriticalFields,
-      lowConfidenceItems,
+      totalAssets: assets.length, approvedCount, needsReviewCount, pendingCount, rejectedCount,
+      duplicatesUnresolved, missingCriticalFields, lowConfidenceItems,
       canProceed: assets.length > 0 && duplicatesUnresolved === 0 && needsReviewCount === 0 && pendingCount === 0,
     };
   }, [assets]);
@@ -194,11 +181,7 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
 
     if (searchQuery.trim()) {
       const q = searchQuery.trim().toLowerCase();
-      items = items.filter(a =>
-        a.name.toLowerCase().includes(q) ||
-        (a.category || "").toLowerCase().includes(q) ||
-        (a.description || "").toLowerCase().includes(q)
-      );
+      items = items.filter(a => a.name.toLowerCase().includes(q) || (a.category || "").toLowerCase().includes(q) || (a.description || "").toLowerCase().includes(q));
     }
     items.sort((a, b) => {
       let cmp = 0;
@@ -214,7 +197,6 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
     return items;
   }, [assets, activePanel, searchQuery, sortField, sortDir]);
 
-  // Grouped view data
   const groupedAssets = useMemo(() => {
     const groups: Record<string, ExtractedAsset[]> = {};
     for (const a of filteredAssets) {
@@ -235,7 +217,42 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
     return sortDir === "asc" ? <ChevronUp className="w-3 h-3 inline" /> : <ChevronDown className="w-3 h-3 inline" />;
   };
 
-  // Asset CRUD
+  // ── Bulk selection ──
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredAssets.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredAssets.map(a => a.id)));
+    }
+  };
+
+  const bulkSetStatus = async (status: string) => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setAssets(prev => prev.map(a => ids.includes(a.id) ? { ...a, review_status: status } : a));
+    await supabase.from("extracted_assets").update({ review_status: status } as any).in("id", ids);
+    toast({ title: `تم تحديث ${ids.length} أصل إلى "${REVIEW_STATUS_CONFIG[status]?.label || status}"` });
+    setSelectedIds(new Set());
+  };
+
+  const bulkDelete = async () => {
+    const ids = Array.from(selectedIds);
+    if (ids.length === 0) return;
+    setAssets(prev => prev.filter(a => !ids.includes(a.id)));
+    await supabase.from("extracted_assets").delete().in("id", ids);
+    toast({ title: `تم حذف ${ids.length} أصل` });
+    setSelectedIds(new Set());
+  };
+
+  // ── Asset CRUD ──
   const updateAsset = async (id: string, updates: Partial<ExtractedAsset>, logAction?: string, fieldName?: string, oldVal?: string, newVal?: string) => {
     setAssets(prev => prev.map(a => a.id === id ? { ...a, ...updates } : a));
     await supabase.from("extracted_assets").update(updates as any).eq("id", id);
@@ -245,9 +262,7 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
   const updateAssetField = (id: string, fieldKey: string, newValue: string) => {
     const asset = assets.find(a => a.id === id);
     if (!asset) return;
-    const fields = (asset.asset_data?.fields || []).map((f: any) =>
-      f.key === fieldKey ? { ...f, value: newValue } : f
-    );
+    const fields = (asset.asset_data?.fields || []).map((f: any) => f.key === fieldKey ? { ...f, value: newValue } : f);
     const oldField = (asset.asset_data?.fields || []).find((f: any) => f.key === fieldKey);
     updateAsset(id, { asset_data: { ...asset.asset_data, fields } } as any, "edit_field", fieldKey, oldField?.value, newValue);
   };
@@ -275,87 +290,63 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
     const keep = assets.find(a => a.id === keepId);
     const remove = assets.find(a => a.id === removeId);
     if (!keep || !remove) return;
-
-    // Merge fields from removed into kept
     const keepFields = [...(keep.asset_data?.fields || [])];
     for (const rf of (remove.asset_data?.fields || [])) {
       const existing = keepFields.find((f: any) => f.key === rf.key);
       if (!existing || (!existing.value && rf.value) || (rf.confidence > existing.confidence)) {
-        if (existing) {
-          Object.assign(existing, rf);
-        } else {
-          keepFields.push(rf);
-        }
+        if (existing) Object.assign(existing, rf); else keepFields.push(rf);
       }
     }
-
-    await updateAsset(keepId, {
-      asset_data: { ...keep.asset_data, fields: keepFields },
-      confidence: Math.max(keep.confidence, remove.confidence),
-      review_status: "merged",
-      duplicate_status: "resolved",
-    } as any, "merge", "merged_with", remove.name);
-
-    await updateAsset(removeId, {
-      review_status: "rejected",
-      duplicate_status: "resolved",
-    } as any, "merged_into", "merged_into", keep.name);
+    await updateAsset(keepId, { asset_data: { ...keep.asset_data, fields: keepFields }, confidence: Math.max(keep.confidence, remove.confidence), review_status: "merged", duplicate_status: "resolved" } as any, "merge", "merged_with", remove.name);
+    await updateAsset(removeId, { review_status: "rejected", duplicate_status: "resolved" } as any, "merged_into", "merged_into", keep.name);
   };
 
   const addManualAsset = async () => {
     const maxIdx = Math.max(0, ...assets.map(a => a.asset_index));
-    const newAsset = {
-      job_id: jobId,
-      asset_index: maxIdx + 1,
-      name: "أصل جديد",
-      asset_type: "real_estate",
-      quantity: 1,
-      condition: "unknown",
-      confidence: 100,
-      asset_data: { fields: [] },
-      source_evidence: "إدخال يدوي",
-      review_status: "approved",
-      missing_fields: [],
-    };
-    const { data } = await supabase.from("extracted_assets").insert(newAsset).select().single();
-    if (data) {
-      setAssets(prev => [...prev, data as any]);
-      logEdit((data as any).id, "create_manual");
-    }
+    const { data } = await supabase.from("extracted_assets").insert({
+      job_id: jobId, asset_index: maxIdx + 1, name: "أصل جديد", asset_type: "real_estate",
+      quantity: 1, condition: "unknown", confidence: 100, asset_data: { fields: [] },
+      source_evidence: "إدخال يدوي", review_status: "approved", missing_fields: [],
+    }).select().single();
+    if (data) { setAssets(prev => [...prev, data as any]); logEdit((data as any).id, "create_manual"); }
   };
 
   const duplicateAssetRow = async (asset: ExtractedAsset) => {
     const maxIdx = Math.max(0, ...assets.map(a => a.asset_index));
-    const dup = {
-      job_id: jobId,
-      asset_index: maxIdx + 1,
-      name: `${asset.name} (نسخة)`,
-      asset_type: asset.asset_type,
-      category: asset.category,
-      subcategory: asset.subcategory,
-      description: asset.description,
-      quantity: asset.quantity,
-      condition: asset.condition,
-      confidence: asset.confidence,
-      asset_data: asset.asset_data,
-      source_evidence: asset.source_evidence,
-      review_status: "pending",
-      missing_fields: asset.missing_fields,
-    };
-    const { data } = await supabase.from("extracted_assets").insert(dup).select().single();
-    if (data) {
-      setAssets(prev => [...prev, data as any]);
-      logEdit((data as any).id, "duplicate", "source", asset.name);
-    }
+    const { data } = await supabase.from("extracted_assets").insert({
+      job_id: jobId, asset_index: maxIdx + 1, name: `${asset.name} (نسخة)`, asset_type: asset.asset_type,
+      category: asset.category, subcategory: asset.subcategory, description: asset.description,
+      quantity: asset.quantity, condition: asset.condition, confidence: asset.confidence,
+      asset_data: asset.asset_data, source_evidence: asset.source_evidence,
+      review_status: "pending", missing_fields: asset.missing_fields,
+    }).select().single();
+    if (data) { setAssets(prev => [...prev, data as any]); logEdit((data as any).id, "duplicate", "source", asset.name); }
   };
 
   const addFieldToAsset = (assetId: string) => {
     const asset = assets.find(a => a.id === assetId);
     if (!asset) return;
-    const fields = [...(asset.asset_data?.fields || []), {
-      key: `custom_${Date.now()}`, label: "حقل جديد", value: "", confidence: 100,
-    }];
+    const fields = [...(asset.asset_data?.fields || []), { key: `custom_${Date.now()}`, label: "حقل جديد", value: "", confidence: 100 }];
     updateAsset(assetId, { asset_data: { ...asset.asset_data, fields } } as any, "add_field");
+  };
+
+  // ── Export to CSV ──
+  const exportToCSV = () => {
+    const activeAssets = assets.filter(a => a.review_status !== "rejected");
+    const headers = ["#", "الاسم", "النوع", "التصنيف", "الكمية", "الحالة", "الثقة%", "المصدر", "المراجعة"];
+    const rows = activeAssets.map(a => [
+      a.asset_index, a.name, a.asset_type === "real_estate" ? "عقار" : "آلة/معدة",
+      a.category || "", a.quantity, CONDITION_LABELS[a.condition] || a.condition,
+      a.confidence, a.source_evidence || "", REVIEW_STATUS_CONFIG[a.review_status]?.label || a.review_status,
+    ]);
+    const BOM = "\uFEFF";
+    const csv = BOM + [headers.join(","), ...rows.map(r => r.map(c => `"${c}"`).join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `asset-inventory-${jobId.substring(0, 8)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast({ title: `تم تصدير ${activeAssets.length} أصل` });
   };
 
   const getConfidenceColor = (c: number) => c >= 85 ? "text-emerald-600 dark:text-emerald-400" : c >= 70 ? "text-amber-600 dark:text-amber-400" : "text-red-500 dark:text-red-400";
@@ -375,32 +366,33 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
   const reCount = assets.filter(a => a.asset_type === "real_estate" && a.review_status !== "rejected").length;
   const meCount = assets.filter(a => a.asset_type === "machinery_equipment" && a.review_status !== "rejected").length;
 
-  // ── Render asset card (for card view) ──
+  // ── Render asset card ──
   const renderAssetCard = (asset: ExtractedAsset) => {
     const reviewCfg = REVIEW_STATUS_CONFIG[asset.review_status] || REVIEW_STATUS_CONFIG.pending;
     const ReviewIcon = reviewCfg.icon;
     const fields = asset.asset_data?.fields || [];
+    const isSelected = selectedIds.has(asset.id);
 
     return (
-      <Card key={asset.id} className="shadow-sm hover:shadow-md transition-shadow">
+      <Card key={asset.id} className={`shadow-sm hover:shadow-md transition-shadow ${isSelected ? "ring-2 ring-primary" : ""}`}>
         <CardContent className="p-3 space-y-2">
           <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Badge variant={asset.asset_type === "real_estate" ? "default" : "secondary"} className="text-[9px] shrink-0">
-                  {asset.asset_type === "real_estate" ? "عقار" : "آلة"}
-                </Badge>
-                <span className="text-xs text-muted-foreground">#{asset.asset_index}</span>
+            <div className="flex items-center gap-2">
+              <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(asset.id)} />
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Badge variant={asset.asset_type === "real_estate" ? "default" : "secondary"} className="text-[9px] shrink-0">
+                    {asset.asset_type === "real_estate" ? "عقار" : "آلة"}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground">#{asset.asset_index}</span>
+                </div>
+                <p className="text-sm font-semibold truncate">{asset.name}</p>
               </div>
-              <p className="text-sm font-semibold truncate">{asset.name}</p>
-              {asset.category && <p className="text-[10px] text-muted-foreground">{asset.category}</p>}
             </div>
             <Badge className={`text-[9px] gap-0.5 shrink-0 ${reviewCfg.color}`}>
               <ReviewIcon className="w-3 h-3" /> {reviewCfg.label}
             </Badge>
           </div>
-
-          {/* Key fields */}
           <div className="grid grid-cols-2 gap-1">
             {fields.slice(0, 4).map((f: any) => (
               <div key={f.key} className="text-[10px]">
@@ -409,8 +401,6 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
               </div>
             ))}
           </div>
-
-          {/* Bottom bar */}
           <div className="flex items-center justify-between pt-1 border-t border-border/50">
             <div className="flex items-center gap-1">
               <div className={`w-2 h-2 rounded-full ${getConfidenceBg(asset.confidence)}`} />
@@ -423,19 +413,13 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
               <button onClick={() => deleteAsset(asset.id)} className="p-1 hover:text-destructive text-muted-foreground"><Trash2 className="w-3 h-3" /></button>
             </div>
           </div>
-
-          {/* Warnings */}
           {(asset.duplicate_status === "potential_duplicate" || (asset.missing_fields?.length || 0) > 0) && (
             <div className="flex gap-1 flex-wrap">
               {asset.duplicate_status === "potential_duplicate" && (
-                <Badge variant="outline" className="text-[8px] border-amber-300 text-amber-600">
-                  <Layers className="w-2 h-2 ml-0.5" /> تكرار
-                </Badge>
+                <Badge variant="outline" className="text-[8px] border-amber-300 text-amber-600"><Layers className="w-2 h-2 ml-0.5" /> تكرار</Badge>
               )}
               {(asset.missing_fields?.length || 0) > 0 && (
-                <Badge variant="outline" className="text-[8px] border-destructive/30 text-destructive">
-                  {asset.missing_fields.length} ناقص
-                </Badge>
+                <Badge variant="outline" className="text-[8px] border-destructive/30 text-destructive">{asset.missing_fields.length} ناقص</Badge>
               )}
             </div>
           )}
@@ -450,18 +434,21 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
     const ReviewIcon = reviewCfg.icon;
     const fields = asset.asset_data?.fields || [];
     const isExpanded = expandedId === asset.id;
+    const isSelected = selectedIds.has(asset.id);
 
     return (
       <>
-        <TableRow key={asset.id} className="cursor-pointer hover:bg-muted/30"
+        <TableRow key={asset.id} className={`cursor-pointer hover:bg-muted/30 ${isSelected ? "bg-primary/5" : ""}`}
           onClick={() => setExpandedId(isExpanded ? null : asset.id)}>
+          <TableCell className="text-center" onClick={e => e.stopPropagation()}>
+            <Checkbox checked={isSelected} onCheckedChange={() => toggleSelect(asset.id)} />
+          </TableCell>
           <TableCell className="text-center font-mono text-xs text-muted-foreground">{asset.asset_index}</TableCell>
           <TableCell>
             {editingId === asset.id ? (
               <Input value={asset.name}
                 onChange={e => updateAsset(asset.id, { name: e.target.value } as any, "edit", "name", asset.name, e.target.value)}
-                onBlur={() => setEditingId(null)}
-                onKeyDown={e => e.key === "Enter" && setEditingId(null)}
+                onBlur={() => setEditingId(null)} onKeyDown={e => e.key === "Enter" && setEditingId(null)}
                 className="h-7 text-sm" autoFocus onClick={e => e.stopPropagation()} />
             ) : (
               <div>
@@ -510,7 +497,7 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
 
         {isExpanded && (
           <TableRow key={`${asset.id}-exp`}>
-            <TableCell colSpan={9} className="bg-muted/20 p-4">
+            <TableCell colSpan={10} className="bg-muted/20 p-4">
               <div className="space-y-3">
                 {asset.description && (
                   <div className="p-2 rounded-lg bg-card border text-sm text-muted-foreground">{asset.description}</div>
@@ -526,23 +513,17 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
                   </div>
                 )}
 
-                {/* Duplicate resolution */}
                 {asset.duplicate_status === "potential_duplicate" && asset.duplicate_group && (
                   <div className="p-2 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
                     <p className="text-xs font-bold text-amber-700 dark:text-amber-400 mb-2">تكرار محتمل — اختر الإجراء:</p>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => {
                         updateAsset(asset.id, { duplicate_status: "resolved", review_status: "approved" } as any, "resolve_duplicate");
-                      }}>
-                        <CheckCircle className="w-3 h-3" /> ليس تكراراً
-                      </Button>
+                      }}><CheckCircle className="w-3 h-3" /> ليس تكراراً</Button>
                       <Button size="sm" variant="outline" className="text-xs h-7 gap-1" onClick={() => {
-                        // Find other assets in same duplicate group
                         const siblings = assets.filter(a => a.duplicate_group === asset.duplicate_group && a.id !== asset.id);
                         if (siblings.length > 0) mergeAssets(siblings[0].id, asset.id);
-                      }}>
-                        <Merge className="w-3 h-3" /> دمج مع الأصل
-                      </Button>
+                      }}><Merge className="w-3 h-3" /> دمج مع الأصل</Button>
                       <Button size="sm" variant="destructive" className="text-xs h-7 gap-1" onClick={() => deleteAsset(asset.id)}>
                         <Trash2 className="w-3 h-3" /> حذف
                       </Button>
@@ -550,7 +531,6 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
                   </div>
                 )}
 
-                {/* Fields */}
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-bold text-muted-foreground">المواصفات ({fields.length} حقل)</p>
                   <Button size="sm" variant="ghost" className="text-[10px] h-6 gap-1" onClick={() => addFieldToAsset(asset.id)}>
@@ -565,24 +545,19 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
                           <span className="text-[10px] text-muted-foreground">{field.label}</span>
                           <span className={`text-[9px] font-mono ${getConfidenceColor(field.confidence)}`}>{field.confidence}%</span>
                         </div>
-                        <Input value={field.value}
-                          onChange={e => updateAssetField(asset.id, field.key, e.target.value)}
-                          className="h-6 text-xs" />
+                        <Input value={field.value} onChange={e => updateAssetField(asset.id, field.key, e.target.value)} className="h-6 text-xs" />
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* Review status actions */}
                 <div className="flex items-center gap-2 pt-2 border-t border-border/50">
                   <span className="text-[10px] text-muted-foreground">تغيير الحالة:</span>
                   {Object.entries(REVIEW_STATUS_CONFIG).filter(([k]) => k !== "merged").map(([key, cfg]) => (
                     <button key={key} onClick={() => setReviewStatus(asset.id, key)}
                       className={`text-[9px] px-2 py-0.5 rounded-full border transition-colors ${
                         asset.review_status === key ? cfg.color : "border-border text-muted-foreground hover:border-primary/40"
-                      }`}>
-                      {cfg.label}
-                    </button>
+                      }`}>{cfg.label}</button>
                   ))}
                 </div>
 
@@ -648,7 +623,7 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
         </CardContent>
       </Card>
 
-      {/* Audit Log Dialog */}
+      {/* Audit Log */}
       {showAuditLog && (
         <Card className="shadow-card border-primary/20">
           <CardHeader className="pb-2">
@@ -743,26 +718,40 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
               </SelectContent>
             </Select>
 
-            {/* View mode */}
             <div className="flex border border-border rounded-md overflow-hidden">
-              <button onClick={() => setViewMode("table")} className={`p-1.5 ${viewMode === "table" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`} title="جدول">
-                <List className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={() => setViewMode("cards")} className={`p-1.5 ${viewMode === "cards" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`} title="بطاقات">
-                <LayoutGrid className="w-3.5 h-3.5" />
-              </button>
-              <button onClick={() => setViewMode("grouped")} className={`p-1.5 ${viewMode === "grouped" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`} title="مجموعات">
-                <Layers className="w-3.5 h-3.5" />
-              </button>
+              <button onClick={() => setViewMode("table")} className={`p-1.5 ${viewMode === "table" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`} title="جدول"><List className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setViewMode("cards")} className={`p-1.5 ${viewMode === "cards" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`} title="بطاقات"><LayoutGrid className="w-3.5 h-3.5" /></button>
+              <button onClick={() => setViewMode("grouped")} className={`p-1.5 ${viewMode === "grouped" ? "bg-primary/10 text-primary" : "text-muted-foreground"}`} title="مجموعات"><Layers className="w-3.5 h-3.5" /></button>
             </div>
 
-            <Button variant="outline" size="sm" className="text-xs h-8 gap-1" onClick={addManualAsset}>
-              <Plus className="w-3 h-3" /> إضافة أصل
-            </Button>
-            <Button variant="outline" size="sm" className="text-xs h-8 gap-1" onClick={approveAll}>
-              <CheckCircle className="w-3 h-3" /> اعتماد الكل
-            </Button>
+            <Button variant="outline" size="sm" className="text-xs h-8 gap-1" onClick={addManualAsset}><Plus className="w-3 h-3" /> إضافة</Button>
+            <Button variant="outline" size="sm" className="text-xs h-8 gap-1" onClick={approveAll}><CheckCircle className="w-3 h-3" /> اعتماد الكل</Button>
+            <Button variant="outline" size="sm" className="text-xs h-8 gap-1" onClick={exportToCSV}><Download className="w-3 h-3" /> تصدير</Button>
           </div>
+
+          {/* Bulk actions bar */}
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2 mt-2 p-2 rounded-lg bg-primary/5 border border-primary/20">
+              <span className="text-xs font-medium text-primary">{selectedIds.size} أصل محدد</span>
+              <div className="flex gap-1 mr-auto">
+                <Button size="sm" variant="outline" className="text-[10px] h-6 gap-1" onClick={() => bulkSetStatus("approved")}>
+                  <CheckCircle className="w-3 h-3" /> اعتماد
+                </Button>
+                <Button size="sm" variant="outline" className="text-[10px] h-6 gap-1" onClick={() => bulkSetStatus("needs_review")}>
+                  <AlertTriangle className="w-3 h-3" /> مراجعة
+                </Button>
+                <Button size="sm" variant="outline" className="text-[10px] h-6 gap-1" onClick={() => bulkSetStatus("rejected")}>
+                  <XCircle className="w-3 h-3" /> رفض
+                </Button>
+                <Button size="sm" variant="destructive" className="text-[10px] h-6 gap-1" onClick={bulkDelete}>
+                  <Trash2 className="w-3 h-3" /> حذف
+                </Button>
+              </div>
+              <Button size="sm" variant="ghost" className="text-[10px] h-6" onClick={() => setSelectedIds(new Set())}>
+                إلغاء التحديد
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -784,8 +773,7 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
             <Card key={group} className="shadow-card">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Package className="w-4 h-4 text-primary" />
-                  {group} <Badge variant="secondary" className="text-[10px]">{items.length}</Badge>
+                  <Package className="w-4 h-4 text-primary" /> {group} <Badge variant="secondary" className="text-[10px]">{items.length}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
@@ -803,8 +791,8 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
                     </TableHeader>
                     <TableBody>
                       {items.map(asset => {
-                        const reviewCfg = REVIEW_STATUS_CONFIG[asset.review_status] || REVIEW_STATUS_CONFIG.pending;
-                        const ReviewIcon = reviewCfg.icon;
+                        const rc = REVIEW_STATUS_CONFIG[asset.review_status] || REVIEW_STATUS_CONFIG.pending;
+                        const RI = rc.icon;
                         return (
                           <TableRow key={asset.id}>
                             <TableCell className="text-center text-xs text-muted-foreground">{asset.asset_index}</TableCell>
@@ -814,7 +802,7 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
                               <span className={`text-xs font-mono ${getConfidenceColor(asset.confidence)}`}>{asset.confidence}%</span>
                             </TableCell>
                             <TableCell>
-                              <Badge className={`text-[9px] gap-0.5 ${reviewCfg.color}`}><ReviewIcon className="w-3 h-3" /> {reviewCfg.label}</Badge>
+                              <Badge className={`text-[9px] gap-0.5 ${rc.color}`}><RI className="w-3 h-3" /> {rc.label}</Badge>
                             </TableCell>
                             <TableCell>
                               <div className="flex justify-center gap-0.5">
@@ -833,13 +821,18 @@ export default function AssetReviewWorkspace({ jobId, onSubmit, onBack }: Props)
           ))}
         </div>
       ) : (
-        /* Table View */
         <Card className="shadow-card">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10 text-center">
+                      <Checkbox
+                        checked={selectedIds.size === filteredAssets.length && filteredAssets.length > 0}
+                        onCheckedChange={toggleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead className="w-10 text-center cursor-pointer" onClick={() => toggleSort("asset_index")}>#<SortIcon field="asset_index" /></TableHead>
                     <TableHead className="min-w-[200px] cursor-pointer" onClick={() => toggleSort("name")}>الأصل<SortIcon field="name" /></TableHead>
                     <TableHead className="w-20 cursor-pointer" onClick={() => toggleSort("asset_type")}>النوع<SortIcon field="asset_type" /></TableHead>
