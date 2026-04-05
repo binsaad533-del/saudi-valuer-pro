@@ -329,6 +329,30 @@ export default function AssignmentHubPage() {
         onResultReady={() => loadAssignmentData()}
       />
 
+      {/* Justification Engine */}
+      <JustificationWriter
+        context={{
+          methodsUsed: assignment?.methodology ? [assignment.methodology] : [],
+          hasAssumptions: true,
+          dataQuality: comparables.length >= 3 ? "sufficient" : "limited",
+        } as RiskContext}
+        asset={(subject ?? {}) as Record<string, unknown>}
+        valuation={{
+          finalValue: assignment?.final_value,
+          methodology: assignment?.methodology,
+          purpose: assignment?.purpose_ar,
+        }}
+        confidenceScore={75}
+        confidenceLevel="متوسط"
+        compliancePassed={complianceChecks.every((c: any) => c.is_passed)}
+        comparables={comparables as Record<string, unknown>[]}
+        finalValue={{
+          amount: assignment?.final_value,
+          currency: "SAR",
+          methodology: assignment?.methodology,
+        }}
+      />
+
       {/* Compliance Summary */}
       {complianceChecks.length > 0 && (
         <Card>
