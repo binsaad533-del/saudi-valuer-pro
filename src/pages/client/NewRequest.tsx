@@ -48,15 +48,22 @@ interface UploadedFile {
 type Step = "upload" | "processing" | "review" | "submitted";
 
 const PURPOSE_LABELS: Record<string, string> = {
-  sale_purchase: "بيع / شراء",
-  mortgage: "رهن عقاري",
+  financing: "تمويل",
+  sale: "بيع",
+  purchase: "شراء",
   financial_reporting: "تقارير مالية",
-  insurance: "تأمين",
-  taxation: "ضريبي",
-  litigation: "قضائي",
-  investment: "استثمار",
-  zakat: "زكاة",
+  zakat_tax: "زكاة / ضريبة",
+  dispute_court: "نزاع / قضاء",
   expropriation: "نزع ملكية",
+  other: "أخرى",
+};
+
+const INTENDED_USERS_OPTIONS: Record<string, string> = {
+  bank: "بنك / مؤسسة مالية",
+  government: "جهة حكومية",
+  court: "محكمة",
+  internal_management: "إدارة داخلية",
+  investor: "مستثمر",
   other: "أخرى",
 };
 
@@ -87,7 +94,9 @@ export default function NewRequest() {
     clientType: "",
     additionalNotes: "",
     purpose: "",
+    purposeOther: "",
     intendedUsers: "",
+    intendedUsersOther: "",
   });
 
   // Discount code
@@ -155,6 +164,22 @@ export default function NewRequest() {
 
   // ── Start AI Processing via Orchestrator ──
   const startProcessing = async () => {
+    if (!clientInfo.purpose) {
+      toast({ title: "يرجى اختيار الغرض من التقييم", variant: "destructive" });
+      return;
+    }
+    if (clientInfo.purpose === "other" && !clientInfo.purposeOther.trim()) {
+      toast({ title: "يرجى تحديد الغرض من التقييم", variant: "destructive" });
+      return;
+    }
+    if (!clientInfo.intendedUsers) {
+      toast({ title: "يرجى اختيار مستخدم التقرير", variant: "destructive" });
+      return;
+    }
+    if (clientInfo.intendedUsers === "other" && !clientInfo.intendedUsersOther.trim()) {
+      toast({ title: "يرجى تحديد مستخدم التقرير", variant: "destructive" });
+      return;
+    }
     if (uploadedFiles.length === 0) {
       toast({ title: "يرجى رفع الوثائق أولاً", variant: "destructive" });
       return;
@@ -236,7 +261,10 @@ export default function NewRequest() {
           valuation_type: (discipline || "real_estate") as any,
           property_description_ar: description || null,
           purpose: (clientInfo.purpose || null) as any,
-          intended_users_ar: clientInfo.intendedUsers || null,
+          purpose_other: clientInfo.purpose === "other" ? clientInfo.purposeOther : null,
+          intended_users_ar: clientInfo.intendedUsers === "other"
+            ? clientInfo.intendedUsersOther
+            : (INTENDED_USERS_OPTIONS[clientInfo.intendedUsers] || clientInfo.intendedUsers || null),
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
@@ -404,7 +432,7 @@ export default function NewRequest() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1.5">
                     <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                    <Select value={clientInfo.purpose} onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val }))}>
+                    <Select value={clientInfo.purpose} onValueChange={(val) => setClientInfo(p => ({ ...p, purpose: val, purposeOther: val !== "other" ? "" : p.purposeOther }))}>
                       <SelectTrigger><SelectValue placeholder="اختر الغرض" /></SelectTrigger>
                       <SelectContent>
                         {Object.entries(PURPOSE_LABELS).map(([k, v]) => (
@@ -412,6 +440,14 @@ export default function NewRequest() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {clientInfo.purpose === "other" && (
+                      <Input
+                        value={clientInfo.purposeOther}
+                        onChange={(e) => setClientInfo(p => ({ ...p, purposeOther: e.target.value }))}
+                        placeholder="حدد الغرض من التقييم"
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-sm">نوع العميل <span className="text-destructive">*</span></Label>
@@ -450,7 +486,22 @@ export default function NewRequest() {
 
                 <div className="space-y-1.5">
                   <Label className="text-sm">مستخدمو التقرير <span className="text-destructive">*</span></Label>
-                  <Input value={clientInfo.intendedUsers} onChange={(e) => setClientInfo(p => ({ ...p, intendedUsers: e.target.value }))} placeholder="مثال: البنك، المستثمر، الجهة الحكومية..." />
+                  <Select value={clientInfo.intendedUsers} onValueChange={(val) => setClientInfo(p => ({ ...p, intendedUsers: val, intendedUsersOther: val !== "other" ? "" : p.intendedUsersOther }))}>
+                    <SelectTrigger><SelectValue placeholder="اختر مستخدم التقرير" /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(INTENDED_USERS_OPTIONS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {clientInfo.intendedUsers === "other" && (
+                    <Input
+                      value={clientInfo.intendedUsersOther}
+                      onChange={(e) => setClientInfo(p => ({ ...p, intendedUsersOther: e.target.value }))}
+                      placeholder="حدد مستخدم التقرير"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
