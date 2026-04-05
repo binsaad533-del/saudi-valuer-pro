@@ -690,39 +690,23 @@ export default function NewRequest() {
         {/* === STEP 3: Extracted Data Review === */}
         {step === "extracted" && extractedResult && (
           <div className="space-y-4">
-            {/* Analysis Summary */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <Bot className="w-5 h-5 text-primary" />
-                    نتائج التحليل الذكي
-                  </CardTitle>
-                  <Badge variant="outline" className={`text-xs ${getConfidenceColor(extractedResult.confidence * 100)}`}>
-                    <ShieldCheck className="w-3 h-3 ml-1" />
-                    دقة {Math.round(extractedResult.confidence * 100)}%
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Discipline */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
-                  <Target className="w-5 h-5 text-primary shrink-0" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">نوع التقييم المحدد</p>
-                    <p className="text-sm font-bold text-foreground">{DISCIPLINE_LABELS[extractedResult.discipline] || extractedResult.discipline_label}</p>
-                  </div>
-                  {extractedResult.analyzedFilesCount != null && (
-                    <Badge variant="secondary" className="mr-auto text-[10px]">
-                      تم تحليل {extractedResult.analyzedFilesCount} ملف
+            {/* AI Notes */}
+            {extractedResult.notes?.length > 0 && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-sm">
+                      <Bot className="w-4 h-4 text-primary" />
+                      ملاحظات التحليل الذكي
+                    </CardTitle>
+                    <Badge variant="outline" className="text-xs">
+                      <ShieldCheck className="w-3 h-3 ml-1" />
+                      دقة {Math.round(extractedResult.confidence * 100)}%
                     </Badge>
-                  )}
-                </div>
-
-                {/* AI Notes */}
-                {extractedResult.notes?.length > 0 && (
-                  <div className="p-3 rounded-lg bg-muted/50 border border-border space-y-1">
-                    <p className="text-xs font-semibold text-muted-foreground mb-1">ملاحظات التحليل</p>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
                     {extractedResult.notes.map((note, i) => (
                       <p key={i} className="text-sm text-foreground flex items-start gap-1.5">
                         <span className="text-primary mt-0.5">•</span>
@@ -730,162 +714,23 @@ export default function NewRequest() {
                       </p>
                     ))}
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
-            {/* Asset Description */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <FileText className="w-4 h-4 text-primary" />
-                    وصف الأصل
-                  </CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditingDescription(!editingDescription)}
-                    className="text-xs gap-1"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    {editingDescription ? "حفظ" : "تعديل"}
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {editingDescription ? (
-                  <Textarea
-                    value={editableDescription}
-                    onChange={(e) => setEditableDescription(e.target.value)}
-                    rows={6}
-                    className="text-sm leading-relaxed"
-                  />
-                ) : (
-                  <div className="p-3 rounded-lg bg-muted/30 border border-border">
-                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed">
-                      {editableDescription || "لم يتم استخراج وصف"}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Dynamic Asset Fields */}
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    البيانات المستخرجة
-                  </CardTitle>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowAddField(!showAddField)}
-                    className="text-xs gap-1"
-                  >
-                    <Plus className="w-3 h-3" />
-                    إضافة حقل
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  تم استخراج {editableFields.length} حقل — اضغط على أي قيمة لتعديلها
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Add custom field */}
-                {showAddField && (
-                  <div className="p-3 rounded-lg border border-dashed border-primary/40 bg-primary/5 space-y-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input
-                        value={newFieldLabel}
-                        onChange={(e) => setNewFieldLabel(e.target.value)}
-                        placeholder="اسم الحقل"
-                        className="text-sm"
-                      />
-                      <Input
-                        value={newFieldValue}
-                        onChange={(e) => setNewFieldValue(e.target.value)}
-                        placeholder="القيمة"
-                        className="text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-2 justify-end">
-                      <Button size="sm" variant="ghost" onClick={() => setShowAddField(false)} className="text-xs">إلغاء</Button>
-                      <Button size="sm" onClick={addCustomField} className="text-xs" disabled={!newFieldLabel.trim() || !newFieldValue.trim()}>إضافة</Button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Group fields by group */}
-                {Object.entries(
-                  editableFields.reduce((acc, f) => {
-                    const g = f.group || "general";
-                    if (!acc[g]) acc[g] = [];
-                    acc[g].push(f);
-                    return acc;
-                  }, {} as Record<string, AssetField[]>)
-                ).map(([group, fields]) => (
-                  <div key={group}>
-                    <p className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1.5">
-                      <Tag className="w-3 h-3" />
-                      {GROUP_LABELS[group] || group}
-                    </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {fields.map((field) => (
-                        <div
-                          key={field.key}
-                          className={`p-2.5 rounded-lg border transition-all ${getConfidenceBg(field.confidence)}`}
-                        >
-                          <div className="flex items-center justify-between mb-1">
-                            <p className="text-[11px] font-medium text-muted-foreground">{field.label}</p>
-                            <div className="flex items-center gap-1">
-                              <span className={`text-[10px] font-mono ${getConfidenceColor(field.confidence)}`}>
-                                {field.confidence}%
-                              </span>
-                              <button
-                                onClick={() => removeField(field.key)}
-                                className="text-muted-foreground/40 hover:text-destructive p-0.5"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          </div>
-                          {editingFieldKey === field.key ? (
-                            <Input
-                              value={field.value}
-                              onChange={(e) => updateField(field.key, e.target.value)}
-                              onBlur={() => setEditingFieldKey(null)}
-                              onKeyDown={(e) => e.key === "Enter" && setEditingFieldKey(null)}
-                              className="h-7 text-sm"
-                              autoFocus
-                            />
-                          ) : (
-                            <p
-                              className="text-sm font-medium text-foreground cursor-pointer hover:text-primary transition-colors"
-                              onClick={() => setEditingFieldKey(field.key)}
-                            >
-                              {field.value}
-                            </p>
-                          )}
-                          {field.source && (
-                            <p className="text-[9px] text-muted-foreground/60 mt-0.5">المصدر: {field.source}</p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-
-                {editableFields.length === 0 && (
-                  <div className="text-center py-6 text-muted-foreground">
-                    <AlertTriangle className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                    <p className="text-sm">لم يتم استخراج حقول بيانات. يمكنك إضافة حقول يدوياً.</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Asset Inventory Table */}
+            <AssetInventoryTable
+              discipline={currentDiscipline}
+              inventory={inventoryAssets}
+              description={editableDescription}
+              summary={extractedResult.summary}
+              onInventoryChange={setInventoryAssets}
+              onDescriptionChange={setEditableDescription}
+              onDisciplineChange={setCurrentDiscipline}
+              onReanalyze={() => {
+                setStep("upload");
+              }}
+            />
 
             {/* Document Categories */}
             {extractedResult.documentCategories?.length > 0 && (
