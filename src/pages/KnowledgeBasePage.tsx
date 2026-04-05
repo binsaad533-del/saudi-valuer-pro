@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   BookOpen, Upload, Loader2, Sparkles,
-  ShieldCheck, ShieldAlert, ToggleLeft, ToggleRight,
-  Trash2, FileText, AlertTriangle,
+  ShieldCheck, ShieldAlert, Trash2, CheckCircle2, AlertTriangle, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { ingestKnowledgeDocument } from "@/lib/compliance-engine";
 import { useAuth } from "@/hooks/useAuth";
