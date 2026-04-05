@@ -2,170 +2,103 @@ import { supabase } from "@/integrations/supabase/client";
 import { hasPermission } from "./permissions-engine";
 import { runIssuanceGate } from "./issuance-gate";
 
-// ── All 19 statuses in order ──
+// ── Simplified 8-status workflow ──
 export const WORKFLOW_STATUSES = [
   "draft",
-  "client_submitted",
-  "under_ai_review",
-  "awaiting_client_info",
-  "priced",
-  "awaiting_payment_initial",
-  "payment_received_initial",
-  "inspection_required",
-  "inspection_assigned",
-  "inspection_in_progress",
-  "inspection_submitted",
-  "valuation_in_progress",
-  "draft_report_ready",
-  "under_client_review",
-  "revision_in_progress",
-  "awaiting_final_payment",
-  "final_payment_received",
-  "report_issued",
-  "closed",
+  "submitted",
+  "processing",
+  "inspection",
+  "valuation_ready",
+  "under_review",
+  "approved",
+  "issued",
 ] as const;
 
 export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
 
-// ── Allowed transitions (from → to[]) ──
+// ── Allowed transitions ──
 export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
-  draft: ["client_submitted"],
-  client_submitted: ["under_ai_review", "awaiting_client_info"],
-  under_ai_review: ["awaiting_client_info", "priced", "inspection_required"],
-  awaiting_client_info: ["under_ai_review", "client_submitted"],
-  priced: ["awaiting_payment_initial"],
-  awaiting_payment_initial: ["payment_received_initial"],
-  payment_received_initial: ["inspection_required", "valuation_in_progress"], // desktop mode skips inspection
-  inspection_required: ["inspection_assigned"],
-  inspection_assigned: ["inspection_in_progress"],
-  inspection_in_progress: ["inspection_submitted"],
-  inspection_submitted: ["valuation_in_progress"],
-  valuation_in_progress: ["draft_report_ready"],
-  draft_report_ready: ["under_client_review"],
-  // under_client_review = Admin reviews draft → approves or requests revision
-  under_client_review: ["revision_in_progress", "awaiting_final_payment"],
-  revision_in_progress: ["draft_report_ready"],
-  // awaiting_final_payment = Super Admin final approval
-  awaiting_final_payment: ["final_payment_received"],
-  final_payment_received: ["report_issued"],
-  report_issued: ["closed"],
-  closed: [],
+  draft: ["submitted"],
+  submitted: ["processing"],
+  processing: ["inspection", "valuation_ready"], // skip inspection if desktop
+  inspection: ["valuation_ready"],
+  valuation_ready: ["under_review"],
+  under_review: ["approved", "valuation_ready"], // owner can send back
+  approved: ["issued"],
+  issued: [],
 };
 
 // ── Blocking conditions per status ──
 export const BLOCKING_RULES: Record<string, string> = {
-  inspection_assigned: "يجب تعيين معاين قبل الانتقال لهذه المرحلة",
-  inspection_in_progress: "يجب أن يبدأ المعاين المعاينة",
-  payment_received_initial: "يجب استلام الدفعة الأولى",
-  final_payment_received: "يجب اعتماد المشرف العام النهائي",
-  report_issued: "يجب اجتياز فحوصات الامتثال والاعتماد النهائي",
-  draft_report_ready: "يجب إنشاء مسودة التقرير",
-  valuation_in_progress: "يجب إكمال المعاينة الميدانية وتسليم البيانات قبل بدء التقييم",
+  inspection: "يجب تعيين معاين قبل الانتقال لهذه المرحلة",
+  valuation_ready: "يجب إكمال المعالجة والمعاينة (إن وُجدت)",
+  under_review: "يجب إكمال التقييم وإنشاء المسودة",
+  approved: "يجب اعتماد المالك للتقرير",
+  issued: "يجب اجتياز فحوصات الامتثال والاعتماد النهائي",
 };
 
 // ── Status labels (Arabic) ──
 export const STATUS_LABELS: Record<string, { ar: string; icon: string; phase: string }> = {
   draft: { ar: "مسودة", icon: "📝", phase: "intake" },
-  client_submitted: { ar: "تم الإرسال", icon: "📤", phase: "intake" },
-  under_ai_review: { ar: "مراجعة ذكية", icon: "🤖", phase: "intake" },
-  awaiting_client_info: { ar: "بانتظار معلومات إضافية", icon: "⏳", phase: "intake" },
-  priced: { ar: "تم التسعير", icon: "💰", phase: "pricing" },
-  awaiting_payment_initial: { ar: "بانتظار الدفعة الأولى", icon: "💳", phase: "pricing" },
-  payment_received_initial: { ar: "تم استلام الدفعة", icon: "✅", phase: "pricing" },
-  inspection_required: { ar: "معاينة مطلوبة", icon: "🔍", phase: "inspection" },
-  inspection_assigned: { ar: "تم تعيين المعاين (تلقائي)", icon: "🤖", phase: "inspection" },
-  inspection_in_progress: { ar: "المعاينة جارية", icon: "🏗️", phase: "inspection" },
-  inspection_submitted: { ar: "تم إرسال المعاينة", icon: "📋", phase: "inspection" },
-  valuation_in_progress: { ar: "التقييم جارٍ (ذكاء اصطناعي)", icon: "🤖", phase: "valuation" },
-  draft_report_ready: { ar: "مسودة التقرير جاهزة", icon: "📄", phase: "report" },
-  under_client_review: { ar: "اعتماد الإداري", icon: "👤", phase: "report" },
-  revision_in_progress: { ar: "التعديل جارٍ", icon: "✏️", phase: "report" },
-  awaiting_final_payment: { ar: "اعتماد المشرف العام", icon: "👑", phase: "finalization" },
-  final_payment_received: { ar: "تمت الموافقة النهائية", icon: "✅", phase: "finalization" },
-  report_issued: { ar: "تم إصدار التقرير", icon: "📜", phase: "finalization" },
-  closed: { ar: "مؤرشف", icon: "🗄️", phase: "finalization" },
+  submitted: { ar: "تم الإرسال", icon: "📤", phase: "intake" },
+  processing: { ar: "معالجة ذكية", icon: "🤖", phase: "processing" },
+  inspection: { ar: "المعاينة الميدانية", icon: "🏗️", phase: "inspection" },
+  valuation_ready: { ar: "جاهز للتقييم", icon: "📊", phase: "valuation" },
+  under_review: { ar: "مراجعة المالك", icon: "👑", phase: "review" },
+  approved: { ar: "معتمد", icon: "✅", phase: "finalization" },
+  issued: { ar: "تم الإصدار", icon: "📜", phase: "finalization" },
 };
 
 // ── Client-facing simplified labels ──
 export const CLIENT_STATUS_MAP: Record<string, string> = {
   draft: "مسودة",
-  client_submitted: "جاري التنفيذ",
-  under_ai_review: "جاري التنفيذ",
-  awaiting_client_info: "يحتاج معلومات إضافية",
-  priced: "جاري التنفيذ",
-  awaiting_payment_initial: "بانتظار الدفع",
-  payment_received_initial: "جاري التنفيذ",
-  inspection_required: "جاري التنفيذ",
-  inspection_assigned: "جاري التنفيذ",
-  inspection_in_progress: "جاري التنفيذ",
-  inspection_submitted: "جاري التنفيذ",
-  valuation_in_progress: "جاري التنفيذ",
-  draft_report_ready: "تحت المراجعة",
-  under_client_review: "تحت المراجعة",
-  revision_in_progress: "تحت المراجعة",
-  awaiting_final_payment: "تحت المراجعة",
-  final_payment_received: "جاري التنفيذ",
-  report_issued: "مكتمل",
-  closed: "مكتمل",
+  submitted: "جاري التنفيذ",
+  processing: "جاري التنفيذ",
+  inspection: "جاري التنفيذ",
+  valuation_ready: "جاري التنفيذ",
+  under_review: "تحت المراجعة",
+  approved: "مكتمل",
+  issued: "مكتمل",
 };
 
 // ── Inspector-facing statuses ──
 export const INSPECTOR_STATUS_MAP: Record<string, string> = {
-  inspection_required: "معاينة مطلوبة",
-  inspection_assigned: "مُسندة إليك",
-  inspection_in_progress: "جارية",
-  inspection_submitted: "تم الإرسال",
+  inspection: "معاينة مطلوبة",
 };
 
 // ── Status color classes using design tokens ──
 export const STATUS_COLORS: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
-  client_submitted: "bg-primary/10 text-primary",
-  under_ai_review: "bg-accent text-accent-foreground",
-  awaiting_client_info: "bg-warning/10 text-warning",
-  priced: "bg-primary/10 text-primary",
-  awaiting_payment_initial: "bg-warning/10 text-warning",
-  payment_received_initial: "bg-success/10 text-success",
-  inspection_required: "bg-accent text-accent-foreground",
-  inspection_assigned: "bg-primary/10 text-primary",
-  inspection_in_progress: "bg-warning/10 text-warning",
-  inspection_submitted: "bg-success/10 text-success",
-  valuation_in_progress: "bg-primary/10 text-primary",
-  draft_report_ready: "bg-accent text-accent-foreground",
-  under_client_review: "bg-warning/10 text-warning",
-  revision_in_progress: "bg-warning/10 text-warning",
-  awaiting_final_payment: "bg-warning/10 text-warning",
-  final_payment_received: "bg-success/10 text-success",
-  report_issued: "bg-success/10 text-success",
-  closed: "bg-muted text-muted-foreground",
+  submitted: "bg-primary/10 text-primary",
+  processing: "bg-accent text-accent-foreground",
+  inspection: "bg-warning/10 text-warning",
+  valuation_ready: "bg-primary/10 text-primary",
+  under_review: "bg-warning/10 text-warning",
+  approved: "bg-success/10 text-success",
+  issued: "bg-success/10 text-success",
 };
 
 // ── Phase grouping for pipeline view ──
 export const PIPELINE_PHASES = [
-  { key: "intake", label: "الاستقبال", statuses: ["draft", "client_submitted", "under_ai_review", "awaiting_client_info"] },
-  { key: "pricing", label: "التسعير والدفع", statuses: ["priced", "awaiting_payment_initial", "payment_received_initial"] },
-  { key: "inspection", label: "المعاينة", statuses: ["inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted"] },
-  { key: "valuation", label: "التقييم (AI)", statuses: ["valuation_in_progress"] },
-  { key: "report", label: "التقرير والاعتماد", statuses: ["draft_report_ready", "under_client_review", "revision_in_progress"] },
-  { key: "finalization", label: "الاعتماد النهائي والأرشفة", statuses: ["awaiting_final_payment", "final_payment_received", "report_issued", "closed"] },
+  { key: "intake", label: "الاستقبال", statuses: ["draft", "submitted"] },
+  { key: "processing", label: "المعالجة الذكية", statuses: ["processing"] },
+  { key: "inspection", label: "المعاينة", statuses: ["inspection"] },
+  { key: "valuation", label: "التقييم", statuses: ["valuation_ready"] },
+  { key: "review", label: "المراجعة", statuses: ["under_review"] },
+  { key: "finalization", label: "الاعتماد والإصدار", statuses: ["approved", "issued"] },
 ];
 
-// ── Automation configuration: which transitions are AI-driven ──
+// ── Automation configuration: AI-driven transitions ──
 export const AUTOMATED_TRANSITIONS: Record<string, { to: string; trigger: string }> = {
-  client_submitted: { to: "under_ai_review", trigger: "ai_intake" },
-  under_ai_review: { to: "inspection_required", trigger: "ai_review_complete" },
-  inspection_required: { to: "inspection_assigned", trigger: "auto_assign_inspector" },
-  inspection_submitted: { to: "valuation_in_progress", trigger: "auto_start_valuation" },
-  valuation_in_progress: { to: "draft_report_ready", trigger: "auto_generate_report" },
-  final_payment_received: { to: "report_issued", trigger: "auto_issue_report" },
-  report_issued: { to: "closed", trigger: "auto_archive" },
+  submitted: { to: "processing", trigger: "ai_intake" },
+  processing: { to: "valuation_ready", trigger: "ai_processing_complete" },
+  inspection: { to: "valuation_ready", trigger: "inspection_complete" },
+  approved: { to: "issued", trigger: "auto_issue_report" },
 };
 
-// ── Human checkpoints ──
+// ── Human checkpoints — only owner ──
 export const HUMAN_CHECKPOINTS: Record<string, { role: string; action: string }> = {
-  draft_report_ready: { role: "admin_coordinator", action: "اعتماد المسودة من المنسق" },
-  under_client_review: { role: "admin_coordinator", action: "موافقة المنسق على المسودة" },
-  awaiting_final_payment: { role: "owner", action: "الاعتماد النهائي من المالك" },
+  under_review: { role: "owner", action: "مراجعة واعتماد المالك" },
 };
 
 // ── Core transition function ──
@@ -189,6 +122,31 @@ export function isHumanCheckpoint(status: string): boolean {
   return status in HUMAN_CHECKPOINTS;
 }
 
+// ── Backward compatibility: map old statuses to new ──
+export function normalizeStatus(status: string): WorkflowStatus {
+  const mapping: Record<string, WorkflowStatus> = {
+    client_submitted: "submitted",
+    under_ai_review: "processing",
+    awaiting_client_info: "processing",
+    priced: "processing",
+    awaiting_payment_initial: "processing",
+    payment_received_initial: "processing",
+    inspection_required: "inspection",
+    inspection_assigned: "inspection",
+    inspection_in_progress: "inspection",
+    inspection_submitted: "valuation_ready",
+    valuation_in_progress: "valuation_ready",
+    draft_report_ready: "under_review",
+    under_client_review: "under_review",
+    revision_in_progress: "under_review",
+    awaiting_final_payment: "under_review",
+    final_payment_received: "approved",
+    report_issued: "issued",
+    closed: "issued",
+  };
+  return mapping[status] || (status as WorkflowStatus);
+}
+
 // ── Transition with audit logging ──
 export async function transitionStatus(
   assignmentId: string,
@@ -205,40 +163,20 @@ export async function transitionStatus(
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
 
   // ── Inspection enforcement: block valuation without completed inspection (field mode only) ──
-  if (toStatus === "valuation_in_progress") {
-    // Check if this is a desktop valuation
-    const { data: assignmentData } = await supabase
-      .from("valuation_assignments")
-      .select("valuation_mode")
-      .eq("id", assignmentId)
-      .single();
+  if (toStatus === "valuation_ready" && fromStatus === "inspection") {
+    const { data: inspections } = await supabase
+      .from("inspections")
+      .select("id, status, completed, submitted_at")
+      .eq("assignment_id", assignmentId)
+      .order("created_at", { ascending: false })
+      .limit(1);
 
-    const isDesktop = assignmentData?.valuation_mode === "desktop";
-
-    if (!isDesktop) {
-      const { data: inspections } = await supabase
-        .from("inspections")
-        .select("id, status, completed, submitted_at")
-        .eq("assignment_id", assignmentId)
-        .order("created_at", { ascending: false })
-        .limit(1);
-
-      const inspection = inspections?.[0];
-      if (!inspection) {
-        return { success: false, error: "لا يمكن بدء التقييم بدون معاينة ميدانية." };
-      }
-      if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
-        return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
-      }
-
-      const { count: photoCount } = await supabase
-        .from("inspection_photos")
-        .select("id", { count: "exact", head: true })
-        .eq("inspection_id", inspection.id);
-
-      if (!photoCount || photoCount === 0) {
-        return { success: false, error: "لا يمكن بدء التقييم بدون صور المعاينة." };
-      }
+    const inspection = inspections?.[0];
+    if (!inspection) {
+      return { success: false, error: "لا يمكن الانتقال بدون معاينة ميدانية." };
+    }
+    if (inspection.status !== "completed" && !inspection.completed && !inspection.submitted_at) {
+      return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
     }
   }
 
@@ -252,8 +190,8 @@ export async function transitionStatus(
 
   const userId = user?.id || "system";
   const description = automatedBy
-    ? `[تلقائي: ${automatedBy}] ${STATUS_LABELS[fromStatus]?.ar} → ${STATUS_LABELS[toStatus]?.ar}`
-    : `تغيير الحالة: ${STATUS_LABELS[fromStatus]?.ar} → ${STATUS_LABELS[toStatus]?.ar}${reason ? ` | السبب: ${reason}` : ""}`;
+    ? `[تلقائي: ${automatedBy}] ${STATUS_LABELS[fromStatus]?.ar || fromStatus} → ${STATUS_LABELS[toStatus]?.ar || toStatus}`
+    : `تغيير الحالة: ${STATUS_LABELS[fromStatus]?.ar || fromStatus} → ${STATUS_LABELS[toStatus]?.ar || toStatus}${reason ? ` | السبب: ${reason}` : ""}`;
 
   // Log in status_history
   await supabase.from("status_history").insert({
@@ -279,88 +217,8 @@ export async function transitionStatus(
   return { success: true };
 }
 
-// ── Automation: auto-advance after events ──
-export async function autoAdvanceAfterPayment(assignmentId: string, paymentStage: "first" | "final") {
-  const { data } = await supabase
-    .from("valuation_assignments")
-    .select("status")
-    .eq("id", assignmentId)
-    .single();
-
-  if (!data) return;
-  const current = data.status as string;
-
-  if (paymentStage === "first" && current === "awaiting_payment_initial") {
-    await transitionStatus(assignmentId, current, "payment_received_initial", undefined, "دفعة أولى مؤكدة");
-  }
-  if (paymentStage === "final" && current === "awaiting_final_payment") {
-    await transitionStatus(assignmentId, current, "final_payment_received", undefined, "دفعة نهائية مؤكدة");
-  }
-}
-
-export async function autoAdvanceAfterInspection(assignmentId: string) {
-  const { data } = await supabase
-    .from("valuation_assignments")
-    .select("status")
-    .eq("id", assignmentId)
-    .single();
-
-  if (!data) return;
-  if (data.status === "inspection_in_progress") {
-    await transitionStatus(assignmentId, data.status as string, "inspection_submitted", undefined, "إرسال معاينة تلقائي");
-  }
-}
-
-export async function autoAdvanceAfterReport(assignmentId: string) {
-  const { data } = await supabase
-    .from("valuation_assignments")
-    .select("status")
-    .eq("id", assignmentId)
-    .single();
-
-  if (!data) return;
-  if (data.status === "valuation_in_progress") {
-    await transitionStatus(assignmentId, data.status as string, "draft_report_ready", undefined, "إنشاء مسودة تقرير تلقائي");
-  }
-}
-
-// ── Admin approval: admin approves draft ──
-export async function adminApproveDraft(assignmentId: string): Promise<{ success: boolean; error?: string }> {
-  // Verify caller has permission
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false, error: "غير مسجل الدخول" };
-
-  const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  const userRole = roleData?.role || "client";
-  if (!hasPermission(userRole, "approve_report_draft")) {
-    return { success: false, error: "ليس لديك صلاحية اعتماد مسودة التقرير" };
-  }
-
-  const { data } = await supabase
-    .from("valuation_assignments")
-    .select("status")
-    .eq("id", assignmentId)
-    .single();
-
-  if (!data) return { success: false, error: "الملف غير موجود" };
-  
-  if (data.status === "draft_report_ready") {
-    return transitionStatus(assignmentId, data.status as string, "under_client_review", "اعتماد الإداري للمسودة");
-  }
-  if (data.status === "under_client_review") {
-    return transitionStatus(assignmentId, data.status as string, "awaiting_final_payment", "الإداري أرسل للاعتماد النهائي");
-  }
-  return { success: false, error: "الحالة الحالية لا تسمح بالاعتماد" };
-}
-
-// ── Super Admin final approval ──
-export async function superAdminFinalApproval(assignmentId: string): Promise<{ success: boolean; error?: string }> {
-  // 1. Verify caller role
+// ── Owner final approval & issuance ──
+export async function ownerFinalApproval(assignmentId: string): Promise<{ success: boolean; error?: string }> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: "غير مسجل الدخول" };
 
@@ -372,7 +230,7 @@ export async function superAdminFinalApproval(assignmentId: string): Promise<{ s
 
   const userRole = roleData?.role || "client";
   if (!hasPermission(userRole, "issue_final_report")) {
-    return { success: false, error: "ليس لديك صلاحية إصدار التقرير النهائي. مطلوب دور: مالك أو منسق إداري أو مدير تقييم." };
+    return { success: false, error: "ليس لديك صلاحية إصدار التقرير النهائي. مطلوب دور: مالك." };
   }
 
   const { data } = await supabase
@@ -383,27 +241,26 @@ export async function superAdminFinalApproval(assignmentId: string): Promise<{ s
 
   if (!data) return { success: false, error: "الملف غير موجود" };
 
-  if (data.status !== "awaiting_final_payment") {
-    return { success: false, error: "الملف ليس في مرحلة الاعتماد النهائي" };
+  if (data.status !== "under_review") {
+    return { success: false, error: "الملف ليس في مرحلة المراجعة" };
   }
 
-  // 2. Run full issuance gate
+  // Run issuance gate
   const gate = await runIssuanceGate(assignmentId, userRole);
   if (!gate.can_issue) {
     const reasons = gate.blocked_reasons_ar.join("، ");
     return { success: false, error: `لا يمكن إصدار التقرير: ${reasons}` };
   }
 
-  // 3. Execute transition chain
-  const approved = await transitionStatus(assignmentId, data.status as string, "final_payment_received", "اعتماد المشرف العام النهائي");
+  // Approve
+  const approved = await transitionStatus(assignmentId, "under_review", "approved", "اعتماد المالك");
   if (!approved.success) return approved;
 
-  const issued = await transitionStatus(assignmentId, "final_payment_received", "report_issued", undefined, "إصدار تلقائي بعد الاعتماد");
+  // Issue
+  const issued = await transitionStatus(assignmentId, "approved", "issued", undefined, "إصدار تلقائي بعد الاعتماد");
   if (!issued.success) return issued;
 
-  await transitionStatus(assignmentId, "report_issued", "closed", undefined, "أرشفة تلقائية");
-
-  // 4. Lock the assignment
+  // Lock the assignment
   await supabase
     .from("valuation_assignments")
     .update({ is_locked: true } as any)
@@ -412,11 +269,15 @@ export async function superAdminFinalApproval(assignmentId: string): Promise<{ s
   return { success: true };
 }
 
-// ── Trigger full automation pipeline after submission ──
+// Keep backward compat aliases
+export const superAdminFinalApproval = ownerFinalApproval;
+export const adminApproveDraft = ownerFinalApproval;
+
+// ── Trigger full AI automation pipeline after submission ──
 export async function triggerAutomationPipeline(assignmentId: string) {
   try {
-    // 1. Auto AI review
-    await transitionStatus(assignmentId, "client_submitted", "under_ai_review", undefined, "بدء المراجعة الذكية");
+    // 1. Move to processing
+    await transitionStatus(assignmentId, "submitted", "processing", undefined, "بدء المعالجة الذكية");
 
     // 2. Call AI intake function
     await supabase.functions.invoke("ai-intake", { body: { assignment_id: assignmentId } });
@@ -432,14 +293,14 @@ export async function triggerAutomationPipeline(assignmentId: string) {
 
     if (isDesktop) {
       // Desktop: skip inspection → go directly to valuation
-      await transitionStatus(assignmentId, "under_ai_review", "valuation_in_progress", undefined, "تقييم مكتبي — تخطي المعاينة الميدانية");
+      await transitionStatus(assignmentId, "processing", "valuation_ready", undefined, "تقييم مكتبي — تخطي المعاينة");
     } else {
-      // Field: normal flow with inspection
-      await transitionStatus(assignmentId, "under_ai_review", "inspection_required", undefined, "المراجعة الذكية مكتملة");
+      // Field: needs inspection
+      await transitionStatus(assignmentId, "processing", "inspection", undefined, "المعالجة مكتملة — معاينة مطلوبة");
 
-      // 4. Auto-assign inspector
+      // Auto-assign inspector
       const subject = (assignmentInfo as any)?.subjects?.[0];
-      const { data: inspectorResult } = await supabase.functions.invoke("smart-inspector-assignment", {
+      await supabase.functions.invoke("smart-inspector-assignment", {
         body: {
           assignment_id: assignmentId,
           property_city_ar: subject?.city_ar || "",
@@ -448,10 +309,6 @@ export async function triggerAutomationPipeline(assignmentId: string) {
           property_longitude: subject?.longitude,
         },
       });
-
-      if (inspectorResult?.assigned) {
-        await transitionStatus(assignmentId, "inspection_required", "inspection_assigned", undefined, "تعيين معاين تلقائي");
-      }
     }
   } catch (err) {
     console.error("Automation pipeline error:", err);
@@ -461,24 +318,42 @@ export async function triggerAutomationPipeline(assignmentId: string) {
 // ── Auto-chain after inspection submitted ──
 export async function triggerPostInspectionPipeline(assignmentId: string) {
   try {
-    // 1. Start AI valuation
-    await transitionStatus(assignmentId, "inspection_submitted", "valuation_in_progress", undefined, "بدء التقييم الآلي");
+    // Move to valuation_ready
+    await transitionStatus(assignmentId, "inspection", "valuation_ready", undefined, "المعاينة مكتملة");
 
-    // 2. Run valuation engine
+    // Run valuation engine
     await supabase.functions.invoke("valuation-engine", { body: { assignment_id: assignmentId } });
 
-    // 3. Analyze inspection
+    // Analyze inspection
     await supabase.functions.invoke("analyze-inspection", { body: { assignment_id: assignmentId } });
 
-    // 4. Generate report
+    // Generate report
     await supabase.functions.invoke("generate-report-pdf", { body: { assignment_id: assignmentId } });
 
-    // 5. Move to draft ready
-    await transitionStatus(assignmentId, "valuation_in_progress", "draft_report_ready", undefined, "إنشاء مسودة تقرير تلقائي");
-
-    // 6. Auto-move to admin review
-    await transitionStatus(assignmentId, "draft_report_ready", "under_client_review", undefined, "إرسال للإداري للاعتماد");
+    // Move to owner review
+    await transitionStatus(assignmentId, "valuation_ready", "under_review", undefined, "التقرير جاهز للمراجعة");
   } catch (err) {
     console.error("Post-inspection pipeline error:", err);
+  }
+}
+
+// ── Deprecated helpers kept for backward compat ──
+export async function autoAdvanceAfterPayment(_assignmentId: string, _paymentStage: "first" | "final") {
+  // Payment no longer blocks workflow — no-op
+}
+
+export async function autoAdvanceAfterInspection(assignmentId: string) {
+  await triggerPostInspectionPipeline(assignmentId);
+}
+
+export async function autoAdvanceAfterReport(assignmentId: string) {
+  const { data } = await supabase
+    .from("valuation_assignments")
+    .select("status")
+    .eq("id", assignmentId)
+    .single();
+
+  if (data?.status === "valuation_ready") {
+    await transitionStatus(assignmentId, "valuation_ready", "under_review", undefined, "إنشاء مسودة تقرير تلقائي");
   }
 }

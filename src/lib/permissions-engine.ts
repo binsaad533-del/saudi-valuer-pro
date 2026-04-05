@@ -1,9 +1,9 @@
 /**
- * Role-Based Permissions Engine — مصفوفة الصلاحيات المركزية
- * Controls who can perform which operations across the platform.
+ * Role-Based Permissions Engine — مصفوفة الصلاحيات المبسطة
+ * AI-first platform: only 4 roles remain.
  */
 
-export type PlatformRole = "owner" | "admin_coordinator" | "financial_manager" | "valuation_manager" | "valuer" | "inspector" | "client";
+export type PlatformRole = "owner" | "financial_manager" | "inspector" | "client";
 
 export type PlatformAction =
   // Request lifecycle
@@ -33,7 +33,7 @@ export type PlatformAction =
 
 /**
  * Permission matrix: role → allowed actions
- * CRITICAL: issue_final_report is allowed for owner, admin_coordinator, AND valuation_manager
+ * Owner has full control. All other roles are narrowly scoped.
  */
 const PERMISSION_MATRIX: Record<PlatformRole, Set<PlatformAction>> = {
   owner: new Set([
@@ -57,47 +57,6 @@ const PERMISSION_MATRIX: Record<PlatformRole, Set<PlatformAction>> = {
     "manage_settings",
     "view_audit_logs",
   ]),
-  admin_coordinator: new Set([
-    "create_request",
-    "edit_request_data",
-    "cancel_request",
-    "approve_asset_review",
-    "edit_extracted_assets",
-    "run_valuation",
-    "edit_assumptions",
-    "edit_report_draft",
-    "approve_report_draft",
-    "issue_final_report",
-    "create_report_version",
-    "manage_inspectors",
-    "manage_clients",
-    "view_audit_logs",
-  ]),
-  valuation_manager: new Set([
-    "create_request",
-    "edit_request_data",
-    "approve_asset_review",
-    "edit_extracted_assets",
-    "run_valuation",
-    "edit_assumptions",
-    "override_value",
-    "approve_final_value",
-    "edit_report_draft",
-    "approve_report_draft",
-    "issue_final_report",
-    "create_report_version",
-    "create_revaluation",
-    "manage_inspectors",
-    "view_audit_logs",
-  ]),
-  valuer: new Set([
-    "run_valuation",
-    "edit_assumptions",
-    "approve_final_value",
-    "edit_report_draft",
-    "edit_extracted_assets",
-    "view_audit_logs",
-  ]),
   financial_manager: new Set([
     "view_financials",
     "view_audit_logs",
@@ -112,14 +71,14 @@ const PERMISSION_MATRIX: Record<PlatformRole, Set<PlatformAction>> = {
 };
 
 /**
- * Roles allowed to issue final reports
+ * Roles allowed to issue final reports — owner only in AI-first model
  */
-export const ISSUANCE_ROLES: PlatformRole[] = ["owner", "admin_coordinator", "valuation_manager"];
+export const ISSUANCE_ROLES: PlatformRole[] = ["owner"];
 
 /**
  * Roles allowed to approve final value
  */
-export const VALUE_APPROVAL_ROLES: PlatformRole[] = ["owner", "valuation_manager", "valuer"];
+export const VALUE_APPROVAL_ROLES: PlatformRole[] = ["owner"];
 
 /**
  * Actions that require written justification when performed
@@ -132,19 +91,24 @@ export const JUSTIFICATION_REQUIRED: PlatformAction[] = [
 
 export function hasPermission(role: string | null, action: PlatformAction): boolean {
   if (!role) return false;
-  const perms = PERMISSION_MATRIX[role as PlatformRole];
+  // Backward compatibility: treat admin_coordinator as owner
+  const normalizedRole = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer"
+    ? "owner" : role;
+  const perms = PERMISSION_MATRIX[normalizedRole as PlatformRole];
   if (!perms) return false;
   return perms.has(action);
 }
 
 export function canIssueReport(role: string | null): boolean {
   if (!role) return false;
-  return ISSUANCE_ROLES.includes(role as PlatformRole);
+  const normalized = role === "admin_coordinator" || role === "valuation_manager" ? "owner" : role;
+  return ISSUANCE_ROLES.includes(normalized as PlatformRole);
 }
 
 export function canApproveValue(role: string | null): boolean {
   if (!role) return false;
-  return VALUE_APPROVAL_ROLES.includes(role as PlatformRole);
+  const normalized = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer" ? "owner" : role;
+  return VALUE_APPROVAL_ROLES.includes(normalized as PlatformRole);
 }
 
 export function requiresJustification(action: PlatformAction): boolean {
@@ -153,7 +117,8 @@ export function requiresJustification(action: PlatformAction): boolean {
 
 export function getAllowedActions(role: string | null): PlatformAction[] {
   if (!role) return [];
-  const perms = PERMISSION_MATRIX[role as PlatformRole];
+  const normalized = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer" ? "owner" : role;
+  const perms = PERMISSION_MATRIX[normalized as PlatformRole];
   if (!perms) return [];
   return Array.from(perms);
 }
