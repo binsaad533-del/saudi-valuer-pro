@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { PAYMENT_STATUS_LABELS, SERVICE_TYPE_LABELS } from "@/lib/commercial-engine";
+import { PAYMENT_STATUS_LABELS } from "@/lib/commercial-engine";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { CurrencyDisplay } from "@/components/ui/saudi-riyal";
+import CompanyTaxHeader from "@/components/commercial/CompanyTaxHeader";
 import {
   Wallet, FileText, Clock, CheckCircle, AlertTriangle,
   TrendingUp, Ticket, ArrowRight, Loader2,
@@ -105,6 +106,9 @@ export default function CommercialDashboardPage() {
           <p className="text-sm text-muted-foreground">عروض الأسعار والمدفوعات والفواتير</p>
         </div>
       </div>
+
+      {/* Company Tax Info */}
+      <CompanyTaxHeader showLogo />
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">

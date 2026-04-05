@@ -35,6 +35,10 @@ export default function AppFooter() {
                 <Shield className="w-3 h-3 shrink-0 text-primary" />
                 <span>سجل تجاري: 1010625839</span>
               </li>
+              <li className="flex items-center justify-center sm:justify-start gap-1.5">
+                <Shield className="w-3 h-3 shrink-0 text-primary" />
+                <span>الرقم الضريبي: 310625839900003</span>
+              </li>
               {/* عقار */}
               <li className="flex items-center justify-center sm:justify-start gap-1.5">
                 <Award className="w-3 h-3 shrink-0 text-primary" />

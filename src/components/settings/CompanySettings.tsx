@@ -128,6 +128,10 @@ export default function CompanySettings() {
               <Input value={orgData.cr_number || ""} onChange={e => update("cr_number", e.target.value)} />
             </div>
             <div className="space-y-2">
+              <Label>الرقم الضريبي (VAT)</Label>
+              <Input value={(orgData as any).vat_number || ""} onChange={e => update("vat_number", e.target.value)} dir="ltr" placeholder="3XXXXXXXXXX0003" />
+            </div>
+            <div className="space-y-2">
               <Label>رقم ترخيص تقييم</Label>
               <Input value={orgData.taqeem_registration || ""} onChange={e => update("taqeem_registration", e.target.value)} />
             </div>

@@ -184,7 +184,7 @@ function drawCover(doc: jsPDF, report: Report) {
   doc.setFontSize(9);
   doc.text("Jassas Valuation Company", PAGE_WIDTH / 2, y + 23, { align: "center" });
   doc.setFontSize(8);
-  doc.text("سجل تجاري: 1010625839 | ترخيص تقييم معتمد", PAGE_WIDTH / 2, y + 33, { align: "center" });
+  doc.text("سجل تجاري: 1010625839 | الرقم الضريبي: 310625839900003 | ترخيص تقييم معتمد", PAGE_WIDTH / 2, y + 33, { align: "center" });
   doc.setFillColor(...GOLD);
   doc.rect(0, y, PAGE_WIDTH, 2, "F");
 }
