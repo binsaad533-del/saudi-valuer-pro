@@ -40,6 +40,7 @@ const translations: Record<string, Record<Language, string>> = {
   coordinatorPanel: { ar: "واجهة المنسق", en: "Coordinator Panel" },
   knowledgeBase: { ar: "المعرفة المهنية", en: "Knowledge Base" },
   auditLog: { ar: "سجل التدقيق", en: "Audit Log" },
+  commercial: { ar: "العمليات التجارية", en: "Commercial" },
 
   // Valuation section
   valuationSection: { ar: "التقييم", en: "Valuation" },
