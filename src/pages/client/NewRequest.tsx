@@ -466,8 +466,24 @@ export default function NewRequest() {
                 </div>
 
                 <div className="space-y-1.5">
+                <div className="space-y-1.5">
                   <Label className="text-sm">مستخدمو التقرير <span className="text-destructive">*</span></Label>
-                  <Input value={clientInfo.intendedUsers} onChange={(e) => setClientInfo(p => ({ ...p, intendedUsers: e.target.value }))} placeholder="مثال: البنك، المستثمر، الجهة الحكومية..." />
+                  <Select value={clientInfo.intendedUsers} onValueChange={(val) => setClientInfo(p => ({ ...p, intendedUsers: val, intendedUsersOther: val !== "other" ? "" : p.intendedUsersOther }))}>
+                    <SelectTrigger><SelectValue placeholder="اختر مستخدم التقرير" /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(INTENDED_USERS_OPTIONS).map(([k, v]) => (
+                        <SelectItem key={k} value={k}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {clientInfo.intendedUsers === "other" && (
+                    <Input
+                      value={clientInfo.intendedUsersOther}
+                      onChange={(e) => setClientInfo(p => ({ ...p, intendedUsersOther: e.target.value }))}
+                      placeholder="حدد مستخدم التقرير"
+                      className="mt-2"
+                    />
+                  )}
                 </div>
               </CardContent>
             </Card>
