@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { hasPermission } from "./permissions-engine";
+import { runIssuanceGate } from "./issuance-gate";
 
 // ── All 19 statuses in order ──
 export const WORKFLOW_STATUSES = [
@@ -324,6 +326,21 @@ export async function autoAdvanceAfterReport(assignmentId: string) {
 
 // ── Admin approval: admin approves draft ──
 export async function adminApproveDraft(assignmentId: string): Promise<{ success: boolean; error?: string }> {
+  // Verify caller has permission
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "غير مسجل الدخول" };
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const userRole = roleData?.role || "client";
+  if (!hasPermission(userRole, "approve_report_draft")) {
+    return { success: false, error: "ليس لديك صلاحية اعتماد مسودة التقرير" };
+  }
+
   const { data } = await supabase
     .from("valuation_assignments")
     .select("status")
@@ -333,11 +350,9 @@ export async function adminApproveDraft(assignmentId: string): Promise<{ success
   if (!data) return { success: false, error: "الملف غير موجود" };
   
   if (data.status === "draft_report_ready") {
-    // Admin approves → move to under_client_review (admin review step)
     return transitionStatus(assignmentId, data.status as string, "under_client_review", "اعتماد الإداري للمسودة");
   }
   if (data.status === "under_client_review") {
-    // Admin confirms → send to super admin
     return transitionStatus(assignmentId, data.status as string, "awaiting_final_payment", "الإداري أرسل للاعتماد النهائي");
   }
   return { success: false, error: "الحالة الحالية لا تسمح بالاعتماد" };
@@ -345,6 +360,21 @@ export async function adminApproveDraft(assignmentId: string): Promise<{ success
 
 // ── Super Admin final approval ──
 export async function superAdminFinalApproval(assignmentId: string): Promise<{ success: boolean; error?: string }> {
+  // 1. Verify caller role
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "غير مسجل الدخول" };
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const userRole = roleData?.role || "client";
+  if (!hasPermission(userRole, "issue_final_report")) {
+    return { success: false, error: "ليس لديك صلاحية إصدار التقرير النهائي. هذا الإجراء مخصص للمالك فقط." };
+  }
+
   const { data } = await supabase
     .from("valuation_assignments")
     .select("status")
@@ -357,16 +387,27 @@ export async function superAdminFinalApproval(assignmentId: string): Promise<{ s
     return { success: false, error: "الملف ليس في مرحلة الاعتماد النهائي" };
   }
 
-  // Super admin approves → auto chain: approved → issued → archived
+  // 2. Run full issuance gate
+  const gate = await runIssuanceGate(assignmentId, userRole);
+  if (!gate.can_issue) {
+    const reasons = gate.blocked_reasons_ar.join("، ");
+    return { success: false, error: `لا يمكن إصدار التقرير: ${reasons}` };
+  }
+
+  // 3. Execute transition chain
   const approved = await transitionStatus(assignmentId, data.status as string, "final_payment_received", "اعتماد المشرف العام النهائي");
   if (!approved.success) return approved;
 
-  // Auto-issue report
   const issued = await transitionStatus(assignmentId, "final_payment_received", "report_issued", undefined, "إصدار تلقائي بعد الاعتماد");
   if (!issued.success) return issued;
 
-  // Auto-archive
   await transitionStatus(assignmentId, "report_issued", "closed", undefined, "أرشفة تلقائية");
+
+  // 4. Lock the assignment
+  await supabase
+    .from("valuation_assignments")
+    .update({ is_locked: true } as any)
+    .eq("id", assignmentId);
 
   return { success: true };
 }
