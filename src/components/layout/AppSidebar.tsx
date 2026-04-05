@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import {
+  Activity,
   LayoutDashboard,
   FileText,
   Users,
