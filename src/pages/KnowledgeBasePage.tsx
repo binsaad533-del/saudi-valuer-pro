@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import {
   BookOpen, Upload, Loader2, Sparkles,
-  ShieldCheck, ShieldAlert, ToggleLeft, ToggleRight,
-  Trash2, FileText, AlertTriangle,
+  ShieldCheck, ShieldAlert, Trash2, CheckCircle2, AlertTriangle, Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { ingestKnowledgeDocument } from "@/lib/compliance-engine";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,30 +44,6 @@ const UPLOAD_CATEGORIES = [
 const CATEGORY_LABELS: Record<string, string> = {
   ivs: "IVS", rics: "RICS", taqeem: "تقييم", internal: "داخلي",
   professional_standards: "معايير مهنية", regulatory: "تنظيمي",
-  valuation: "تقييم", compliance: "امتثال", reporting: "تقارير",
-  methodology: "منهجيات", data_quality: "جودة البيانات",
-};
-
-const STAGE_LABELS: Record<string, string> = {
-  asset_extraction: "استخراج الأصول",
-  asset_review: "مراجعة الأصول",
-  valuation_calculation: "حسابات التقييم",
-  reconciliation: "المصالحة",
-  report_generation: "إعداد التقرير",
-  report_issuance: "إصدار التقرير",
-};
-
-const IMPACT_LABELS: Record<string, { ar: string; cls: string }> = {
-  warning: { ar: "تحذير", cls: "bg-amber-500/10 text-amber-600 border-amber-200" },
-  risk: { ar: "خطر", cls: "bg-orange-500/10 text-orange-600 border-orange-200" },
-  confidence_reduction: { ar: "تخفيض ثقة", cls: "bg-blue-500/10 text-blue-600 border-blue-200" },
-  blocking: { ar: "حجب", cls: "bg-red-500/10 text-red-600 border-red-200" },
-};
-
-const ASSET_TYPE_LABELS: Record<string, string> = {
-  real_estate: "عقارات",
-  machinery: "آلات",
-  both: "الكل",
 };
 
 function formatBytes(bytes: number | null) {
@@ -123,7 +97,6 @@ export default function KnowledgeBasePage() {
 
       if (uploadErr) { toast.error(`فشل رفع ${file.name}`); continue; }
 
-      // Extract text
       let content = "";
       try {
         const { data } = await supabase.functions.invoke("extract-pdf-text", {
@@ -154,7 +127,6 @@ export default function KnowledgeBasePage() {
     setUploading(false);
     fetchAll();
 
-    // Auto-ingest rules from uploaded docs
     for (const docId of uploadedIds) {
       setIngesting(docId);
       try {
@@ -182,26 +154,50 @@ export default function KnowledgeBasePage() {
     }
   };
 
-  /* ── Toggle Rule Active/Inactive ── */
-  const toggleRule = async (ruleId: string, active: boolean) => {
-    await supabase.from("raqeem_rules").update({ is_active: !active }).eq("id", ruleId);
-    setRules((prev) => prev.map((r) => r.id === ruleId ? { ...r, is_active: !active } : r));
-  };
-
-  /* ── Toggle Rule Severity (warning ↔ blocking) ── */
-  const toggleSeverity = async (ruleId: string, currentSeverity: string) => {
-    const newSeverity = currentSeverity === "blocking" ? "warning" : "blocking";
-    await supabase.from("raqeem_rules").update({ severity: newSeverity }).eq("id", ruleId);
-    setRules((prev) => prev.map((r) => r.id === ruleId ? { ...r, severity: newSeverity } : r));
-    toast.success(newSeverity === "blocking" ? "تم تحويل القاعدة إلى حرجة (تمنع المتابعة)" : "تم تحويل القاعدة إلى تحذيرية");
-  };
-
   /* ── Delete Doc ── */
   const deleteDoc = async (docId: string) => {
     await supabase.from("raqeem_knowledge").delete().eq("id", docId);
     setDocs((prev) => prev.filter((d) => d.id !== docId));
     toast.success("تم حذف المستند");
   };
+
+  /* ── Derived stats ── */
+  const activeRules = rules.filter((r) => r.is_active);
+  const blockingCount = activeRules.filter((r) => r.severity === "blocking").length;
+  const warningCount = activeRules.filter((r) => r.severity === "warning").length;
+  const hasRules = activeRules.length > 0;
+
+  /* ── Observations: human-readable notes from rules ── */
+  const observations: { icon: React.ReactNode; text: string; type: "ok" | "warn" | "critical" }[] = [];
+
+  if (hasRules) {
+    observations.push({
+      icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
+      text: `${activeRules.length} معيار مهني مفعّل ويُطبّق تلقائياً على كل عمليات التقييم`,
+      type: "ok",
+    });
+  }
+  if (blockingCount > 0) {
+    observations.push({
+      icon: <ShieldAlert className="w-4 h-4 text-destructive" />,
+      text: `${blockingCount} متطلب إلزامي يجب تحقيقه قبل إصدار التقرير`,
+      type: "critical",
+    });
+  }
+  if (warningCount > 0) {
+    observations.push({
+      icon: <AlertTriangle className="w-4 h-4 text-amber-500" />,
+      text: `${warningCount} ملاحظة تحسينية سيتم عرضها أثناء العمل`,
+      type: "warn",
+    });
+  }
+  if (docs.length === 0) {
+    observations.push({
+      icon: <Info className="w-4 h-4 text-muted-foreground" />,
+      text: "لم يتم رفع أي معايير بعد — ارفع مستندات IVS أو RICS لتفعيل النظام",
+      type: "warn",
+    });
+  }
 
   if (loading) {
     return (
@@ -212,7 +208,7 @@ export default function KnowledgeBasePage() {
   }
 
   return (
-    <div className="p-4 md:p-6 space-y-5 max-w-4xl mx-auto">
+    <div className="p-4 md:p-6 space-y-5 max-w-3xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -220,31 +216,75 @@ export default function KnowledgeBasePage() {
           المعرفة المهنية
         </h1>
         <p className="text-xs text-muted-foreground mt-0.5">
-          ارفع معايير التقييم المهنية — سيقوم الذكاء الاصطناعي باتباعها تلقائياً في كل مراحل العمل
+          يتم تطبيق المعايير المرفوعة تلقائياً عبر كافة مراحل التقييم
         </p>
       </div>
+
+      {/* System Status Cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <StatusCard
+          icon={<BookOpen className="w-5 h-5 text-primary" />}
+          value={docs.length}
+          label="مستند مرفوع"
+        />
+        <StatusCard
+          icon={<ShieldCheck className="w-5 h-5 text-emerald-500" />}
+          value={activeRules.length}
+          label="معيار مُطبّق"
+        />
+        <StatusCard
+          icon={<ShieldAlert className="w-5 h-5 text-destructive" />}
+          value={blockingCount}
+          label="متطلب إلزامي"
+        />
+      </div>
+
+      {/* System Status Indicator */}
+      <div className={`rounded-xl border p-4 ${
+        hasRules
+          ? "bg-emerald-500/5 border-emerald-500/20"
+          : "bg-amber-500/5 border-amber-500/20"
+      }`}>
+        <div className="flex items-center gap-2.5 mb-2">
+          {hasRules ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+          ) : (
+            <AlertTriangle className="w-5 h-5 text-amber-500" />
+          )}
+          <span className="text-sm font-semibold text-foreground">
+            {hasRules ? "المعايير المهنية مفعّلة" : "بانتظار رفع المعايير"}
+          </span>
+        </div>
+        <p className="text-xs text-muted-foreground mr-7">
+          {hasRules
+            ? "يقوم النظام بتطبيق المعايير تلقائياً على: استخراج البيانات، المراجعة، الحسابات، المقارنة، وإعداد التقارير"
+            : "ارفع مستندات المعايير المهنية ليقوم النظام بتحليلها وتطبيقها تلقائياً"}
+        </p>
+      </div>
+
+      {/* Observations */}
+      {observations.length > 0 && (
+        <div className="bg-card rounded-xl border border-border overflow-hidden">
+          <div className="px-4 py-2.5 border-b border-border">
+            <h3 className="text-sm font-semibold text-foreground">ملاحظات النظام</h3>
+          </div>
+          <div className="divide-y divide-border">
+            {observations.map((obs, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3">
+                {obs.icon}
+                <p className="text-xs text-foreground">{obs.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bulk Rebuild */}
       <KnowledgeRebuildPanel />
 
-      {/* Quick Stats */}
-      <div className="flex items-center gap-4 text-xs">
-        <span className="flex items-center gap-1.5 text-muted-foreground">
-          <FileText className="w-3.5 h-3.5" />
-          {docs.length} مستند
-        </span>
-        <span className="flex items-center gap-1.5 text-success">
-          <ShieldCheck className="w-3.5 h-3.5" />
-          {rules.filter(r => r.is_active).length} قاعدة فعّالة
-        </span>
-        <span className="flex items-center gap-1.5 text-destructive">
-          <AlertTriangle className="w-3.5 h-3.5" />
-          {rules.filter(r => r.severity === "blocking").length} حرجة
-        </span>
-      </div>
-
       {/* Upload Area */}
       <div className="bg-card rounded-xl border border-border p-4">
+        <h3 className="text-sm font-semibold text-foreground mb-3">رفع معايير جديدة</h3>
         <div className="flex items-center gap-3 mb-3">
           <span className="text-xs text-muted-foreground">التصنيف:</span>
           <div className="flex gap-1.5">
@@ -274,7 +314,7 @@ export default function KnowledgeBasePage() {
             {uploading ? "جاري الرفع والمعالجة..." : "ارفع ملفات المعايير المهنية (PDF, DOCX)"}
           </p>
           <p className="text-[10px] text-muted-foreground/50 mt-0.5">
-            سيتم استخراج القواعد تلقائياً بعد الرفع
+            سيتم استخراج القواعد وتطبيقها تلقائياً
           </p>
           <input
             type="file"
@@ -287,7 +327,7 @@ export default function KnowledgeBasePage() {
         </label>
       </div>
 
-      {/* Documents */}
+      {/* Documents List */}
       {docs.length > 0 && (
         <div className="bg-card rounded-xl border border-border overflow-hidden">
           <div className="px-4 py-2.5 border-b border-border">
@@ -295,7 +335,7 @@ export default function KnowledgeBasePage() {
           </div>
           <div className="divide-y divide-border max-h-[300px] overflow-y-auto">
             {docs.map((doc) => (
-              <div key={doc.id} className="flex items-center gap-3 px-4 py-2 hover:bg-muted/30 transition-colors">
+              <div key={doc.id} className="flex items-center gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors">
                 <BookOpen className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-foreground truncate">{doc.title_ar}</p>
@@ -316,7 +356,7 @@ export default function KnowledgeBasePage() {
                   ) : (
                     <Sparkles className="w-3 h-3" />
                   )}
-                  إعادة استخراج
+                  إعادة تحليل
                 </Button>
                 <button
                   onClick={() => deleteDoc(doc.id)}
@@ -330,117 +370,27 @@ export default function KnowledgeBasePage() {
         </div>
       )}
 
-      {/* Active Rules */}
-      {rules.length > 0 && (
-        <div className="bg-card rounded-xl border border-border overflow-hidden">
-          <div className="px-4 py-2.5 border-b border-border flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-foreground">
-              القواعد المستخرجة ({rules.length})
-            </h3>
-            <span className="text-[10px] text-muted-foreground">
-              يتم تطبيقها تلقائياً عبر الذكاء الاصطناعي
-            </span>
-          </div>
-          <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
-            {rules.map((rule) => (
-              <div
-                key={rule.id}
-                className={`px-4 py-2.5 transition-colors
-                  ${!rule.is_active ? "opacity-40" : "hover:bg-muted/30"}`}
-              >
-                <div className="flex items-center gap-3">
-                  {rule.severity === "blocking" ? (
-                    <ShieldAlert className="w-3.5 h-3.5 text-destructive shrink-0" />
-                  ) : (
-                    <ShieldCheck className="w-3.5 h-3.5 text-success shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{rule.rule_title_ar}</p>
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span className="text-[10px] text-muted-foreground">
-                        {CATEGORY_LABELS[rule.category] || rule.category}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground/40">•</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        {ASSET_TYPE_LABELS[rule.applicable_asset_type] || "الكل"}
-                      </span>
-                      {rule.enforcement_stage?.length > 0 && (
-                        <>
-                          <span className="text-[10px] text-muted-foreground/40">•</span>
-                          <span className="text-[10px] text-muted-foreground">
-                            {rule.enforcement_stage.map((s) => STAGE_LABELS[s] || s).join("، ")}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  {/* Impact badge */}
-                  <Badge
-                    variant="outline"
-                    className={`text-[9px] shrink-0 ${
-                      IMPACT_LABELS[rule.impact_type]?.cls || "border-muted text-muted-foreground"
-                    }`}
-                  >
-                    {IMPACT_LABELS[rule.impact_type]?.ar || rule.impact_type}
-                  </Badge>
-                  {/* Severity toggle */}
-                  <button
-                    onClick={() => toggleSeverity(rule.id, rule.severity)}
-                    title="اضغط لتغيير المستوى"
-                  >
-                    <Badge
-                      variant="outline"
-                      className={`text-[9px] shrink-0 cursor-pointer hover:opacity-80 transition-opacity ${
-                        rule.severity === "blocking"
-                          ? "border-destructive text-destructive"
-                          : "border-warning text-warning"
-                      }`}
-                    >
-                      {rule.severity === "blocking" ? "حرج" : "تحذير"}
-                    </Badge>
-                  </button>
-                  <button
-                    onClick={() => toggleRule(rule.id, rule.is_active)}
-                    className="text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {rule.is_active ? (
-                      <ToggleRight className="w-4.5 h-4.5 text-success" />
-                    ) : (
-                      <ToggleLeft className="w-4.5 h-4.5" />
-                    )}
-                  </button>
-                </div>
-                {/* Condition & Requirement (structured details) */}
-                {(rule.condition_text || rule.requirement_text) && rule.is_active && (
-                  <div className="mr-7 mt-1.5 space-y-1 text-[10px]">
-                    {rule.condition_text && (
-                      <p className="text-muted-foreground">
-                        <span className="font-medium text-foreground/70">متى: </span>
-                        {rule.condition_text}
-                      </p>
-                    )}
-                    {rule.requirement_text && (
-                      <p className="text-muted-foreground">
-                        <span className="font-medium text-foreground/70">المتطلب: </span>
-                        {rule.requirement_text}
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Empty state */}
-      {docs.length === 0 && rules.length === 0 && (
+      {docs.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
           <BookOpen className="w-8 h-8 mx-auto mb-3 opacity-30" />
           <p className="text-sm">لم يتم رفع أي معايير مهنية بعد</p>
-          <p className="text-xs mt-1">ارفع مستندات IVS أو RICS أو تقييم لتفعيل الذكاء الاصطناعي المهني</p>
+          <p className="text-xs mt-1">ارفع مستندات IVS أو RICS أو تقييم لتفعيل النظام الذكي</p>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ── Small stat card ── */
+function StatusCard({ icon, value, label }: { icon: React.ReactNode; value: number; label: string }) {
+  return (
+    <div className="bg-card rounded-xl border border-border p-3 flex items-center gap-3">
+      {icon}
+      <div>
+        <p className="text-xl font-bold text-foreground leading-none">{value}</p>
+        <p className="text-[10px] text-muted-foreground mt-0.5">{label}</p>
+      </div>
     </div>
   );
 }
