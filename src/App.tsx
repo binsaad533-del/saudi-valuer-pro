@@ -129,6 +129,16 @@ const App = () => (
               <UserSettingsPage />
             </ProtectedRoute>
           } />
+          <Route path="/inspector/notifications" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
+              <NotificationsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/inspector/notification-settings" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
+              <NotificationSettingsPage />
+            </ProtectedRoute>
+          } />
 
           {/* Client Portal */}
           <Route path="/client/register" element={<ClientRegister />} />
@@ -162,6 +172,16 @@ const App = () => (
           <Route path="/client/settings" element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <UserSettingsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/notifications" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
+              <NotificationsPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/client/notification-settings" element={
+            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
+              <NotificationSettingsPage />
             </ProtectedRoute>
           } />
 

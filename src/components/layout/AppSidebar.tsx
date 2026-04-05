@@ -22,6 +22,7 @@ import {
   FolderOpen,
   Wallet,
   BookOpen,
+  Bell,
 } from "lucide-react";
 
 const logo = "/favicon.png";
@@ -61,6 +62,7 @@ const ownerNav: NavGroup[] = [
     items: [
       { labelKey: "knowledgeBase", icon: BookOpen, path: "/knowledge" },
       { labelKey: "analytics", icon: BarChart3, path: "/analytics" },
+      { labelKey: "notifications", icon: Bell, path: "/notifications" },
       { labelKey: "settings", icon: Settings, path: "/settings" },
     ],
   },
@@ -70,6 +72,7 @@ const inspectorNav: NavGroup[] = [
   {
     items: [
       { labelKey: "inspections", icon: MapPin, path: "/inspector" },
+      { labelKey: "notifications", icon: Bell, path: "/inspector/notifications" },
       { labelKey: "myProfile", icon: UserCircle, path: "/inspector/settings" },
     ],
   },
@@ -81,6 +84,7 @@ const clientNav: NavGroup[] = [
       { labelKey: "dashboard", icon: LayoutDashboard, path: "/client" },
       { labelKey: "clientRequests", icon: ClipboardCheck, path: "/client/requests" },
       { labelKey: "reports", icon: FolderOpen, path: "/client/dashboard" },
+      { labelKey: "notifications", icon: Bell, path: "/client/notifications" },
       { labelKey: "myProfile", icon: UserCircle, path: "/client/settings" },
     ],
   },
@@ -90,6 +94,7 @@ const financialNav: NavGroup[] = [
   {
     items: [
       { labelKey: "cfoDashboard", icon: Wallet, path: "/cfo-dashboard" },
+      { labelKey: "notifications", icon: Bell, path: "/notifications" },
       { labelKey: "myProfile", icon: UserCircle, path: "/account" },
     ],
   },
