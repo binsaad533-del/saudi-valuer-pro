@@ -100,7 +100,7 @@ export default function KnowledgeBasePage() {
     setLoadingRules(true);
     const q = supabase
       .from("raqeem_rules")
-      .select("id, title_ar, category, severity, enforcement_stage, is_active, created_at")
+      .select("id, rule_title_ar, category, severity, enforcement_stage, is_active, created_at")
       .order("created_at", { ascending: false });
 
     if (ruleFilter === "active") q.eq("is_active", true);
@@ -411,17 +411,17 @@ export default function KnowledgeBasePage() {
                       )}
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium text-foreground truncate">
-                          {rule.title_ar}
+                          {rule.rule_title_ar}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] text-muted-foreground">
                             {CATEGORY_LABELS[rule.category] || rule.category}
                           </span>
-                          {rule.enforcement_stage && (
+                          {rule.enforcement_stage?.length > 0 && (
                             <>
                               <span className="text-[10px] text-muted-foreground/50">•</span>
                               <span className="text-[10px] text-muted-foreground">
-                                {STAGE_LABELS[rule.enforcement_stage] || rule.enforcement_stage}
+                                {rule.enforcement_stage.map((s) => STAGE_LABELS[s] || s).join("، ")}
                               </span>
                             </>
                           )}
