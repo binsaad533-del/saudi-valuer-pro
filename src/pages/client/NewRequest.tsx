@@ -48,15 +48,22 @@ interface UploadedFile {
 type Step = "upload" | "processing" | "review" | "submitted";
 
 const PURPOSE_LABELS: Record<string, string> = {
-  sale_purchase: "بيع / شراء",
-  mortgage: "رهن عقاري",
+  financing: "تمويل",
+  sale: "بيع",
+  purchase: "شراء",
   financial_reporting: "تقارير مالية",
-  insurance: "تأمين",
-  taxation: "ضريبي",
-  litigation: "قضائي",
-  investment: "استثمار",
-  zakat: "زكاة",
+  zakat_tax: "زكاة / ضريبة",
+  dispute_court: "نزاع / قضاء",
   expropriation: "نزع ملكية",
+  other: "أخرى",
+};
+
+const INTENDED_USERS_OPTIONS: Record<string, string> = {
+  bank: "بنك / مؤسسة مالية",
+  government: "جهة حكومية",
+  court: "محكمة",
+  internal_management: "إدارة داخلية",
+  investor: "مستثمر",
   other: "أخرى",
 };
 
