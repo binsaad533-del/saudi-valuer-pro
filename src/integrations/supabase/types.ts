@@ -2614,6 +2614,63 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_gateway_settings: {
+        Row: {
+          access_token: string | null
+          callback_url: string | null
+          configuration: Json | null
+          created_at: string
+          enabled_methods: string[]
+          entity_id: string | null
+          entity_id_applepay: string | null
+          entity_id_mada: string | null
+          environment: string
+          failure_url: string | null
+          id: string
+          is_active: boolean
+          provider: string
+          return_url: string | null
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          access_token?: string | null
+          callback_url?: string | null
+          configuration?: Json | null
+          created_at?: string
+          enabled_methods?: string[]
+          entity_id?: string | null
+          entity_id_applepay?: string | null
+          entity_id_mada?: string | null
+          environment?: string
+          failure_url?: string | null
+          id?: string
+          is_active?: boolean
+          provider?: string
+          return_url?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          access_token?: string | null
+          callback_url?: string | null
+          configuration?: Json | null
+          created_at?: string
+          enabled_methods?: string[]
+          entity_id?: string | null
+          entity_id_applepay?: string | null
+          entity_id_mada?: string | null
+          environment?: string
+          failure_url?: string | null
+          id?: string
+          is_active?: boolean
+          provider?: string
+          return_url?: string | null
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: []
+      }
       payment_receipts: {
         Row: {
           amount: number
@@ -2724,6 +2781,7 @@ export type Database = {
           currency: string
           gateway_name: string
           gateway_response_json: Json | null
+          hyperpay_checkout_id: string | null
           id: string
           is_mock: boolean
           notes: string | null
@@ -2753,6 +2811,7 @@ export type Database = {
           currency?: string
           gateway_name?: string
           gateway_response_json?: Json | null
+          hyperpay_checkout_id?: string | null
           id?: string
           is_mock?: boolean
           notes?: string | null
@@ -2782,6 +2841,7 @@ export type Database = {
           currency?: string
           gateway_name?: string
           gateway_response_json?: Json | null
+          hyperpay_checkout_id?: string | null
           id?: string
           is_mock?: boolean
           notes?: string | null
