@@ -113,6 +113,57 @@ export type Database = {
           },
         ]
       }
+      asset_edit_logs: {
+        Row: {
+          action: string
+          asset_id: string
+          created_at: string
+          field_name: string | null
+          id: string
+          job_id: string
+          new_value: string | null
+          old_value: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          asset_id: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          job_id: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          asset_id?: string
+          created_at?: string
+          field_name?: string | null
+          id?: string
+          job_id?: string
+          new_value?: string | null
+          old_value?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_edit_logs_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "extracted_assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_edit_logs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "processing_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       assignment_comparables: {
         Row: {
           assignment_id: string
