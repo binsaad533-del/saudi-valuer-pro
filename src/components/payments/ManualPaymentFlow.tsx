@@ -10,7 +10,7 @@ import { formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
 import {
   Building2, Upload, CheckCircle, Loader2, FileText,
-  Clock, CreditCard, AlertTriangle, XCircle, Banknote,
+  Clock, CreditCard, Banknote,
 } from "lucide-react";
 
 interface ManualPaymentFlowProps {
@@ -78,7 +78,7 @@ export default function ManualPaymentFlow({
       if (uploadErr) throw uploadErr;
 
       // Create payment record via edge function
-      const { data, error } = await supabase.functions.invoke("process-payment", {
+      const { error } = await supabase.functions.invoke("process-payment", {
         body: {
           action: "submit_manual_payment",
           requestId: request.id,
