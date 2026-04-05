@@ -44,6 +44,7 @@ import UserSettingsPage from "@/pages/UserSettingsPage";
 import NotificationsPage from "@/pages/NotificationsPage";
 import NotificationSettingsPage from "@/pages/NotificationSettingsPage";
 import AuditLogPage from "@/pages/AuditLogPage";
+import CommercialDashboardPage from "@/pages/CommercialDashboardPage";
 
 // Client Portal
 import ClientRegister from "@/pages/client/ClientRegister";
