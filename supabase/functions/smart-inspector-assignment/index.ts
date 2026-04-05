@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     // 1. Get all active inspector profiles with their coverage
     const { data: inspectorProfiles } = await supabase
       .from("inspector_profiles")
-      .select("id, user_id, availability_status, current_workload, max_concurrent_tasks, quality_score, total_completed, home_latitude, home_longitude")
+      .select("id, user_id, availability_status, current_workload, max_concurrent_tasks, quality_score, total_completed, home_latitude, home_longitude, specializations")
       .eq("is_active", true);
 
     if (!inspectorProfiles || inspectorProfiles.length === 0) {
