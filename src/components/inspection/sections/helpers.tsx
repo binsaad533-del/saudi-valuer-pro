@@ -4,15 +4,17 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronDown } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
-export function SectionHeader({ num, title, icon: Icon, subtitle }: { num: number; title: string; icon: any; subtitle?: string }) {
+export function SectionHeader({ num, title, icon: Icon, subtitle }: { num?: number; title: string; icon?: any; subtitle?: string }) {
   return (
     <div className="flex items-center gap-3 mb-4">
-      <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold shrink-0">
-        {num}
-      </div>
+      {num != null && (
+        <div className="flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground text-sm font-bold shrink-0">
+          {num}
+        </div>
+      )}
       <div className="flex-1">
         <h2 className="text-base font-bold flex items-center gap-2">
-          <Icon className="w-5 h-5 text-primary" /> {title}
+          {Icon && <Icon className="w-5 h-5 text-primary" />} {title}
         </h2>
         {subtitle && <p className="text-xs text-muted-foreground mt-0.5">{subtitle}</p>}
       </div>
