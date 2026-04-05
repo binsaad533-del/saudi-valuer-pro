@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatTime } from "@/lib/utils";
+import ScopeOfWorkGenerator from "@/components/valuation/ScopeOfWorkGenerator";
 
 
 // ── Steps ──
@@ -1025,6 +1026,18 @@ export default function NewValuation() {
                     )}
                   </ul>
                 </div>
+
+                {/* AI Scope of Work Generator */}
+                <ScopeOfWorkGenerator
+                  purpose={purpose}
+                  assetDescription={assetDescription}
+                  assetType={extracted?.discipline || "real_estate"}
+                  clientName={clientFields.clientName}
+                  city={locationFields?.city}
+                  district={locationFields?.district}
+                  area={dynamicAssetFields.find(f => f.key === "area_sqm")?.value}
+                  documents={uploadedFiles.map(f => ({ name: f.name }))}
+                />
 
                 <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
                   <h4 className="text-sm font-semibold text-primary mb-2">المخرج المتوقع</h4>
