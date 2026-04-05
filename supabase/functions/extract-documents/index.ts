@@ -39,6 +39,220 @@ function guessExtMime(name: string): string {
   return map[ext] || "application/octet-stream";
 }
 
+function safeString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function stripMarkdownCodeFences(value: string): string {
+  return value.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+}
+
+function detectTruncation(value: string): boolean {
+  const text = value.trim();
+  if (!text) return false;
+
+  const openBraces = (text.match(/\{/g) || []).length;
+  const closeBraces = (text.match(/\}/g) || []).length;
+  const openBrackets = (text.match(/\[/g) || []).length;
+  const closeBrackets = (text.match(/\]/g) || []).length;
+
+  if (openBraces !== closeBraces || openBrackets !== closeBrackets) return true;
+
+  return [/\.\.\.$/, /…$/, /\[truncated\]/i, /\[continued\]/i].some((pattern) => pattern.test(text));
+}
+
+function extractJsonFromText(value: string): Record<string, any> {
+  const cleaned = stripMarkdownCodeFences(value);
+  const objectStart = cleaned.indexOf("{");
+  const arrayStart = cleaned.indexOf("[");
+
+  let start = -1;
+  let endChar = "}";
+  if (objectStart === -1 && arrayStart === -1) throw new Error("No JSON object found in model response");
+  if (objectStart === -1 || (arrayStart !== -1 && arrayStart < objectStart)) {
+    start = arrayStart;
+    endChar = "]";
+  } else {
+    start = objectStart;
+  }
+
+  const end = cleaned.lastIndexOf(endChar);
+  if (start === -1 || end === -1 || end < start) throw new Error("Incomplete JSON detected in model response");
+
+  let candidate = cleaned.slice(start, end + 1)
+    .replace(/,\s*}/g, "}")
+    .replace(/,\s*]/g, "]")
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "");
+
+  const parsed = JSON.parse(candidate);
+  if (Array.isArray(parsed)) {
+    return {
+      discipline: "real_estate",
+      discipline_label: "تقييم عقاري",
+      confidence: 50,
+      description: "",
+      inventory: parsed,
+      summary: { total: parsed.length, by_type: { real_estate: parsed.length, machinery_equipment: 0 }, by_condition: {} },
+      notes: ["تم تحويل استجابة مصفوفة إلى تنسيق الجرد المعتمد تلقائياً"],
+      documentCategories: [],
+    };
+  }
+
+  if (!parsed || typeof parsed !== "object") throw new Error("Parsed JSON is not an object");
+  return parsed as Record<string, any>;
+}
+
+function normalizeInventoryItem(item: any, index: number) {
+  const normalizedType = item?.type === "machinery_equipment" ? "machinery_equipment" : item?.type === "mixed" ? "machinery_equipment" : "real_estate";
+  const quantity = typeof item?.quantity === "number" && Number.isFinite(item.quantity) ? item.quantity : Number(item?.quantity || 1) || 1;
+  return {
+    id: typeof item?.id === "number" && Number.isFinite(item.id) ? item.id : index + 1,
+    name: safeString(item?.name) || `أصل ${index + 1}`,
+    type: normalizedType,
+    category: safeString(item?.category) || (normalizedType === "machinery_equipment" ? "معدة" : "عقار"),
+    subcategory: safeString(item?.subcategory) || undefined,
+    quantity,
+    condition: safeString(item?.condition) || "unknown",
+    fields: Array.isArray(item?.fields)
+      ? item.fields
+          .filter((field: any) => field && typeof field === "object")
+          .map((field: any) => ({
+            key: safeString(field?.key) || `field_${index}_${crypto.randomUUID().slice(0, 8)}`,
+            label: safeString(field?.label) || safeString(field?.key) || "حقل",
+            value: field?.value == null ? "" : String(field.value),
+            confidence: typeof field?.confidence === "number" && Number.isFinite(field.confidence)
+              ? Math.min(100, Math.max(0, field.confidence))
+              : 50,
+          }))
+      : [],
+    source: safeString(item?.source) || "تحليل ذكي",
+    confidence: typeof item?.confidence === "number" && Number.isFinite(item.confidence)
+      ? Math.min(100, Math.max(0, item.confidence))
+      : 50,
+  };
+}
+
+function summarizeInventory(inventory: ReturnType<typeof normalizeInventoryItem>[]) {
+  return inventory.reduce((acc, item) => {
+    acc.total += 1;
+    acc.by_type[item.type] = (acc.by_type[item.type] || 0) + 1;
+    const condition = item.condition || "unknown";
+    acc.by_condition[condition] = (acc.by_condition[condition] || 0) + 1;
+    return acc;
+  }, {
+    total: 0,
+    by_type: { real_estate: 0, machinery_equipment: 0 },
+    by_condition: {} as Record<string, number>,
+  });
+}
+
+function normalizeDocumentCategories(categories: any[], fileNames: string[]) {
+  const normalized = Array.isArray(categories)
+    ? categories
+        .filter((category) => category && typeof category === "object")
+        .map((category) => ({
+          fileName: safeString(category?.fileName),
+          category: safeString(category?.category) || "other",
+          categoryLabel: safeString(category?.categoryLabel) || "أخرى",
+          relevance: ["high", "medium", "low"].includes(category?.relevance) ? category.relevance : "medium",
+          extractedInfo: safeString(category?.extractedInfo) || undefined,
+        }))
+        .filter((category) => category.fileName)
+    : [];
+
+  if (normalized.length > 0) return normalized;
+
+  return fileNames.map((fileName) => ({
+    fileName,
+    category: "other",
+    categoryLabel: "أخرى",
+    relevance: "low",
+    extractedInfo: undefined,
+  }));
+}
+
+function normalizeExtractedResult(raw: any, fileNames: string[]) {
+  const inventory = Array.isArray(raw?.inventory)
+    ? raw.inventory.map((item: any, index: number) => normalizeInventoryItem(item, index))
+    : [];
+
+  const normalizedSummary = raw?.summary && typeof raw.summary === "object"
+    ? {
+        total: typeof raw.summary.total === "number" && Number.isFinite(raw.summary.total) ? raw.summary.total : inventory.length,
+        by_type: {
+          real_estate: Number(raw.summary.by_type?.real_estate || inventory.filter((item) => item.type === "real_estate").length),
+          machinery_equipment: Number(raw.summary.by_type?.machinery_equipment || inventory.filter((item) => item.type === "machinery_equipment").length),
+        },
+        by_condition: raw.summary.by_condition && typeof raw.summary.by_condition === "object" ? raw.summary.by_condition : summarizeInventory(inventory).by_condition,
+      }
+    : summarizeInventory(inventory);
+
+  const normalizedDiscipline = ["real_estate", "machinery_equipment", "mixed"].includes(raw?.discipline)
+    ? raw.discipline
+    : inventory.some((item) => item.type === "real_estate") && inventory.some((item) => item.type === "machinery_equipment")
+      ? "mixed"
+      : inventory.some((item) => item.type === "machinery_equipment")
+        ? "machinery_equipment"
+        : "real_estate";
+
+  const disciplineLabelMap: Record<string, string> = {
+    real_estate: "تقييم عقاري",
+    machinery_equipment: "تقييم آلات ومعدات",
+    mixed: "تقييم مختلط",
+  };
+
+  return {
+    ...raw,
+    discipline: normalizedDiscipline,
+    discipline_label: safeString(raw?.discipline_label) || disciplineLabelMap[normalizedDiscipline],
+    confidence: typeof raw?.confidence === "number" && Number.isFinite(raw.confidence) ? Math.min(100, Math.max(0, raw.confidence)) : 50,
+    client: raw?.client && typeof raw.client === "object" ? {
+      clientName: safeString(raw.client.clientName) || undefined,
+      idNumber: safeString(raw.client.idNumber) || undefined,
+      phone: safeString(raw.client.phone) || undefined,
+      email: safeString(raw.client.email) || undefined,
+    } : {},
+    description: safeString(raw?.description),
+    inventory,
+    summary: normalizedSummary,
+    suggestedPurpose: safeString(raw?.suggestedPurpose) || undefined,
+    notes: Array.isArray(raw?.notes) ? raw.notes.map((note: any) => String(note)) : [],
+    documentCategories: normalizeDocumentCategories(raw?.documentCategories, fileNames),
+  };
+}
+
+function extractToolPayload(aiResult: any): Record<string, any> {
+  const firstChoice = aiResult?.choices?.[0]?.message;
+  const toolCall = firstChoice?.tool_calls?.[0];
+  if (toolCall?.function?.arguments) {
+    return JSON.parse(toolCall.function.arguments);
+  }
+
+  const content = firstChoice?.content;
+  if (typeof content === "string" && content.trim()) {
+    if (detectTruncation(content)) {
+      console.warn("Potential truncation detected in model content response");
+    }
+    return extractJsonFromText(content);
+  }
+
+  if (Array.isArray(content)) {
+    const textContent = content
+      .filter((item: any) => item?.type === "text" && typeof item?.text === "string")
+      .map((item: any) => item.text)
+      .join("\n")
+      .trim();
+    if (textContent) {
+      if (detectTruncation(textContent)) {
+        console.warn("Potential truncation detected in multimodal content response");
+      }
+      return extractJsonFromText(textContent);
+    }
+  }
+
+  throw new Error("لم يتم العثور على JSON صالح في استجابة النموذج");
+}
+
 function excelToText(buf: Uint8Array, fileName: string): string {
   try {
     const wb = XLSX.read(buf, { type: "array", cellDates: true });
@@ -276,9 +490,13 @@ serve(async (req) => {
       userContent.push({ type: "text", text: `الملفات (${fileNames.length}):\n${fileNames.map((n: string, i: number) => `${i + 1}. ${n}${fileDescriptions?.[i] ? ` — ${fileDescriptions[i]}` : ""}`).join("\n")}` });
     }
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 120000);
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
         model: "google/gemini-2.5-flash",
         messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: userContent }],
@@ -286,6 +504,8 @@ serve(async (req) => {
         tool_choice: { type: "function", function: { name: "extract_valuation_data" } },
       }),
     });
+
+    clearTimeout(timeout);
 
     if (!response.ok) {
       const status = response.status;
@@ -297,10 +517,7 @@ serve(async (req) => {
     }
 
     const aiResult = await response.json();
-    const toolCall = aiResult.choices?.[0]?.message?.tool_calls?.[0];
-    if (!toolCall) return new Response(JSON.stringify({ error: "لم يتم استخراج بيانات" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
-
-    const extracted = JSON.parse(toolCall.function.arguments);
+    const extracted = normalizeExtractedResult(extractToolPayload(aiResult), fileNames);
 
     // Post-process discipline from document categories
     const cats = (extracted.documentCategories || []).map((d: any) => d.category);
@@ -313,6 +530,10 @@ serve(async (req) => {
     extracted.analysisMethod = hasContent ? "content_analysis" : "filename_only";
     extracted.analyzedFilesCount = visionItems.length + textExtractions.length;
     extracted.totalFilesCount = fileNames.length;
+
+    if (extracted.inventory.length === 0 && !extracted.description) {
+      extracted.notes = [...(extracted.notes || []), "تعذر استخراج أصول قابلة للعرض من المستندات الحالية"];
+    }
 
     return new Response(JSON.stringify(extracted), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
   } catch (e) {
