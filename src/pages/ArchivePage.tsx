@@ -151,6 +151,12 @@ export default function ArchivePage() {
     if (error) {
       toast.error("فشل الربط");
     } else {
+      // Upgrade client status to at least 'verified' if still 'potential'
+      await supabase
+        .from("clients")
+        .update({ client_status: "verified" })
+        .eq("id", clientId)
+        .eq("client_status", "potential");
       toast.success("تم ربط التقرير بالعميل");
       queryClient.invalidateQueries({ queryKey: ["archived-reports"] });
       setLinkDialog(null);
