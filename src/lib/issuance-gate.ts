@@ -1,7 +1,9 @@
 /**
  * Report Issuance Gate — بوابة الإصدار النهائي
- * Validates ALL prerequisites before allowing final report issuance.
- * This is the single source of truth for "can this report be issued?"
+ * Validates ALL technical prerequisites before allowing final report issuance.
+ * 
+ * CRITICAL: Payment status is SEPARATE from technical readiness.
+ * This gate checks ONLY technical/professional requirements.
  */
 
 import { supabase } from "@/integrations/supabase/client";
@@ -13,11 +15,14 @@ export interface IssuanceCheck {
   label_en: string;
   passed: boolean;
   mandatory: boolean;
+  category: "authorization" | "technical" | "compliance" | "financial";
   details?: string;
 }
 
 export interface IssuanceGateResult {
   can_issue: boolean;
+  technically_ready: boolean;
+  payment_pending: boolean;
   checks: IssuanceCheck[];
   passed_count: number;
   failed_mandatory: number;
@@ -39,7 +44,8 @@ export async function runIssuanceGate(
     label_en: "Issuance authorization",
     passed: roleAllowed,
     mandatory: true,
-    details: roleAllowed ? undefined : "فقط المالك يمكنه إصدار التقرير النهائي",
+    category: "authorization",
+    details: roleAllowed ? undefined : "ليس لديك صلاحية إصدار التقرير",
   });
 
   // 2. Fetch assignment data
@@ -52,7 +58,9 @@ export async function runIssuanceGate(
   if (!assignment) {
     return {
       can_issue: false,
-      checks: [{ code: "NO_ASSIGNMENT", label_ar: "المهمة غير موجودة", label_en: "Assignment not found", passed: false, mandatory: true }],
+      technically_ready: false,
+      payment_pending: false,
+      checks: [{ code: "NO_ASSIGNMENT", label_ar: "المهمة غير موجودة", label_en: "Assignment not found", passed: false, mandatory: true, category: "technical" }],
       passed_count: 0,
       failed_mandatory: 1,
       total: 1,
@@ -81,11 +89,12 @@ export async function runIssuanceGate(
       label_en: "Asset review approved",
       passed: assetReviewPassed,
       mandatory: true,
+      category: "technical",
       details: assetReviewPassed ? undefined : `${unreviewedCount} أصول لم تتم مراجعتها`,
     });
   }
 
-  // 4. Valuation calculations exist
+  // 4. Report exists with content
   const { data: reports } = await supabase
     .from("reports")
     .select("id, status, content_ar, is_final, version")
@@ -94,13 +103,13 @@ export async function runIssuanceGate(
     .limit(1);
 
   const latestReport = reports?.[0];
-  const hasReport = !!latestReport;
   checks.push({
     code: "REPORT_EXISTS",
     label_ar: "وجود التقرير",
     label_en: "Report exists",
-    passed: hasReport,
+    passed: !!latestReport,
     mandatory: true,
+    category: "technical",
   });
 
   if (latestReport) {
@@ -110,6 +119,7 @@ export async function runIssuanceGate(
       label_en: "Arabic report content",
       passed: !!latestReport.content_ar,
       mandatory: true,
+      category: "technical",
     });
   }
 
@@ -127,6 +137,7 @@ export async function runIssuanceGate(
       label_en: "Compliance checks",
       passed: mandatoryFailed.length === 0,
       mandatory: true,
+      category: "compliance",
       details: mandatoryFailed.length > 0 ? `${mandatoryFailed.length} فحوصات إلزامية لم تجتز` : undefined,
     });
   }
@@ -143,6 +154,7 @@ export async function runIssuanceGate(
     label_en: "Assumptions documented",
     passed: (assumptionsCount || 0) > 0,
     mandatory: true,
+    category: "technical",
   });
 
   // 7. Inspection completed (unless desktop)
@@ -161,6 +173,7 @@ export async function runIssuanceGate(
       label_en: "Field inspection completed",
       passed: !!inspDone,
       mandatory: true,
+      category: "technical",
     });
   }
 
@@ -172,29 +185,90 @@ export async function runIssuanceGate(
     label_en: "Final value confirmed",
     passed: hasValue,
     mandatory: true,
+    category: "technical",
   });
 
-  // 9. Assignment status is in correct stage
-  const correctStage = ["awaiting_final_payment", "final_payment_received"].includes((assignment as any).status);
+  // 9. Final value approval — explicit approval step logged in audit
+  const { data: valueApprovalLog } = await supabase
+    .from("audit_logs")
+    .select("id")
+    .eq("assignment_id", assignmentId)
+    .eq("table_name", "valuation_assignments")
+    .like("description", "%اعتماد القيمة النهائية%")
+    .limit(1);
+
+  const valueApproved = (valueApprovalLog?.length || 0) > 0;
   checks.push({
-    code: "WORKFLOW_STAGE",
-    label_ar: "مرحلة سير العمل صحيحة",
-    label_en: "Correct workflow stage",
-    passed: correctStage,
+    code: "VALUE_APPROVAL",
+    label_ar: "اعتماد القيمة النهائية من مقيّم/مدير معتمد",
+    label_en: "Final value approved by authorized valuer/manager",
+    passed: valueApproved,
     mandatory: true,
-    details: correctStage ? undefined : `الحالة الحالية: ${(assignment as any).status}`,
+    category: "authorization",
+    details: valueApproved ? undefined : "يجب اعتماد القيمة النهائية صراحةً قبل الإصدار",
   });
 
-  // Calculate results
-  const failedMandatory = checks.filter(c => c.mandatory && !c.passed);
+  // 10. Payment status — INFORMATIONAL ONLY, does NOT block issuance
+  const paymentPending = ["awaiting_payment_initial", "awaiting_final_payment"].includes((assignment as any).status);
+  checks.push({
+    code: "PAYMENT_STATUS",
+    label_ar: "حالة الدفع",
+    label_en: "Payment status",
+    passed: !paymentPending,
+    mandatory: false, // Payment does NOT block technical issuance
+    category: "financial",
+    details: paymentPending ? "الدفع معلق — لا يمنع الإصدار الفني" : undefined,
+  });
+
+  // Calculate results — only mandatory technical/authorization checks block
+  const technicalChecks = checks.filter(c => c.category !== "financial");
+  const failedMandatory = technicalChecks.filter(c => c.mandatory && !c.passed);
   const passedCount = checks.filter(c => c.passed).length;
 
   return {
     can_issue: failedMandatory.length === 0,
+    technically_ready: failedMandatory.length === 0,
+    payment_pending: paymentPending,
     checks,
     passed_count: passedCount,
     failed_mandatory: failedMandatory.length,
     total: checks.length,
     blocked_reasons_ar: failedMandatory.map(c => c.details || c.label_ar),
   };
+}
+
+/**
+ * Approve final value — logs explicit approval in audit trail
+ */
+export async function approveFinalValue(
+  assignmentId: string,
+  approvedValue: number,
+  justification?: string
+): Promise<{ success: boolean; error?: string }> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "غير مسجل الدخول" };
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const userRole = roleData?.role || "client";
+  if (!hasPermission(userRole, "approve_final_value")) {
+    return { success: false, error: "ليس لديك صلاحية اعتماد القيمة النهائية" };
+  }
+
+  // Log explicit approval
+  await supabase.from("audit_logs").insert({
+    user_id: user.id,
+    action: "update" as any,
+    table_name: "valuation_assignments",
+    record_id: assignmentId,
+    assignment_id: assignmentId,
+    description: `اعتماد القيمة النهائية: ${approvedValue.toLocaleString()} ر.س${justification ? ` | المبرر: ${justification}` : ""}`,
+    new_data: { approved_value: approvedValue, approved_by: user.id, approved_at: new Date().toISOString() },
+  });
+
+  return { success: true };
 }
