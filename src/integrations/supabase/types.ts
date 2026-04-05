@@ -450,6 +450,56 @@ export type Database = {
         }
         Relationships: []
       }
+      client_merge_log: {
+        Row: {
+          confidence_score: number | null
+          created_at: string
+          id: string
+          match_field: string | null
+          match_value: string | null
+          merged_by: string | null
+          reason: string | null
+          source_client_id: string
+          source_client_name: string | null
+          target_client_id: string
+          target_client_name: string | null
+        }
+        Insert: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          match_field?: string | null
+          match_value?: string | null
+          merged_by?: string | null
+          reason?: string | null
+          source_client_id: string
+          source_client_name?: string | null
+          target_client_id: string
+          target_client_name?: string | null
+        }
+        Update: {
+          confidence_score?: number | null
+          created_at?: string
+          id?: string
+          match_field?: string | null
+          match_value?: string | null
+          merged_by?: string | null
+          reason?: string | null
+          source_client_id?: string
+          source_client_name?: string | null
+          target_client_id?: string
+          target_client_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_merge_log_target_client_id_fkey"
+            columns: ["target_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           address_ar: string | null
@@ -4812,10 +4862,31 @@ export type Database = {
         }
         Returns: string
       }
-      merge_client_records: {
-        Args: { _source_id: string; _target_id: string }
-        Returns: boolean
+      match_client_with_confidence: {
+        Args: {
+          _cr_number?: string
+          _email?: string
+          _name_ar?: string
+          _org_id?: string
+          _phone?: string
+        }
+        Returns: {
+          confidence: number
+          match_field: string
+          matched_id: string
+        }[]
       }
+      merge_client_records:
+        | { Args: { _source_id: string; _target_id: string }; Returns: boolean }
+        | {
+            Args: {
+              _merged_by?: string
+              _reason?: string
+              _source_id: string
+              _target_id: string
+            }
+            Returns: boolean
+          }
       move_to_dlq: {
         Args: {
           dlq_name: string

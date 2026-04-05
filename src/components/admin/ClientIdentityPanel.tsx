@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -13,9 +14,13 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
   Search, Loader2, Users, Link2, GitMerge, UserCheck, UserPlus, Building2,
-  AlertTriangle, CheckCircle2, Eye,
+  AlertTriangle, CheckCircle2, History, Plus, Zap,
 } from "lucide-react";
+import { format } from "date-fns";
 
 interface ClientRecord {
   id: string;
@@ -38,11 +43,33 @@ interface DuplicatePair {
   match_value: string;
 }
 
+interface MergeLogEntry {
+  id: string;
+  target_client_id: string;
+  source_client_id: string;
+  source_client_name: string | null;
+  target_client_name: string | null;
+  match_field: string | null;
+  confidence_score: number | null;
+  reason: string | null;
+  created_at: string;
+}
+
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
   potential: { label: "عميل محتمل", color: "bg-muted text-muted-foreground", icon: UserPlus },
   verified: { label: "عميل مؤكد", color: "bg-info/10 text-info", icon: UserCheck },
   portal: { label: "لديه حساب", color: "bg-success/10 text-success", icon: CheckCircle2 },
 };
+
+function ConfidenceBadge({ score }: { score: number }) {
+  const color = score >= 80 ? "text-success bg-success/10" : score >= 60 ? "text-warning bg-warning/10" : "text-destructive bg-destructive/10";
+  const label = score >= 80 ? "عالية" : score >= 60 ? "متوسطة" : "منخفضة";
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${color}`}>
+      {score}% — {label}
+    </span>
+  );
+}
 
 export default function ClientIdentityPanel() {
   const { user } = useAuth();
@@ -54,6 +81,22 @@ export default function ClientIdentityPanel() {
   const [showDuplicates, setShowDuplicates] = useState(false);
   const [merging, setMerging] = useState(false);
   const [orgId, setOrgId] = useState<string | null>(null);
+
+  // Manual link dialog
+  const [linkDialog, setLinkDialog] = useState<ClientRecord | null>(null);
+  const [linkTargetId, setLinkTargetId] = useState("");
+
+  // Merge reason dialog
+  const [mergeDialog, setMergeDialog] = useState<{ targetId: string; sourceId: string } | null>(null);
+  const [mergeReason, setMergeReason] = useState("");
+
+  // Merge history
+  const [showHistory, setShowHistory] = useState(false);
+  const [mergeHistory, setMergeHistory] = useState<MergeLogEntry[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // Suggested matches
+  const [matchResults, setMatchResults] = useState<Record<string, { matched_id: string; confidence: number; match_field: string }>>({});
 
   const fetchClients = async () => {
     setLoading(true);
@@ -81,22 +124,74 @@ export default function ClientIdentityPanel() {
     if (!orgId) { toast.error("لم يتم تحديد المنظمة"); return; }
     const { data, error } = await supabase.rpc("find_duplicate_clients", { _org_id: orgId });
     if (error) { toast.error("خطأ في البحث عن التكرارات"); return; }
-    setDuplicates(data || []);
+
+    // Compute confidence for each pair
+    const pairs = data || [];
+    const confidenceMap: Record<string, { matched_id: string; confidence: number; match_field: string }> = {};
+    for (const p of pairs) {
+      const conf = p.match_field === "phone" ? 95 : p.match_field === "email" ? 90 : 85;
+      confidenceMap[`${p.client_id_1}-${p.client_id_2}`] = {
+        matched_id: p.client_id_2,
+        confidence: conf,
+        match_field: p.match_field,
+      };
+    }
+    setMatchResults(confidenceMap);
+    setDuplicates(pairs);
     setShowDuplicates(true);
-    if (!data?.length) toast.info("لا توجد سجلات مكررة");
+    if (!pairs.length) toast.info("لا توجد سجلات مكررة");
   };
 
-  const handleMerge = async (targetId: string, sourceId: string) => {
-    if (!confirm("هل أنت متأكد من دمج السجلين؟ سيتم نقل جميع التقارير والطلبات إلى السجل المستهدف.")) return;
+  const openMergeDialog = (targetId: string, sourceId: string) => {
+    setMergeDialog({ targetId, sourceId });
+    setMergeReason("");
+  };
+
+  const handleMerge = async () => {
+    if (!mergeDialog) return;
     setMerging(true);
-    const { data, error } = await supabase.rpc("merge_client_records", { _target_id: targetId, _source_id: sourceId });
+    const { error } = await supabase.rpc("merge_client_records", {
+      _target_id: mergeDialog.targetId,
+      _source_id: mergeDialog.sourceId,
+      _merged_by: user?.id || null,
+      _reason: mergeReason || null,
+    });
     if (error) toast.error("فشل الدمج");
     else {
       toast.success("تم دمج السجلات بنجاح");
+      setMergeDialog(null);
       fetchClients();
       handleFindDuplicates();
     }
     setMerging(false);
+  };
+
+  const handleManualLink = async () => {
+    if (!linkDialog || !linkTargetId || !user) return;
+    // Get the profile user_id from profiles matching the selected client
+    const { error } = await supabase
+      .from("clients")
+      .update({ portal_user_id: linkTargetId, client_status: "portal", updated_at: new Date().toISOString() })
+      .eq("id", linkDialog.id);
+    if (error) toast.error("فشل الربط اليدوي");
+    else {
+      toast.success("تم ربط العميل بالحساب يدوياً");
+      setLinkDialog(null);
+      setLinkTargetId("");
+      fetchClients();
+    }
+  };
+
+  const fetchMergeHistory = async () => {
+    setHistoryLoading(true);
+    const { data } = await supabase
+      .from("client_merge_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setMergeHistory((data as MergeLogEntry[]) || []);
+    setHistoryLoading(false);
+    setShowHistory(true);
   };
 
   const filtered = useMemo(() => {
@@ -115,6 +210,18 @@ export default function ClientIdentityPanel() {
   }), [clients]);
 
   const getClientName = (id: string) => clients.find(c => c.id === id)?.name_ar || id.slice(0, 8);
+
+  // Get unlinked profiles for manual linking
+  const [profiles, setProfiles] = useState<{ user_id: string; full_name_ar: string; email: string | null }[]>([]);
+  const fetchProfiles = async () => {
+    const linkedIds = clients.filter(c => c.portal_user_id).map(c => c.portal_user_id!);
+    const { data } = await supabase
+      .from("profiles")
+      .select("user_id, full_name_ar, email")
+      .not("user_id", "in", linkedIds.length > 0 ? `(${linkedIds.join(",")})` : "(00000000-0000-0000-0000-000000000000)")
+      .limit(50);
+    setProfiles(data || []);
+  };
 
   return (
     <div className="space-y-6">
@@ -146,7 +253,7 @@ export default function ClientIdentityPanel() {
           <Search className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
           <Input placeholder="بحث بالاسم، البريد أو الجوال..." value={search} onChange={e => setSearch(e.target.value)} className="pr-10" />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           {["all", "potential", "verified", "portal"].map(s => (
             <Button
               key={s}
@@ -158,10 +265,16 @@ export default function ClientIdentityPanel() {
             </Button>
           ))}
         </div>
-        <Button variant="outline" size="sm" onClick={handleFindDuplicates} className="gap-1.5">
-          <GitMerge className="w-4 h-4" />
-          كشف التكرارات
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleFindDuplicates} className="gap-1.5">
+            <GitMerge className="w-4 h-4" />
+            كشف التكرارات
+          </Button>
+          <Button variant="outline" size="sm" onClick={fetchMergeHistory} className="gap-1.5">
+            <History className="w-4 h-4" />
+            سجل الدمج
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -182,6 +295,7 @@ export default function ClientIdentityPanel() {
                     <TableHead className="text-right">البريد</TableHead>
                     <TableHead className="text-right">الحالة</TableHead>
                     <TableHead className="text-right">حساب البوابة</TableHead>
+                    <TableHead className="text-right">إجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -216,6 +330,19 @@ export default function ClientIdentityPanel() {
                             <span className="text-xs text-muted-foreground">غير مرتبط</span>
                           )}
                         </TableCell>
+                        <TableCell>
+                          {!c.portal_user_id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs gap-1"
+                              onClick={() => { setLinkDialog(c); fetchProfiles(); }}
+                            >
+                              <Link2 className="w-3 h-3" />
+                              ربط يدوي
+                            </Button>
+                          )}
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -226,7 +353,7 @@ export default function ClientIdentityPanel() {
         </CardContent>
       </Card>
 
-      {/* Duplicates Dialog */}
+      {/* Duplicates Dialog with Confidence */}
       <Dialog open={showDuplicates} onOpenChange={setShowDuplicates}>
         <DialogContent dir="rtl" className="max-w-lg">
           <DialogHeader>
@@ -242,29 +369,158 @@ export default function ClientIdentityPanel() {
             </div>
           ) : (
             <div className="space-y-3 max-h-[400px] overflow-y-auto">
-              {duplicates.map((d, i) => (
-                <div key={i} className="border border-border rounded-lg p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className="text-xs">
-                      تطابق: {d.match_field === "phone" ? "رقم الجوال" : d.match_field === "email" ? "البريد" : "السجل التجاري"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground" dir="ltr">{d.match_value}</span>
+              {duplicates.map((d, i) => {
+                const key = `${d.client_id_1}-${d.client_id_2}`;
+                const conf = matchResults[key];
+                return (
+                  <div key={i} className="border border-border rounded-lg p-3">
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        تطابق: {d.match_field === "phone" ? "رقم الجوال" : d.match_field === "email" ? "البريد" : "السجل التجاري"}
+                      </Badge>
+                      {conf && <ConfidenceBadge score={conf.confidence} />}
+                      <span className="text-xs text-muted-foreground" dir="ltr">{d.match_value}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="font-medium">{getClientName(d.client_id_1)}</span>
+                      <span className="text-muted-foreground">←</span>
+                      <span className="font-medium">{getClientName(d.client_id_2)}</span>
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <Button size="sm" variant="outline" className="text-xs gap-1" disabled={merging}
+                        onClick={() => openMergeDialog(d.client_id_1, d.client_id_2)}>
+                        <GitMerge className="w-3 h-3" /> دمج في الأول
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-xs gap-1" disabled={merging}
+                        onClick={() => openMergeDialog(d.client_id_2, d.client_id_1)}>
+                        <GitMerge className="w-3 h-3" /> دمج في الثاني
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">{getClientName(d.client_id_1)}</span>
-                    <span className="text-muted-foreground">←</span>
-                    <span className="font-medium">{getClientName(d.client_id_2)}</span>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Merge Confirmation Dialog with Reason */}
+      <Dialog open={!!mergeDialog} onOpenChange={() => setMergeDialog(null)}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitMerge className="w-5 h-5 text-primary" />
+              تأكيد الدمج
+            </DialogTitle>
+          </DialogHeader>
+          {mergeDialog && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p>سيتم نقل جميع التقارير والطلبات من <strong>{getClientName(mergeDialog.sourceId)}</strong> إلى <strong>{getClientName(mergeDialog.targetId)}</strong></p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">سبب الدمج (اختياري)</label>
+                <Textarea
+                  placeholder="مثال: سجل مكرر لنفس العميل..."
+                  value={mergeReason}
+                  onChange={e => setMergeReason(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMergeDialog(null)}>إلغاء</Button>
+            <Button onClick={handleMerge} disabled={merging} className="gap-1">
+              {merging && <Loader2 className="w-4 h-4 animate-spin" />}
+              تأكيد الدمج
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Link Dialog */}
+      <Dialog open={!!linkDialog} onOpenChange={() => setLinkDialog(null)}>
+        <DialogContent dir="rtl" className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Link2 className="w-5 h-5 text-primary" />
+              ربط يدوي بحساب
+            </DialogTitle>
+          </DialogHeader>
+          {linkDialog && (
+            <div className="space-y-4">
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                <p className="font-medium">{linkDialog.name_ar}</p>
+                <p className="text-muted-foreground text-xs mt-1">
+                  {linkDialog.phone || "—"} · {linkDialog.email || "—"}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">اختر حساب المستخدم</label>
+                <Select value={linkTargetId} onValueChange={setLinkTargetId}>
+                  <SelectTrigger><SelectValue placeholder="اختر حساباً..." /></SelectTrigger>
+                  <SelectContent>
+                    {profiles.map(p => (
+                      <SelectItem key={p.user_id} value={p.user_id}>
+                        {p.full_name_ar} {p.email ? `(${p.email})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLinkDialog(null)}>إلغاء</Button>
+            <Button onClick={handleManualLink} disabled={!linkTargetId} className="gap-1">
+              <Link2 className="w-3.5 h-3.5" />
+              ربط
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Merge History Dialog */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent dir="rtl" className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              سجل عمليات الدمج
+            </DialogTitle>
+          </DialogHeader>
+          {historyLoading ? (
+            <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+          ) : mergeHistory.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <p className="text-sm">لا توجد عمليات دمج سابقة</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-[400px] overflow-y-auto">
+              {mergeHistory.map(log => (
+                <div key={log.id} className="border border-border rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs text-muted-foreground">
+                      {format(new Date(log.created_at), "yyyy/MM/dd HH:mm")}
+                    </span>
+                    {log.confidence_score && <ConfidenceBadge score={log.confidence_score} />}
                   </div>
-                  <div className="flex gap-2 mt-2">
-                    <Button size="sm" variant="outline" className="text-xs gap-1" disabled={merging}
-                      onClick={() => handleMerge(d.client_id_1, d.client_id_2)}>
-                      <GitMerge className="w-3 h-3" /> دمج في الأول
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-xs gap-1" disabled={merging}
-                      onClick={() => handleMerge(d.client_id_2, d.client_id_1)}>
-                      <GitMerge className="w-3 h-3" /> دمج في الثاني
-                    </Button>
-                  </div>
+                  <p className="text-sm">
+                    <span className="text-destructive line-through">{log.source_client_name || "—"}</span>
+                    <span className="text-muted-foreground mx-2">→</span>
+                    <span className="font-medium text-foreground">{log.target_client_name || "—"}</span>
+                  </p>
+                  {log.match_field && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      حقل التطابق: {log.match_field === "phone" ? "رقم الجوال" : log.match_field === "email" ? "البريد" : log.match_field}
+                    </p>
+                  )}
+                  {log.reason && (
+                    <p className="text-xs text-muted-foreground mt-1 bg-muted/50 rounded px-2 py-1">
+                      {log.reason}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
