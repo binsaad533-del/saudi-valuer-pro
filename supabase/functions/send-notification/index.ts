@@ -23,28 +23,28 @@ const NOTIFICATION_DEFS: Record<string, {
   report_ready_approval: { category: "report", roles: ["owner"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
   report_issued: { category: "report", roles: ["owner"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: false } },
   client_matching_issue: { category: "system", roles: ["owner"], defaultPriority: "low", defaultChannels: { in_app: true, email: false, sms: false } },
-  failed_processing: { category: "system", roles: ["owner"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
+  failed_processing: { category: "system", roles: ["owner"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
   archive_import_issue: { category: "system", roles: ["owner"], defaultPriority: "low", defaultChannels: { in_app: true, email: false, sms: false } },
 
   // Client notifications
-  request_submitted: { category: "workflow", roles: ["client"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: true } },
+  request_submitted: { category: "workflow", roles: ["client"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: true } },
   request_processing: { category: "workflow", roles: ["client"], defaultPriority: "low", defaultChannels: { in_app: true, email: false, sms: false } },
-  additional_info_requested: { category: "workflow", roles: ["client"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
-  inspection_scheduled: { category: "inspection", roles: ["client"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: true } },
-  report_completed: { category: "report", roles: ["client"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: true } },
+  additional_info_requested: { category: "workflow", roles: ["client"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
+  inspection_scheduled: { category: "inspection", roles: ["client"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: true } },
+  report_completed: { category: "report", roles: ["client"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
   report_available: { category: "report", roles: ["client"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
 
   // Inspector notifications
-  new_inspection_assigned: { category: "inspection", roles: ["inspector"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: true } },
-  inspection_date_update: { category: "inspection", roles: ["inspector"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: false } },
+  new_inspection_assigned: { category: "inspection", roles: ["inspector"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
+  inspection_date_update: { category: "inspection", roles: ["inspector"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
   overdue_inspection: { category: "inspection", roles: ["inspector"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
-  inspection_submission_confirmed: { category: "inspection", roles: ["inspector"], defaultPriority: "low", defaultChannels: { in_app: true, email: false, sms: false } },
+  inspection_submission_confirmed: { category: "inspection", roles: ["inspector"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: false } },
 
   // Financial manager notifications
   new_payment: { category: "financial", roles: ["financial_manager"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: false } },
-  payment_received: { category: "financial", roles: ["financial_manager"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: true } },
-  overdue_payment: { category: "financial", roles: ["financial_manager"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
-  payment_mismatch: { category: "financial", roles: ["financial_manager"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: false } },
+  payment_received: { category: "financial", roles: ["financial_manager"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
+  overdue_payment: { category: "financial", roles: ["financial_manager"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
+  payment_mismatch: { category: "financial", roles: ["financial_manager"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
 };
 
 // Arabic templates
