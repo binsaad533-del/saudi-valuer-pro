@@ -326,6 +326,21 @@ export async function autoAdvanceAfterReport(assignmentId: string) {
 
 // ── Admin approval: admin approves draft ──
 export async function adminApproveDraft(assignmentId: string): Promise<{ success: boolean; error?: string }> {
+  // Verify caller has permission
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: "غير مسجل الدخول" };
+
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const userRole = roleData?.role || "client";
+  if (!hasPermission(userRole, "approve_report_draft")) {
+    return { success: false, error: "ليس لديك صلاحية اعتماد مسودة التقرير" };
+  }
+
   const { data } = await supabase
     .from("valuation_assignments")
     .select("status")
@@ -335,11 +350,9 @@ export async function adminApproveDraft(assignmentId: string): Promise<{ success
   if (!data) return { success: false, error: "الملف غير موجود" };
   
   if (data.status === "draft_report_ready") {
-    // Admin approves → move to under_client_review (admin review step)
     return transitionStatus(assignmentId, data.status as string, "under_client_review", "اعتماد الإداري للمسودة");
   }
   if (data.status === "under_client_review") {
-    // Admin confirms → send to super admin
     return transitionStatus(assignmentId, data.status as string, "awaiting_final_payment", "الإداري أرسل للاعتماد النهائي");
   }
   return { success: false, error: "الحالة الحالية لا تسمح بالاعتماد" };
