@@ -794,6 +794,61 @@ export type Database = {
           },
         ]
       }
+      compliance_check_results: {
+        Row: {
+          assignment_id: string
+          checked_at: string
+          checked_by: string | null
+          id: string
+          passed: boolean
+          rule_id: string
+          stage: string
+          violation_message: string | null
+        }
+        Insert: {
+          assignment_id: string
+          checked_at?: string
+          checked_by?: string | null
+          id?: string
+          passed?: boolean
+          rule_id: string
+          stage: string
+          violation_message?: string | null
+        }
+        Update: {
+          assignment_id?: string
+          checked_at?: string
+          checked_by?: string | null
+          id?: string
+          passed?: boolean
+          rule_id?: string
+          stage?: string
+          violation_message?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "compliance_check_results_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_check_results_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "compliance_check_results_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "raqeem_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       compliance_checks: {
         Row: {
           assignment_id: string
@@ -2720,39 +2775,59 @@ export type Database = {
           category: string
           created_at: string
           created_by: string
+          enforcement_stage: string[]
           id: string
           is_active: boolean
           priority: number
           rule_content: string
           rule_title_ar: string
           rule_title_en: string | null
+          rule_type: string
+          severity: string
+          source_document_id: string | null
           updated_at: string
         }
         Insert: {
           category?: string
           created_at?: string
           created_by: string
+          enforcement_stage?: string[]
           id?: string
           is_active?: boolean
           priority?: number
           rule_content: string
           rule_title_ar: string
           rule_title_en?: string | null
+          rule_type?: string
+          severity?: string
+          source_document_id?: string | null
           updated_at?: string
         }
         Update: {
           category?: string
           created_at?: string
           created_by?: string
+          enforcement_stage?: string[]
           id?: string
           is_active?: boolean
           priority?: number
           rule_content?: string
           rule_title_ar?: string
           rule_title_en?: string | null
+          rule_type?: string
+          severity?: string
+          source_document_id?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "raqeem_rules_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "raqeem_knowledge"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       raqeem_test_sessions: {
         Row: {
