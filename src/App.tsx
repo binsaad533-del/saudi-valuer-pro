@@ -41,6 +41,8 @@ import ValuationWorkspacePage from "@/pages/ValuationWorkspacePage";
 import KnowledgeBasePage from "@/pages/KnowledgeBasePage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import UserSettingsPage from "@/pages/UserSettingsPage";
+import NotificationsPage from "@/pages/NotificationsPage";
+import NotificationSettingsPage from "@/pages/NotificationSettingsPage";
 
 // Client Portal
 import ClientRegister from "@/pages/client/ClientRegister";
@@ -107,6 +109,8 @@ const App = () => (
             <Route path="/knowledge" element={<KnowledgeBasePage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
             <Route path="/account" element={<UserSettingsPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/notification-settings" element={<NotificationSettingsPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
