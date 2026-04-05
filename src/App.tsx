@@ -36,6 +36,7 @@ import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import CFODashboardPage from "@/pages/CFODashboardPage";
 import AssignmentHubPage from "@/pages/AssignmentHubPage";
 import ValuationWorkspacePage from "@/pages/ValuationWorkspacePage";
+import KnowledgeBasePage from "@/pages/KnowledgeBasePage";
 import UnsubscribePage from "@/pages/UnsubscribePage";
 import UserSettingsPage from "@/pages/UserSettingsPage";
 
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/inspectors" element={<InspectorsListPage />} />
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
+            <Route path="/knowledge" element={<KnowledgeBasePage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
             <Route path="/account" element={<UserSettingsPage />} />
           </Route>

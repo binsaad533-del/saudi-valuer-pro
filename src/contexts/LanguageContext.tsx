@@ -38,6 +38,7 @@ const translations: Record<string, Record<Language, string>> = {
   // Sidebar navigation
   raqeem: { ar: "رقيم", en: "Raqeem" },
   coordinatorPanel: { ar: "واجهة المنسق", en: "Coordinator Panel" },
+  knowledgeBase: { ar: "المعرفة المهنية", en: "Knowledge Base" },
 
   // Valuation section
   valuationSection: { ar: "التقييم", en: "Valuation" },
