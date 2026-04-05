@@ -249,18 +249,19 @@ serve(async (req) => {
 - القيود يجب أن تشمل: نطاق المعاينة، مصادر المعلومات، التحفظات
 - المخرجات: تقرير عربي + ملخص تنفيذي + شهادة قيمة كحد أدنى${knowledgeContext}`;
 
-    const buildingInfo = extractedData.building
-      ? `\n- مساحة البناء: ${extractedData.building?.buildingArea || "—"} م²
-- عدد الطوابق: ${extractedData.building?.floors || "—"}
-- عدد الغرف: ${extractedData.building?.rooms || "—"}
-- عمر البناء: ${extractedData.building?.age || "—"} سنة`
+    // Extract building info from inventory fields or old format
+    const buildingArea = getInvField("building_area_sqm") || extractedData.building?.buildingArea;
+    const floorsCount = getInvField("floors_count") || extractedData.building?.floors;
+    const buildingAge = getInvField("building_age") || extractedData.building?.age;
+    const buildingInfo = (buildingArea || floorsCount)
+      ? `\n- مساحة البناء: ${buildingArea || "—"} م²\n- عدد الطوابق: ${floorsCount || "—"}\n- عمر البناء: ${buildingAge || "—"} سنة`
       : "";
 
+    const rentalFields = allFields.filter((f: any) => f.key?.includes("rental") || f.label?.includes("إيجار"));
     const rentalInfo = hasRental
-      ? `\n- بيانات الإيجار: ${extractedData.extractedNumbers
-          ?.filter((n: any) => n.label?.includes("إيجار") || n.label?.includes("ريع"))
-          .map((n: any) => `${n.label}: ${n.value}`)
-          .join("، ") || "متوفرة"}`
+      ? `\n- بيانات الإيجار: ${rentalFields.length > 0 
+          ? rentalFields.map((f: any) => `${f.label}: ${f.value}`).join("، ")
+          : "متوفرة"}`
       : "";
 
     // Build inventory summary for AI prompt
