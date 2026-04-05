@@ -23,6 +23,7 @@ import {
   Wallet,
   BookOpen,
   Bell,
+  Shield,
 } from "lucide-react";
 
 const logo = "/favicon.png";
@@ -62,6 +63,7 @@ const ownerNav: NavGroup[] = [
     items: [
       { labelKey: "knowledgeBase", icon: BookOpen, path: "/knowledge" },
       { labelKey: "analytics", icon: BarChart3, path: "/analytics" },
+      { labelKey: "auditLog", icon: Shield, path: "/audit-log" },
       { labelKey: "notifications", icon: Bell, path: "/notifications" },
       { labelKey: "settings", icon: Settings, path: "/settings" },
     ],
