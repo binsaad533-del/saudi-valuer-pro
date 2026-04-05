@@ -204,16 +204,37 @@ ${context.comparables?.length ? "- المقارنات:\n" + context.comparables.
 
     if (mode === "structured_sections") {
       useToolCalling = true;
-      const requestedKeys = sectionKeys || [
-        "purpose", "scope", "property_desc", "market", "hbu",
-        "approaches", "calculations", "reconciliation", "assumptions", "compliance"
-      ];
+      let requestedKeys: string[];
+      if (isMachinery) {
+        requestedKeys = sectionKeys || [
+          "purpose", "scope", "machinery_inventory", "market", 
+          "machinery_approaches", "machinery_calculations", "reconciliation", "assumptions", "compliance"
+        ];
+      } else if (isMixed) {
+        requestedKeys = sectionKeys || [
+          "purpose", "scope", "property_desc", "market", "hbu",
+          "approaches", "calculations",
+          "machinery_inventory", "machinery_approaches", "machinery_calculations",
+          "unified_summary", "reconciliation", "assumptions", "compliance"
+        ];
+      } else {
+        requestedKeys = sectionKeys || [
+          "purpose", "scope", "property_desc", "market", "hbu",
+          "approaches", "calculations", "reconciliation", "assumptions", "compliance"
+        ];
+      }
+
+      let extraInstructions = "";
+      if (isMixed) {
+        extraInstructions = `\nمهم: قسم unified_summary يجب أن يتضمن جدولاً يجمع: قيمة العقارات + قيمة الآلات والمعدات = القيمة الإجمالية الموحدة.`;
+      }
+
       userPrompt = `بناءً على البيانات التالية، قم بتوليد محتوى مهني كامل لأقسام تقرير التقييم المطلوبة.
 
 ${contextBlock}
 
 الأقسام المطلوبة: ${requestedKeys.join(", ")}
-
+${extraInstructions}
 لكل قسم، اكتب محتوى مهنياً مفصلاً باللغة العربية والإنجليزية.
 استند إلى المعايير والمراجع المرفقة في system prompt لتعزيز المحتوى.`;
     } else if (mode === "full_report") {
