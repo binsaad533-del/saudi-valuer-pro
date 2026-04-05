@@ -10,7 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import ConfidenceScoreCard from "@/components/valuation/ConfidenceScoreCard";
-import type { ValuationContext } from "@/lib/confidence-scoring";
+import RiskDetectionPanel from "@/components/valuation/RiskDetectionPanel";
+import type { RiskContext } from "@/lib/risk-detection";
 
 const MOCK = {
   id: "VA-2026-0042",
@@ -82,7 +83,7 @@ export default function ValuationDetailPage() {
   const { id: _id } = useParams();
   const d = MOCK;
 
-  const confidenceCtx: ValuationContext = {
+  const riskCtx: RiskContext = {
     requiredFields: ["type", "category", "city", "district", "landArea", "buildingArea", "yearBuilt"],
     assetFields: d.property as unknown as Record<string, unknown>,
     extractionConfidence: 0.85,
@@ -97,6 +98,18 @@ export default function ValuationDetailPage() {
     hasBlockingIssues: false,
     methodValues: [2_850_000, 2_720_000],
     finalValue: d.valuation.estimatedValue,
+    // Risk-specific fields
+    comparablesCount: 4,
+    comparablesMaxAge: 8,
+    priceVariancePct: 12,
+    hasInspection: true,
+    inspectionRequired: true,
+    workflowComplete: false,
+    daysSinceRequest: 21,
+    valuationDateSet: true,
+    purposeDefined: true,
+    basisOfValueDefined: true,
+    reconciliationDone: false,
   };
 
   return (
@@ -273,7 +286,10 @@ export default function ValuationDetailPage() {
           </Card>
 
           {/* Confidence Score */}
-          <ConfidenceScoreCard context={confidenceCtx} />
+          <ConfidenceScoreCard context={riskCtx} />
+
+          {/* Risk Detection */}
+          <RiskDetectionPanel context={riskCtx} />
 
           {/* Team */}
           <Card>
