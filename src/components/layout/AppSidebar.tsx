@@ -56,6 +56,7 @@ const ownerNav: NavGroup[] = [
       { labelKey: "inspections", icon: MapPin, path: "/inspectors" },
       { labelKey: "clients", icon: Users, path: "/clients-management" },
       { labelKey: "reports", icon: FolderOpen, path: "/reports" },
+      { labelKey: "commercial", icon: Wallet, path: "/commercial" },
     ],
   },
   {

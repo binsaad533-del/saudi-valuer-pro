@@ -114,6 +114,7 @@ const App = () => (
             <Route path="/notifications" element={<NotificationsPage />} />
             <Route path="/notification-settings" element={<NotificationSettingsPage />} />
             <Route path="/audit-log" element={<AuditLogPage />} />
+            <Route path="/commercial" element={<CommercialDashboardPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
