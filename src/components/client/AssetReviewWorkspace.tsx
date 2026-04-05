@@ -5,16 +5,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Search, Plus, Trash2, Edit3, ChevronDown, ChevronUp, BarChart3,
+  Search, Plus, Trash2, Edit3, ChevronDown, ChevronUp,
   Building2, Wrench, Package, FileText, AlertTriangle, X, Copy,
   ShieldCheck, Eye, CheckCircle, XCircle, RefreshCw, Filter, Layers,
-  LayoutGrid, List, History, Merge, Split,
+  LayoutGrid, List, History, Merge,
 } from "lucide-react";
 
 interface ExtractedAsset {
