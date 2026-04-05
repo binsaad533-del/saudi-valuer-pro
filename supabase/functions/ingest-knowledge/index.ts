@@ -20,7 +20,6 @@ serve(async (req) => {
     const { knowledge_id } = await req.json();
     if (!knowledge_id) throw new Error("knowledge_id required");
 
-    // Fetch the knowledge document
     const { data: doc, error: docErr } = await supabase
       .from("raqeem_knowledge")
       .select("*")
@@ -36,7 +35,6 @@ serve(async (req) => {
       );
     }
 
-    // Chunk content for large documents (max ~20K chars per call)
     const MAX_CHUNK = 18000;
     const chunks: string[] = [];
     for (let i = 0; i < content.length; i += MAX_CHUNK) {
@@ -46,19 +44,28 @@ serve(async (req) => {
     const allRules: any[] = [];
 
     for (const chunk of chunks) {
-      const prompt = `You are a professional valuation standards analyst.
+      const prompt = `You are a professional valuation standards analyst specializing in IVS, RICS, and Saudi Taqeem standards.
 
-Analyze this document excerpt and extract ALL enforceable rules, requirements, checklists, and constraints.
+Analyze this document and extract ALL enforceable rules as STRUCTURED, CONTEXT-AWARE professional rules.
 
-For each rule, return JSON with these exact fields:
-- rule_title_ar: Arabic title (concise)
-- rule_content: Full rule description in Arabic
-- category: one of "valuation", "compliance", "reporting", "methodology", "data_quality"
-- severity: "warning" or "blocking"
-- rule_type: one of "rule", "checklist", "required_field", "validation", "prohibition"
-- enforcement_stage: array of stages where this applies: "asset_extraction", "asset_review", "valuation_calculation", "reconciliation", "report_generation", "report_issuance"
+For each rule, you MUST provide:
+1. rule_title_ar: Concise Arabic title
+2. rule_content: Full rule description in Arabic
+3. category: one of "valuation", "compliance", "reporting", "methodology", "data_quality"
+4. severity: "warning" or "blocking"
+5. rule_type: one of "rule", "checklist", "required_field", "validation", "prohibition"
+6. enforcement_stage: array of stages: "asset_extraction", "asset_review", "valuation_calculation", "reconciliation", "report_generation", "report_issuance"
+7. applicable_asset_type: "real_estate", "machinery", or "both"
+8. condition_text: WHEN this rule applies — Arabic, specific, contextual. Example: "عند تقييم عقار سكني بأسلوب المقارنة السوقية"
+9. requirement_text: WHAT must be satisfied — Arabic, actionable. Example: "يجب توفر 3 مقارنات سوقية حديثة على الأقل ضمن نطاق جغرافي مناسب"
+10. impact_type: one of "warning" (show alert), "risk" (add to risk report), "confidence_reduction" (lower confidence score), "blocking" (prevent workflow)
 
-Return a JSON array of rules. Only return valid rules that can be enforced programmatically.
+IMPORTANT RULES FOR EXTRACTION:
+- Be SPECIFIC, not generic. Reference actual standards and sections.
+- condition_text must describe the exact scenario, not just "always"
+- requirement_text must be actionable and measurable
+- Differentiate between real estate rules and machinery rules
+- Map each rule to the correct enforcement stage(s)
 
 Document category: ${doc.category}
 Document title: ${doc.title_ar}
@@ -80,7 +87,7 @@ ${chunk}`;
               {
                 role: "system",
                 content:
-                  "You extract structured valuation rules from professional documents. Always respond with a valid JSON array. No markdown wrapping.",
+                  "You extract structured, context-aware valuation rules from professional documents. Always respond via the tool call. Rules must be specific and actionable, not generic.",
               },
               { role: "user", content: prompt },
             ],
@@ -89,7 +96,7 @@ ${chunk}`;
                 type: "function",
                 function: {
                   name: "extract_rules",
-                  description: "Extract structured valuation rules",
+                  description: "Extract structured context-aware valuation rules",
                   parameters: {
                     type: "object",
                     properties: {
@@ -102,13 +109,7 @@ ${chunk}`;
                             rule_content: { type: "string" },
                             category: {
                               type: "string",
-                              enum: [
-                                "valuation",
-                                "compliance",
-                                "reporting",
-                                "methodology",
-                                "data_quality",
-                              ],
+                              enum: ["valuation", "compliance", "reporting", "methodology", "data_quality"],
                             },
                             severity: {
                               type: "string",
@@ -116,36 +117,30 @@ ${chunk}`;
                             },
                             rule_type: {
                               type: "string",
-                              enum: [
-                                "rule",
-                                "checklist",
-                                "required_field",
-                                "validation",
-                                "prohibition",
-                              ],
+                              enum: ["rule", "checklist", "required_field", "validation", "prohibition"],
                             },
                             enforcement_stage: {
                               type: "array",
                               items: {
                                 type: "string",
-                                enum: [
-                                  "asset_extraction",
-                                  "asset_review",
-                                  "valuation_calculation",
-                                  "reconciliation",
-                                  "report_generation",
-                                  "report_issuance",
-                                ],
+                                enum: ["asset_extraction", "asset_review", "valuation_calculation", "reconciliation", "report_generation", "report_issuance"],
                               },
+                            },
+                            applicable_asset_type: {
+                              type: "string",
+                              enum: ["real_estate", "machinery", "both"],
+                            },
+                            condition_text: { type: "string" },
+                            requirement_text: { type: "string" },
+                            impact_type: {
+                              type: "string",
+                              enum: ["warning", "risk", "confidence_reduction", "blocking"],
                             },
                           },
                           required: [
-                            "rule_title_ar",
-                            "rule_content",
-                            "category",
-                            "severity",
-                            "rule_type",
-                            "enforcement_stage",
+                            "rule_title_ar", "rule_content", "category", "severity",
+                            "rule_type", "enforcement_stage", "applicable_asset_type",
+                            "condition_text", "requirement_text", "impact_type",
                           ],
                         },
                       },
@@ -155,17 +150,13 @@ ${chunk}`;
                 },
               },
             ],
-            tool_choice: {
-              type: "function",
-              function: { name: "extract_rules" },
-            },
+            tool_choice: { type: "function", function: { name: "extract_rules" } },
           }),
         }
       );
 
       if (!resp.ok) {
-        const errText = await resp.text();
-        console.error("AI error:", resp.status, errText);
+        console.error("AI error:", resp.status, await resp.text());
         continue;
       }
 
@@ -175,22 +166,18 @@ ${chunk}`;
 
       try {
         const parsed = JSON.parse(toolCall.function.arguments);
-        if (Array.isArray(parsed.rules)) {
-          allRules.push(...parsed.rules);
-        }
+        if (Array.isArray(parsed.rules)) allRules.push(...parsed.rules);
       } catch (e) {
         console.error("Parse error:", e);
       }
     }
 
-    // Insert rules into database
+    // Get user
     const authHeader = req.headers.get("Authorization");
     let userId = "system";
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
-      const {
-        data: { user },
-      } = await supabase.auth.getUser(token);
+      const { data: { user } } = await supabase.auth.getUser(token);
       if (user) userId = user.id;
     }
 
@@ -203,6 +190,10 @@ ${chunk}`;
         severity: rule.severity,
         rule_type: rule.rule_type,
         enforcement_stage: rule.enforcement_stage,
+        applicable_asset_type: rule.applicable_asset_type || "both",
+        condition_text: rule.condition_text || null,
+        requirement_text: rule.requirement_text || null,
+        impact_type: rule.impact_type || "warning",
         source_document_id: knowledge_id,
         priority: rule.severity === "blocking" ? 10 : 5,
         is_active: true,
@@ -223,10 +214,7 @@ ${chunk}`;
     console.error("ingest-knowledge error:", e);
     return new Response(
       JSON.stringify({ error: e instanceof Error ? e.message : "Unknown" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      }
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
