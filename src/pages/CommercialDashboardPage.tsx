@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SAR } from "@/components/ui/saudi-riyal";
+import { CurrencyDisplay } from "@/components/ui/saudi-riyal";
 import {
   Wallet, FileText, Clock, CheckCircle, AlertTriangle,
   TrendingUp, Ticket, ArrowRight, Receipt, Loader2,
