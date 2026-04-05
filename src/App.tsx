@@ -32,6 +32,7 @@ import ClientsManagementPage from "@/pages/admin/ClientsManagementPage";
 import InspectorsListPage from "@/pages/admin/InspectorsListPage";
 import InspectorProfilePage from "@/pages/admin/InspectorProfilePage";
 import InspectorCoverage from "@/pages/admin/InspectorCoverage";
+import ClientProfilePage from "@/pages/admin/ClientProfilePage";
 import MarketDataPage from "@/pages/MarketDataPage";
 import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
 import CFODashboardPage from "@/pages/CFODashboardPage";
@@ -99,6 +100,7 @@ const App = () => (
             <Route path="/inspector-coverage" element={<InspectorCoverage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/clients-management" element={<ClientsManagementPage />} />
+            <Route path="/clients/:clientId" element={<ClientProfilePage />} />
             <Route path="/inspectors" element={<InspectorsListPage />} />
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
