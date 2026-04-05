@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  BookOpen, Upload, Loader2, Sparkles, CheckCircle2,
+  BookOpen, Upload, Loader2, Sparkles,
   ShieldCheck, ShieldAlert, ToggleLeft, ToggleRight,
-  Trash2, Filter, ChevronDown, FileText, AlertTriangle,
+  Trash2, Filter, FileText, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,10 +26,10 @@ interface KnowledgeDoc {
 
 interface RuleRow {
   id: string;
-  title_ar: string;
+  rule_title_ar: string;
   category: string;
   severity: string;
-  enforcement_stage: string | null;
+  enforcement_stage: string[];
   is_active: boolean;
   created_at: string;
 }
