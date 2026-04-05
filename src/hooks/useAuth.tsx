@@ -46,7 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // 1. Hydrate from persisted session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!mountedRef.current) return;
       if (session?.user) {
@@ -56,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // 2. Listen for auth changes — only clear user on explicit SIGNED_OUT
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mountedRef.current) return;
 
@@ -67,7 +65,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else if (event === "SIGNED_OUT") {
         setState({ user: null, role: null, loading: false, accountStatus: null });
       }
-      // INITIAL_SESSION is handled by getSession above — ignore it here
     });
 
     return () => {

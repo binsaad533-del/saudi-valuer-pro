@@ -241,7 +241,7 @@ export async function ownerFinalApproval(assignmentId: string): Promise<{ succes
 
   if (!data) return { success: false, error: "الملف غير موجود" };
 
-  if (data.status !== "under_review") {
+  if ((data.status as string) !== "under_review") {
     return { success: false, error: "الملف ليس في مرحلة المراجعة" };
   }
 
@@ -353,7 +353,7 @@ export async function autoAdvanceAfterReport(assignmentId: string) {
     .eq("id", assignmentId)
     .single();
 
-  if (data?.status === "valuation_ready") {
+  if ((data?.status as string) === "valuation_ready") {
     await transitionStatus(assignmentId, "valuation_ready", "under_review", undefined, "إنشاء مسودة تقرير تلقائي");
   }
 }
