@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,6 @@ import {
   ArrowLeft,
   User as UserIcon,
   Send,
-  Download,
-  Share2,
   Home,
   Edit3,
   Clock,
@@ -210,13 +208,13 @@ export default function SimplifiedJourney() {
       while (!cancelled) {
         const { data } = await supabase
           .from("processing_jobs")
-          .select("status, progress, total_assets_extracted")
+          .select("status, processed_files, total_files, total_assets_found")
           .eq("id", jobId)
           .maybeSingle();
 
         if (!data || cancelled) break;
 
-        const prog = data.progress ?? 0;
+        const prog = data.total_files > 0 ? Math.round((data.processed_files / data.total_files) * 100) : 0;
         setProcessingProgress(prog);
 
         if (data.status === "completed" || data.status === "ready_for_review") {
@@ -292,7 +290,6 @@ export default function SimplifiedJourney() {
         jobId,
       };
 
-      const purposeText = purpose === "other" ? purposeOther : (PURPOSE_OPTIONS[purpose] || purpose);
       const usersText = intendedUsers === "other" ? intendedUsersOther : (USERS_OPTIONS[intendedUsers] || intendedUsers);
 
       const { data, error } = await supabase
