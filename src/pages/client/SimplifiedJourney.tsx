@@ -504,6 +504,7 @@ export default function SimplifiedJourney() {
                   <p className="text-xs text-muted-foreground">
                     PDF • صور • Excel (XLSX, CSV) • Word
                   </p>
+                  <p className="text-[11px] text-primary/70 mt-1">رفع Excel يسرّع إدخال الأصول تلقائياً</p>
                   {uploading && (
                     <div className="mt-3 flex items-center justify-center gap-2 text-primary">
                       <Loader2 className="w-4 h-4 animate-spin" />
