@@ -17,7 +17,7 @@ export default function ClientRegister() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"form" | "verify-phone" | "done">("form");
+  const [step, setStep] = useState<"form" | "verify-phone" | "done" | "redirecting">("form");
   const [showPassword, setShowPassword] = useState(false);
   const [clientType, setClientType] = useState<ClientType>("individual");
 
