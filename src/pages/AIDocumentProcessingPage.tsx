@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ProcessingStatusTracker from "@/components/client/ProcessingStatusTracker";
 import AssetReviewWorkspace from "@/components/client/AssetReviewWorkspace";
+import ExcelAssetUploader from "@/components/client/ExcelAssetUploader";
 
 type FileStatus = "pending" | "uploading" | "uploaded" | "error";
 
@@ -25,6 +26,7 @@ interface UploadedFile {
 }
 
 type PageStep = "upload" | "processing" | "review";
+type UploadMode = "files" | "excel";
 
 export default function AIDocumentProcessingPage({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate();
@@ -36,6 +38,8 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
 
   const [step, setStep] = useState<PageStep>("upload");
   const [jobId, setJobId] = useState<string | null>(null);
+  const [uploadMode, setUploadMode] = useState<UploadMode>("files");
+  const [excelAssets, setExcelAssets] = useState<Record<string, any>[] | null>(null);
 
   const handleFilesSelected = useCallback((files: FileList | null) => {
     if (!files) return;
@@ -133,6 +137,66 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
     setStep("review");
   }, []);
 
+  const handleExcelAssetsReady = useCallback(async (assets: Record<string, any>[], fileName: string) => {
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData.user?.id;
+      if (!userId) { toast.error("يرجى تسجيل الدخول أولاً"); return; }
+
+      // Create a processing job with excel source
+      const { data: job, error: jobErr } = await supabase
+        .from("processing_jobs")
+        .insert({
+          user_id: userId,
+          status: "completed",
+          total_files: 1,
+          processed_files: 1,
+          current_message: `تم استيراد ${assets.length} أصل من ${fileName}`,
+          file_manifest: [{ name: fileName, path: "excel-import", size: 0, mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", status: "processed" }],
+          started_at: new Date().toISOString(),
+          completed_at: new Date().toISOString(),
+        } as any)
+        .select()
+        .single();
+
+      if (jobErr) throw jobErr;
+
+      // Insert extracted assets
+      const assetRows = assets.map((a, idx) => ({
+        job_id: job.id,
+        name: a.name || `أصل ${idx + 1}`,
+        asset_type: a.type || "equipment",
+        category: a.type || null,
+        description: a.description || null,
+        quantity: Number(a.quantity) || 1,
+        condition: a.condition || "unknown",
+        confidence: 0.9,
+        asset_data: {
+          model: a.model || null,
+          serial_number: a.serial_number || null,
+          manufacturer: a.manufacturer || null,
+          year: a.year || null,
+          location: a.location || null,
+          value: a.value || null,
+          source: "excel_import",
+        },
+        source_files: [{ name: fileName, source: "excel" }],
+        source_evidence: `استيراد من ملف Excel: ${fileName}`,
+        review_status: "pending",
+        asset_index: idx,
+      }));
+
+      const { error: insertErr } = await supabase.from("extracted_assets").insert(assetRows);
+      if (insertErr) throw insertErr;
+
+      setJobId(job.id);
+      setStep("review");
+      toast.success(`تم استيراد ${assets.length} أصل من Excel بنجاح`);
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ أثناء حفظ الأصول");
+    }
+  }, []);
+
   const handleSubmitReview = useCallback(async (assets: any[], discipline: string, description: string) => {
     navigate("/scope-and-pricing", {
       state: {
@@ -164,7 +228,39 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
             </p>
           </div>
 
-          {/* Drop zone */}
+          {/* Upload mode selector */}
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant={uploadMode === "files" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setUploadMode("files")}
+              className="gap-1.5"
+            >
+              <FolderUp className="w-4 h-4" />
+              مستندات وصور
+            </Button>
+            <Button
+              variant={uploadMode === "excel" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setUploadMode("excel")}
+              className="gap-1.5"
+            >
+              <FileSpreadsheet className="w-4 h-4" />
+              استيراد من Excel
+            </Button>
+          </div>
+
+          {/* Excel mode */}
+          {uploadMode === "excel" && (
+            <ExcelAssetUploader
+              onAssetsReady={handleExcelAssetsReady}
+              onCancel={() => setUploadMode("files")}
+            />
+          )}
+
+          {/* Files mode — Drop zone */}
+          {uploadMode === "files" && (
+          <>
           <div
             onDragOver={e => { e.preventDefault(); setDragOver(true); }}
             onDragLeave={() => setDragOver(false)}
@@ -183,7 +279,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
             />
             <FolderUp className={`w-12 h-12 mx-auto mb-3 ${dragOver ? "text-primary" : "text-muted-foreground/50"}`} />
             <p className="text-base font-medium text-foreground mb-1">اسحب الملفات هنا أو انقر للاختيار</p>
-            <p className="text-xs text-muted-foreground">PDF • صور • Word • Excel • CSV • ZIP — حتى 500 ملف</p>
+            <p className="text-xs text-muted-foreground">PDF • صور • Word • Excel (XLSX, CSV) • ZIP — حتى 500 ملف</p>
           </div>
 
           {/* File list */}
@@ -248,6 +344,8 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                 )}
               </Button>
             </div>
+          )}
+          </>
           )}
         </div>
       </div>

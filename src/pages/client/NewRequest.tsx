@@ -532,7 +532,7 @@ export default function NewRequest() {
                     {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات هنا أو اضغط للاختيار"}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    PDF, صور, Word, Excel, CSV, ZIP — بأي عدد وحجم
+                    PDF • صور • Word • Excel (XLSX, CSV) • ZIP — بأي عدد وحجم
                   </p>
                   {uploading && (
                     <div className="mt-2 flex items-center justify-center gap-2 text-primary">
