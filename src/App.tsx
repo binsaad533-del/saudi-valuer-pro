@@ -50,6 +50,7 @@ import SystemMonitoringPage from "@/pages/SystemMonitoringPage";
 // Client Portal
 import ClientRegister from "@/pages/client/ClientRegister";
 import ForgotPassword from "@/pages/client/ForgotPassword";
+import RecoveryCallback from "@/pages/client/RecoveryCallback";
 import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
@@ -149,6 +150,7 @@ const App = () => (
           {/* Client Portal */}
           <Route path="/client/register" element={<ClientRegister />} />
           <Route path="/client/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/recovery" element={<RecoveryCallback />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/client" element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
