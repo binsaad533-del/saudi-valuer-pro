@@ -45,7 +45,90 @@ interface UploadedFile {
   type: string;
   path: string;
 }
-...
+
+type Step = "upload" | "processing" | "review" | "submitted";
+
+const PURPOSE_LABELS: Record<string, string> = {
+  financing: "تمويل",
+  sale: "بيع",
+  purchase: "شراء",
+  financial_reporting: "تقارير مالية",
+  zakat_tax: "زكاة / ضريبة",
+  dispute_court: "نزاع / قضاء",
+  expropriation: "نزع ملكية",
+  other: "أخرى",
+};
+
+const INTENDED_USERS_OPTIONS: Record<string, string> = {
+  bank: "بنك / مؤسسة مالية",
+  government: "جهة حكومية",
+  court: "محكمة",
+  internal_management: "إدارة داخلية",
+  investor: "مستثمر",
+  other: "أخرى",
+};
+
+export default function NewRequest() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [user, setUser] = useState<any>(null);
+  const [step, setStep] = useState<Step>("upload");
+  const [loading, setLoading] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+
+  // Files
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  // Processing job
+  const [jobId, setJobId] = useState<string | null>(null);
+
+  // Client info
+  const [clientInfo, setClientInfo] = useState({
+    contactName: "",
+    contactPhone: "",
+    contactEmail: "",
+    idNumber: "",
+    clientType: "",
+    additionalNotes: "",
+    purpose: "",
+    purposeOther: "",
+    intendedUsers: "",
+    intendedUsersOther: "",
+  });
+
+  // Discount code
+  const [clientDiscountCode, setClientDiscountCode] = useState("");
+  const [clientDiscountApplied, setClientDiscountApplied] = useState<{ code: string; percentage: number } | null>(null);
+  const [clientCheckingDiscount, setClientCheckingDiscount] = useState(false);
+
+  // Asset locations
+  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/login"); return; }
+      setUser(user);
+    };
+    checkAuth();
+  }, [navigate]);
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-info" />;
+    if (type.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
+    return <File className="w-4 h-4 text-muted-foreground" />;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const handleFileUpload = async (fileList: FileList) => {
     if (!user) {
       toast({ title: "يجب تسجيل الدخول أولاً", description: "يرجى تسجيل الدخول ثم إعادة المحاولة.", variant: "destructive" });
