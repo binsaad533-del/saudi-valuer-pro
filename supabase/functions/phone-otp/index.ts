@@ -131,6 +131,7 @@ serve(async (req) => {
       const expiresAt = Date.now() + OTP_TTL_MS;
       // Determine sender number: request param > env var > auto-discover from Twilio
       let twilioFrom = from_number || "";
+      console.log("twilioFrom initial:", JSON.stringify(twilioFrom), "env:", JSON.stringify(TWILIO_PHONE_NUMBER_ENV.substring(0, 6)));
       if (!twilioFrom && isValidE164(TWILIO_PHONE_NUMBER_ENV)) {
         twilioFrom = TWILIO_PHONE_NUMBER_ENV;
       }
