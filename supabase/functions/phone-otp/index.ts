@@ -98,6 +98,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
+  console.log("phone-otp v2 handler invoked");
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
