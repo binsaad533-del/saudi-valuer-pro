@@ -308,7 +308,7 @@ export default function ClientRegister() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              <PasswordStrengthMessage password={password} />
+              <PasswordStrengthMessage password={password} warningOnly />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}

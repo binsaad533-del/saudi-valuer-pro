@@ -207,6 +207,11 @@ export default function ClientLogin() {
             ليس لديك حساب؟{" "}
             <Link to="/client/register" className="text-primary font-medium hover:underline">إنشاء حساب جديد</Link>
           </div>
+          <div className="mt-2 text-center">
+            <Link to="/client/register" className="text-xs text-muted-foreground hover:text-primary">
+              دخول سريع برقم الجوال (بدون كلمة مرور)
+            </Link>
+          </div>
         </div>
 
       </div>
