@@ -315,11 +315,12 @@ export default function ClientDashboard() {
               <CardContent className="flex flex-col items-center justify-center py-10 gap-2">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <p className="text-sm font-medium text-foreground">اضغط لرفع مستند جديد</p>
-                <p className="text-xs text-muted-foreground">PDF, JPG, PNG — حتى 20 ميجا</p>
+                <p className="text-xs text-muted-foreground">PDF • صور • Excel (XLSX, CSV) — حتى 20 ميجا</p>
+                <p className="text-[11px] text-primary/70 mt-1">رفع Excel يسرّع إدخال الأصول تلقائياً</p>
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept=".pdf,.jpg,.jpeg,.png"
+                  accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
                   className="hidden"
                   onChange={handleFileUpload}
                 />
@@ -496,15 +497,9 @@ export default function ClientDashboard() {
             >
               <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
-              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، فواتير شراء، مواصفات فنية — PDF, JPG, PNG</p>
-              <input
-                ref={newReqFileRef}
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                multiple
-                className="hidden"
-                onChange={handleNewReqFileAdd}
-              />
+              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، فواتير شراء — PDF • صور • Excel (XLSX, CSV)</p>
+              <p className="text-[11px] text-primary/70 mt-1">يمكنك رفع قائمة الأصول بصيغة Excel</p>
+              <input ref={newReqFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" multiple className="hidden" onChange={handleNewReqFileAdd} />
             </div>
 
             {/* Selected files */}
