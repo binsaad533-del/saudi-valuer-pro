@@ -18,66 +18,9 @@ import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTrack
 import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
+import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import AppFooter from "@/components/layout/AppFooter";
-
-
-export default function ClientDashboard() {
-  const navigate = useNavigate();
-  const [requests, setRequests] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string>("");
-  const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState("");
-  const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // New request dialog
-  const [showNewRequest, setShowNewRequest] = useState(false);
-  const [newReqNotes, setNewReqNotes] = useState("");
-  const [newReqFiles, setNewReqFiles] = useState<File[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const newReqFileRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const init = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/login"); return; }
-      setUserId(user.id);
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name_ar")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      setUserName(profile?.full_name_ar || user.user_metadata?.full_name || "عميل");
-
-      const { data } = await supabase
-        .from("valuation_requests" as any)
-        .select("*")
-        .eq("client_user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      setRequests(data || []);
-      setLoading(false);
-    };
-    init();
-  }, [navigate]);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.replace("/login");
-  };
-
-  const handleFileUpload = () => {
-    toast.success("تم رفع المستند بنجاح (تجريبي)");
-  };
-
-  const handleNewReqFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewReqFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
+...
   const handleSubmitNewRequest = async () => {
     if (newReqFiles.length === 0) {
       toast.error("يرجى رفع مستند واحد على الأقل");
@@ -86,15 +29,14 @@ export default function ClientDashboard() {
     setSubmitting(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("غير مسجل");
+      if (!user) throw new Error("يرجى تسجيل الدخول أولاً");
 
-      // Upload files to client-uploads bucket
       const uploadedPaths: string[] = [];
       for (const file of newReqFiles) {
-        const path = `${user.id}/${Date.now()}-${file.name}`;
-        const { error } = await supabase.storage.from("client-uploads").upload(path, file);
+        const { storageKey } = buildSafeStorageObject({ userId: user.id, originalFilename: file.name });
+        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
         if (error) throw error;
-        uploadedPaths.push(path);
+        uploadedPaths.push(storageKey);
       }
 
       toast.success("تم إرسال طلب التقييم بنجاح");
@@ -102,7 +44,7 @@ export default function ClientDashboard() {
       setNewReqNotes("");
       setNewReqFiles([]);
     } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء الإرسال");
+      toast.error(getUploadErrorMessage(err));
     } finally {
       setSubmitting(false);
     }

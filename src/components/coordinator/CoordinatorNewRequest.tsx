@@ -15,6 +15,7 @@ import {
   Loader2, Send, UserPlus, Users, Upload, FileText, Image, File, X,
   Brain, CheckCircle, Sparkles,
 } from "lucide-react";
+import { buildSafeStorageObject } from "@/lib/storage-path";
 
 interface Props {
   clients: any[];
@@ -64,38 +65,20 @@ interface AIResult {
 export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
   const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [saving, setSaving] = useState(false);
   const [clientMode, setClientMode] = useState<"existing" | "new">("existing");
   const [dragOver, setDragOver] = useState(false);
-
-  // Basic fields only
-  const [form, setForm] = useState({
-    clientId: "",
-    purpose: "",
-    valuationType: "real_estate",
-    notes: "",
-  });
-
-  const [newClient, setNewClient] = useState({
-    nameAr: "",
-    phone: "",
-    email: "",
-  });
-
-  // Files
+  const [form, setForm] = useState({ clientId: "", purpose: "", valuationType: "real_estate", notes: "" });
+  const [newClient, setNewClient] = useState({ nameAr: "", phone: "", email: "" });
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
-
-  // AI
   const [aiProcessing, setAiProcessing] = useState(false);
   const [aiProgress, setAiProgress] = useState(0);
   const [aiMessage, setAiMessage] = useState("");
   const [aiResult, setAiResult] = useState<AIResult | null>(null);
 
-  const update = (key: string, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const update = (key: string, value: any) => setForm(prev => ({ ...prev, [key]: value }));
 
-  // File handling
   const getFileIcon = (type: string) => {
     if (type.startsWith("image/")) return <Image className="w-4 h-4 text-info" />;
     if (type.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
@@ -109,25 +92,17 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
   };
 
   const handleFileUpload = async (fileList: FileList) => {
-    if (!user) return;
     setUploading(true);
-    const newFiles: UploadedFile[] = Array.from(fileList).map(f => ({
+    const next = Array.from(fileList).map((file) => ({
       id: crypto.randomUUID(),
-      name: f.name,
-      size: f.size,
-      type: f.type,
-      file: f,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file,
     }));
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    setUploadedFiles(prev => [...prev, ...next]);
     setUploading(false);
-    // Reset AI result when files change
-    setAiResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const removeFile = (id: string) => {
-    setUploadedFiles(prev => prev.filter(f => f.id !== id));
-    setAiResult(null);
   };
 
   const handleDrop = (e: React.DragEvent) => {
@@ -136,10 +111,9 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
     if (e.dataTransfer.files.length > 0) handleFileUpload(e.dataTransfer.files);
   };
 
-  // AI Processing
   const runAIAnalysis = async () => {
     if (uploadedFiles.length === 0) {
-      toast.error("يرجى رفع الوثائق أولاً");
+      toast.error("يرجى رفع ملف واحد على الأقل");
       return;
     }
 
@@ -148,33 +122,33 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
     setAiMessage("جارٍ رفع الملفات...");
 
     try {
-      // Upload files to storage
-      const tempId = `coord_${Date.now()}`;
-      const storagePaths: { path: string; name: string; mimeType: string }[] = [];
+        const storagePaths: { path: string; name: string; mimeType: string }[] = [];
 
-      for (const uf of uploadedFiles) {
-        setAiProgress(p => Math.min(p + 10, 30));
-        const filePath = `${tempId}/${Date.now()}_${uf.name}`;
-        const { error: uploadErr } = await supabase.storage
-          .from("client-uploads")
-          .upload(filePath, uf.file);
-        if (!uploadErr) {
-          storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.type });
-          uf.storagePath = filePath;
+        for (const uf of uploadedFiles) {
+          setAiProgress(p => Math.min(p + 10, 30));
+          const { storageKey, originalFilename } = buildSafeStorageObject({
+            userId: user?.id || "coordinator",
+            originalFilename: uf.name,
+          });
+          const { error: uploadErr } = await supabase.storage
+            .from("client-uploads")
+            .upload(storageKey, uf.file);
+          if (!uploadErr) {
+            storagePaths.push({ path: storageKey, name: originalFilename, mimeType: uf.type });
+            uf.storagePath = storageKey;
+          }
         }
-      }
 
-      setAiProgress(40);
-      setAiMessage("تحليل المحتوى بالذكاء الاصطناعي...");
+        setAiProgress(40);
+        setAiMessage("تحليل المحتوى بالذكاء الاصطناعي...");
 
-      // Call AI extraction
-      const { data, error } = await supabase.functions.invoke("extract-documents", {
-        body: {
-          fileNames: uploadedFiles.map(f => f.name),
-          fileDescriptions: [],
-          storagePaths,
-        },
-      });
+        const { data, error } = await supabase.functions.invoke("extract-documents", {
+          body: {
+            fileNames: uploadedFiles.map(f => f.name),
+            fileDescriptions: [],
+            storagePaths,
+          },
+        });
 
       if (error) throw error;
 

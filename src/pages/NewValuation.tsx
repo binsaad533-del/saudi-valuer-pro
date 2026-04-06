@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatTime } from "@/lib/utils";
+import { buildSafeStorageObject } from "@/lib/storage-path";
 import ScopeOfWorkGenerator from "@/components/valuation/ScopeOfWorkGenerator";
 
 
@@ -202,21 +203,21 @@ export default function NewValuation() {
     logActivity(1, "بدء التحليل الذكي للوثائق");
 
     try {
-      // Phase 1: Upload files to storage for content analysis
       setExtractionPhase("رفع الملفات...");
-      const tempId = `temp_${Date.now()}`;
       const storagePaths: { path: string; name: string; mimeType: string }[] = [];
 
       for (const uf of uploadedFiles) {
-        const filePath = `${tempId}/${Date.now()}_${uf.name}`;
-        const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+        const { storageKey, originalFilename } = buildSafeStorageObject({
+          userId: "shared",
+          originalFilename: uf.name,
+        });
+        const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(storageKey, uf.file);
         if (!uploadErr) {
-          storagePaths.push({ path: filePath, name: uf.name, mimeType: uf.file.type });
-          uf.storagePath = filePath;
+          storagePaths.push({ path: storageKey, name: originalFilename, mimeType: uf.file.type });
+          uf.storagePath = storageKey;
         }
       }
 
-      // Phase 2: AI Analysis
       setExtractionPhase("تحليل المحتوى بالذكاء الاصطناعي...");
       const { data, error } = await supabase.functions.invoke("extract-documents", {
         body: {
