@@ -17,6 +17,19 @@ function isValidE164(phone: string): boolean {
   return /^\+[1-9]\d{7,14}$/.test(phone.trim());
 }
 
+function isSaudiNumber(phone: string): boolean {
+  return phone.trim().startsWith("+966");
+}
+
+function isValidAlphaSenderId(value: string): boolean {
+  const normalized = value.trim();
+  return /^[A-Za-z][A-Za-z0-9 ]{2,10}$/.test(normalized);
+}
+
+function isValidTwilioSender(value: string): boolean {
+  return isValidE164(value) || isValidAlphaSenderId(value);
+}
+
 function normalizePhone(phone: string): string {
   const trimmed = phone.trim();
   if (trimmed.startsWith("+")) return trimmed;
@@ -128,14 +141,14 @@ serve(async (req) => {
     if (action === "send") {
       const otp = generateOtp();
       const expiresAt = Date.now() + OTP_TTL_MS;
-      // Determine sender number: request param > env var > auto-discover from Twilio
+      // Determine sender identity: request param > env var > auto-discover from Twilio
       let twilioFrom = from_number || "";
-      if (!twilioFrom && isValidE164(TWILIO_PHONE_NUMBER_ENV)) {
+      if (!twilioFrom && isValidTwilioSender(TWILIO_PHONE_NUMBER_ENV)) {
         twilioFrom = TWILIO_PHONE_NUMBER_ENV;
       }
 
-      if (!isValidE164(twilioFrom)) {
-        // Auto-discover first phone number from Twilio account
+      if (!isValidTwilioSender(twilioFrom)) {
+        // Auto-discover first phone number from Twilio account when no valid sender identity is configured.
         try {
           const numRes = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=1`, {
             method: "GET",
@@ -157,9 +170,11 @@ serve(async (req) => {
         }
       }
 
-      if (!isValidE164(twilioFrom)) {
+      if (!isValidTwilioSender(twilioFrom)) {
         return new Response(JSON.stringify({
-          error: "تعذر إرسال رمز التحقق لأن رقم الرسائل غير مهيأ بشكل صحيح حالياً.",
+          error: isSaudiNumber(normalizedPhone)
+            ? "تعذر إرسال رمز التحقق حالياً لأن السعودية تتطلب Sender ID أبجدي مسجّل أو جهة إرسال معتمدة في Twilio."
+            : "تعذر إرسال رمز التحقق لأن جهة الإرسال غير مهيأة بشكل صحيح حالياً.",
         }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -185,12 +200,17 @@ serve(async (req) => {
         console.error("Twilio error:", JSON.stringify(data));
         const twilioMessage = typeof data?.message === "string" ? data.message : "";
         const isInvalidFromNumber = response.status === 400 && (
-          twilioMessage.includes("Invalid From Number") || Number(data?.code) === 21212
+          twilioMessage.includes("Invalid From Number") ||
+          twilioMessage.includes("The From phone number") ||
+          twilioMessage.includes("Alphanumeric Sender ID") ||
+          Number(data?.code) === 21212
         );
 
         if (isInvalidFromNumber) {
           return new Response(JSON.stringify({
-            error: "تعذر إرسال رمز التحقق لأن رقم الرسائل المعتمد غير صالح حالياً.",
+            error: isSaudiNumber(normalizedPhone)
+              ? "جهة الإرسال الحالية غير صالحة للسعودية. استخدم Alphanumeric Sender ID مسجّلاً في Twilio بدلاً من رقم هاتف عادي."
+              : "جهة الإرسال المعتمدة غير صالحة حالياً.",
           }), {
             status: 500,
             headers: { ...corsHeaders, "Content-Type": "application/json" },
