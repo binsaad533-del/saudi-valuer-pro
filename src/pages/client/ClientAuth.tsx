@@ -37,19 +37,22 @@ export default function ClientAuth() {
       }
       setLoading(true);
       try {
+        // 1. Call edge function to ensure user exists & get credentials
         const { data, error } = await supabase.functions.invoke("demo-auth", {
           body: { phone: raw, client_name: clientName.trim() || undefined },
         });
         if (error) throw error;
         if (data?.error) throw new Error(data.error);
 
-        if (data?.valid && data?.token_hash) {
+        if (data?.valid && data?.email && data?.password) {
           setRedirecting(true);
-          const { error: verifyError } = await supabase.auth.verifyOtp({
-            token_hash: data.token_hash,
-            type: "magiclink",
+
+          // 2. Sign in directly with password — no OTP, no magic link
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: data.email,
+            password: data.password,
           });
-          if (verifyError) throw verifyError;
+          if (signInError) throw signInError;
 
           const msg = data.is_new_account
             ? "تم إنشاء حسابك بنجاح"
@@ -70,7 +73,7 @@ export default function ClientAuth() {
         setLoading(false);
       }
     },
-    [phone, clientName, toast, navigate]
+    [phone, clientName, toast, navigate],
   );
 
   if (redirecting) {

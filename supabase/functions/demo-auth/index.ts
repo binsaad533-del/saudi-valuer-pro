@@ -13,57 +13,70 @@ function json(body: Record<string, unknown>, status = 200) {
   });
 }
 
+/* Simple in-memory rate limit: max 5 attempts per phone per 2 minutes */
+const rateBucket = new Map<string, { count: number; resetAt: number }>();
+const RATE_WINDOW_MS = 2 * 60 * 1000;
+const RATE_MAX = 5;
+
+function isRateLimited(phone: string): boolean {
+  const now = Date.now();
+  const entry = rateBucket.get(phone);
+  if (!entry || now > entry.resetAt) {
+    rateBucket.set(phone, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    return false;
+  }
+  entry.count++;
+  return entry.count > RATE_MAX;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 
   try {
     const { phone, client_name } = await req.json();
 
-    if (!phone || typeof phone !== "string" || phone.trim().length < 9) {
+    if (!phone || typeof phone !== "string" || phone.trim().length < 8) {
       return json({ error: "رقم جوال غير صالح" }, 400);
     }
 
-    // Normalize: strip leading 0, ensure digits only
     const raw = phone.trim().replace(/^0+/, "").replace(/\D/g, "");
     const fullPhone = raw.startsWith("966") ? `+${raw}` : `+966${raw}`;
+
+    if (isRateLimited(fullPhone)) {
+      return json({ error: "محاولات كثيرة، انتظر دقيقتين" }, 429);
+    }
+
     const demoEmail = `${fullPhone.replace("+", "")}@demo.jsaas.app`;
     const demoPassword = `demo_${fullPhone}_2026!`;
 
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { auth: { autoRefreshToken: false, persistSession: false } }
+      { auth: { autoRefreshToken: false, persistSession: false } },
     );
 
-    // Check if user exists
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers({
-      perPage: 1,
-      page: 1,
-    });
-
+    /* ---- Find existing user ---- */
     let userId: string | null = null;
     let isNewAccount = false;
 
-    // Search by email
-    const { data: userByEmail } = await supabaseAdmin
+    const { data: profileHit } = await supabaseAdmin
       .from("profiles")
       .select("user_id")
       .eq("phone", fullPhone)
       .maybeSingle();
 
-    if (userByEmail?.user_id) {
-      userId = userByEmail.user_id;
+    if (profileHit?.user_id) {
+      userId = profileHit.user_id;
     } else {
-      // Try to find by email pattern in auth
       const { data: { users } } = await supabaseAdmin.auth.admin.listUsers();
       const found = users?.find((u) => u.email === demoEmail);
-      if (found) {
-        userId = found.id;
-      }
+      if (found) userId = found.id;
     }
 
+    /* ---- Create if new ---- */
     if (!userId) {
-      // Create new user
       const { data: newUser, error: createError } =
         await supabaseAdmin.auth.admin.createUser({
           email: demoEmail,
@@ -82,47 +95,43 @@ Deno.serve(async (req) => {
       userId = newUser.user!.id;
       isNewAccount = true;
 
-      // Create profile
-      await supabaseAdmin.from("profiles").upsert({
-        user_id: userId,
-        full_name_ar: client_name || "",
-        phone: fullPhone,
-        account_status: "active",
-      }, { onConflict: "user_id" });
+      await supabaseAdmin.from("profiles").upsert(
+        {
+          user_id: userId,
+          full_name_ar: client_name || "",
+          phone: fullPhone,
+          account_status: "active",
+        },
+        { onConflict: "user_id" },
+      );
 
-      // Assign client role
-      await supabaseAdmin.from("user_roles").upsert({
-        user_id: userId,
-        role: "client",
-      }, { onConflict: "user_id,role" });
+      await supabaseAdmin.from("user_roles").upsert(
+        { user_id: userId, role: "client" },
+        { onConflict: "user_id,role" },
+      );
 
-      // Try to link to existing client record
       await supabaseAdmin.rpc("link_portal_user_to_client", {
         _user_id: userId,
         _phone: fullPhone,
         _name_ar: client_name || null,
       });
+    } else {
+      // Ensure password is in sync (in case it was changed)
+      await supabaseAdmin.auth.admin.updateUser(userId, { password: demoPassword });
     }
 
-    // Generate magic link for instant sign-in
-    const { data: linkData, error: linkError } =
-      await supabaseAdmin.auth.admin.generateLink({
-        type: "magiclink",
-        email: demoEmail,
-      });
+    /* ---- Log attempt ---- */
+    console.log(`demo-auth: phone=${fullPhone} ip=${clientIp} new=${isNewAccount}`);
 
-    if (linkError) throw linkError;
-
-    const tokenHash = linkData?.properties?.hashed_token;
-    if (!tokenHash) throw new Error("فشل إنشاء رمز الدخول");
-
+    /* ---- Return credentials for client-side signInWithPassword ---- */
     return json({
       valid: true,
-      token_hash: tokenHash,
+      email: demoEmail,
+      password: demoPassword,
       is_new_account: isNewAccount,
     });
   } catch (err) {
     console.error("demo-auth error:", err);
-    return json({ error: err.message || "خطأ في الخادم" }, 500);
+    return json({ error: (err as Error).message || "خطأ في الخادم" }, 500);
   }
 });
