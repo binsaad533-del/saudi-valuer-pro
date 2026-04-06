@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Loader2, CheckCircle, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { buildRecoveryRedirectUrl } from "@/lib/auth-recovery";
 
 export default function ForgotPassword() {
   const { toast } = useToast();
@@ -33,14 +34,28 @@ export default function ForgotPassword() {
   const sendResetEmail = async () => {
     setLoading(true);
     try {
+      const redirectTo = buildRecoveryRedirectUrl();
+      console.info("[ForgotPassword] Sending recovery email", {
+        email,
+        redirectTo,
+        currentOrigin: window.location.origin,
+      });
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo,
       });
       if (error) throw error;
+
+      console.info("[ForgotPassword] Recovery email request accepted", {
+        email,
+        redirectTo,
+      });
+
       setSent(true);
       startCooldown();
       toast({ title: "تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني" });
     } catch (err: any) {
+      console.error("[ForgotPassword] Recovery email request failed", err);
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
