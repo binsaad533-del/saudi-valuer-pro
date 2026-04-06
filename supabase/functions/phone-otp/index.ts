@@ -99,7 +99,6 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
   console.log("phone-otp v2 handler invoked");
-
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
   const TWILIO_PHONE_NUMBER_ENV = Deno.env.get("TWILIO_PHONE_NUMBER") || "";
@@ -131,7 +130,6 @@ serve(async (req) => {
       const expiresAt = Date.now() + OTP_TTL_MS;
       // Determine sender number: request param > env var > auto-discover from Twilio
       let twilioFrom = from_number || "";
-      console.log("twilioFrom initial:", JSON.stringify(twilioFrom), "env:", JSON.stringify(TWILIO_PHONE_NUMBER_ENV.substring(0, 6)));
       if (!twilioFrom && isValidE164(TWILIO_PHONE_NUMBER_ENV)) {
         twilioFrom = TWILIO_PHONE_NUMBER_ENV;
       }
@@ -139,7 +137,6 @@ serve(async (req) => {
       if (!isValidE164(twilioFrom)) {
         // Auto-discover first phone number from Twilio account
         try {
-          console.log("Attempting auto-discover from Twilio...");
           const numRes = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=1`, {
             method: "GET",
             headers: {
@@ -148,9 +145,7 @@ serve(async (req) => {
             },
           });
           if (numRes.ok) {
-            console.log("Twilio phone numbers response OK");
             const numData = await numRes.json();
-            console.log("Twilio numbers data:", JSON.stringify(numData).substring(0, 200));
             const numbers = numData?.incoming_phone_numbers ?? [];
             if (numbers.length > 0 && numbers[0].phone_number) {
               twilioFrom = numbers[0].phone_number;
