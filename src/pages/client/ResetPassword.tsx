@@ -12,7 +12,8 @@ import { hasRecoveryParams, readRecoveryParamsFromLocation, RECOVERY_CALLBACK_PA
 
 type RecoveryStatus = "checking" | "ready" | "invalid";
 
-const SESSION_TIMEOUT_MS = 6000;
+const SESSION_POLL_INTERVAL = 500;
+const SESSION_POLL_MAX_ATTEMPTS = 12;
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -37,38 +38,85 @@ export default function ResetPassword() {
 
   useEffect(() => {
     let isActive = true;
+    let resolved = false;
 
-    const timeoutId = window.setTimeout(() => {
-      if (!isActive) return;
-      console.error("[ResetPassword] Timed out waiting for recovery session", {
+    const markReady = (source: string) => {
+      if (!isActive || resolved) return;
+      resolved = true;
+      console.info("[ResetPassword] Recovery session ready", {
+        source,
+        href: window.location.href,
+        state: location.state,
+      });
+      setStatus("ready");
+    };
+
+    const markInvalid = (reason: string, error?: unknown) => {
+      if (!isActive || resolved) return;
+      resolved = true;
+      console.error("[ResetPassword] Recovery session missing", {
+        reason,
+        error,
         href: window.location.href,
         state: location.state,
       });
       setStatus("invalid");
-    }, SESSION_TIMEOUT_MS);
+    };
+
+    const checkSession = async (label: string) => {
+      const { data, error } = await supabase.auth.getSession();
+
+      console.info(`[ResetPassword] Session check (${label})`, {
+        hasSession: Boolean(data.session),
+        hasUser: Boolean(data.session?.user),
+        userId: data.session?.user?.id ?? null,
+        error: error?.message ?? null,
+        href: window.location.href,
+        state: location.state,
+      });
+
+      if (error) {
+        console.error(`[ResetPassword] getSession error (${label})`, error);
+      }
+
+      if (data.session?.user) {
+        markReady(label);
+        return true;
+      }
+
+      return false;
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.info("[ResetPassword] onAuthStateChange", {
+        event,
+        hasSession: Boolean(session),
+        userId: session?.user?.id ?? null,
+      });
+
+      if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || event === "TOKEN_REFRESHED") && session?.user) {
+        markReady(`auth-event:${event}`);
+      }
+    });
 
     const run = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        if (await checkSession("initial")) return;
 
-        console.info("[ResetPassword] Current session after recovery callback", {
-          hasSession: Boolean(data.session),
-          hasUser: Boolean(data.session?.user),
-          userId: data.session?.user?.id ?? null,
-          error: error?.message ?? null,
-          href: window.location.href,
-          state: location.state,
-        });
+        for (let attempt = 1; attempt <= SESSION_POLL_MAX_ATTEMPTS; attempt++) {
+          if (!isActive || resolved) return;
 
-        if (error) throw error;
-        if (!isActive) return;
+          await new Promise((resolve) => setTimeout(resolve, SESSION_POLL_INTERVAL));
 
-        setStatus(data.session?.user ? "ready" : "invalid");
+          if (await checkSession(`poll-${attempt}`)) {
+            return;
+          }
+        }
+
+        markInvalid("session-not-found-after-polling");
       } catch (error) {
         console.error("[ResetPassword] Failed to resolve recovery session", error);
-        if (isActive) setStatus("invalid");
-      } finally {
-        window.clearTimeout(timeoutId);
+        markInvalid("exception", error);
       }
     };
 
@@ -76,7 +124,7 @@ export default function ResetPassword() {
 
     return () => {
       isActive = false;
-      window.clearTimeout(timeoutId);
+      subscription.unsubscribe();
     };
   }, [location.state]);
 
