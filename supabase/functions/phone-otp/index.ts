@@ -139,6 +139,7 @@ serve(async (req) => {
       if (!isValidE164(twilioFrom)) {
         // Auto-discover first phone number from Twilio account
         try {
+          console.log("Attempting auto-discover from Twilio...");
           const numRes = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=1`, {
             method: "GET",
             headers: {
@@ -147,7 +148,9 @@ serve(async (req) => {
             },
           });
           if (numRes.ok) {
+            console.log("Twilio phone numbers response OK");
             const numData = await numRes.json();
+            console.log("Twilio numbers data:", JSON.stringify(numData).substring(0, 200));
             const numbers = numData?.incoming_phone_numbers ?? [];
             if (numbers.length > 0 && numbers[0].phone_number) {
               twilioFrom = numbers[0].phone_number;
