@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,27 +7,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
-import { Phone, KeyRound, Loader2, CheckCircle, ArrowRight } from "lucide-react";
+import { Phone, KeyRound, Loader2, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AppFooter from "@/components/layout/AppFooter";
+import { useOtpCountries, OtpCountry } from "@/hooks/useOtpCountries";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type Step = "phone" | "otp" | "redirecting";
-
 const RESEND_COOLDOWN = 60;
 
 export default function ClientAuth() {
   const navigate = useNavigate();
   const { user, role, loading: authLoading, getRedirectPath } = useAuth();
   const { toast } = useToast();
+  const { countries, loading: countriesLoading } = useOtpCountries();
 
   const [step, setStep] = useState<Step>("phone");
   const [loading, setLoading] = useState(false);
+  const [selectedCountryCode, setSelectedCountryCode] = useState("SA");
   const [phone, setPhone] = useState("");
   const [clientName, setClientName] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [verificationToken, setVerificationToken] = useState("");
   const [resendTimer, setResendTimer] = useState(0);
   const [failedAttempts, setFailedAttempts] = useState(0);
+
+  const selectedCountry: OtpCountry | undefined = useMemo(
+    () => countries.find((c) => c.country_code === selectedCountryCode),
+    [countries, selectedCountryCode]
+  );
+
+  const otpAvailable = selectedCountry?.otp_enabled ?? false;
 
   // Redirect if already logged in
   useEffect(() => {
@@ -43,31 +59,40 @@ export default function ClientAuth() {
     return () => clearTimeout(t);
   }, [resendTimer]);
 
-  const handleSendOtp = useCallback(async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!phone || phone.trim().length < 9) {
-      toast({ title: "أدخل رقم جوال صحيح", variant: "destructive" });
-      return;
-    }
-    setLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("phone-otp", {
-        body: { action: "send", phone: phone.trim() },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      setVerificationToken(data?.verification_token || "");
-      setStep("otp");
-      setResendTimer(RESEND_COOLDOWN);
-      setFailedAttempts(0);
-      toast({ title: "تم إرسال رمز التحقق" });
-    } catch (err: unknown) {
-      const message = await extractEdgeFunctionErrorMessage(err, "تعذر إرسال رمز التحقق حالياً");
-      toast({ title: "تعذر إرسال الرمز", description: message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
-  }, [phone, toast]);
+  const fullPhone = useMemo(() => {
+    const raw = phone.trim().replace(/^0+/, "");
+    return `${selectedCountry?.dial_code ?? "+966"}${raw}`;
+  }, [phone, selectedCountry]);
+
+  const handleSendOtp = useCallback(
+    async (e?: React.FormEvent) => {
+      e?.preventDefault();
+      if (!otpAvailable) return;
+      if (!phone || phone.trim().length < 5) {
+        toast({ title: "أدخل رقم جوال صحيح", variant: "destructive" });
+        return;
+      }
+      setLoading(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("phone-otp", {
+          body: { action: "send", phone: fullPhone },
+        });
+        if (error) throw error;
+        if (data?.error) throw new Error(data.error);
+        setVerificationToken(data?.verification_token || "");
+        setStep("otp");
+        setResendTimer(RESEND_COOLDOWN);
+        setFailedAttempts(0);
+        toast({ title: "تم إرسال رمز التحقق" });
+      } catch (err: unknown) {
+        const message = await extractEdgeFunctionErrorMessage(err, "تعذر إرسال رمز التحقق حالياً");
+        toast({ title: "تعذر إرسال الرمز", description: message, variant: "destructive" });
+      } finally {
+        setLoading(false);
+      }
+    },
+    [phone, fullPhone, otpAvailable, toast]
+  );
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,7 +105,7 @@ export default function ClientAuth() {
       const { data, error } = await supabase.functions.invoke("phone-otp", {
         body: {
           action: "verify",
-          phone: phone.trim(),
+          phone: fullPhone,
           code: otpCode,
           verification_token: verificationToken,
           client_name: clientName.trim() || undefined,
@@ -141,23 +166,63 @@ export default function ClientAuth() {
                 </p>
               </div>
 
+              {/* Country selector */}
+              <div className="space-y-2">
+                <Label>الدولة</Label>
+                <Select
+                  value={selectedCountryCode}
+                  onValueChange={setSelectedCountryCode}
+                  disabled={countriesLoading}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="اختر الدولة" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countries.map((c) => (
+                      <SelectItem key={c.country_code} value={c.country_code}>
+                        <span className="flex items-center gap-2">
+                          <span dir="ltr" className="text-muted-foreground text-xs">{c.dial_code}</span>
+                          <span>{c.country_name_ar}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Phone input */}
               <div className="space-y-2">
                 <Label htmlFor="phone">رقم الجوال</Label>
-                <div className="relative">
-                  <Phone className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="05XXXXXXXX"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="pr-10"
-                    required
-                    dir="ltr"
-                    autoFocus
-                  />
+                <div className="relative flex items-center gap-2">
+                  <span className="shrink-0 text-sm text-muted-foreground font-medium min-w-[3.5rem] text-center" dir="ltr">
+                    {selectedCountry?.dial_code ?? "+966"}
+                  </span>
+                  <div className="relative flex-1">
+                    <Phone className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="5XXXXXXXX"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="pr-10"
+                      required
+                      dir="ltr"
+                      autoFocus
+                    />
+                  </div>
                 </div>
               </div>
+
+              {/* OTP unavailable warning */}
+              {!otpAvailable && !countriesLoading && (
+                <div className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/5 p-3">
+                  <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-sm text-destructive">
+                    رمز التحقق غير متاح حاليًا لهذه الدولة
+                  </p>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="client-name">الاسم <span className="text-muted-foreground text-xs">(اختياري)</span></Label>
@@ -169,7 +234,7 @@ export default function ClientAuth() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full" disabled={loading || !otpAvailable}>
                 {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                 إرسال رمز التحقق
               </Button>
@@ -182,7 +247,7 @@ export default function ClientAuth() {
                 <CheckCircle className="w-10 h-10 text-primary mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
                   تم إرسال رمز التحقق إلى{" "}
-                  <span className="font-medium text-foreground" dir="ltr">{phone}</span>
+                  <span className="font-medium text-foreground" dir="ltr">{fullPhone}</span>
                 </p>
               </div>
 
