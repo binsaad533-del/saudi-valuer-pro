@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Loader2, CheckCircle } from "lucide-react";
+import { Mail, Loader2, CheckCircle, RefreshCw } from "lucide-react";
 import logo from "@/assets/logo.png";
 
 export default function ForgotPassword() {
@@ -13,9 +13,24 @@ export default function ForgotPassword() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const startCooldown = () => {
+    setResendCooldown(60);
+    if (cooldownRef.current) clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          if (cooldownRef.current) clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  const sendResetEmail = async () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -23,11 +38,23 @@ export default function ForgotPassword() {
       });
       if (error) throw error;
       setSent(true);
+      startCooldown();
+      toast({ title: "تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني" });
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await sendResetEmail();
+  };
+
+  const handleResend = async () => {
+    if (resendCooldown > 0) return;
+    await sendResetEmail();
   };
 
   if (sent) {
@@ -36,13 +63,31 @@ export default function ForgotPassword() {
         <div className="w-full max-w-md text-center">
           <div className="bg-card rounded-xl border border-border shadow-card p-8">
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-foreground mb-2">تم إرسال رابط الاسترجاع</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">تم إرسال رابط إعادة التعيين إلى بريدك الإلكتروني</h2>
             <p className="text-muted-foreground text-sm mb-6">
               يرجى التحقق من بريدك الإلكتروني <span className="font-medium text-foreground" dir="ltr">{email}</span> واتبع الرابط لإعادة تعيين كلمة المرور.
             </p>
-            <Link to="/login">
-              <Button variant="outline" className="w-full">العودة لتسجيل الدخول</Button>
-            </Link>
+            <p className="text-xs text-muted-foreground mb-4">تحقق من مجلد البريد غير المرغوب فيه إذا لم تجد الرسالة</p>
+            <div className="space-y-3">
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={handleResend}
+                disabled={loading || resendCooldown > 0}
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                {resendCooldown > 0
+                  ? `إعادة الإرسال بعد ${resendCooldown} ثانية`
+                  : "إعادة إرسال الرابط"}
+              </Button>
+              <Link to="/login">
+                <Button variant="ghost" className="w-full">العودة لتسجيل الدخول</Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
