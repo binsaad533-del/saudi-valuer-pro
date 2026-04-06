@@ -92,23 +92,27 @@ export default function ClientRegister() {
         } catch {
           // Non-critical: linking can happen later
         }
+
+        // Auto-confirm is enabled, so session should already exist
+        if (data.session) {
+          setStep("redirecting");
+          toast({ title: "جاري تسجيل الدخول..." });
+          setTimeout(() => navigate("/client/dashboard", { replace: true }), 1000);
+          return;
+        }
+
+        // Fallback: try signing in explicitly
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!signInError) {
+          setStep("redirecting");
+          toast({ title: "جاري تسجيل الدخول..." });
+          setTimeout(() => navigate("/client/dashboard", { replace: true }), 1000);
+          return;
+        }
       }
 
-      // Send phone OTP via Twilio
-      try {
-        const { data: otpData, error: otpError } = await supabase.functions.invoke("phone-otp", {
-          body: { action: "send", phone },
-        });
-        if (otpError) throw otpError;
-        if (otpData?.error) throw new Error(otpData.error);
-        setPhoneVerificationToken(otpData?.verification_token || "");
-        setStep("verify-phone");
-        toast({ title: "تم إرسال رمز التحقق إلى جوالك" });
-      } catch (otpError: unknown) {
-        const message = await extractEdgeFunctionErrorMessage(otpError, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
-        toast({ title: "تم إنشاء الحساب", description: `${message} يمكنك حالياً إكمال الدخول عبر البريد الإلكتروني بعد تأكيده.`, variant: "destructive" });
-        setStep("done");
-      }
+      // Final fallback if no session could be created
+      setStep("done");
     } catch (err: any) {
       toast({ title: "خطأ في التسجيل", description: err.message, variant: "destructive" });
     } finally {
