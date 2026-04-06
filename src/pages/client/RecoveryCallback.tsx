@@ -61,8 +61,8 @@ function extractParams(search: string, hash: string) {
 const PARAMS = extractParams(INITIAL_SEARCH, INITIAL_HASH);
 
 const SESSION_POLL_INTERVAL = 500;
-const SESSION_POLL_MAX_ATTEMPTS = 16; // 8 seconds total
-const HARD_TIMEOUT_MS = 12000;
+const SESSION_POLL_MAX_ATTEMPTS = 20; // 10 seconds total
+const SESSION_GRACE_ATTEMPTS = 6; // extra 3 seconds if recovery event fires but session is delayed
 
 export default function RecoveryCallback() {
   const navigate = useNavigate();
@@ -89,6 +89,8 @@ export default function RecoveryCallback() {
     console.log("[RecoveryCallback] Current URL (may differ if hash was consumed):", window.location.href);
 
     let isActive = true;
+    let recoveryEventFired = false;
+    let lastRecoveryError: unknown = null;
 
     const done = (source: string) => {
       if (!isActive || completedRef.current) return;
@@ -104,64 +106,89 @@ export default function RecoveryCallback() {
       setStatus("invalid");
     };
 
+    const getSessionAndLog = async (label: string) => {
+      const { data, error } = await supabase.auth.getSession();
+      console.log(`[RecoveryCallback] SESSION (${label}):`, {
+        hasSession: Boolean(data.session),
+        userId: data.session?.user?.id ?? null,
+        error: error?.message ?? null,
+        session: data.session,
+      });
+
+      if (error) {
+        lastRecoveryError = error;
+        console.error(`[RecoveryCallback] getSession error (${label}):`, error.message);
+      }
+
+      if (data.session?.user) {
+        done(`session:${label}`);
+        return true;
+      }
+
+      return false;
+    };
+
+    const pollForSession = async (attempts: number, label: string) => {
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        if (!isActive || completedRef.current) return true;
+        await new Promise((resolve) => setTimeout(resolve, SESSION_POLL_INTERVAL));
+        if (await getSessionAndLog(`${label}-${attempt}`)) {
+          return true;
+        }
+      }
+
+      return false;
+    };
+
     // ─── 1. Auth state listener (catches auto-detected tokens) ──
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("[RecoveryCallback] onAuthStateChange →", event, {
         hasSession: Boolean(session),
         userId: session?.user?.id ?? null,
       });
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+        recoveryEventFired = true;
+      }
       if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session?.user) {
         done(`auth-event:${event}`);
       }
     });
 
-    // ─── 2. Hard timeout ────────────────────────────────────
-    const hardTimeout = window.setTimeout(() => {
-      fail("hard-timeout (12s)");
-    }, HARD_TIMEOUT_MS);
-
-    // ─── 3. Main verification flow ──────────────────────────
+    // ─── 2. Main verification flow ──────────────────────────
     const run = async () => {
-      // If the URL had an explicit error from Supabase, fail immediately
+      console.log("[RecoveryCallback] Starting session-first verification flow");
+
+      if (await getSessionAndLog("initial")) {
+        return;
+      }
+
       if (PARAMS.error) {
-        fail("url-contains-error", PARAMS.errorDescription ?? PARAMS.error);
-        return;
+        console.warn("[RecoveryCallback] URL contains error, but continuing because session may already be established:", {
+          error: PARAMS.error,
+          errorDescription: PARAMS.errorDescription ?? null,
+        });
       }
 
-      // STRATEGY A: Check if session already exists (auto-detected by AuthProvider)
-      const { data: s1 } = await supabase.auth.getSession();
-      console.log("[RecoveryCallback] Strategy A — existing session:", {
-        hasSession: Boolean(s1.session),
-        userId: s1.session?.user?.id ?? null,
-      });
-      if (s1.session?.user) {
-        done("existing-session");
-        return;
-      }
-
-      // STRATEGY B: Explicit token exchange using captured params
-      let exchangeAttempted = false;
+      // STRATEGY A: Explicit token exchange using captured params (only if session is still missing)
+      let methodUsed = "none";
 
       try {
         if (PARAMS.code) {
-          exchangeAttempted = true;
-          console.log("[RecoveryCallback] Strategy B — exchangeCodeForSession");
+          methodUsed = "exchangeCodeForSession";
+          console.log("[RecoveryCallback] Strategy A — exchangeCodeForSession");
           const { data, error } = await supabase.auth.exchangeCodeForSession(PARAMS.code);
           console.log("[RecoveryCallback] exchangeCodeForSession result:", {
             hasSession: Boolean(data.session),
             hasUser: Boolean(data.user),
             error: error?.message ?? null,
           });
-          if (!error && data.session?.user) {
-            done("exchangeCodeForSession");
-            return;
+          if (error) {
+            lastRecoveryError = error;
+            console.error("[RecoveryCallback] exchangeCodeForSession error:", error.message);
           }
-          if (error) console.warn("[RecoveryCallback] exchangeCodeForSession error:", error.message);
-        }
-
-        if (PARAMS.accessToken && PARAMS.refreshToken) {
-          exchangeAttempted = true;
-          console.log("[RecoveryCallback] Strategy B — setSession");
+        } else if (PARAMS.accessToken && PARAMS.refreshToken) {
+          methodUsed = "setSession";
+          console.log("[RecoveryCallback] Strategy A — setSession");
           const { data, error } = await supabase.auth.setSession({
             access_token: PARAMS.accessToken,
             refresh_token: PARAMS.refreshToken,
@@ -171,16 +198,13 @@ export default function RecoveryCallback() {
             hasUser: Boolean(data.session?.user),
             error: error?.message ?? null,
           });
-          if (!error && data.session?.user) {
-            done("setSession");
-            return;
+          if (error) {
+            lastRecoveryError = error;
+            console.error("[RecoveryCallback] setSession error:", error.message);
           }
-          if (error) console.warn("[RecoveryCallback] setSession error:", error.message);
-        }
-
-        if (PARAMS.tokenHash) {
-          exchangeAttempted = true;
-          console.log("[RecoveryCallback] Strategy B — verifyOtp(token_hash)");
+        } else if (PARAMS.tokenHash) {
+          methodUsed = "verifyOtp(token_hash)";
+          console.log("[RecoveryCallback] Strategy A — verifyOtp(token_hash)");
           const { data, error } = await supabase.auth.verifyOtp({
             token_hash: PARAMS.tokenHash,
             type: "recovery",
@@ -190,16 +214,13 @@ export default function RecoveryCallback() {
             hasUser: Boolean(data.user),
             error: error?.message ?? null,
           });
-          if (!error && data.session) {
-            done("verifyOtp-token_hash");
-            return;
+          if (error) {
+            lastRecoveryError = error;
+            console.error("[RecoveryCallback] verifyOtp(token_hash) error:", error.message);
           }
-          if (error) console.warn("[RecoveryCallback] verifyOtp(token_hash) error:", error.message);
-        }
-
-        if (PARAMS.token && PARAMS.email) {
-          exchangeAttempted = true;
-          console.log("[RecoveryCallback] Strategy B — verifyOtp(token+email)");
+        } else if (PARAMS.token && PARAMS.email) {
+          methodUsed = "verifyOtp(token+email)";
+          console.log("[RecoveryCallback] Strategy A — verifyOtp(token+email)");
           const { data, error } = await supabase.auth.verifyOtp({
             email: PARAMS.email,
             token: PARAMS.token,
@@ -210,43 +231,51 @@ export default function RecoveryCallback() {
             hasUser: Boolean(data.user),
             error: error?.message ?? null,
           });
-          if (!error && data.session) {
-            done("verifyOtp-token");
-            return;
+          if (error) {
+            lastRecoveryError = error;
+            console.error("[RecoveryCallback] verifyOtp(token+email) error:", error.message);
           }
-          if (error) console.warn("[RecoveryCallback] verifyOtp(token+email) error:", error.message);
+        } else {
+          console.log("[RecoveryCallback] No explicit recovery params found, relying on existing auth session/polling.");
         }
       } catch (err) {
-        console.error("[RecoveryCallback] Strategy B exception:", err);
+        lastRecoveryError = err;
+        console.error("[RecoveryCallback] Strategy A exception:", err);
       }
 
-      // STRATEGY C: Poll for session (AuthProvider may still be processing)
-      console.log("[RecoveryCallback] Strategy C — polling for session",
-        { exchangeAttempted, pollMax: SESSION_POLL_MAX_ATTEMPTS });
+      console.log("[RecoveryCallback] Recovery method used:", methodUsed);
 
-      for (let attempt = 1; attempt <= SESSION_POLL_MAX_ATTEMPTS; attempt++) {
-        if (completedRef.current) return;
-        await new Promise((r) => setTimeout(r, SESSION_POLL_INTERVAL));
-        const { data: s } = await supabase.auth.getSession();
-        console.log(`[RecoveryCallback] Poll #${attempt}:`, {
-          hasSession: Boolean(s.session),
-          userId: s.session?.user?.id ?? null,
+      if (await getSessionAndLog(`after-${methodUsed}`)) {
+        return;
+      }
+
+      // STRATEGY B: Poll for session (AuthProvider may still be processing)
+      console.log("[RecoveryCallback] Strategy B — polling for session", {
+        recoveryEventFired,
+        pollMax: SESSION_POLL_MAX_ATTEMPTS,
+      });
+
+      if (await pollForSession(SESSION_POLL_MAX_ATTEMPTS, "poll")) {
+        return;
+      }
+
+      if (recoveryEventFired) {
+        console.warn("[RecoveryCallback] Recovery event fired without a session yet, extending polling window", {
+          graceAttempts: SESSION_GRACE_ATTEMPTS,
         });
-        if (s.session?.user) {
-          done(`poll-attempt-${attempt}`);
+        if (await pollForSession(SESSION_GRACE_ATTEMPTS, "grace")) {
           return;
         }
       }
 
       // All strategies exhausted
-      fail("all-strategies-exhausted");
+      fail("session-not-established", lastRecoveryError ?? PARAMS.errorDescription ?? PARAMS.error ?? null);
     };
 
     void run();
 
     return () => {
       isActive = false;
-      window.clearTimeout(hardTimeout);
       subscription.unsubscribe();
     };
   }, [navigate]);
