@@ -2716,6 +2716,39 @@ export type Database = {
         }
         Relationships: []
       }
+      otp_supported_countries: {
+        Row: {
+          country_code: string
+          country_name_ar: string
+          country_name_en: string | null
+          created_at: string
+          dial_code: string
+          id: string
+          otp_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          country_code: string
+          country_name_ar: string
+          country_name_en?: string | null
+          created_at?: string
+          dial_code: string
+          id?: string
+          otp_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          country_code?: string
+          country_name_ar?: string
+          country_name_en?: string | null
+          created_at?: string
+          dial_code?: string
+          id?: string
+          otp_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       payment_gateway_settings: {
         Row: {
           access_token: string | null
