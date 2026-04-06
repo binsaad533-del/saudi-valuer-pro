@@ -89,6 +89,7 @@ export const ASSET_FIELDS: AssetFieldDef[] = [
     aliases: [
       "name", "asset name", "item name", "item", "asset", "اسم", "اسم الأصل", "البند",
       "description", "الوصف", "اسم المعدة", "equipment name", "machine name",
+      "account name", "account", "اسم الحساب", "حساب", "بيان", "asset description",
     ],
   },
   {
@@ -98,7 +99,7 @@ export const ASSET_FIELDS: AssetFieldDef[] = [
     required: false,
     aliases: [
       "type", "asset type", "category", "نوع", "نوع الأصل", "التصنيف", "فئة",
-      "classification", "class",
+      "classification", "class", "code", "asset code", "رمز", "كود",
     ],
   },
   {
@@ -118,6 +119,7 @@ export const ASSET_FIELDS: AssetFieldDef[] = [
     aliases: [
       "value", "cost", "price", "amount", "القيمة", "السعر", "التكلفة", "المبلغ",
       "unit price", "unit cost", "سعر الوحدة", "book value", "القيمة الدفترية",
+      "acquisition cost", "original cost", "تكلفة الاقتناء", "net book value",
     ],
   },
   {
