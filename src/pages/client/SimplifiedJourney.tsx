@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { parseExcelFile, autoMapColumns, applyMapping } from "@/lib/excel-parser";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,7 @@ interface UploadedFile {
   size: number;
   type: string;
   path: string;
+  rawFile?: File;
 }
 
 type JourneyStep = "start" | "upload" | "processing" | "scope" | "complete";
@@ -157,7 +159,7 @@ export default function SimplifiedJourney() {
           continue;
         }
 
-        newFiles.push({ id: crypto.randomUUID(), name: originalFilename, size: file.size, type: file.type, path: storageKey });
+        newFiles.push({ id: crypto.randomUUID(), name: originalFilename, size: file.size, type: file.type, path: storageKey, rawFile: file });
       }
 
       setUploadedFiles(prev => [...prev, ...newFiles]);
