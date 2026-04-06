@@ -9,6 +9,7 @@ import { extractEdgeFunctionErrorMessage } from "@/lib/edge-function-errors";
 import { User, Mail, Phone, Lock, Loader2, CheckCircle, KeyRound, Eye, EyeOff, Building2, CreditCard, UserCheck } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AppFooter from "@/components/layout/AppFooter";
+import { PasswordStrengthMessage } from "@/components/ui/password-strength-message";
 
 type ClientType = "individual" | "company";
 
@@ -289,6 +290,7 @@ export default function ClientRegister() {
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              <PasswordStrengthMessage password={password} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}

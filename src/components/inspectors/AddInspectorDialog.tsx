@@ -11,6 +11,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Loader2, UserPlus } from "lucide-react";
+import { PasswordStrengthMessage } from "@/components/ui/password-strength-message";
 
 interface Props {
   onCreated: () => void;
@@ -136,6 +137,7 @@ export default function AddInspectorDialog({ onCreated }: Props) {
           <div className="space-y-2">
             <Label>كلمة المرور *</Label>
             <Input value={password} onChange={(e) => setPassword(e.target.value)} placeholder="كلمة المرور الأولية" required dir="ltr" />
+            <PasswordStrengthMessage password={password} />
             <p className="text-xs text-muted-foreground">سيُطلب من المعاين تغييرها عند أول دخول</p>
           </div>
           <div className="grid grid-cols-2 gap-3">

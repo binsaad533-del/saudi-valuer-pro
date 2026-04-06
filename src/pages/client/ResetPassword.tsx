@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Lock, Loader2, CheckCircle } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { PasswordStrengthMessage } from "@/components/ui/password-strength-message";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ export default function ResetPassword() {
                 <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input id="new-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} className="pr-10" required dir="ltr" minLength={6} />
               </div>
+              <PasswordStrengthMessage password={password} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirm-new-password">تأكيد كلمة المرور</Label>
