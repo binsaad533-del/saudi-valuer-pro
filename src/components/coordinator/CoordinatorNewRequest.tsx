@@ -105,6 +105,10 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const removeFile = (id: string) => {
+    setUploadedFiles(prev => prev.filter(f => f.id !== id));
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setDragOver(false);

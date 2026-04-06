@@ -35,7 +35,105 @@ import {
   Table2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
-...
+
+// ── Types ──
+interface UploadedFile {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  path: string;
+}
+
+type JourneyStep = "start" | "upload" | "processing" | "scope" | "complete";
+
+const PURPOSE_OPTIONS: Record<string, string> = {
+  financing: "تمويل",
+  sale: "بيع",
+  purchase: "شراء",
+  financial_reporting: "تقارير مالية",
+  zakat_tax: "زكاة / ضريبة",
+  dispute_court: "نزاع / قضاء",
+  expropriation: "نزع ملكية",
+  insurance: "تأمين",
+  other: "أخرى",
+};
+
+const USERS_OPTIONS: Record<string, string> = {
+  bank: "بنك / مؤسسة مالية",
+  government: "جهة حكومية",
+  court: "محكمة",
+  internal_management: "إدارة داخلية",
+  investor: "مستثمر",
+  other: "أخرى",
+};
+
+export default function SimplifiedJourney() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [user, setUser] = useState<any>(null);
+  const [step, setStep] = useState<JourneyStep>("start");
+  const [loading, setLoading] = useState(false);
+  const [requestId, setRequestId] = useState<string | null>(null);
+
+  // Step 1: Client info
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [purposeOther, setPurposeOther] = useState("");
+  const [intendedUsers, setIntendedUsers] = useState("");
+  const [intendedUsersOther, setIntendedUsersOther] = useState("");
+
+  // Step 2: Files
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  // Step 3: Processing
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [processingProgress, setProcessingProgress] = useState(0);
+  const [processingStatus, setProcessingStatus] = useState("جارٍ تحليل المستندات...");
+
+  // Step 4: Scope
+  const [scopeData, setScopeData] = useState<any>(null);
+  const [scopeConfirmed, setScopeConfirmed] = useState(false);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { navigate("/login"); return; }
+      setUser(user);
+
+      // Pre-fill from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name_ar, phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile?.full_name_ar) setClientName(profile.full_name_ar);
+      if (profile?.phone) setClientPhone(profile.phone);
+      if (user.email) setClientEmail(user.email);
+    };
+    checkAuth();
+  }, [navigate]);
+
+  // ── File handling ──
+  const getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-info" />;
+    if (type.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
+    if (type.includes("sheet") || type.includes("excel") || type.includes("csv")) return <Table2 className="w-4 h-4 text-success" />;
+    return <File className="w-4 h-4 text-muted-foreground" />;
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const handleFileUpload = async (fileList: FileList) => {
     if (!user) {
       toast({ title: "يجب تسجيل الدخول أولاً", description: "يرجى تسجيل الدخول ثم إعادة المحاولة.", variant: "destructive" });

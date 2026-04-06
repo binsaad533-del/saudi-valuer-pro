@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import TopBar from "@/components/layout/TopBar";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -90,14 +91,14 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
       for (let i = 0; i < uploadedFiles.length; i++) {
         const uf = uploadedFiles[i];
         setUploadedFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "uploading" } : f));
-        const filePath = `${batchId}/${Date.now()}_${uf.name}`;
-        const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, uf.file);
+        const { storageKey } = buildSafeStorageObject({ userId, originalFilename: uf.name, prefix: `batch/${batchId}` });
+        const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(storageKey, uf.file);
 
         if (uploadErr) {
-          setUploadedFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "error", errorMsg: uploadErr.message } : f));
+          setUploadedFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "error", errorMsg: getUploadErrorMessage(uploadErr) } : f));
         } else {
-          uploadedMeta.push({ name: uf.name, path: filePath, size: uf.size, mimeType: uf.file.type });
-          setUploadedFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "uploaded", storagePath: filePath } : f));
+          uploadedMeta.push({ name: uf.name, path: storageKey, size: uf.size, mimeType: uf.file.type });
+          setUploadedFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: "uploaded", storagePath: storageKey } : f));
         }
         setUploadProgress(((i + 1) / uploadedFiles.length) * 80);
       }
