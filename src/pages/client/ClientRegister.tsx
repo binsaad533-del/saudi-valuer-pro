@@ -17,7 +17,7 @@ export default function ClientRegister() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<"form" | "verify-phone" | "done">("form");
+  const [step, setStep] = useState<"form" | "verify-phone" | "done" | "redirecting">("form");
   const [showPassword, setShowPassword] = useState(false);
   const [clientType, setClientType] = useState<ClientType>("individual");
 
@@ -92,23 +92,27 @@ export default function ClientRegister() {
         } catch {
           // Non-critical: linking can happen later
         }
+
+        // Auto-confirm is enabled, so session should already exist
+        if (data.session) {
+          setStep("redirecting");
+          toast({ title: "جاري تسجيل الدخول..." });
+          setTimeout(() => navigate("/client/dashboard", { replace: true }), 1000);
+          return;
+        }
+
+        // Fallback: try signing in explicitly
+        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!signInError) {
+          setStep("redirecting");
+          toast({ title: "جاري تسجيل الدخول..." });
+          setTimeout(() => navigate("/client/dashboard", { replace: true }), 1000);
+          return;
+        }
       }
 
-      // Send phone OTP via Twilio
-      try {
-        const { data: otpData, error: otpError } = await supabase.functions.invoke("phone-otp", {
-          body: { action: "send", phone },
-        });
-        if (otpError) throw otpError;
-        if (otpData?.error) throw new Error(otpData.error);
-        setPhoneVerificationToken(otpData?.verification_token || "");
-        setStep("verify-phone");
-        toast({ title: "تم إرسال رمز التحقق إلى جوالك" });
-      } catch (otpError: unknown) {
-        const message = await extractEdgeFunctionErrorMessage(otpError, "تعذر إرسال رمز التحقق إلى الجوال حالياً");
-        toast({ title: "تم إنشاء الحساب", description: `${message} يمكنك حالياً إكمال الدخول عبر البريد الإلكتروني بعد تأكيده.`, variant: "destructive" });
-        setStep("done");
-      }
+      // Final fallback if no session could be created
+      setStep("done");
     } catch (err: any) {
       toast({ title: "خطأ في التسجيل", description: err.message, variant: "destructive" });
     } finally {
@@ -153,6 +157,20 @@ export default function ClientRegister() {
     }
   };
 
+  if (step === "redirecting") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-md text-center">
+          <div className="bg-card rounded-xl border border-border shadow-card p-8">
+            <Loader2 className="w-12 h-12 text-primary mx-auto mb-4 animate-spin" />
+            <h2 className="text-xl font-bold text-foreground mb-2">جاري تسجيل الدخول...</h2>
+            <p className="text-muted-foreground text-sm">سيتم توجيهك تلقائياً</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (step === "done") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -160,7 +178,7 @@ export default function ClientRegister() {
           <div className="bg-card rounded-xl border border-border shadow-card p-8">
             <CheckCircle className="w-16 h-16 text-success mx-auto mb-4" />
             <h2 className="text-xl font-bold text-foreground mb-2">تم إنشاء حسابك بنجاح</h2>
-            <p className="text-muted-foreground text-sm mb-6">يرجى التحقق من بريدك الإلكتروني لتأكيد حسابك، ثم يمكنك تسجيل الدخول.</p>
+            <p className="text-muted-foreground text-sm mb-6">يمكنك الآن تسجيل الدخول.</p>
             <Button onClick={() => navigate("/login")} className="w-full">الذهاب لتسجيل الدخول</Button>
           </div>
         </div>
