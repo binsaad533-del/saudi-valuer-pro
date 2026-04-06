@@ -30,9 +30,10 @@ export function buildSafeStorageObject(params: {
 }) : SafeStorageObject {
   const originalFilename = normalizeFilename(params.originalFilename) || "file";
   const extension = extractSafeExtension(originalFilename);
-  const prefix = params.prefix?.replace(/^\/+|\/+$/g, "").replace(/[^a-z0-9/_-]/gi, "") || "uploads";
+  const subFolder = params.prefix?.replace(/^\/+|\/+$/g, "").replace(/[^a-z0-9/_-]/gi, "") || "uploads";
   const objectId = `${Date.now()}-${crypto.randomUUID()}`;
-  const storageKey = `${prefix}/${params.userId}/${objectId}.${extension}`;
+  // userId MUST be the first path segment to satisfy storage RLS policy
+  const storageKey = `${params.userId}/${subFolder}/${objectId}.${extension}`;
 
   return {
     storageKey,
