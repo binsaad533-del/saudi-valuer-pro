@@ -101,13 +101,12 @@ serve(async (req) => {
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-  const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER") || "";
-   console.log("DEBUG TWILIO_PHONE_NUMBER length:", TWILIO_PHONE_NUMBER.length, "starts with +:", TWILIO_PHONE_NUMBER.startsWith("+"), "first 4 chars:", TWILIO_PHONE_NUMBER.substring(0, 4));
+  const TWILIO_PHONE_NUMBER_ENV = Deno.env.get("TWILIO_PHONE_NUMBER") || "";
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const SIGNING_SECRET = SUPABASE_SERVICE_ROLE_KEY || LOVABLE_API_KEY;
 
-  if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY || !SIGNING_SECRET) {
+  if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     return new Response(JSON.stringify({ error: "خدمة التحقق غير مهيأة حالياً" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -129,7 +128,34 @@ serve(async (req) => {
     if (action === "send") {
       const otp = generateOtp();
       const expiresAt = Date.now() + OTP_TTL_MS;
-      const twilioFrom = from_number || TWILIO_PHONE_NUMBER;
+      // Determine sender number: request param > env var > auto-discover from Twilio
+      let twilioFrom = from_number || "";
+      if (!twilioFrom && isValidE164(TWILIO_PHONE_NUMBER_ENV)) {
+        twilioFrom = TWILIO_PHONE_NUMBER_ENV;
+      }
+
+      if (!isValidE164(twilioFrom)) {
+        // Auto-discover first phone number from Twilio account
+        try {
+          const numRes = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=1`, {
+            method: "GET",
+            headers: {
+              Authorization: `Bearer ${LOVABLE_API_KEY}`,
+              "X-Connection-Api-Key": TWILIO_API_KEY,
+            },
+          });
+          if (numRes.ok) {
+            const numData = await numRes.json();
+            const numbers = numData?.incoming_phone_numbers ?? [];
+            if (numbers.length > 0 && numbers[0].phone_number) {
+              twilioFrom = numbers[0].phone_number;
+              console.log("Auto-discovered Twilio number:", twilioFrom);
+            }
+          }
+        } catch (e) {
+          console.error("Failed to auto-discover Twilio number:", e);
+        }
+      }
 
       if (!isValidE164(twilioFrom)) {
         return new Response(JSON.stringify({
