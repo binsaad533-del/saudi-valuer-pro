@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ProcessingStatusTracker from "@/components/client/ProcessingStatusTracker";
 import AssetReviewWorkspace from "@/components/client/AssetReviewWorkspace";
+import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 
 import {
   Select,
@@ -44,108 +45,43 @@ interface UploadedFile {
   type: string;
   path: string;
 }
-
-type Step = "upload" | "processing" | "review" | "submitted";
-
-const PURPOSE_LABELS: Record<string, string> = {
-  financing: "تمويل",
-  sale: "بيع",
-  purchase: "شراء",
-  financial_reporting: "تقارير مالية",
-  zakat_tax: "زكاة / ضريبة",
-  dispute_court: "نزاع / قضاء",
-  expropriation: "نزع ملكية",
-  other: "أخرى",
-};
-
-const INTENDED_USERS_OPTIONS: Record<string, string> = {
-  bank: "بنك / مؤسسة مالية",
-  government: "جهة حكومية",
-  court: "محكمة",
-  internal_management: "إدارة داخلية",
-  investor: "مستثمر",
-  other: "أخرى",
-};
-
-export default function NewRequest() {
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const [user, setUser] = useState<any>(null);
-  const [step, setStep] = useState<Step>("upload");
-  const [loading, setLoading] = useState(false);
-  const [requestId, setRequestId] = useState<string | null>(null);
-
-  // Files
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
-  const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
-
-  // Processing job
-  const [jobId, setJobId] = useState<string | null>(null);
-
-  // Client info
-  const [clientInfo, setClientInfo] = useState({
-    contactName: "",
-    contactPhone: "",
-    contactEmail: "",
-    idNumber: "",
-    clientType: "",
-    additionalNotes: "",
-    purpose: "",
-    purposeOther: "",
-    intendedUsers: "",
-    intendedUsersOther: "",
-  });
-
-  // Discount code
-  const [clientDiscountCode, setClientDiscountCode] = useState("");
-  const [clientDiscountApplied, setClientDiscountApplied] = useState<{ code: string; percentage: number } | null>(null);
-  const [clientCheckingDiscount, setClientCheckingDiscount] = useState(false);
-
-  // Asset locations
-  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { navigate("/login"); return; }
-      setUser(user);
-    };
-    checkAuth();
-  }, [navigate]);
-
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-info" />;
-    if (type.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
-    return <File className="w-4 h-4 text-muted-foreground" />;
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  };
-
+...
   const handleFileUpload = async (fileList: FileList) => {
-    if (!user) return;
+    if (!user) {
+      toast({ title: "يجب تسجيل الدخول أولاً", description: "يرجى تسجيل الدخول ثم إعادة المحاولة.", variant: "destructive" });
+      return;
+    }
+
     setUploading(true);
     const newFiles: UploadedFile[] = [];
 
-    for (const file of Array.from(fileList)) {
-      const filePath = `${user.id}/${Date.now()}_${file.name}`;
-      const { error } = await supabase.storage.from("client-uploads").upload(filePath, file);
-      if (error) {
-        toast({ title: `خطأ في رفع ${file.name}`, description: error.message, variant: "destructive" });
-        continue;
-      }
-      newFiles.push({ id: crypto.randomUUID(), name: file.name, size: file.size, type: file.type, path: filePath });
-    }
+    try {
+      for (const file of Array.from(fileList)) {
+        const { storageKey, originalFilename } = buildSafeStorageObject({
+          userId: user.id,
+          originalFilename: file.name,
+        });
 
-    setUploadedFiles(prev => [...prev, ...newFiles]);
-    setUploading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
+        if (error) {
+          toast({ title: `تعذر رفع الملف ${originalFilename}`, description: getUploadErrorMessage(error), variant: "destructive" });
+          continue;
+        }
+
+        newFiles.push({
+          id: crypto.randomUUID(),
+          name: originalFilename,
+          size: file.size,
+          type: file.type,
+          path: storageKey,
+        });
+      }
+
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
