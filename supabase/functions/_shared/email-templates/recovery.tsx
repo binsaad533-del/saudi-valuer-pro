@@ -8,9 +8,12 @@ import {
   Container,
   Head,
   Heading,
+  Hr,
   Html,
   Img,
+  Link,
   Preview,
+  Section,
   Text,
 } from 'npm:@react-email/components@0.0.22'
 
@@ -26,24 +29,42 @@ export const RecoveryEmail = ({
   confirmationUrl,
 }: RecoveryEmailProps) => (
   <Html lang="ar" dir="rtl">
-    <Head>
-      <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet" />
-    </Head>
+    <Head />
     <Preview>إعادة تعيين كلمة المرور - جساس للتقييم</Preview>
     <Body style={main}>
       <Container style={container}>
         <Img src={LOGO_URL} alt="جساس للتقييم" width="80" height="auto" style={logo} />
+
         <Heading style={h1}>إعادة تعيين كلمة المرور</Heading>
+
         <Text style={text}>
-          تلقينا طلباً لإعادة تعيين كلمة المرور الخاصة بحسابك في جساس للتقييم.
-          اضغط على الزر أدناه لاختيار كلمة مرور جديدة.
+          تلقينا طلبًا لإعادة تعيين كلمة المرور الخاصة بحسابك في جساس للتقييم.
         </Text>
-        <Button style={button} href={confirmationUrl}>
-          إعادة تعيين كلمة المرور
-        </Button>
-        <Text style={footer}>
+
+        <Section style={buttonSection}>
+          <Button style={button} href={confirmationUrl}>
+            إعادة تعيين كلمة المرور
+          </Button>
+        </Section>
+
+        <Text style={fallbackText}>
+          إذا لم يعمل الزر، انسخ الرابط التالي والصقه في المتصفح:
+        </Text>
+        <Text style={linkText}>
+          <Link href={confirmationUrl} style={linkStyle}>{confirmationUrl}</Link>
+        </Text>
+
+        <Hr style={hr} />
+
+        <Text style={disclaimer}>
           إذا لم تطلب إعادة تعيين كلمة المرور، يمكنك تجاهل هذا البريد بأمان.
           لن يتم تغيير كلمة مرورك.
+        </Text>
+
+        <Text style={disclaimerEn}>
+          Reset your password using the button above.
+          If the button doesn't work, copy and paste the link into your browser.
+          If you didn't request a password reset, you can safely ignore this email.
         </Text>
       </Container>
     </Body>
@@ -52,27 +73,88 @@ export const RecoveryEmail = ({
 
 export default RecoveryEmail
 
-const main = { backgroundColor: '#ffffff', fontFamily: "'Cairo', 'Inter', Arial, sans-serif" }
-const container = { padding: '20px 25px', textAlign: 'right' as const }
-const logo = { margin: '0 0 24px 0' }
-const h1 = {
-  fontSize: '22px',
-  fontWeight: 'bold' as const,
+const main: React.CSSProperties = {
+  backgroundColor: '#ffffff',
+  fontFamily: "'Cairo', 'Inter', Arial, sans-serif",
+}
+
+const container: React.CSSProperties = {
+  padding: '40px 24px',
+  maxWidth: '520px',
+  margin: '0 auto',
+  textAlign: 'right',
+}
+
+const logo: React.CSSProperties = { margin: '0 0 28px 0' }
+
+const h1: React.CSSProperties = {
+  fontSize: '24px',
+  fontWeight: 'bold',
   color: 'hsl(215, 30%, 18%)',
-  margin: '0 0 20px',
+  margin: '0 0 16px',
 }
-const text = {
-  fontSize: '14px',
-  color: 'hsl(215, 15%, 52%)',
-  lineHeight: '1.7',
-  margin: '0 0 25px',
+
+const text: React.CSSProperties = {
+  fontSize: '15px',
+  color: 'hsl(215, 15%, 40%)',
+  lineHeight: '1.8',
+  margin: '0 0 28px',
 }
-const button = {
+
+const buttonSection: React.CSSProperties = {
+  textAlign: 'center',
+  margin: '8px 0 28px',
+}
+
+const button: React.CSSProperties = {
   backgroundColor: 'hsl(212, 60%, 50%)',
   color: '#ffffff',
-  fontSize: '14px',
+  fontSize: '16px',
+  fontWeight: 'bold',
   borderRadius: '10px',
-  padding: '12px 24px',
+  padding: '16px 48px',
   textDecoration: 'none',
+  display: 'inline-block',
 }
-const footer = { fontSize: '12px', color: '#999999', margin: '30px 0 0' }
+
+const fallbackText: React.CSSProperties = {
+  fontSize: '13px',
+  color: 'hsl(215, 15%, 52%)',
+  lineHeight: '1.6',
+  margin: '0 0 8px',
+}
+
+const linkText: React.CSSProperties = {
+  fontSize: '12px',
+  lineHeight: '1.4',
+  margin: '0 0 24px',
+  wordBreak: 'break-all',
+  direction: 'ltr',
+  textAlign: 'left',
+}
+
+const linkStyle: React.CSSProperties = {
+  color: 'hsl(212, 60%, 50%)',
+  textDecoration: 'underline',
+}
+
+const hr: React.CSSProperties = {
+  borderColor: '#e5e7eb',
+  margin: '24px 0',
+}
+
+const disclaimer: React.CSSProperties = {
+  fontSize: '12px',
+  color: '#999999',
+  lineHeight: '1.8',
+  margin: '0 0 16px',
+}
+
+const disclaimerEn: React.CSSProperties = {
+  fontSize: '12px',
+  color: '#999999',
+  lineHeight: '1.8',
+  margin: '0',
+  direction: 'ltr',
+  textAlign: 'left',
+}
