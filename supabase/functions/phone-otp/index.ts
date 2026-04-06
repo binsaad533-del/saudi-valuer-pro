@@ -102,6 +102,7 @@ serve(async (req) => {
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
   const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER") || "";
+   console.log("DEBUG TWILIO_PHONE_NUMBER length:", TWILIO_PHONE_NUMBER.length, "starts with +:", TWILIO_PHONE_NUMBER.startsWith("+"), "first 4 chars:", TWILIO_PHONE_NUMBER.substring(0, 4));
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
   const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const SIGNING_SECRET = SUPABASE_SERVICE_ROLE_KEY || LOVABLE_API_KEY;
