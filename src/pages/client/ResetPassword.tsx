@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { PasswordStrengthMessage } from "@/components/ui/password-strength-messa
 
 type RecoveryStatus = "verifying" | "ready" | "invalid";
 
-const RECOVERY_TIMEOUT_MS = 8000;
+const RECOVERY_TIMEOUT_MS = 10000;
 
 const readRecoveryParams = () => {
   const searchParams = new URLSearchParams(window.location.search);
@@ -27,7 +27,11 @@ const readRecoveryParams = () => {
     tokenHash: getParam("token_hash"),
     type: getParam("type"),
     code: getParam("code"),
-    redirect: getParam("redirect"),
+    redirect: getParam("redirect") ?? getParam("redirect_to") ?? getParam("redirectTo"),
+    email: getParam("email"),
+    error: getParam("error"),
+    errorCode: getParam("error_code"),
+    errorDescription: getParam("error_description"),
   };
 };
 
@@ -35,14 +39,27 @@ const clearRecoveryParamsFromUrl = () => {
   window.history.replaceState({}, document.title, window.location.pathname);
 };
 
+const hasRecoverySignals = (params: ReturnType<typeof readRecoveryParams>) => Boolean(
+  params.type === "recovery" ||
+  params.accessToken ||
+  params.refreshToken ||
+  params.token ||
+  params.tokenHash ||
+  params.code,
+);
+
 const getRecoveryDebugInfo = (params: ReturnType<typeof readRecoveryParams>) => ({
   hasAccessToken: Boolean(params.accessToken),
   hasRefreshToken: Boolean(params.refreshToken),
   hasToken: Boolean(params.token),
   hasTokenHash: Boolean(params.tokenHash),
   hasCode: Boolean(params.code),
+  hasEmail: Boolean(params.email),
   type: params.type ?? null,
   hasRedirect: Boolean(params.redirect),
+  error: params.error ?? null,
+  errorCode: params.errorCode ?? null,
+  errorDescription: params.errorDescription ?? null,
 });
 
 export default function ResetPassword() {
@@ -54,12 +71,17 @@ export default function ResetPassword() {
   const [done, setDone] = useState(false);
   const [status, setStatus] = useState<RecoveryStatus>("verifying");
   const recoveryParams = useMemo(() => readRecoveryParams(), []);
+  const recoveryEventSeenRef = useRef(false);
+  const recoverySignalsDetected = useMemo(() => hasRecoverySignals(recoveryParams), [recoveryParams]);
 
   useEffect(() => {
     let isActive = true;
     const timeoutId = window.setTimeout(() => {
       if (!isActive) return;
-      console.error("[ResetPassword] Recovery verification timed out", getRecoveryDebugInfo(recoveryParams));
+      console.error("[ResetPassword] Recovery verification timed out", {
+        ...getRecoveryDebugInfo(recoveryParams),
+        href: window.location.href,
+      });
       setStatus((current) => (current === "verifying" ? "invalid" : current));
     }, RECOVERY_TIMEOUT_MS);
 
@@ -69,75 +91,174 @@ export default function ResetPassword() {
       setStatus(nextStatus);
     };
 
+    const markReady = (source: string) => {
+      console.info("[ResetPassword] Recovery verified", { source });
+      clearRecoveryParamsFromUrl();
+      finalizeStatus("ready");
+    };
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.info("[ResetPassword] Auth state changed", {
         event,
         hasSession: Boolean(session),
         hasUser: Boolean(session?.user),
+        userId: session?.user?.id ?? null,
       });
 
-      if (event === "PASSWORD_RECOVERY" && session?.user) {
-        clearRecoveryParamsFromUrl();
-        finalizeStatus("ready");
+      if (event === "PASSWORD_RECOVERY") {
+        recoveryEventSeenRef.current = true;
+      }
+
+      if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session?.user) {
+        if (recoveryEventSeenRef.current || recoverySignalsDetected || window.location.pathname === "/reset-password") {
+          markReady(`auth-event:${event}`);
+        }
       }
     });
 
     const initializeRecovery = async () => {
       const debugInfo = getRecoveryDebugInfo(recoveryParams);
-      const isRecoveryType = recoveryParams.type === "recovery";
-      const hasRecoveryCredentials = Boolean(
-        recoveryParams.accessToken || recoveryParams.refreshToken || recoveryParams.tokenHash || recoveryParams.code || recoveryParams.token,
-      );
 
-      console.info("[ResetPassword] Initializing recovery flow", debugInfo);
+      console.info("[ResetPassword] Initializing recovery flow", {
+        ...debugInfo,
+        href: window.location.href,
+        pathname: window.location.pathname,
+        search: window.location.search,
+        hash: window.location.hash,
+      });
+
+      if (recoveryParams.error || recoveryParams.errorCode || recoveryParams.errorDescription) {
+        console.error("[ResetPassword] Recovery URL contains auth error", debugInfo);
+        finalizeStatus("invalid");
+        return;
+      }
 
       try {
+        const initResult = await supabase.auth.initialize();
+
+        console.info("[ResetPassword] Auth initialize result", {
+          error: initResult.error?.message ?? null,
+        });
+
+        if (initResult.error) {
+          console.error("[ResetPassword] Auth initialize returned error", initResult.error);
+        }
+
         const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+
+        console.info("[ResetPassword] Session after initialize", {
+          hasSession: Boolean(sessionData.session),
+          hasUser: Boolean(sessionData.session?.user),
+          userId: sessionData.session?.user?.id ?? null,
+        });
 
         if (sessionError) {
           console.error("[ResetPassword] Failed to read current session", sessionError);
         }
 
-        if (sessionData.session?.user && (isRecoveryType || hasRecoveryCredentials)) {
-          clearRecoveryParamsFromUrl();
-          finalizeStatus("ready");
+        if (sessionData.session?.user && (window.location.pathname === "/reset-password" || recoverySignalsDetected || recoveryEventSeenRef.current)) {
+          markReady("existing-session");
           return;
         }
 
         if (recoveryParams.accessToken && recoveryParams.refreshToken) {
-          const { error } = await supabase.auth.setSession({
+          console.info("[ResetPassword] Attempting setSession from URL tokens");
+          const { data, error } = await supabase.auth.setSession({
             access_token: recoveryParams.accessToken,
             refresh_token: recoveryParams.refreshToken,
           });
 
-          if (error) throw error;
-
-          clearRecoveryParamsFromUrl();
-          finalizeStatus("ready");
-          return;
-        }
-
-        if (recoveryParams.code) {
-          const { error } = await supabase.auth.exchangeCodeForSession(recoveryParams.code);
-
-          if (error) throw error;
-
-          clearRecoveryParamsFromUrl();
-          finalizeStatus("ready");
-          return;
-        }
-
-        if (recoveryParams.tokenHash && (isRecoveryType || !recoveryParams.type)) {
-          const { error } = await supabase.auth.verifyOtp({
-            token_hash: recoveryParams.tokenHash,
-            type: "recovery",
+          console.info("[ResetPassword] setSession result", {
+            hasSession: Boolean(data.session),
+            hasUser: Boolean(data.session?.user),
+            error: error?.message ?? null,
           });
 
           if (error) throw error;
 
-          clearRecoveryParamsFromUrl();
-          finalizeStatus("ready");
+          markReady("set-session");
           return;
+        }
+
+        if (recoveryParams.code) {
+          console.info("[ResetPassword] Attempting exchangeCodeForSession", { hasCode: true });
+          const { data, error } = await supabase.auth.exchangeCodeForSession(recoveryParams.code);
+
+          console.info("[ResetPassword] exchangeCodeForSession result", {
+            hasSession: Boolean(data.session),
+            hasUser: Boolean(data.user),
+            error: error?.message ?? null,
+          });
+
+          if (error) throw error;
+
+          markReady("exchange-code");
+          return;
+        }
+
+        if (recoveryParams.tokenHash && (recoveryParams.type === "recovery" || !recoveryParams.type)) {
+          console.info("[ResetPassword] Attempting verifyOtp with token_hash", {
+            type: recoveryParams.type ?? "recovery",
+          });
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: recoveryParams.tokenHash,
+            type: "recovery",
+          });
+
+          console.info("[ResetPassword] verifyOtp(token_hash) result", {
+            hasSession: Boolean(data.session),
+            hasUser: Boolean(data.user),
+            error: error?.message ?? null,
+          });
+
+          if (error) throw error;
+
+          markReady("verify-token-hash");
+          return;
+        }
+
+        if (recoveryParams.token && recoveryParams.email && (recoveryParams.type === "recovery" || !recoveryParams.type)) {
+          console.info("[ResetPassword] Attempting verifyOtp with email token", {
+            hasEmail: true,
+            type: recoveryParams.type ?? "recovery",
+          });
+          const { data, error } = await supabase.auth.verifyOtp({
+            email: recoveryParams.email,
+            token: recoveryParams.token,
+            type: "recovery",
+          });
+
+          console.info("[ResetPassword] verifyOtp(token) result", {
+            hasSession: Boolean(data.session),
+            hasUser: Boolean(data.user),
+            error: error?.message ?? null,
+          });
+
+          if (error) throw error;
+
+          markReady("verify-token");
+          return;
+        }
+
+        const { data: finalSessionData, error: finalSessionError } = await supabase.auth.getSession();
+
+        console.info("[ResetPassword] Final session result", {
+          hasSession: Boolean(finalSessionData.session),
+          hasUser: Boolean(finalSessionData.session?.user),
+          userId: finalSessionData.session?.user?.id ?? null,
+        });
+
+        if (finalSessionError) {
+          console.error("[ResetPassword] Failed to read final session", finalSessionError);
+        }
+
+        if (finalSessionData.session?.user && window.location.pathname === "/reset-password") {
+          markReady("final-session-check");
+          return;
+        }
+
+        if (recoveryParams.token && !recoveryParams.email) {
+          console.error("[ResetPassword] Token detected without email parameter", debugInfo);
         }
 
         console.error("[ResetPassword] Missing or unsupported recovery parameters", debugInfo);
@@ -158,7 +279,7 @@ export default function ResetPassword() {
       window.clearTimeout(timeoutId);
       subscription.unsubscribe();
     };
-  }, [recoveryParams]);
+  }, [recoveryParams, recoverySignalsDetected]);
 
   useEffect(() => {
     if (!done) return;
