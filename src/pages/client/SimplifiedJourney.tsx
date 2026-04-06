@@ -188,12 +188,94 @@ export default function SimplifiedJourney() {
     setStep("upload");
   };
 
+  const isExcelOrCsv = (type: string, name: string) =>
+    type.includes("sheet") || type.includes("excel") || type.includes("csv") ||
+    /\.(xlsx|xls|csv)$/i.test(name);
+
+  const parseExcelFilesLocally = async (excelFiles: UploadedFile[]): Promise<ScopeAsset[]> => {
+    const allAssets: ScopeAsset[] = [];
+    for (const uf of excelFiles) {
+      if (!uf.rawFile) continue;
+      try {
+        const result = await parseExcelFile(uf.rawFile);
+        for (const sheet of result.sheets) {
+          const mappings = autoMapColumns(sheet.headers);
+          const mapped = applyMapping(sheet.rows, mappings);
+          for (const row of mapped) {
+            const hasMinData = (row.name && row.name !== `أصل ${row._rowIndex}`) || row.value || row.type;
+            if (!hasMinData && !row.quantity) continue;
+            const fields: { key: string; value: any }[] = [];
+            for (const [k, v] of Object.entries(row)) {
+              if (k.startsWith("_") || !v) continue;
+              fields.push({ key: k, value: v });
+            }
+            const confidence = mappings.filter(m => m.autoMapped).length >= 2 ? 80 : mappings.filter(m => m.autoMapped).length === 1 ? 50 : 20;
+            allAssets.push({
+              id: crypto.randomUUID(),
+              asset_index: allAssets.length + 1,
+              name: String(row.name || `أصل ${allAssets.length + 1}`),
+              asset_type: String(row.type || "machinery_equipment").includes("عقار") || String(row.type || "").includes("real") ? "real_estate" : "machinery_equipment",
+              category: row.type ? String(row.type) : null,
+              subcategory: null,
+              quantity: Number(row.quantity) || 1,
+              condition: row.condition ? String(row.condition) : "unknown",
+              confidence,
+              review_status: confidence >= 70 ? "approved" : "needs_review",
+              source_evidence: `${uf.name} → ${sheet.name}`,
+              asset_data: { fields },
+            });
+          }
+        }
+      } catch (e) {
+        console.error("Excel parse error:", e);
+      }
+    }
+    return allAssets;
+  };
+
   // ── Step 2 → Step 3 (auto-process) ──
   const handleUploadDone = async () => {
     if (uploadedFiles.length === 0) {
       toast({ title: "يرجى رفع ملف واحد على الأقل", variant: "destructive" });
       return;
     }
+
+    const excelFiles = uploadedFiles.filter(f => isExcelOrCsv(f.type, f.name));
+    const otherFiles = uploadedFiles.filter(f => !isExcelOrCsv(f.type, f.name));
+
+    // If ALL files are Excel/CSV → parse locally (instant, no edge function)
+    if (excelFiles.length > 0 && otherFiles.length === 0) {
+      setStep("processing");
+      setProcessingProgress(10);
+      setProcessingStatus("جارٍ قراءة ملف Excel...");
+
+      try {
+        const assets = await parseExcelFilesLocally(excelFiles);
+        setProcessingProgress(100);
+        setProcessingStatus("اكتمل التحليل بنجاح");
+
+        const realEstate = assets.filter(a => a.asset_type === "real_estate").length;
+        const machinery = assets.filter(a => a.asset_type === "machinery_equipment").length;
+
+        setScopeData({
+          totalAssets: assets.length,
+          realEstate,
+          machinery,
+          assets,
+          discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
+          approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
+        });
+
+        await new Promise(r => setTimeout(r, 400));
+        setStep("scope");
+      } catch (err: any) {
+        toast({ title: "خطأ في قراءة الملف", description: "تعذر تحليل ملف Excel — يرجى التأكد من صحة الملف.", variant: "destructive" });
+        setStep("upload");
+      }
+      return;
+    }
+
+    // Otherwise use edge function for PDFs/images (+ include Excel if mixed)
     setStep("processing");
     setProcessingProgress(0);
 
@@ -211,6 +293,12 @@ export default function SimplifiedJourney() {
       if (error) throw new Error(error.message);
       if (data?.error) throw new Error(data.error);
       setJobId(data.jobId);
+
+      // Also parse Excel files locally and merge later
+      if (excelFiles.length > 0) {
+        const localAssets = await parseExcelFilesLocally(excelFiles);
+        setScopeData((prev: any) => ({ ...prev, _localExcelAssets: localAssets }));
+      }
     } catch (err: any) {
       toast({ title: "خطأ في بدء المعالجة", description: err.message, variant: "destructive" });
       setStep("upload");
