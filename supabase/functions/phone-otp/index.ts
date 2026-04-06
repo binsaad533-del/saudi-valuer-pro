@@ -114,7 +114,7 @@ serve(async (req) => {
   }
 
   try {
-    const { action, phone, code, from_number, verification_token } = await req.json();
+    const { action, phone, code, from_number, verification_token, client_name } = await req.json();
 
     if (!phone) {
       return new Response(JSON.stringify({ error: "رقم الجوال مطلوب" }), {
@@ -216,16 +216,72 @@ serve(async (req) => {
         .eq("phone", normalizedPhone)
         .maybeSingle();
 
-      if (!profile?.email) {
-        return new Response(JSON.stringify({ error: "لا يوجد حساب مرتبط بهذا الرقم", valid: false }), {
-          status: 404,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+      let userEmail: string;
+      let isNewAccount = false;
+
+      if (profile?.email) {
+        // Existing account — login
+        userEmail = profile.email;
+      } else {
+        // No account — auto-create one
+        isNewAccount = true;
+        const generatedEmail = `phone_${normalizedPhone.replace("+", "")}@client.jsaas.local`;
+        const tempPassword = crypto.randomUUID();
+
+        const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+          email: generatedEmail,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name: client_name || "عميل جديد",
+            phone: normalizedPhone,
+            role: "client",
+          },
         });
+
+        if (createError) {
+          console.error("Auto-create user error:", createError);
+          throw new Error("تعذر إنشاء الحساب تلقائياً");
+        }
+
+        const userId = newUser.user.id;
+
+        // Create profile
+        await supabase.from("profiles").insert({
+          user_id: userId,
+          full_name_ar: client_name || "عميل جديد",
+          email: generatedEmail,
+          phone: normalizedPhone,
+          preferred_language: "ar",
+          account_status: "active",
+          user_type: "external",
+        });
+
+        // Assign client role
+        await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: "client",
+        });
+
+        // Try to link to existing client record
+        try {
+          await supabase.rpc("link_portal_user_to_client", {
+            _user_id: userId,
+            _phone: normalizedPhone,
+            _email: generatedEmail,
+            _name_ar: client_name || "عميل جديد",
+            _org_id: null,
+          });
+        } catch {
+          // Non-critical
+        }
+
+        userEmail = generatedEmail;
       }
 
       const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
         type: "magiclink",
-        email: profile.email,
+        email: userEmail,
       });
 
       if (linkError) {
@@ -234,7 +290,7 @@ serve(async (req) => {
 
       return new Response(JSON.stringify({
         valid: true,
-        email: profile.email,
+        is_new_account: isNewAccount,
         token_hash: linkData?.properties?.hashed_token,
       }), {
         status: 200,
