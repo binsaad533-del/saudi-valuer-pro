@@ -218,6 +218,8 @@ export default function SimplifiedJourney() {
   useEffect(() => {
     if (step !== "processing" || !jobId) return;
     let cancelled = false;
+    const startedAt = Date.now();
+    const timeoutMs = 90 * 1000;
 
     const poll = async () => {
       while (!cancelled) {
@@ -229,14 +231,26 @@ export default function SimplifiedJourney() {
 
         if (!data || cancelled) break;
 
-        const prog = data.total_files > 0 ? Math.round((data.processed_files / data.total_files) * 100) : 0;
+        const statusProgressMap: Record<string, number> = {
+          pending: 5,
+          uploading: 10,
+          classifying: 25,
+          extracting: 50,
+          deduplicating: 75,
+          merging: 90,
+          ready: 100,
+        };
+
+        const fileProgress = data.total_files > 0
+          ? Math.round((data.processed_files / data.total_files) * 100)
+          : 0;
+        const prog = Math.max(statusProgressMap[data.status] ?? 0, fileProgress);
         setProcessingProgress(prog);
 
-        if (data.status === "completed" || data.status === "ready_for_review") {
+        if (data.status === "ready" || data.status === "completed" || data.status === "ready_for_review") {
           setProcessingProgress(100);
           setProcessingStatus("اكتمل التحليل بنجاح");
 
-          // Fetch extracted assets for scope
           const { data: assets } = await supabase
             .from("extracted_assets")
             .select("*")
@@ -255,7 +269,7 @@ export default function SimplifiedJourney() {
             approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
           });
 
-          await new Promise(r => setTimeout(r, 800));
+          await new Promise(r => setTimeout(r, 500));
           if (!cancelled) setStep("scope");
           break;
         }
@@ -266,11 +280,21 @@ export default function SimplifiedJourney() {
           break;
         }
 
-        // Update status text
-        if (prog < 30) setProcessingStatus("جارٍ قراءة وتصنيف المستندات...");
-        else if (prog < 60) setProcessingStatus("جارٍ استخراج بيانات الأصول...");
-        else if (prog < 90) setProcessingStatus("جارٍ التحقق والمراجعة الآلية...");
-        else setProcessingStatus("جارٍ إعداد نطاق العمل...");
+        if (Date.now() - startedAt >= timeoutMs) {
+          toast({
+            title: "استغرقت المعالجة وقتًا أطول من المتوقع",
+            description: "يمكنك إعادة المحاولة أو رفع الملفات من جديد.",
+            variant: "destructive",
+          });
+          if (!cancelled) setStep("upload");
+          break;
+        }
+
+        if (["pending", "uploading", "classifying"].includes(data.status)) setProcessingStatus("جارٍ قراءة وتصنيف المستندات...");
+        else if (data.status === "extracting") setProcessingStatus("جارٍ استخراج بيانات الأصول...");
+        else if (data.status === "deduplicating") setProcessingStatus("جارٍ التحقق والمراجعة الآلية...");
+        else if (data.status === "merging") setProcessingStatus("جارٍ إعداد نطاق العمل...");
+        else setProcessingStatus("جارٍ تجهيز طلبك...");
 
         await new Promise(r => setTimeout(r, 2500));
       }
