@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
   Table2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
 
 // ── Types ──
 interface UploadedFile {
@@ -633,50 +634,75 @@ export default function SimplifiedJourney() {
                   <CardTitle className="text-lg">نطاق العمل جاهز</CardTitle>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  تم تحليل المستندات وإعداد نطاق العمل تلقائياً — راجع وأكد
+                  تم تحليل المستندات وإعداد نطاق العمل تلقائياً — راجع الأصول المستخرجة وأكد
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Summary */}
-                <div className="bg-muted/50 rounded-xl p-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-card rounded-lg p-3 border border-border">
-                      <p className="text-xs text-muted-foreground">إجمالي الأصول</p>
-                      <p className="text-2xl font-bold text-foreground">{scopeData.totalAssets}</p>
-                    </div>
-                    <div className="bg-card rounded-lg p-3 border border-border">
-                      <p className="text-xs text-muted-foreground">المنهج المقترح</p>
-                      <p className="text-sm font-semibold text-foreground mt-1">{scopeData.approach}</p>
-                    </div>
+                {/* Summary row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
+                    <p className="text-xs text-muted-foreground">الأصول المستخرجة</p>
+                    <p className="text-2xl font-bold text-foreground">{scopeData.assets?.length || 0}</p>
                   </div>
+                  <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
+                    <p className="text-xs text-muted-foreground">المنهج المقترح</p>
+                    <p className="text-xs font-semibold text-foreground mt-1">{scopeData.approach}</p>
+                  </div>
+                  <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
+                    <p className="text-xs text-muted-foreground">المستندات</p>
+                    <p className="text-2xl font-bold text-foreground">{uploadedFiles.length}</p>
+                  </div>
+                </div>
 
+                {/* Assets detail table */}
+                <ScopeAssetsTable
+                  assets={(scopeData.assets || []).map((a: any) => ({
+                    id: a.id || crypto.randomUUID(),
+                    asset_index: a.asset_index || 0,
+                    name: a.name || "أصل",
+                    asset_type: a.asset_type || "machinery_equipment",
+                    category: a.category,
+                    subcategory: a.subcategory,
+                    quantity: a.quantity || 1,
+                    condition: a.condition || "unknown",
+                    confidence: a.confidence || 50,
+                    review_status: a.review_status,
+                    source_evidence: a.source_evidence,
+                    asset_data: a.asset_data || {},
+                  } as ScopeAsset))}
+                  onAssetsChange={(updated) => {
+                    setScopeData((prev: any) => ({
+                      ...prev,
+                      assets: updated,
+                      totalAssets: updated.length,
+                      realEstate: updated.filter((a: any) => a.asset_type === "real_estate").length,
+                      machinery: updated.filter((a: any) => a.asset_type === "machinery_equipment").length,
+                    }));
+                  }}
+                />
+
+                {/* Meta info */}
+                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">الغرض</span>
+                    <span className="font-medium text-foreground">{purpose === "other" ? purposeOther : PURPOSE_OPTIONS[purpose]}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">مستخدمو التقرير</span>
+                    <span className="font-medium text-foreground">{intendedUsers === "other" ? intendedUsersOther : USERS_OPTIONS[intendedUsers]}</span>
+                  </div>
                   {scopeData.realEstate > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">{scopeData.realEstate} عقار</Badge>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">عقارات</span>
+                      <Badge variant="secondary" className="text-[10px]">{scopeData.realEstate}</Badge>
                     </div>
                   )}
                   {scopeData.machinery > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs">{scopeData.machinery} معدة / آلة</Badge>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-muted-foreground">معدات / آلات</span>
+                      <Badge variant="secondary" className="text-[10px]">{scopeData.machinery}</Badge>
                     </div>
                   )}
-
-                  <div className="pt-2 border-t border-border">
-                    <p className="text-xs text-muted-foreground mb-1">الغرض</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {purpose === "other" ? purposeOther : PURPOSE_OPTIONS[purpose]}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">مستخدمو التقرير</p>
-                    <p className="text-sm font-medium text-foreground">
-                      {intendedUsers === "other" ? intendedUsersOther : USERS_OPTIONS[intendedUsers]}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">المستندات</p>
-                    <p className="text-sm font-medium text-foreground">{uploadedFiles.length} ملف</p>
-                  </div>
                 </div>
 
                 <div className="flex gap-3">
@@ -684,10 +710,10 @@ export default function SimplifiedJourney() {
                     onClick={handleConfirmScope}
                     className="flex-1 gap-2"
                     size="lg"
-                    disabled={loading || scopeConfirmed}
+                    disabled={loading || scopeConfirmed || (scopeData.assets?.length || 0) === 0}
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                    اعتماد وإرسال
+                    اعتماد وإرسال ({scopeData.assets?.length || 0} أصل)
                   </Button>
                   <Button
                     variant="outline"
