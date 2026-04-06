@@ -99,7 +99,7 @@ export const ASSET_FIELDS: AssetFieldDef[] = [
     required: false,
     aliases: [
       "type", "asset type", "category", "نوع", "نوع الأصل", "التصنيف", "فئة",
-      "classification", "class",
+      "classification", "class", "code", "asset code", "رمز", "كود",
     ],
   },
   {
