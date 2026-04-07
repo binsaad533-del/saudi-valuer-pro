@@ -5,18 +5,14 @@ interface RaqeemAnimatedLogoProps {
   className?: string;
 }
 
-export default function RaqeemAnimatedLogo({ size = 24, className = "" }: RaqeemAnimatedLogoProps) {
+export default function RaqeemAnimatedLogo({ size = 40, className = "" }: RaqeemAnimatedLogoProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const r = size / 2;
-  const cx = r;
-  const cy = r;
+  const cx = size / 2;
+  const cy = size / 2;
+  const pupilR = size * 0.10;
 
-  // Eye (pupil)
-  const pupilR = size * 0.12;
-
-  // Arc radii from inner to outer
   const arcs = [
     { radius: size * 0.18, width: size * 0.06, color: "hsl(var(--primary))", dir: 1, startAngle: 200, sweep: 280 },
     { radius: size * 0.26, width: size * 0.05, color: "hsl(210, 60%, 70%)", dir: -1, startAngle: 160, sweep: 260 },
@@ -24,16 +20,15 @@ export default function RaqeemAnimatedLogo({ size = 24, className = "" }: Raqeem
     { radius: size * 0.42, width: size * 0.04, color: "hsl(210, 40%, 84%)", dir: -1, startAngle: 120, sweep: 220 },
   ];
 
-  // Small colored squares at the outer edge
   const squares = [
-    { angle: 20, color: "#4A90D9", s: size * 0.055 },
-    { angle: 40, color: "#E74C3C", s: size * 0.05 },
-    { angle: 55, color: "#2ECC71", s: size * 0.045 },
-    { angle: 70, color: "#9B59B6", s: size * 0.04 },
-    { angle: 85, color: "#F39C12", s: size * 0.05 },
-    { angle: 100, color: "#1ABC9C", s: size * 0.045 },
-    { angle: 340, color: "#3498DB", s: size * 0.04 },
-    { angle: 355, color: "#E67E22", s: size * 0.035 },
+    { angle: 20, color: "#4A90D9", s: size * 0.06 },
+    { angle: 50, color: "#E74C3C", s: size * 0.055 },
+    { angle: 80, color: "#2ECC71", s: size * 0.05 },
+    { angle: 120, color: "#9B59B6", s: size * 0.05 },
+    { angle: 160, color: "#F39C12", s: size * 0.055 },
+    { angle: 210, color: "#1ABC9C", s: size * 0.05 },
+    { angle: 270, color: "#3498DB", s: size * 0.05 },
+    { angle: 320, color: "#E67E22", s: size * 0.045 },
   ];
 
   function arcPath(radius: number, startAngle: number, sweep: number) {
@@ -73,12 +68,14 @@ export default function RaqeemAnimatedLogo({ size = 24, className = "" }: Raqeem
         />
       ))}
 
-      {/* Colored squares */}
+      {/* Colored squares - fixed position, random blink */}
       {squares.map((sq, i) => {
         const rad = (sq.angle * Math.PI) / 180;
-        const dist = size * 0.46;
+        const dist = size * 0.48;
         const x = cx + dist * Math.cos(rad) - sq.s / 2;
         const y = cy + dist * Math.sin(rad) - sq.s / 2;
+        const delay = (i * 0.7 + Math.random() * 0.5).toFixed(2);
+        const duration = (1.5 + i * 0.3).toFixed(2);
         return (
           <rect
             key={i}
@@ -86,14 +83,13 @@ export default function RaqeemAnimatedLogo({ size = 24, className = "" }: Raqeem
             y={y}
             width={sq.s}
             height={sq.s}
-            rx={sq.s * 0.15}
+            rx={sq.s * 0.2}
             fill={sq.color}
             style={{
-              transformOrigin: `${cx}px ${cy}px`,
               animation: mounted
-                ? `raqeem-spin-ccw ${12 + i}s linear infinite`
+                ? `raqeem-blink ${duration}s ease-in-out ${delay}s infinite`
                 : "none",
-              opacity: 0.85,
+              opacity: 0.9,
             }}
           />
         );
@@ -102,7 +98,6 @@ export default function RaqeemAnimatedLogo({ size = 24, className = "" }: Raqeem
       {/* Central eye */}
       <circle cx={cx} cy={cy} r={pupilR * 1.8} fill="white" />
       <circle cx={cx} cy={cy} r={pupilR} fill="#1a1a2e" />
-      {/* Eye glint */}
       <circle cx={cx + pupilR * 0.35} cy={cy - pupilR * 0.35} r={pupilR * 0.3} fill="white" />
 
       <style>{`
@@ -113,6 +108,10 @@ export default function RaqeemAnimatedLogo({ size = 24, className = "" }: Raqeem
         @keyframes raqeem-spin-ccw {
           from { transform: rotate(0deg); }
           to { transform: rotate(-360deg); }
+        }
+        @keyframes raqeem-blink {
+          0%, 100% { opacity: 0.9; }
+          50% { opacity: 0.15; }
         }
       `}</style>
     </svg>
