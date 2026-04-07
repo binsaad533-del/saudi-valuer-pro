@@ -56,27 +56,71 @@ interface Props {
   onBack: () => void;
 }
 
-// ── Company Identity & Credentials ──
+// ── Company Identity & Credentials (Source: jsaas-valuation.com + official docs) ──
 const COMPANY = {
-  name_ar: "جساس للتقييم",
+  name_ar: "شركة جسّاس للتقييم",
+  name_en: "Jsaas Valuation",
+  legal_form: "شركة ذات مسؤولية محدودة (مهنية)",
   cr_number: "1010625839",
+  unified_number: "7016803038",
+  cr_date: "2020/02/05",
+  ceo: "أحمد سعد المالكي",
+  ceo_id: "1017487701",
+  website: "www.jsaas-valuation.com",
+  email: "care@jsaas-valuation.com",
+  phone: "920015029",
+  mobile: "966500668089",
+  address: "السعودية — الرياض — حي الياسمين — طريق الثمامة",
+  bank: { name: "مصرف الراجحي", iban: "SA7080000611608010112580" },
   branches: [
     {
       name: "تقييم العقارات",
+      name_en: "Real Estate Valuation",
       license: "1210001217",
       fellowship: "1210001217",
       label: "ترخيص وعضوية زمالة",
+      expiry: "2026-12-31",
     },
     {
       name: "تقييم الآلات والمعدات",
+      name_en: "Machinery & Equipment Valuation",
       license: "4114000015",
       fellowship: "4210000041",
       label: "ترخيص + عضوية زمالة",
+      expiry: "2026-12-31",
     },
   ],
   authority: "الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  accreditations: [
+    "عضوية الزمالة — الهيئة السعودية للمقيمين المعتمدين (TAQEEM)",
+    "اعتماد الجمعية الأمريكية للمقيّمين (ASA) — USPAP",
+    "التوافق مع معايير التقييم الدولية (IVS)",
+  ],
+  services: [
+    "تقييم العقارات",
+    "تقييم الآلات والمعدات",
+    "نزع الملكية والتعويضات",
+  ],
+  vision: "نصنع للأصل قيمة",
+  mission: "نقيّم الأصول بعِلم وفنْ",
+  values: "الكفاءة والاستقلالية",
+  achievements: {
+    total_assets_valued: "111,641+ أصل",
+    total_value: "1.185+ مليار ريال سعودي",
+  },
+  strengths: [
+    "الثقة — شركة سعودية مرخصة بسجل إنجازات معتمدة",
+    "المرونة — نتعامل مع المشاريع الصغيرة والكبيرة بنفس الكفاءة",
+    "القيمة مقابل التكلفة — جودة بأسعار منطقية وتنفيذ سريع",
+    "الالتزام والتنظيم — إدارة رقمية وجدولة تضمن التسليم في الوقت",
+  ],
   permitted_assets: ["عقارات", "أراضي", "مباني", "فلل", "شقق", "آلات", "معدات", "مركبات", "أثاث", "أجهزة"],
-  excluded_scope: "تقييم المنشآت الاقتصادية (Business Valuation) — يتطلب ترخيصاً مستقلاً لا تملكه الشركة حالياً",
+  excluded_scope: "تقييم المنشآت الاقتصادية (Business Valuation) — يتطلب ترخيصاً مستقلاً",
+  valuation_purposes: [
+    "التأمين", "الرهن", "التمويل", "البيع والشراء",
+    "الاندماج والاستحواذ", "التصفية", "التركات ونزع الملكية",
+    "تقدير القيمة الإيجارية", "تحليل القيمة المتبقية", "الحسابات والمراجعة",
+  ],
 };
 
 // ── Professional Knowledge References ──
@@ -474,21 +518,67 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     // Raqeem auto-reply — knowledge-grounded, every answer has a reference
     setTimeout(() => {
       let reply = "";
+      const lowerText = text.toLowerCase();
 
-      // Check if asking about excluded items
+      // Check categories
       const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"];
       const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
 
-      // Check if asking about methodology / approach
+      const aboutUsKeywords = ["من أنتم", "من انتم", "عن الشركة", "عن جساس", "عن جسّاس", "من نحن", "تعريف", "نبذة", "about"];
+      const isAskingAboutUs = aboutUsKeywords.some(k => lowerText.includes(k));
+
       const methodKeywords = ["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"];
       const isAskingMethod = methodKeywords.some(k => text.includes(k));
 
-      // Check if asking about license / credentials
-      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "تقييم", "هيئة", "مؤهل"];
+      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "هيئة", "مؤهل", "شهادة"];
       const isAskingLicense = licenseKeywords.some(k => text.includes(k));
+
+      const contactKeywords = ["تواصل", "رقم", "هاتف", "جوال", "إيميل", "بريد", "عنوان", "موقع"];
+      const isAskingContact = contactKeywords.some(k => text.includes(k));
+
+      const purposeKeywords = ["أغراض", "غرض", "ليش أقيم", "متى أحتاج", "فايدة التقييم"];
+      const isAskingPurpose = purposeKeywords.some(k => text.includes(k));
 
       if (isAskingAboutExcluded && excluded.length > 0) {
         reply = buildExclusionReply(excluded.length);
+      } else if (isAskingAboutUs) {
+        reply = `${COMPANY.name_ar} (${COMPANY.name_en})
+${COMPANY.legal_form}
+
+📌 الرؤية: ${COMPANY.vision}
+📌 الرسالة: ${COMPANY.mission}
+📌 القيم: ${COMPANY.values}
+
+🏢 الرئيس التنفيذي: ${COMPANY.ceo}
+📍 المقر: ${COMPANY.address}
+🌐 الموقع: ${COMPANY.website}
+
+🏅 الاعتمادات:
+${COMPANY.accreditations.map(a => `• ${a}`).join("\n")}
+
+📊 الإنجازات:
+• تقييم أكثر من ${COMPANY.achievements.total_assets_valued}
+• بقيمة إجمالية تجاوزت ${COMPANY.achievements.total_value}
+
+💪 مرتكزات التميز:
+${COMPANY.strengths.map(s => `• ${s}`).join("\n")}
+
+📖 السجل التجاري: ${COMPANY.cr_number}`;
+      } else if (isAskingContact) {
+        reply = `📞 معلومات التواصل — ${COMPANY.name_ar}:
+
+• الهاتف الموحد: ${COMPANY.phone}
+• الجوال: ${COMPANY.mobile}
+• البريد: ${COMPANY.email}
+• الموقع: ${COMPANY.website}
+• العنوان: ${COMPANY.address}`;
+      } else if (isAskingPurpose) {
+        reply = `أغراض التقييم المعتمدة:
+
+${COMPANY.valuation_purposes.map(p => `• ${p}`).join("\n")}
+
+📖 المرجع: IVS 104 — Scope of Work
+"يجب تحديد غرض التقييم بوضوح في نطاق العمل"`;
       } else if (isAskingMethod) {
         reply = `نعتمد في التقييم على المنهجيات المعتمدة دولياً:
 
@@ -501,13 +591,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
       } else if (isAskingLicense) {
         const branchDetails = COMPANY.branches.map(b =>
-          `• ${b.name}\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}`
+          `• ${b.name} (${b.name_en})\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}\n  صالح حتى: ${b.expiry}`
         ).join("\n");
         reply = `${COMPANY.name_ar} مرخصة من ${COMPANY.authority}:
 
 ${branchDetails}
 
 السجل التجاري: ${COMPANY.cr_number}
+الرقم الموحد: ${COMPANY.unified_number}
 
 📖 المرجع: ${KB_LICENSE.article}
 "${KB_LICENSE.principle}"`;
