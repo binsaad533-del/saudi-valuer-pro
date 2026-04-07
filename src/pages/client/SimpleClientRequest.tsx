@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Upload, FileText, Image, File, X, Loader2, CheckCircle, Send,
   ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
+  PenLine, RotateCcw,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -27,11 +28,15 @@ interface UploadedFile {
 
 type PageState = "form" | "processing" | "done";
 
-const ASSET_TYPE_LABELS: Record<string, { label: string; icon: typeof Building2; desc: string }> = {
-  real_estate: { label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
-  machinery_equipment: { label: "آلات ومعدات", icon: Cog, desc: "معدات صناعية، أجهزة، مركبات، أثاث" },
-  both: { label: "عقار + آلات ومعدات", icon: Sparkles, desc: "تقييم مختلط يشمل كلا النوعين" },
-};
+const ASSET_TYPES = [
+  { key: "real_estate", label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
+  { key: "machinery_equipment", label: "آلات ومعدات", icon: Cog, desc: "معدات صناعية، أجهزة، مركبات، أثاث" },
+  { key: "both", label: "عقار + آلات ومعدات", icon: Sparkles, desc: "تقييم مختلط يشمل كلا النوعين" },
+] as const;
+
+const ASSET_TYPE_MAP: Record<string, typeof ASSET_TYPES[number]> = Object.fromEntries(
+  ASSET_TYPES.map(t => [t.key, t])
+);
 
 export default function SimpleClientRequest() {
   const navigate = useNavigate();
@@ -41,7 +46,7 @@ export default function SimpleClientRequest() {
   const [user, setUser] = useState<any>(null);
   const [state, setState] = useState<PageState>("form");
 
-  // Form fields — asset type is now AI-detected
+  // Form fields
   const [notes, setNotes] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -53,6 +58,11 @@ export default function SimpleClientRequest() {
   const [detecting, setDetecting] = useState(false);
   const [detectionConfidence, setDetectionConfidence] = useState<number>(0);
   const [detectionReason, setDetectionReason] = useState<string>("");
+
+  // User confirmation state
+  const [confirmedType, setConfirmedType] = useState<string | null>(null);
+  const [showManualOverride, setShowManualOverride] = useState(false);
+  const [detectionFailed, setDetectionFailed] = useState(false);
 
   // Processing
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -72,13 +82,17 @@ export default function SimpleClientRequest() {
   const detectAssetType = async (files: UploadedFile[]) => {
     if (files.length === 0) {
       setDetectedType(null);
+      setConfirmedType(null);
+      setDetectionFailed(false);
       return;
     }
     setDetecting(true);
     setDetectedType(null);
+    setConfirmedType(null);
+    setShowManualOverride(false);
+    setDetectionFailed(false);
 
     try {
-      // Extract sample data from Excel files for better classification
       let excelSample = "";
       const excelFiles = files.filter(f => isExcel(f.type, f.name));
       if (excelFiles.length > 0) {
@@ -88,7 +102,6 @@ export default function SimpleClientRequest() {
             const result = await parseExcelFile(uf.rawFile);
             for (const sheet of result.sheets) {
               excelSample += `Headers: ${sheet.headers.join(", ")}\n`;
-              // Include first 3 rows as sample
               const sampleRows = sheet.rows.slice(0, 3);
               for (const row of sampleRows) {
                 excelSample += `Row: ${Object.values(row).join(", ")}\n`;
@@ -107,15 +120,23 @@ export default function SimpleClientRequest() {
 
       if (error) throw error;
 
-      setDetectedType(data.asset_type || "real_estate");
-      setDetectionConfidence(data.confidence || 50);
+      const type = data.asset_type || "real_estate";
+      const confidence = data.confidence || 50;
+
+      setDetectedType(type);
+      setDetectionConfidence(confidence);
       setDetectionReason(data.reason_ar || "");
+
+      // If confidence is very low, mark as failed → require manual
+      if (confidence < 30) {
+        setDetectionFailed(true);
+      }
     } catch (err) {
       console.error("Asset type detection failed:", err);
-      // Fallback to real_estate
-      setDetectedType("real_estate");
-      setDetectionConfidence(30);
-      setDetectionReason("تعذر التحليل التلقائي — تم الاختيار الافتراضي");
+      setDetectionFailed(true);
+      setDetectedType(null);
+      setDetectionConfidence(0);
+      setDetectionReason("تعذر التحليل التلقائي — يرجى الاختيار يدوياً");
     } finally {
       setDetecting(false);
     }
@@ -127,10 +148,27 @@ export default function SimpleClientRequest() {
       detectAssetType(uploadedFiles);
     } else {
       setDetectedType(null);
+      setConfirmedType(null);
       setDetectionConfidence(0);
       setDetectionReason("");
+      setDetectionFailed(false);
+      setShowManualOverride(false);
     }
   }, [uploadedFiles]);
+
+  const handleConfirmType = () => {
+    if (detectedType) setConfirmedType(detectedType);
+  };
+
+  const handleManualSelect = (type: string) => {
+    setConfirmedType(type);
+    setShowManualOverride(false);
+  };
+
+  const handleResetConfirmation = () => {
+    setConfirmedType(null);
+    setShowManualOverride(false);
+  };
 
   // ── File helpers ──
   const getFileIcon = (type: string) => {
@@ -178,13 +216,18 @@ export default function SimpleClientRequest() {
   const isExcel = (type: string, name: string) =>
     type.includes("sheet") || type.includes("excel") || type.includes("csv") || /\.(xlsx|xls|csv)$/i.test(name);
 
+  // The final asset type to use
+  const finalAssetType = confirmedType;
+
   // ── Submit ──
   const handleSubmit = async () => {
     if (uploadedFiles.length === 0) { toast({ title: "يرجى رفع ملف واحد على الأقل", variant: "destructive" }); return; }
-    if (!detectedType) { toast({ title: "جارٍ تحليل نوع الأصل، يرجى الانتظار", variant: "destructive" }); return; }
+    if (!finalAssetType) { toast({ title: "يرجى تأكيد نوع الأصل قبل الإرسال", variant: "destructive" }); return; }
     if (!user) return;
 
-    const assetType = detectedType;
+    const assetType = finalAssetType;
+    const wasManuallyOverridden = detectedType !== confirmedType;
+
     setSubmitting(true);
     setState("processing");
     setProcessingProgress(10);
@@ -240,23 +283,28 @@ export default function SimpleClientRequest() {
             },
           });
           jobId = jobData?.jobId || null;
-        } catch { /* AI extraction is optional — proceed without it */ }
+        } catch { /* AI extraction is optional */ }
       }
 
       setProcessingProgress(70);
       setProcessingLabel("جارٍ حفظ الطلب...");
 
       // ── Step 3: Create valuation_request ──
+      const aiClassification = {
+        ai_detected_asset_type: detectedType,
+        user_confirmed_asset_type: confirmedType,
+        was_manually_overridden: wasManuallyOverridden,
+        detection_failed: detectionFailed,
+        confidence: detectionConfidence,
+        reason: detectionReason,
+      };
+
       const assetData = {
         discipline: assetType,
         inventory: assetInventory.map((a, i) => ({ id: i + 1, ...a })),
         summary: { total: assetInventory.length, by_type: { [assetType]: assetInventory.length } },
         jobId,
-        ai_classification: {
-          detected_type: assetType,
-          confidence: detectionConfidence,
-          reason: detectionReason,
-        },
+        ai_classification: aiClassification,
       };
 
       const { data: reqData, error: reqError } = await supabase
@@ -273,11 +321,7 @@ export default function SimpleClientRequest() {
             totalAssets: assetInventory.length,
             simplified: true,
             quick_request: true,
-            ai_asset_type_detection: {
-              type: assetType,
-              confidence: detectionConfidence,
-              reason: detectionReason,
-            },
+            ai_asset_type_detection: aiClassification,
           },
           asset_data: assetData,
         } as any)
@@ -305,6 +349,17 @@ export default function SimpleClientRequest() {
         }));
         await supabase.from("request_documents" as any).insert(docs);
       }
+
+      // ── Audit log: AI detection ──
+      await supabase.from("audit_logs").insert({
+        user_id: user.id,
+        action: "create" as any,
+        table_name: "valuation_requests",
+        record_id: newRequestId,
+        description: `تصنيف نوع الأصل تلقائياً: ${detectedType || "فشل"} → مؤكد: ${confirmedType}${wasManuallyOverridden ? " (تعديل يدوي)" : ""}`,
+        new_data: aiClassification as any,
+        user_role: "client",
+      });
 
       // Fire-and-forget: send notification
       supabase.functions.invoke("send-notification", {
@@ -375,9 +430,9 @@ export default function SimpleClientRequest() {
     );
   }
 
-  // ── Detected type display ──
-  const typeInfo = detectedType ? ASSET_TYPE_LABELS[detectedType] : null;
-  const TypeIcon = typeInfo?.icon;
+  // ── helpers for rendering ──
+  const confirmedInfo = confirmedType ? ASSET_TYPE_MAP[confirmedType] : null;
+  const ConfirmedIcon = confirmedInfo?.icon;
 
   // ── FORM ──
   return (
@@ -448,51 +503,159 @@ export default function SimpleClientRequest() {
           )}
         </div>
 
-        {/* ── 2. AI Detected Asset Type ── */}
+        {/* ── 2. AI Asset Type Detection & Confirmation ── */}
         {uploadedFiles.length > 0 && (
-          <div className="space-y-2">
+          <div className="space-y-3">
             <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
               <Sparkles className="w-4 h-4 text-primary" />
               نوع الأصل
               <Badge variant="secondary" className="text-[10px]">تحديد تلقائي</Badge>
             </p>
 
-            {detecting ? (
-              <div className="border-2 border-dashed border-primary/30 rounded-xl p-4 text-center bg-primary/5">
-                <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">جارٍ تحليل الملفات لتحديد نوع الأصل...</p>
+            {/* State: Detecting */}
+            {detecting && (
+              <div className="border-2 border-dashed border-primary/30 rounded-xl p-5 text-center bg-primary/5">
+                <Loader2 className="w-7 h-7 text-primary animate-spin mx-auto mb-2" />
+                <p className="text-sm font-medium text-foreground">جارٍ تحليل الملفات...</p>
+                <p className="text-xs text-muted-foreground mt-1">يتم تحديد نوع الأصل تلقائياً بالذكاء الاصطناعي</p>
               </div>
-            ) : detectedType && typeInfo && TypeIcon ? (
-              <div className="border-2 border-primary rounded-xl p-4 bg-primary/5 transition-all">
+            )}
+
+            {/* State: Confirmed */}
+            {!detecting && confirmedType && confirmedInfo && ConfirmedIcon && (
+              <div className="border-2 border-primary rounded-xl p-4 bg-primary/5">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-                    <TypeIcon className="w-5 h-5" />
+                    <ConfirmedIcon className="w-5 h-5" />
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-foreground">{typeInfo.label}</h4>
-                      <Badge variant={detectionConfidence >= 70 ? "default" : "secondary"} className="text-[10px]">
-                        {detectionConfidence}% ثقة
-                      </Badge>
+                      <h4 className="font-bold text-sm text-foreground">{confirmedInfo.label}</h4>
+                      <Badge variant="default" className="text-[10px]">مؤكد ✓</Badge>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{typeInfo.desc}</p>
-                    {detectionReason && (
-                      <p className="text-[10px] text-muted-foreground/70 mt-1">{detectionReason}</p>
-                    )}
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{confirmedInfo.desc}</p>
                   </div>
                   <CheckCircle className="w-5 h-5 text-primary shrink-0" />
                 </div>
+                <div className="mt-3 flex justify-end">
+                  <button
+                    onClick={handleResetConfirmation}
+                    className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    تغيير
+                  </button>
+                </div>
+              </div>
+            )}
 
-                {detectionConfidence < 60 && (
-                  <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
-                    <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-destructive">
-                      ثقة التصنيف منخفضة — سيتم التحقق من قبل فريق التقييم بعد الإرسال
-                    </p>
+            {/* State: Detected but not confirmed */}
+            {!detecting && !confirmedType && detectedType && !detectionFailed && (
+              <div className="space-y-3">
+                {(() => {
+                  const info = ASSET_TYPE_MAP[detectedType];
+                  const Icon = info?.icon;
+                  if (!info || !Icon) return null;
+                  return (
+                    <div className="border-2 border-border rounded-xl p-4 bg-muted/30">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-xs text-muted-foreground mb-0.5">تم التعرف على نوع الأصل:</p>
+                          <h4 className="font-bold text-sm text-foreground">{info.label}</h4>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{info.desc}</p>
+                          {detectionReason && (
+                            <p className="text-[10px] text-muted-foreground/70 mt-1">{detectionReason}</p>
+                          )}
+                        </div>
+                        <Badge variant={detectionConfidence >= 70 ? "default" : "secondary"} className="text-[10px] shrink-0">
+                          {detectionConfidence}%
+                        </Badge>
+                      </div>
+
+                      {detectionConfidence < 60 && (
+                        <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                          <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+                          <p className="text-[10px] text-destructive">
+                            ثقة التصنيف منخفضة — يرجى التحقق وتأكيد النوع الصحيح
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex gap-2">
+                        <Button size="sm" className="flex-1 gap-1.5" onClick={handleConfirmType}>
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          تأكيد
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5"
+                          onClick={() => setShowManualOverride(true)}
+                        >
+                          <PenLine className="w-3.5 h-3.5" />
+                          تعديل
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Manual override options */}
+                {showManualOverride && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">اختر النوع الصحيح:</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {ASSET_TYPES.map(t => {
+                        const Icon = t.icon;
+                        return (
+                          <button
+                            key={t.key}
+                            onClick={() => handleManualSelect(t.key)}
+                            className="border-2 border-border rounded-lg p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all"
+                          >
+                            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mx-auto mb-1.5">
+                              <Icon className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                            <p className="text-[11px] font-semibold text-foreground">{t.label}</p>
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 )}
               </div>
-            ) : null}
+            )}
+
+            {/* State: Detection failed → manual fallback */}
+            {!detecting && !confirmedType && detectionFailed && (
+              <div className="space-y-3">
+                <div className="border-2 border-dashed border-destructive/30 rounded-xl p-4 text-center bg-destructive/5">
+                  <AlertTriangle className="w-7 h-7 text-destructive mx-auto mb-2" />
+                  <p className="text-sm font-medium text-foreground">تعذر التحديد التلقائي</p>
+                  <p className="text-xs text-muted-foreground mt-1">يرجى اختيار نوع الأصل يدوياً</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {ASSET_TYPES.map(t => {
+                    const Icon = t.icon;
+                    return (
+                      <button
+                        key={t.key}
+                        onClick={() => handleManualSelect(t.key)}
+                        className="border-2 border-border rounded-lg p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all"
+                      >
+                        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mx-auto mb-1.5">
+                          <Icon className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <p className="text-[11px] font-semibold text-foreground">{t.label}</p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -512,7 +675,7 @@ export default function SimpleClientRequest() {
           onClick={handleSubmit}
           className="w-full gap-2"
           size="lg"
-          disabled={uploadedFiles.length === 0 || uploading || submitting || detecting || !detectedType}
+          disabled={uploadedFiles.length === 0 || uploading || submitting || detecting || !confirmedType}
         >
           <Send className="w-4 h-4" />
           إرسال الطلب
