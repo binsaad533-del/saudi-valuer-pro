@@ -106,6 +106,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
   };
 
   const handleAddFromCoords = () => {
+    if (atLimit) return;
     if (!coordsForm.name.trim() || !coordsForm.latitude.trim() || !coordsForm.longitude.trim()) return;
 
     const lat = parseFloat(coordsForm.latitude);
