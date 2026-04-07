@@ -270,7 +270,7 @@ export default function ExecutiveDashboard() {
                           </td>
                           <td className="px-4 py-3">
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="عرض التفاصيل"
-                              onClick={e => { e.stopPropagation(); navigate(`/client-requests?id=${req.id}`); }}>
+                              onClick={e => { e.stopPropagation(); navigate("/client-requests", { state: { selectedRequestId: req.id } }); }}>
                               <Eye className="w-3.5 h-3.5" />
                             </Button>
                           </td>
