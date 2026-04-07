@@ -457,6 +457,14 @@ function sourceLabel(s?: AssetSourceInfo): string {
   return `${icon} ${s.file_name?.slice(0, 15) ?? "ملف"}`;
 }
 
+// ── Chat attachment ──
+interface ChatAttachment {
+  name: string;
+  size: number;
+  type: string;
+  path: string;
+}
+
 // ── Chat message ──
 interface ChatMessage {
   id: string;
@@ -464,6 +472,7 @@ interface ChatMessage {
   text: string;
   questionData?: SmartQuestion;
   timestamp: number;
+  attachments?: ChatAttachment[];
 }
 
 // ── Status badge ──
