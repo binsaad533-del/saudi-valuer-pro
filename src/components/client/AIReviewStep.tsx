@@ -356,7 +356,47 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [customValue, setCustomValue] = useState("");
   const [freeText, setFreeText] = useState("");
 
-  
+  // Free-text message from client
+  const handleFreeTextSend = useCallback(() => {
+    if (!freeText.trim()) return;
+    const text = freeText.trim();
+    setFreeText("");
+
+    // Add client message
+    setMessages(prev => [...prev, {
+      id: `client-${Date.now()}`,
+      type: "answer",
+      text,
+      timestamp: Date.now(),
+    }]);
+
+    // Raqeem auto-reply based on context
+    setTimeout(() => {
+      let reply = "";
+
+      // Check if asking about excluded items
+      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج"];
+      const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
+
+      if (isAskingAboutExcluded && excluded.length > 0) {
+        reply = `البنود المستبعدة (${excluded.length}) هي أصول خارج نطاق ترخيص التقييم — مثل الأصول غير الملموسة والحقوق التعاقدية والأدوات المالية. هذا الاستبعاد تلقائي ولا يمكن تجاوزه حسب اللوائح.`;
+      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد")) {
+        reply = `إجمالي الأصول: ${assets.length} — منها ${autoApproved.length} جاهز و${excluded.length} مستبعد و${flagged.length} بانتظار التوضيح.`;
+      } else {
+        reply = "شكراً لملاحظتك، تم تسجيلها وستؤخذ بالاعتبار عند التقييم. هل لديك شيء آخر؟";
+        // Store as additional note
+        setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
+      }
+
+      setMessages(prev => [...prev, {
+        id: `raqeem-${Date.now()}`,
+        type: "system",
+        text: reply,
+        timestamp: Date.now(),
+      }]);
+    }, 400);
+  }, [freeText, excluded, assets, autoApproved, flagged]);
+
 
   // Compute initial excluded from processed data
   const initialExcluded = useMemo(() => processed.filter(a => a.license_status === "not_permitted"), [processed]);
