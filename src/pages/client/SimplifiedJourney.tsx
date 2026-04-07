@@ -700,7 +700,7 @@ export default function SimplifiedJourney() {
 
               <div className="space-y-1.5">
                 <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                <Select value={purpose} onValueChange={(val) => { setPurpose(val); if (val !== "other") setPurposeOther(""); }}>
+                <Select value={purpose} onValueChange={(val) => { setPurpose(val); if (val !== "other") setPurposeOther(""); if (DESKTOP_BLOCKED_PURPOSES.includes(val) && valuationMode === "desktop") { setValuationMode("field"); setDesktopDisclaimer(false); } }}>
                   <SelectTrigger><SelectValue placeholder="اختر الغرض" /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(PURPOSE_OPTIONS).map(([k, v]) => (
