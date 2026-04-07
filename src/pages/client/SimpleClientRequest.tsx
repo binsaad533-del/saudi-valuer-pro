@@ -809,17 +809,17 @@ export default function SimpleClientRequest() {
                       placeholder="الاسم الكامل" className="text-sm" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">رقم الهوية / السجل التجاري</Label>
+                    <Label className="text-xs text-muted-foreground">رقم الهوية / السجل التجاري <Badge variant="secondary" className="text-[9px] mr-1">اختياري</Badge></Label>
                     <Input value={clientIdNumber} onChange={e => setClientIdNumber(e.target.value)}
                       placeholder="رقم الهوية أو السجل" className="text-sm" dir="ltr" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">الجوال</Label>
+                    <Label className="text-xs text-muted-foreground">الجوال <span className="text-destructive">*</span></Label>
                     <Input value={clientPhone} onChange={e => setClientPhone(e.target.value)}
                       placeholder="05xxxxxxxx" className="text-sm" dir="ltr" />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">البريد الإلكتروني</Label>
+                    <Label className="text-xs text-muted-foreground">البريد الإلكتروني <Badge variant="secondary" className="text-[9px] mr-1">اختياري</Badge></Label>
                     <Input value={clientEmail} onChange={e => setClientEmail(e.target.value)}
                       placeholder="email@example.com" className="text-sm" dir="ltr" />
                   </div>
@@ -844,7 +844,7 @@ export default function SimpleClientRequest() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">المستخدم المستهدف</Label>
+                    <Label className="text-xs text-muted-foreground">المستخدم المستهدف <span className="text-destructive">*</span></Label>
                     <Select value={intendedUser} onValueChange={(v) => { setIntendedUser(v); if (v !== "other") setIntendedUserOther(""); }}>
                       <SelectTrigger className="text-sm">
                         <SelectValue placeholder="اختر المستخدم" />
@@ -861,7 +861,7 @@ export default function SimpleClientRequest() {
                     )}
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs text-muted-foreground">نوع التقييم</Label>
+                    <Label className="text-xs text-muted-foreground">نوع التقييم <span className="text-destructive">*</span></Label>
                     <Select value={valuationMode} onValueChange={setValuationMode}>
                       <SelectTrigger className="text-sm">
                         <SelectValue placeholder="اختر النوع" />
@@ -1076,7 +1076,7 @@ export default function SimpleClientRequest() {
             ) : null}
 
             <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !purpose || (purpose === "other" && !purposeOther.trim())}>
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !clientPhone.trim() || !purpose || (purpose === "other" && !purposeOther.trim()) || !intendedUser || (intendedUser === "other" && !intendedUserOther.trim())}>
               <Sparkles className="w-4 h-4" />
               متابعة — تحليل الملفات ومراجعة الجرد
             </Button>
