@@ -56,11 +56,34 @@ interface Props {
   onBack: () => void;
 }
 
+// ── Company Identity & Credentials ──
+const COMPANY = {
+  name_ar: "جساس للتقييم",
+  cr_number: "1010625839",
+  branches: [
+    {
+      name: "تقييم العقارات",
+      license: "1210001217",
+      fellowship: "1210001217",
+      label: "ترخيص وعضوية زمالة",
+    },
+    {
+      name: "تقييم الآلات والمعدات",
+      license: "4114000015",
+      fellowship: "4210000041",
+      label: "ترخيص + عضوية زمالة",
+    },
+  ],
+  authority: "الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  permitted_assets: ["عقارات", "أراضي", "مباني", "فلل", "شقق", "آلات", "معدات", "مركبات", "أثاث", "أجهزة"],
+  excluded_scope: "تقييم المنشآت الاقتصادية (Business Valuation) — يتطلب ترخيصاً مستقلاً لا تملكه الشركة حالياً",
+};
+
 // ── Professional Knowledge References ──
 interface KnowledgeRef {
-  source: string;     // e.g. "IVS 400", "RICS Red Book"
-  article: string;    // e.g. "الفقرة 40.1"
-  principle: string;  // Arabic explanation
+  source: string;
+  article: string;
+  principle: string;
 }
 
 const KB_INTANGIBLE: KnowledgeRef = {
@@ -82,7 +105,7 @@ const KB_FINANCIAL: KnowledgeRef = {
 };
 
 const KB_LICENSE: KnowledgeRef = {
-  source: "نظام المقيمين المعتمدين — الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  source: `نظام المقيمين المعتمدين — ${COMPANY.authority}`,
   article: "المادة 5 — فروع التقييم",
   principle: "يُرخص للمقيم في فروع محددة: العقار، الآلات والمعدات، المنشآت الاقتصادية، أو أضرار المركبات. لا يجوز ممارسة التقييم في فرع غير مرخص فيه",
 };
@@ -146,21 +169,19 @@ function buildExclusionExplanation(excludedAssets: ExtractedAsset[]): string {
 }
 
 function buildExclusionReply(excludedCount: number): string {
-  return `نحن مرخصون من الهيئة السعودية للمقيمين المعتمدين (تقييم) في فرعين:
+  const branchLines = COMPANY.branches.map(b => `• ${b.name} — ${b.label} رقم ${b.license}`).join("\n");
+  return `${COMPANY.name_ar} مرخصة من ${COMPANY.authority} في فرعين:
 
-• تقييم العقارات
-• تقييم الآلات والمعدات
+${branchLines}
+السجل التجاري: ${COMPANY.cr_number}
 
 وهذا التقييم يندرج ضمن تقييم المنشآت الاقتصادية، ويشمل فقط الأصول الملموسة (عقارات، آلات، معدات، مركبات).
 
+أما الأصول غير الملموسة (علامات تجارية، برمجيات، شهرة، تراخيص) فتتطلب ترخيصاً مستقلاً في فرع "تقييم المنشآت الاقتصادية".
+
 📖 الأساس النظامي:
 • ${KB_LICENSE.source} — ${KB_LICENSE.article}
-  "${KB_LICENSE.principle}"
-
 • ${KB_INTANGIBLE.source} — ${KB_INTANGIBLE.article}
-  "${KB_INTANGIBLE.principle}"
-
-الأصول غير الملموسة (علامات تجارية، برمجيات، شهرة، تراخيص) تتطلب ترخيصاً مستقلاً في فرع "تقييم المنشآت الاقتصادية" وفقاً لمعايير التقييم الدولية IVS 2025 ولوائح الهيئة.
 
 عدد البنود المستبعدة: ${excludedCount} بند.`
 }
@@ -479,10 +500,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
 يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
       } else if (isAskingLicense) {
-        reply = `نحن مرخصون من ${KB_LICENSE.source} في فرعين:
+        const branchDetails = COMPANY.branches.map(b =>
+          `• ${b.name}\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}`
+        ).join("\n");
+        reply = `${COMPANY.name_ar} مرخصة من ${COMPANY.authority}:
 
-• تقييم العقارات
-• تقييم الآلات والمعدات
+${branchDetails}
+
+السجل التجاري: ${COMPANY.cr_number}
 
 📖 المرجع: ${KB_LICENSE.article}
 "${KB_LICENSE.principle}"`;
