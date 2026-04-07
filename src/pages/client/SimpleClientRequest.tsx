@@ -781,8 +781,84 @@ export default function SimpleClientRequest() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── العمود الرئيسي: رفع الملفات + الملاحظات ── */}
+          {/* ── العمود الرئيسي: معلومات العميل + رفع الملفات + الملاحظات ── */}
           <div className="lg:col-span-2 space-y-5">
+
+            {/* معلومات العميل والتقييم */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  معلومات العميل والتقييم
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">اسم العميل <span className="text-destructive">*</span></Label>
+                    <Input value={clientNameInput} onChange={e => setClientNameInput(e.target.value)}
+                      placeholder="الاسم الكامل" className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">رقم الهوية / السجل التجاري</Label>
+                    <Input value={clientIdNumber} onChange={e => setClientIdNumber(e.target.value)}
+                      placeholder="رقم الهوية أو السجل" className="text-sm" dir="ltr" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">الجوال</Label>
+                    <Input value={clientPhone} onChange={e => setClientPhone(e.target.value)}
+                      placeholder="05xxxxxxxx" className="text-sm" dir="ltr" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">البريد الإلكتروني</Label>
+                    <Input value={clientEmail} onChange={e => setClientEmail(e.target.value)}
+                      placeholder="email@example.com" className="text-sm" dir="ltr" />
+                  </div>
+                </div>
+
+                <div className="border-t border-border/50 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">الغرض من التقييم <span className="text-destructive">*</span></Label>
+                    <Select value={purpose} onValueChange={setPurpose}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر الغرض" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PURPOSE_OPTIONS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">المستخدم المستهدف</Label>
+                    <Select value={intendedUser} onValueChange={setIntendedUser}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر المستخدم" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(INTENDED_USERS_OPTIONS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">نوع التقييم</Label>
+                    <Select value={valuationMode} onValueChange={setValuationMode}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر النوع" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(VALUATION_MODE_OPTIONS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
