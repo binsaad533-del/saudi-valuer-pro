@@ -516,43 +516,41 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       timestamp: Date.now(),
     }]);
 
-    // Raqeem auto-reply — knowledge-grounded, every answer has a reference
+    // Raqeem auto-reply — knowledge-grounded, context-aware
     setTimeout(() => {
       let reply = "";
       const lowerText = text.toLowerCase();
+      const t = text; // shorthand
 
-      // Check categories
-      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"];
-      const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
+      // ── Topic detection (order matters: most specific first) ──
 
-      const aboutUsKeywords = ["من أنتم", "من انتم", "عن الشركة", "عن جساس", "عن جسّاس", "من نحن", "تعريف", "نبذة", "about"];
-      const isAskingAboutUs = aboutUsKeywords.some(k => lowerText.includes(k));
+      // Duplicates / مكرر
+      const isDuplicateQ = ["مكرر", "مكررة", "تكرار", "duplicate", "متكرر", "حذف المكرر"].some(k => t.includes(k));
+      if (isDuplicateQ) {
+        reply = `تم فحص جميع العناصر المرفقة تلقائياً بحثاً عن التكرارات.
 
-      const methodKeywords = ["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"];
-      const isAskingMethod = methodKeywords.some(k => text.includes(k));
+📊 النتيجة: تم اكتشاف وإزالة ${removedCount} عنصر مكرر تلقائياً.
 
-      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "هيئة", "مؤهل", "شهادة"];
-      const isAskingLicense = licenseKeywords.some(k => text.includes(k));
+🔍 آلية الكشف عن التكرار:
+• مطابقة اسم الأصل والوصف والفئة
+• مقارنة البيانات بين الملفات المختلفة المرفوعة
+• العناصر المتطابقة يتم دمجها والاحتفاظ بنسخة واحدة فقط
 
-      const contactKeywords = ["تواصل", "رقم", "هاتف", "جوال", "إيميل", "بريد", "عنوان", "موقع"];
-      const isAskingContact = contactKeywords.some(k => text.includes(k));
+✅ الأصول المعروضة حالياً (${assets.length}) هي العناصر الفريدة بعد إزالة التكرارات.
 
-      const purposeKeywords = ["أغراض", "غرض", "ليش أقيم", "متى أحتاج", "فايدة التقييم"];
-      const isAskingPurpose = purposeKeywords.some(k => text.includes(k));
+هل تود الاطلاع على تفاصيل أخرى؟`;
 
-      if (isAskingAboutExcluded && excluded.length > 0) {
+      // Excluded / مستبعد
+      } else if (["مستبعد", "استبعاد", "ليش", "لماذا استبعد", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"].some(k => t.includes(k)) && excluded.length > 0) {
         reply = buildExclusionReply(excluded.length);
-      } else if (isAskingAboutUs) {
+
+      // About us / من نحن
+      } else if (["من أنتم", "من انتم", "عن الشركة", "عن جساس", "عن جسّاس", "من نحن", "تعريف", "نبذة", "about"].some(k => lowerText.includes(k))) {
         reply = `${COMPANY.name_ar} (${COMPANY.name_en})
 ${COMPANY.legal_form}
 
 📌 الرؤية: ${COMPANY.vision}
 📌 الرسالة: ${COMPANY.mission}
-📌 القيم: ${COMPANY.values}
-
-🏢 الرئيس التنفيذي: ${COMPANY.ceo}
-📍 المقر: ${COMPANY.address}
-🌐 الموقع: ${COMPANY.website}
 
 🏅 الاعتمادات:
 ${COMPANY.accreditations.map(a => `• ${a}`).join("\n")}
@@ -561,11 +559,12 @@ ${COMPANY.accreditations.map(a => `• ${a}`).join("\n")}
 • تقييم أكثر من ${COMPANY.achievements.total_assets_valued}
 • بقيمة إجمالية تجاوزت ${COMPANY.achievements.total_value}
 
-💪 مرتكزات التميز:
-${COMPANY.strengths.map(s => `• ${s}`).join("\n")}
+📖 السجل التجاري: ${COMPANY.cr_number}
 
-📖 السجل التجاري: ${COMPANY.cr_number}`;
-      } else if (isAskingContact) {
+هل تود معرفة المزيد عن خدماتنا أو تراخيصنا؟`;
+
+      // Contact
+      } else if (["تواصل", "هاتف", "جوال", "إيميل", "بريد"].some(k => t.includes(k))) {
         reply = `📞 معلومات التواصل — ${COMPANY.name_ar}:
 
 • الهاتف الموحد: ${COMPANY.phone}
@@ -573,24 +572,28 @@ ${COMPANY.strengths.map(s => `• ${s}`).join("\n")}
 • البريد: ${COMPANY.email}
 • الموقع: ${COMPANY.website}
 • العنوان: ${COMPANY.address}`;
-      } else if (isAskingPurpose) {
+
+      // Purposes
+      } else if (["أغراض", "غرض", "ليش أقيم", "متى أحتاج", "فايدة التقييم"].some(k => t.includes(k))) {
         reply = `أغراض التقييم المعتمدة:
 
 ${COMPANY.valuation_purposes.map(p => `• ${p}`).join("\n")}
 
-📖 المرجع: IVS 104 — Scope of Work
-"يجب تحديد غرض التقييم بوضوح في نطاق العمل"`;
-      } else if (isAskingMethod) {
+📖 المرجع: IVS 104 — Scope of Work`;
+
+      // Methodology
+      } else if (["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"].some(k => t.includes(k))) {
         reply = `نعتمد في التقييم على المنهجيات المعتمدة دولياً:
 
 • العقارات: أسلوب المقارنة، أسلوب الدخل، أسلوب التكلفة
 • الآلات والمعدات: أسلوب التكلفة (RCN) كمنهجية أساسية، مع أسلوب المقارنة
 
 📖 المرجع: IVS 105 — Valuation Approaches
-"يجب على المقيّم اختيار الأسلوب الأنسب بناءً على طبيعة الأصل وتوفر البيانات"
 
 يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
-      } else if (isAskingLicense) {
+
+      // License
+      } else if (["ترخيص", "مرخص", "رخصة", "هيئة", "مؤهل", "شهادة"].some(k => t.includes(k))) {
         const branchDetails = COMPANY.branches.map(b =>
           `• ${b.name} (${b.name_en})\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}\n  صالح حتى: ${b.expiry}`
         ).join("\n");
@@ -602,23 +605,81 @@ ${branchDetails}
 الرقم الضريبي: ${COMPANY.vat_number}
 الرقم الموحد: ${COMPANY.unified_number}
 
-📖 المرجع: ${KB_LICENSE.article}
-"${KB_LICENSE.principle}"`;
-      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد") || text.includes("كم")) {
-        reply = `📊 ملخص التحليل:
-• إجمالي الأصول المستخرجة: ${assets.length}
-• جاهز للتقييم: ${autoApproved.length} ✅
-• مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫
-• بانتظار التوضيح: ${flagged.length} ❓
+📖 المرجع: ${KB_LICENSE.article}`;
 
-📖 المرجع: ${KB_LICENSE.source} — ${KB_LICENSE.article}`;
+      // Count / stats / كم / عدد
+      } else if (["أصل", "بند", "عدد", "كم", "إجمالي", "ملخص", "عناصر", "عنصر", "إحصائ"].some(k => t.includes(k))) {
+        reply = `📊 ملخص تحليل الأصول:
+
+• إجمالي الأصول الأصلية: ${data.assets.length}
+• تم إزالة ${removedCount} عنصر مكرر تلقائياً
+• الأصول الفريدة: ${assets.length}
+  ├ ✅ جاهز للتقييم: ${autoApproved.length}
+  ├ 🚫 مستبعد (خارج نطاق الترخيص): ${excluded.length}
+  └ ❓ بانتظار التوضيح: ${flagged.length}
+
+هل تود تفاصيل عن أي فئة من هذه الفئات؟`;
+
+      // Services / خدمات
+      } else if (["خدمات", "خدماتكم", "ماذا تقدمون", "وش تسوون", "تخصص"].some(k => t.includes(k))) {
+        reply = `خدمات ${COMPANY.name_ar}:
+
+${COMPANY.services.map(s => `• ${s}`).join("\n")}
+
+نحن متخصصون في هذه الفروع الثلاثة حصراً وفقاً لتراخيصنا من ${COMPANY.authority}.`;
+
+      // Timeline / مدة / وقت
+      } else if (["مدة", "وقت", "متى", "كم يوم", "كم تاخذ", "موعد", "تسليم"].some(k => t.includes(k))) {
+        reply = `تختلف مدة التقييم حسب نوع وعدد الأصول:
+
+• يتم تحديد الجدول الزمني بدقة بعد اعتماد نطاق العمل
+• سيتواصل معك فريقنا لتأكيد الموعد المتوقع للتسليم
+
+📖 المرجع: IVS 104 — Scope of Work
+"يجب تحديد الإطار الزمني المتوقع ضمن نطاق العمل"`;
+
+      // Pricing / سعر / تكلفة
+      } else if (["سعر", "تكلفة", "كم السعر", "أسعار", "تسعير", "رسوم", "فلوس", "دفع"].some(k => t.includes(k))) {
+        reply = `يتم احتساب رسوم التقييم بناءً على:
+
+• نوع الأصول (عقارات / آلات ومعدات)
+• عدد الأصول المطلوب تقييمها
+• غرض التقييم والمنهجية المطلوبة
+
+سيتم إرسال عرض السعر التفصيلي بعد اعتماد نطاق العمل.
+
+للاستفسار المباشر: ${COMPANY.phone}`;
+
+      // Greeting / شكر
+      } else if (["شكرا", "شكراً", "مشكور", "يعطيك العافية", "الله يعافيك", "جزاك", "ممتاز", "رائع", "حلو", "تمام"].some(k => t.includes(k))) {
+        reply = `العفو! يسعدني خدمتك 😊
+
+هل يمكنني مساعدتك بشيء آخر بخصوص طلبك؟`;
+
+      // Greeting / سلام
+      } else if (["سلام", "هلا", "مرحبا", "مرحباً", "أهلا", "أهلاً", "هاي", "hello", "hi"].some(k => lowerText.includes(k))) {
+        reply = `أهلاً بك! كيف أقدر أساعدك؟
+
+يمكنك سؤالي عن:
+• تفاصيل الأصول المستخرجة
+• أسباب الاستبعاد أو التكرار
+• خدماتنا وتراخيصنا
+• منهجيات التقييم المعتمدة`;
+
+      // Default — smart fallback, NOT generic
       } else {
-        reply = `شكراً لك على ملاحظتك الكريمة، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
+        // Try to be helpful instead of generic
+        reply = `سؤال جيد! دعني أوضح لك:
 
-📖 جميع الملاحظات تُوثّق وفقاً لمتطلبات IVS 104 — Documentation وتُراجع ضمن إجراءات ضبط الجودة.
+بخصوص "${text.slice(0, 50)}${text.length > 50 ? "..." : ""}" — سأحرص على إيصال استفسارك للمقيّم المعتمد ليتم الرد عليك بدقة.
 
-هل يمكنني مساعدتك بشيء آخر؟`;
-        // Store as additional note
+📌 في هذه الأثناء، يمكنني مساعدتك في:
+• شرح أي بند مستخرج من ملفاتك
+• توضيح أسباب الاستبعاد أو التكرار
+• معلومات عن خدماتنا وتراخيصنا
+• أي استفسار عن إجراءات التقييم
+
+اكتب سؤالك وسأبذل قصارى جهدي لمساعدتك!`;
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
       }
 
@@ -629,7 +690,7 @@ ${branchDetails}
         timestamp: Date.now(),
       }]);
     }, 400);
-  }, [freeText, excluded, assets, autoApproved, flagged]);
+  }, [freeText, excluded, assets, autoApproved, flagged, removedCount, data.assets.length]);
 
 
   // Compute initial excluded from processed data
