@@ -981,7 +981,7 @@ export default function SimpleClientRequest() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>حدد الغرض من التقييم في الملاحظات (بيع، تمويل، تأمين...)</span>
+                    <span>تأكد أن ملفات PDF ليست مشفرة أو ممسوحة ضوئياً بجودة منخفضة</span>
                   </li>
                 </ul>
               </CardContent>
