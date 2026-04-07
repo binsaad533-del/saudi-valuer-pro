@@ -17,6 +17,7 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 
 // ── Types ──
 export interface AssetSourceInfo {
