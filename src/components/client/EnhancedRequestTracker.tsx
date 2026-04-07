@@ -127,27 +127,30 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false, val
       </div>
       <Progress value={progressPercent} className="h-2.5" dir="rtl" />
 
-      {/* Timeline */}
-      <div className="relative pr-4">
+      {/* Horizontal stages below progress bar */}
+      <div className="flex items-start" dir="rtl">
         {stages.map((stage, i) => {
           const isDone = i < currentStage;
           const isActive = i === currentStage;
-          const isPending = i > currentStage;
           const stageDate = stageDates[i];
+          const isPending = i > currentStage;
 
           return (
-            <div key={stage.key} className="relative flex gap-3 pb-5 last:pb-0">
-              {/* Vertical line */}
+            <div key={stage.key} className="flex-1 flex flex-col items-center text-center relative">
+              {/* Connector line */}
               {i < stages.length - 1 && (
                 <div
-                  className={`absolute right-[13px] top-8 w-0.5 h-[calc(100%-12px)] ${
-                    isDone ? "bg-primary" : "bg-border"
-                  }`}
+                  className={`absolute top-[14px] left-0 w-1/2 h-0.5 ${isDone ? "bg-primary" : "bg-border"}`}
+                />
+              )}
+              {i > 0 && (
+                <div
+                  className={`absolute top-[14px] right-0 w-1/2 h-0.5 ${i <= currentStage ? "bg-primary" : "bg-border"}`}
                 />
               )}
               {/* Node */}
               <div
-                className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 z-10 transition-all text-xs font-semibold border ${
+                className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 text-xs font-semibold border ${
                   isDone
                     ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
                     : isActive
@@ -157,36 +160,24 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false, val
               >
                 {isDone ? "✓" : <span dir="ltr" style={{ fontFamily: "system-ui" }}>{i + 1}</span>}
               </div>
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <p
-                    className={`text-sm font-medium ${
-                      isDone ? "text-foreground" : isActive ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    {stage.label}
-                    {isActive && (
-                      <span className="inline-flex items-center mr-2 px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
-                        الحالية
-                      </span>
-                    )}
-                  </p>
-                  {stageDate && (isDone || isActive) && (
-                    <span className="text-[10px] text-muted-foreground">
-                      {stageDate.toLocaleDateString("ar-SA", { day: "numeric", month: "short" })}
-                    </span>
-                  )}
-                  {stageDate && isPending && (
-                    <span className="text-[10px] text-muted-foreground/50">
-                      ~{stageDate.toLocaleDateString("ar-SA", { day: "numeric", month: "short" })}
-                    </span>
-                  )}
-                </div>
-                <p className={`text-xs mt-0.5 ${isDone || isActive ? "text-muted-foreground" : "text-muted-foreground/50"}`}>
-                  {stage.description}
-                </p>
-              </div>
+              {/* Label */}
+              <p
+                className={`text-[11px] font-medium mt-1.5 leading-tight ${
+                  isDone ? "text-foreground" : isActive ? "text-primary" : "text-muted-foreground/60"
+                }`}
+              >
+                {stage.label}
+              </p>
+              {isActive && (
+                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-semibold bg-primary/10 text-primary mt-0.5">
+                  الحالية
+                </span>
+              )}
+              {stageDate && (
+                <span className={`text-[9px] mt-0.5 ${isPending ? "text-muted-foreground/40" : "text-muted-foreground"}`}>
+                  {isPending ? "~" : ""}{stageDate.toLocaleDateString("ar-SA", { day: "numeric", month: "short" })}
+                </span>
+              )}
             </div>
           );
         })}
