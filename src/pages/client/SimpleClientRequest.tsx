@@ -1095,7 +1095,7 @@ export default function SimpleClientRequest() {
             ) : null}
 
             <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !clientPhone.trim() || !purpose || (purpose === "other" && !purposeOther.trim()) || !intendedUser || (intendedUser === "other" && !intendedUserOther.trim())}>
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !clientPhone.trim() || !purpose || (purpose === "other" && !purposeOther.trim()) || !intendedUser || (intendedUser === "other" && !intendedUserOther.trim()) || assetLocations.length === 0}>
               <Sparkles className="w-4 h-4" />
               متابعة — تحليل الملفات ومراجعة الجرد
             </Button>
