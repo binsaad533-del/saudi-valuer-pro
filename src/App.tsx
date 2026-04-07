@@ -59,6 +59,7 @@ import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import SimplifiedJourney from "@/pages/client/SimplifiedJourney";
+import SimpleClientRequest from "@/pages/client/SimpleClientRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
 import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 
@@ -172,7 +173,8 @@ const App = () => (
             <Route path="/client" element={<ClientDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
             <Route path="/client/requests" element={<ClientRequestsPage />} />
-            <Route path="/client/new-request" element={<SimplifiedJourney />} />
+            <Route path="/client/new-request" element={<SimpleClientRequest />} />
+            <Route path="/client/new-request-full" element={<SimplifiedJourney />} />
             <Route path="/client/new-request-advanced" element={<NewRequest />} />
             <Route path="/client/request/:id" element={<RequestDetails />} />
             <Route path="/client/settings" element={<UserSettingsPage />} />
