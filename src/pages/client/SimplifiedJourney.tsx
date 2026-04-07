@@ -918,19 +918,30 @@ export default function SimplifiedJourney() {
                     <span className="font-medium text-foreground">{intendedUsers === "other" ? intendedUsersOther : USERS_OPTIONS[intendedUsers]}</span>
                   </div>
                   {(() => {
-                    const TYPE_AR: Record<string, string> = {
-                      real_estate: "عقارات", machinery_equipment: "آلات ومعدات",
-                      right_of_use: "حقوق استخدام (إيجار)", vehicle: "مركبات",
-                      furniture: "أثاث ومفروشات", it_equipment: "أجهزة تقنية",
-                      intangible: "أصول غير ملموسة", leasehold_improvements: "تحسينات مستأجرة",
-                      medical_equipment: "أجهزة طبية",
+                    const TYPE_INFO: Record<string, { label: string; desc: string }> = {
+                      real_estate: { label: "عقارات", desc: "أراضي، مباني، فلل، شقق، عمائر تجارية وصناعية" },
+                      machinery_equipment: { label: "آلات ومعدات", desc: "معدات تشغيلية وصناعية وإنتاجية" },
+                      medical_equipment: { label: "أجهزة طبية", desc: "أجهزة تحليل ومختبرات ومعدات طبية" },
+                      vehicle: { label: "مركبات", desc: "تقييم قيمة المركبة كأصل ثابت" },
+                      furniture: { label: "أثاث ومفروشات", desc: "أثاث مكتبي وتجهيزات داخلية" },
+                      it_equipment: { label: "أجهزة تقنية", desc: "حاسبات، طابعات، شاشات، سيرفرات" },
+                      leasehold_improvements: { label: "تحسينات مستأجرة", desc: "تشطيبات، ديكورات، لوحات، أنظمة سلامة" },
+                      right_of_use: { label: "مصالح مستأجرة", desc: "حقوق منفعة عقارية أو حق استخدام آلة" },
                     };
                     const counts: Record<string, number> = {};
-                    for (const a of (scopeData.assets || [])) counts[a.asset_type] = (counts[a.asset_type] || 0) + 1;
+                    for (const a of (scopeData.assets || [])) {
+                      if (ASSET_COMPLIANCE[a.asset_type] && !ASSET_COMPLIANCE[a.asset_type].permitted) continue;
+                      counts[a.asset_type] = (counts[a.asset_type] || 0) + 1;
+                    }
                     return Object.entries(counts).map(([type, count]) => (
-                      <div key={type} className="flex justify-between text-xs">
-                        <span className="text-muted-foreground">{TYPE_AR[type] || type}</span>
-                        <Badge variant="secondary" className="text-[10px]">{count}</Badge>
+                      <div key={type} className="flex justify-between items-start text-xs gap-2">
+                        <div className="min-w-0">
+                          <span className="text-foreground font-medium">{TYPE_INFO[type]?.label || type}</span>
+                          {TYPE_INFO[type]?.desc && (
+                            <p className="text-[10px] text-muted-foreground mt-0.5">{TYPE_INFO[type].desc}</p>
+                          )}
+                        </div>
+                        <Badge variant="secondary" className="text-[10px] shrink-0">{count}</Badge>
                       </div>
                     ));
                   })()}
