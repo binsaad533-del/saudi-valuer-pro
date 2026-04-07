@@ -601,11 +601,11 @@ export default function SimpleClientRequest() {
       });
 
       // System message to client
-      await supabase.from("request_messages" as any).insert({
+      supabase.from("request_messages" as any).insert({
         request_id: newRequestId,
         sender_type: "system" as any,
         content: "✅ تم استلام طلبك بنجاح، يتم الآن مراجعة الطلب وإعداد عرض السعر.\nسيتم إشعارك فور جاهزية العرض.",
-      }).catch(() => {});
+      }).then(() => {});
 
       // Notify owner/pricing team
       supabase.functions.invoke("send-notification", {
