@@ -43,7 +43,7 @@ function isValidCoordinate(lat: number, lng: number): boolean {
 }
 
 function coordsToGoogleMapsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps?q=${lat},${lng}`;
+  return `https://maps.google.com/maps?q=${lat},${lng}&z=15`;
 }
 
 export default function AssetLocationPicker({ locations, onChange, maxLocations = 50, compact = false }: AssetLocationPickerProps) {
