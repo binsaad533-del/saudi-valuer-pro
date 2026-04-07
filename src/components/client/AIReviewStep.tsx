@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  TableBody, TableCell, TableRow,
 } from "@/components/ui/table";
 import {
   CheckCircle, Cog, Sparkles, Building2,
@@ -802,18 +802,18 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
       {/* ── 2. Compact Assets Table ── */}
       <Card className="overflow-hidden">
-        <div className="max-h-[35vh] overflow-y-auto">
-          <Table className="[&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10 [&_thead_th]:bg-background">
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead className="text-right text-[10px] w-8">#</TableHead>
-                <TableHead className="text-right text-[10px]">الأصل</TableHead>
-                <TableHead className="text-right text-[10px]">النوع</TableHead>
-                <TableHead className="text-right text-[10px] w-12">الكمية</TableHead>
-                <TableHead className="text-right text-[10px]">المصدر</TableHead>
-                <TableHead className="text-right text-[10px] w-16">الحالة</TableHead>
-              </TableRow>
-            </TableHeader>
+        <div className="max-h-[35vh] overflow-y-auto overflow-x-auto relative">
+          <table className="w-full caption-bottom text-sm">
+            <thead className="[&_tr]:border-b sticky top-0 z-10 bg-background">
+              <tr className="border-b transition-colors bg-muted/50">
+                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground text-[10px] w-8">#</th>
+                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground text-[10px]">الأصل</th>
+                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground text-[10px]">النوع</th>
+                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground text-[10px] w-12">الكمية</th>
+                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground text-[10px]">المصدر</th>
+                <th className="h-10 px-4 text-right align-middle font-medium text-muted-foreground text-[10px] w-16">الحالة</th>
+              </tr>
+            </thead>
             <TableBody>
               {visibleAssets.map((asset, idx) => (
                 <TableRow
@@ -848,7 +848,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </table>
         </div>
         {assets.length > 10 && !showAll && (
           <button onClick={() => setShowAll(true)} className="w-full py-2 text-[11px] text-primary hover:bg-primary/5 border-t border-border transition-colors">
