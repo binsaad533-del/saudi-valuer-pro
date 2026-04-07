@@ -440,20 +440,37 @@ export default function SimplifiedJourney() {
           setProcessingProgress(100);
           setProcessingStatus("اكتمل التحليل بنجاح");
 
-          const { data: assets } = await supabase
+          const { data: rawAssets } = await supabase
             .from("extracted_assets")
             .select("*")
             .eq("job_id", jobId);
 
-          const realEstate = (assets || []).filter(a => a.asset_type === "real_estate").length;
-          const machinery = (assets || []).filter(a => a.asset_type === "machinery_equipment").length;
-          const totalAssets = (assets || []).length;
+          // Convert extracted_assets to ScopeAsset format
+          const aiAssets: ScopeAsset[] = (rawAssets || []).map((a: any) => ({
+            id: a.id,
+            name: a.name || "أصل مستخرج",
+            asset_type: a.asset_type || "machinery_equipment",
+            category: a.category || a.subcategory || "",
+            quantity: a.quantity || 1,
+            condition: a.condition || "",
+            estimated_value: a.asset_data?.estimated_value || a.asset_data?.value || null,
+            confidence: a.confidence || 0.5,
+            source: "ai",
+            description: a.description || "",
+          }));
+
+          // Merge with any pending Excel assets
+          const pendingExcel = scopeData?._pendingExcelAssets || [];
+          const allAssets = [...pendingExcel, ...aiAssets];
+
+          const realEstate = allAssets.filter(a => a.asset_type === "real_estate").length;
+          const machinery = allAssets.filter(a => a.asset_type === "machinery_equipment").length;
 
           setScopeData({
-            totalAssets,
+            totalAssets: allAssets.length,
             realEstate,
             machinery,
-            assets: assets || [],
+            assets: allAssets,
             discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
             approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
           });
