@@ -91,7 +91,7 @@ const App = () => (
               <AppLayout />
             </ProtectedRoute>
           }>
-            <Route path="/" element={<ExecutiveDashboard />} />
+            <Route path="/" element={<ExecutiveDashboardOrRedirect />} />
             <Route path="/dashboard-legacy" element={<Dashboard />} />
             <Route path="/valuations" element={<ValuationsList />} />
             <Route path="/valuations/new" element={<NewValuation />} />
