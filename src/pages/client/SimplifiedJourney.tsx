@@ -337,44 +337,68 @@ export default function SimplifiedJourney() {
       return;
     }
 
-    // Mixed: Excel + images/PDFs → parse Excel locally, attach other files as supporting docs
+    // Images/PDFs present → use AI orchestrator for analysis
     setStep("processing");
-    setProcessingProgress(10);
-    setProcessingStatus("جارٍ قراءة ملفات Excel...");
+    setProcessingProgress(5);
+    setProcessingStatus("جارٍ تجهيز الملفات للتحليل الذكي...");
 
     try {
-      let assets: ScopeAsset[] = [];
+      let excelAssets: ScopeAsset[] = [];
 
-      // Always parse Excel files locally (fast)
+      // Parse Excel files locally first (fast)
       if (excelFiles.length > 0) {
-        assets = await parseExcelFilesLocally(excelFiles);
-        setProcessingProgress(70);
+        setProcessingStatus("جارٍ قراءة ملفات Excel...");
+        excelAssets = await parseExcelFilesLocally(excelFiles);
+        setProcessingProgress(20);
       }
 
-      // Images/PDFs are stored as supporting attachments (already uploaded to storage)
-      // No need to wait for slow AI extraction
-      setProcessingProgress(90);
-      setProcessingStatus("جارٍ إعداد نطاق العمل...");
+      // Send images/PDFs to AI orchestrator for asset extraction
+      setProcessingStatus("جارٍ تحليل الصور والمستندات بالذكاء الاصطناعي...");
+      const filesToAnalyze = otherFiles.map(f => ({
+        name: f.name,
+        path: f.path,
+        size: f.size,
+        mimeType: f.type,
+      }));
 
-      const realEstate = assets.filter(a => a.asset_type === "real_estate").length;
-      const machinery = assets.filter(a => a.asset_type === "machinery_equipment").length;
+      const { data: jobData, error: jobError } = await supabase.functions.invoke(
+        "asset-extraction-orchestrator",
+        { body: { action: "create", userId: user.id, files: filesToAnalyze, requestId } }
+      );
 
-      setScopeData({
-        totalAssets: assets.length,
-        realEstate,
-        machinery,
-        assets,
-        attachedFiles: otherFiles.map(f => ({ name: f.name, path: f.path, type: f.type })),
-        discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
-        approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
-      });
+      if (jobError || !jobData?.jobId) {
+        console.error("Orchestrator error:", jobError, jobData);
+        // Fallback: proceed with Excel assets only + images as attachments
+        const realEstate = excelAssets.filter(a => a.asset_type === "real_estate").length;
+        const machinery = excelAssets.filter(a => a.asset_type === "machinery_equipment").length;
+        setScopeData({
+          totalAssets: excelAssets.length,
+          realEstate,
+          machinery,
+          assets: excelAssets,
+          attachedFiles: otherFiles.map(f => ({ name: f.name, path: f.path, type: f.type })),
+          discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
+          approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
+        });
+        setProcessingProgress(100);
+        setProcessingStatus("اكتمل التحليل بنجاح");
+        await new Promise(r => setTimeout(r, 400));
+        setStep("scope");
+        return;
+      }
 
-      setProcessingProgress(100);
-      setProcessingStatus("اكتمل التحليل بنجاح");
-      await new Promise(r => setTimeout(r, 400));
-      setStep("scope");
+      // Store jobId and let the polling useEffect handle the rest
+      setJobId(jobData.jobId);
+      setProcessingProgress(25);
+      setProcessingStatus("جارٍ تحليل الصور بالذكاء الاصطناعي...");
+
+      // Store excel assets to merge later when polling completes
+      if (excelAssets.length > 0) {
+        setScopeData((prev: any) => ({ ...prev, _pendingExcelAssets: excelAssets }));
+      }
     } catch (err: any) {
-      toast({ title: "خطأ في قراءة الملفات", description: "تعذر تحليل الملفات — يرجى المحاولة مرة أخرى.", variant: "destructive" });
+      console.error("Processing error:", err);
+      toast({ title: "خطأ في تحليل الملفات", description: "تعذر تحليل الملفات — يرجى المحاولة مرة أخرى.", variant: "destructive" });
       setStep("upload");
     }
   };
