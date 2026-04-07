@@ -69,6 +69,8 @@ export default function SimpleClientRequest() {
   const [reviewData, setReviewData] = useState<AIReviewData | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisLabel, setAnalysisLabel] = useState("");
+  const [extractionFailureReason, setExtractionFailureReason] = useState("");
+  const [analysisLabel, setAnalysisLabel] = useState("");
 
   // Processing / Done
   const [processingProgress, setProcessingProgress] = useState(0);
