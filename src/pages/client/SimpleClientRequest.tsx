@@ -637,7 +637,7 @@ export default function SimpleClientRequest() {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <header className="bg-card border-b border-border sticky top-0 z-30">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={logo} alt="جساس" className="w-8 h-8" />
               <div>
@@ -649,7 +649,7 @@ export default function SimpleClientRequest() {
           </div>
         </header>
 
-        <div className="max-w-lg mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <AIReviewStep
             data={reviewData}
             onApprove={handleReviewApprove}
@@ -669,7 +669,7 @@ export default function SimpleClientRequest() {
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logo} alt="جساس" className="w-8 h-8" />
             <div>
@@ -687,211 +687,227 @@ export default function SimpleClientRequest() {
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
-        {/* ── 1. File Upload ── */}
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-foreground">المستندات <span className="text-destructive">*</span></p>
-          <div
-            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
-              dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
-            }`}
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={handleDrop}
-          >
-            <Upload className={`w-8 h-8 mx-auto mb-2 ${dragOver ? "text-primary" : "text-muted-foreground/40"}`} />
-            <p className="text-sm font-medium text-foreground mb-0.5">
-              {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات أو اضغط للاختيار"}
-            </p>
-            <p className="text-xs text-muted-foreground">Excel • PDF • صور — حتى 20 ميجا</p>
-            {uploading && (
-              <div className="mt-2 flex items-center justify-center gap-2 text-primary">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-xs">جارٍ الرفع...</span>
-              </div>
-            )}
-          </div>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="hidden"
-            onChange={e => e.target.files && handleFileUpload(e.target.files)}
-            accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv,.doc,.docx,.webp,.tif,.tiff"
-          />
-
-          {uploadedFiles.length > 0 && (
-            <div className="max-h-[200px] overflow-y-auto space-y-1">
-              {uploadedFiles.map(file => (
-                <div key={file.id} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50 border border-border/50">
-                  {getFileIcon(file.type)}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-foreground truncate">{file.name}</p>
-                    <p className="text-[10px] text-muted-foreground">{formatSize(file.size)}</p>
-                  </div>
-                  <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── 2. AI Asset Type Detection & Confirmation ── */}
-        {uploadedFiles.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4 text-primary" />
-              نوع الأصل
-              <Badge variant="secondary" className="text-[10px]">تحديد تلقائي</Badge>
-            </p>
-
-            {detecting && (
-              <div className="border-2 border-dashed border-primary/30 rounded-xl p-5 text-center bg-primary/5">
-                <Loader2 className="w-7 h-7 text-primary animate-spin mx-auto mb-2" />
-                <p className="text-sm font-medium text-foreground">جارٍ تحليل الملفات...</p>
-                <p className="text-xs text-muted-foreground mt-1">يتم تحديد نوع الأصل تلقائياً بالذكاء الاصطناعي</p>
-              </div>
-            )}
-
-            {!detecting && confirmedType && confirmedInfo && ConfirmedIcon && (
-              <div className="border-2 border-primary rounded-xl p-4 bg-primary/5">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
-                    <ConfirmedIcon className="w-5 h-5" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-sm text-foreground">{confirmedInfo.label}</h4>
-                      <Badge variant="default" className="text-[10px]">مؤكد ✓</Badge>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ── العمود الأيمن: رفع الملفات + الملاحظات ── */}
+          <div className="space-y-5">
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <p className="text-sm font-semibold text-foreground">المستندات <span className="text-destructive">*</span></p>
+                <div
+                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
+                    dragOver ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                  }`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                  onDragLeave={() => setDragOver(false)}
+                  onDrop={handleDrop}
+                >
+                  <Upload className={`w-10 h-10 mx-auto mb-3 ${dragOver ? "text-primary" : "text-muted-foreground/40"}`} />
+                  <p className="text-sm font-medium text-foreground mb-1">
+                    {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات أو اضغط للاختيار"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Excel • PDF • صور — حتى 20 ميجا</p>
+                  {uploading && (
+                    <div className="mt-3 flex items-center justify-center gap-2 text-primary">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-xs">جارٍ الرفع...</span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">{confirmedInfo.desc}</p>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                  )}
                 </div>
-                <div className="mt-3 flex justify-end">
-                  <button onClick={handleResetConfirmation} className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
-                    <RotateCcw className="w-3 h-3" /> تغيير
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {!detecting && !confirmedType && detectedType && !detectionFailed && (
-              <div className="space-y-3">
-                {(() => {
-                  const info = ASSET_TYPE_MAP[detectedType];
-                  const Icon = info?.icon;
-                  if (!info || !Icon) return null;
-                  return (
-                    <div className="border-2 border-border rounded-xl p-4 bg-muted/30">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                          <Icon className="w-5 h-5" />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={e => e.target.files && handleFileUpload(e.target.files)}
+                  accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv,.doc,.docx,.webp,.tif,.tiff"
+                />
+                {uploadedFiles.length > 0 && (
+                  <div className="max-h-[250px] overflow-y-auto space-y-1.5">
+                    {uploadedFiles.map(file => (
+                      <div key={file.id} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 border border-border/50">
+                        {getFileIcon(file.type)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs text-foreground truncate">{file.name}</p>
+                          <p className="text-[10px] text-muted-foreground">{formatSize(file.size)}</p>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-xs text-muted-foreground mb-0.5">تم التعرف على نوع الأصل:</p>
-                          <h4 className="font-bold text-sm text-foreground">{info.label}</h4>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{info.desc}</p>
-                          {detectionReason && <p className="text-[10px] text-muted-foreground/70 mt-1">{detectionReason}</p>}
-                        </div>
-                        <Badge variant={detectionConfidence >= 70 ? "default" : "secondary"} className="text-[10px] shrink-0">
-                          {detectionConfidence}%
-                        </Badge>
+                        <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                      {detectionConfidence < 60 && (
-                        <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
-                          <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
-                          <p className="text-[10px] text-destructive">ثقة التصنيف منخفضة — يرجى التحقق وتأكيد النوع الصحيح</p>
-                        </div>
-                      )}
-                      <div className="mt-3 flex gap-2">
-                        <Button size="sm" className="flex-1 gap-1.5" onClick={handleConfirmType}>
-                          <CheckCircle className="w-3.5 h-3.5" /> تأكيد
-                        </Button>
-                        <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowManualOverride(true)}>
-                          <PenLine className="w-3.5 h-3.5" /> تعديل
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })()}
-                {showManualOverride && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">اختر النوع الصحيح:</p>
-                    <div className="grid grid-cols-3 gap-2">
-                      {ASSET_TYPES.map(t => {
-                        const Icon = t.icon;
-                        return (
-                          <button key={t.key} onClick={() => handleManualSelect(t.key)}
-                            className="border-2 border-border rounded-lg p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all">
-                            <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mx-auto mb-1.5">
-                              <Icon className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            <p className="text-[11px] font-semibold text-foreground">{t.label}</p>
-                          </button>
-                        );
-                      })}
-                    </div>
+                    ))}
                   </div>
                 )}
-              </div>
-            )}
+              </CardContent>
+            </Card>
 
-            {!detecting && !confirmedType && detectionFailed && (
-              <div className="space-y-3">
-                <div className="border-2 border-dashed border-destructive/30 rounded-xl p-4 text-center bg-destructive/5">
-                  <AlertTriangle className="w-7 h-7 text-destructive mx-auto mb-2" />
-                  <p className="text-sm font-medium text-foreground">تعذر التحديد التلقائي</p>
-                  <p className="text-xs text-muted-foreground mt-1">يرجى اختيار نوع الأصل يدوياً</p>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {ASSET_TYPES.map(t => {
-                    const Icon = t.icon;
-                    return (
-                      <button key={t.key} onClick={() => handleManualSelect(t.key)}
-                        className="border-2 border-border rounded-lg p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all">
-                        <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mx-auto mb-1.5">
-                          <Icon className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <p className="text-[11px] font-semibold text-foreground">{t.label}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            <Card>
+              <CardContent className="p-5 space-y-3">
+                <p className="text-sm font-semibold text-foreground">ملاحظات <Badge variant="secondary" className="text-[10px] mr-1">اختياري</Badge></p>
+                <Textarea
+                  value={notes}
+                  onChange={e => setNotes(e.target.value)}
+                  placeholder="أي تفاصيل إضافية تود مشاركتها مع فريق التقييم..."
+                  rows={4}
+                />
+              </CardContent>
+            </Card>
           </div>
-        )}
 
-        {/* ── 3. Notes (optional) ── */}
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-foreground">ملاحظات <Badge variant="secondary" className="text-[10px] mr-1">اختياري</Badge></p>
-          <Textarea
-            value={notes}
-            onChange={e => setNotes(e.target.value)}
-            placeholder="أي تفاصيل إضافية تود مشاركتها مع فريق التقييم..."
-            rows={3}
-          />
+          {/* ── العمود الأيسر: نوع الأصل + زر المتابعة ── */}
+          <div className="space-y-5">
+            {uploadedFiles.length > 0 ? (
+              <Card>
+                <CardContent className="p-5 space-y-3">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    نوع الأصل
+                    <Badge variant="secondary" className="text-[10px]">تحديد تلقائي</Badge>
+                  </p>
+
+                  {detecting && (
+                    <div className="border-2 border-dashed border-primary/30 rounded-xl p-5 text-center bg-primary/5">
+                      <Loader2 className="w-7 h-7 text-primary animate-spin mx-auto mb-2" />
+                      <p className="text-sm font-medium text-foreground">جارٍ تحليل الملفات...</p>
+                      <p className="text-xs text-muted-foreground mt-1">يتم تحديد نوع الأصل تلقائياً بالذكاء الاصطناعي</p>
+                    </div>
+                  )}
+
+                  {!detecting && confirmedType && confirmedInfo && ConfirmedIcon && (
+                    <div className="border-2 border-primary rounded-xl p-4 bg-primary/5">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                          <ConfirmedIcon className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-bold text-sm text-foreground">{confirmedInfo.label}</h4>
+                            <Badge variant="default" className="text-[10px]">مؤكد ✓</Badge>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{confirmedInfo.desc}</p>
+                        </div>
+                        <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                      </div>
+                      <div className="mt-3 flex justify-end">
+                        <button onClick={handleResetConfirmation} className="text-[11px] text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors">
+                          <RotateCcw className="w-3 h-3" /> تغيير
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!detecting && !confirmedType && detectedType && !detectionFailed && (
+                    <div className="space-y-3">
+                      {(() => {
+                        const info = ASSET_TYPE_MAP[detectedType];
+                        const Icon = info?.icon;
+                        if (!info || !Icon) return null;
+                        return (
+                          <div className="border-2 border-border rounded-xl p-4 bg-muted/30">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="text-xs text-muted-foreground mb-0.5">تم التعرف على نوع الأصل:</p>
+                                <h4 className="font-bold text-sm text-foreground">{info.label}</h4>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">{info.desc}</p>
+                                {detectionReason && <p className="text-[10px] text-muted-foreground/70 mt-1">{detectionReason}</p>}
+                              </div>
+                              <Badge variant={detectionConfidence >= 70 ? "default" : "secondary"} className="text-[10px] shrink-0">
+                                {detectionConfidence}%
+                              </Badge>
+                            </div>
+                            {detectionConfidence < 60 && (
+                              <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                                <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+                                <p className="text-[10px] text-destructive">ثقة التصنيف منخفضة — يرجى التحقق وتأكيد النوع الصحيح</p>
+                              </div>
+                            )}
+                            <div className="mt-3 flex gap-2">
+                              <Button size="sm" className="flex-1 gap-1.5" onClick={handleConfirmType}>
+                                <CheckCircle className="w-3.5 h-3.5" /> تأكيد
+                              </Button>
+                              <Button size="sm" variant="outline" className="gap-1.5" onClick={() => setShowManualOverride(true)}>
+                                <PenLine className="w-3.5 h-3.5" /> تعديل
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })()}
+                      {showManualOverride && (
+                        <div className="space-y-2">
+                          <p className="text-xs text-muted-foreground">اختر النوع الصحيح:</p>
+                          <div className="grid grid-cols-3 gap-2">
+                            {ASSET_TYPES.map(t => {
+                              const Icon = t.icon;
+                              return (
+                                <button key={t.key} onClick={() => handleManualSelect(t.key)}
+                                  className="border-2 border-border rounded-lg p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all">
+                                  <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mx-auto mb-1.5">
+                                    <Icon className="w-4 h-4 text-muted-foreground" />
+                                  </div>
+                                  <p className="text-[11px] font-semibold text-foreground">{t.label}</p>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!detecting && !confirmedType && detectionFailed && (
+                    <div className="space-y-3">
+                      <div className="border-2 border-dashed border-destructive/30 rounded-xl p-4 text-center bg-destructive/5">
+                        <AlertTriangle className="w-7 h-7 text-destructive mx-auto mb-2" />
+                        <p className="text-sm font-medium text-foreground">تعذر التحديد التلقائي</p>
+                        <p className="text-xs text-muted-foreground mt-1">يرجى اختيار نوع الأصل يدوياً</p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {ASSET_TYPES.map(t => {
+                          const Icon = t.icon;
+                          return (
+                            <button key={t.key} onClick={() => handleManualSelect(t.key)}
+                              className="border-2 border-border rounded-lg p-3 text-center hover:border-primary/50 hover:bg-primary/5 transition-all">
+                              <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center mx-auto mb-1.5">
+                                <Icon className="w-4 h-4 text-muted-foreground" />
+                              </div>
+                              <p className="text-[11px] font-semibold text-foreground">{t.label}</p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Upload className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">ارفع الملفات أولاً لتحديد نوع الأصل تلقائياً</p>
+                </CardContent>
+              </Card>
+            )}
+
+            <Button
+              onClick={handleStartAnalysis}
+              className="w-full gap-2"
+              size="lg"
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType}
+            >
+              <Sparkles className="w-4 h-4" />
+              متابعة — تحليل الملفات ومراجعة الجرد
+            </Button>
+
+            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
+              سيتم تحليل ملفاتك واستخراج قائمة الأصول لمراجعتها قبل إرسال الطلب النهائي.
+              <br />لن يتم إنشاء الطلب إلا بعد اعتمادك للتحليل.
+            </p>
+          </div>
         </div>
-
-        {/* ── Next: Go to AI Review ── */}
-        <Button
-          onClick={handleStartAnalysis}
-          className="w-full gap-2"
-          size="lg"
-          disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType}
-        >
-          <Sparkles className="w-4 h-4" />
-          متابعة — تحليل الملفات ومراجعة الجرد
-        </Button>
-
-        <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-          سيتم تحليل ملفاتك واستخراج قائمة الأصول لمراجعتها قبل إرسال الطلب النهائي.
-          <br />لن يتم إنشاء الطلب إلا بعد اعتمادك للتحليل.
-        </p>
       </div>
     </div>
   );
