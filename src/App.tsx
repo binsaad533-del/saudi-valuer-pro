@@ -59,6 +59,7 @@ import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
 import SimplifiedJourney from "@/pages/client/SimplifiedJourney";
+import SimpleClientRequest from "@/pages/client/SimpleClientRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
 import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 
