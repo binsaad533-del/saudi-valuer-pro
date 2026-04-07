@@ -210,12 +210,14 @@ export default function SimplifiedJourney() {
               fields.push({ key: k, value: v });
             }
             const confidence = mappings.filter(m => m.autoMapped).length >= 2 ? 80 : mappings.filter(m => m.autoMapped).length === 1 ? 50 : 20;
+            const assetName = String(row.name || "");
+            const detectedType = inferAssetType(assetName, row.type ? String(row.type) : null);
             allAssets.push({
               id: crypto.randomUUID(),
               asset_index: allAssets.length + 1,
-              name: String(row.name || `أصل ${allAssets.length + 1}`),
-              asset_type: String(row.type || "machinery_equipment").includes("عقار") || String(row.type || "").includes("real") ? "real_estate" : "machinery_equipment",
-              category: row.type ? String(row.type) : null,
+              name: assetName || `أصل ${allAssets.length + 1}`,
+              asset_type: detectedType.type,
+              category: detectedType.category || (row.type ? String(row.type) : null),
               subcategory: null,
               quantity: Number(row.quantity) || 1,
               condition: row.condition ? String(row.condition) : "unknown",

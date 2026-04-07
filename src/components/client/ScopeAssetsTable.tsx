@@ -44,6 +44,13 @@ const CONDITION_LABELS: Record<string, string> = {
 const TYPE_LABELS: Record<string, string> = {
   real_estate: "عقار",
   machinery_equipment: "معدة / آلة",
+  right_of_use: "حق استخدام / إيجار",
+  vehicle: "مركبة",
+  furniture: "أثاث ومفروشات",
+  it_equipment: "أجهزة تقنية",
+  intangible: "أصول غير ملموسة",
+  leasehold_improvements: "تحسينات مستأجرة",
+  medical_equipment: "أجهزة طبية",
 };
 
 function confidenceBadge(conf: number) {
