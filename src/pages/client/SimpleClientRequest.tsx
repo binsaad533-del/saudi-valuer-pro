@@ -113,6 +113,15 @@ export default function SimpleClientRequest() {
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Client & valuation info
+  const [clientNameInput, setClientNameInput] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientIdNumber, setClientIdNumber] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [intendedUser, setIntendedUser] = useState("");
+  const [valuationMode, setValuationMode] = useState("field");
+
   // AI detection state
   const [detectedType, setDetectedType] = useState<string | null>(null);
   const [detecting, setDetecting] = useState(false);
