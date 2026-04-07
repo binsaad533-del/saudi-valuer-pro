@@ -3863,50 +3863,65 @@ export type Database = {
       report_drafts: {
         Row: {
           ai_model: string | null
+          archived_at: string | null
           client_approved_at: string | null
           client_comments: string | null
           created_at: string
           generated_by: string | null
           generation_mode: string | null
           id: string
+          issued_at: string | null
           notes: string | null
           raw_content: string | null
+          report_number: string | null
           request_id: string
+          retention_until: string | null
           sections: Json
           status: string
           updated_at: string
+          verification_code: string | null
           version: number
         }
         Insert: {
           ai_model?: string | null
+          archived_at?: string | null
           client_approved_at?: string | null
           client_comments?: string | null
           created_at?: string
           generated_by?: string | null
           generation_mode?: string | null
           id?: string
+          issued_at?: string | null
           notes?: string | null
           raw_content?: string | null
+          report_number?: string | null
           request_id: string
+          retention_until?: string | null
           sections?: Json
           status?: string
           updated_at?: string
+          verification_code?: string | null
           version?: number
         }
         Update: {
           ai_model?: string | null
+          archived_at?: string | null
           client_approved_at?: string | null
           client_comments?: string | null
           created_at?: string
           generated_by?: string | null
           generation_mode?: string | null
           id?: string
+          issued_at?: string | null
           notes?: string | null
           raw_content?: string | null
+          report_number?: string | null
           request_id?: string
+          retention_until?: string | null
           sections?: Json
           status?: string
           updated_at?: string
+          verification_code?: string | null
           version?: number
         }
         Relationships: [
@@ -5339,6 +5354,7 @@ export type Database = {
           conflict_of_interest_checked: boolean | null
           conflict_of_interest_result: string | null
           created_at: string
+          delivered_at: string | null
           desktop_disclaimer_accepted: boolean | null
           discipline: string | null
           draft_report_url: string | null
@@ -5355,6 +5371,7 @@ export type Database = {
           intended_users_en: string | null
           is_locked: boolean | null
           is_portfolio: boolean | null
+          issued_at: string | null
           land_area: number | null
           organization_id: string | null
           payment_status: string | null
@@ -5385,6 +5402,7 @@ export type Database = {
           quotation_response_at: string | null
           quotation_sent_at: string | null
           reference_number: string | null
+          report_number: string | null
           scope_of_work_ar: string | null
           scope_of_work_en: string | null
           sow_assumptions_ar: string | null
@@ -5400,6 +5418,7 @@ export type Database = {
           valuation_mode: string
           valuation_type: Database["public"]["Enums"]["valuation_type"] | null
           value_basis_ar: string | null
+          verification_code: string | null
         }
         Insert: {
           ai_complexity_level?: string | null
@@ -5424,6 +5443,7 @@ export type Database = {
           conflict_of_interest_checked?: boolean | null
           conflict_of_interest_result?: string | null
           created_at?: string
+          delivered_at?: string | null
           desktop_disclaimer_accepted?: boolean | null
           discipline?: string | null
           draft_report_url?: string | null
@@ -5440,6 +5460,7 @@ export type Database = {
           intended_users_en?: string | null
           is_locked?: boolean | null
           is_portfolio?: boolean | null
+          issued_at?: string | null
           land_area?: number | null
           organization_id?: string | null
           payment_status?: string | null
@@ -5470,6 +5491,7 @@ export type Database = {
           quotation_response_at?: string | null
           quotation_sent_at?: string | null
           reference_number?: string | null
+          report_number?: string | null
           scope_of_work_ar?: string | null
           scope_of_work_en?: string | null
           sow_assumptions_ar?: string | null
@@ -5485,6 +5507,7 @@ export type Database = {
           valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
           value_basis_ar?: string | null
+          verification_code?: string | null
         }
         Update: {
           ai_complexity_level?: string | null
@@ -5509,6 +5532,7 @@ export type Database = {
           conflict_of_interest_checked?: boolean | null
           conflict_of_interest_result?: string | null
           created_at?: string
+          delivered_at?: string | null
           desktop_disclaimer_accepted?: boolean | null
           discipline?: string | null
           draft_report_url?: string | null
@@ -5525,6 +5549,7 @@ export type Database = {
           intended_users_en?: string | null
           is_locked?: boolean | null
           is_portfolio?: boolean | null
+          issued_at?: string | null
           land_area?: number | null
           organization_id?: string | null
           payment_status?: string | null
@@ -5555,6 +5580,7 @@ export type Database = {
           quotation_response_at?: string | null
           quotation_sent_at?: string | null
           reference_number?: string | null
+          report_number?: string | null
           scope_of_work_ar?: string | null
           scope_of_work_en?: string | null
           sow_assumptions_ar?: string | null
@@ -5570,6 +5596,7 @@ export type Database = {
           valuation_mode?: string
           valuation_type?: Database["public"]["Enums"]["valuation_type"] | null
           value_basis_ar?: string | null
+          verification_code?: string | null
         }
         Relationships: [
           {
