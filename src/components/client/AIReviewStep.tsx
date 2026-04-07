@@ -349,18 +349,20 @@ function consistencyCheck(assets: ExtractedAsset[]): ExtractedAsset[] {
 // ── Deduplication ──
 function deduplicateAssets(assets: ExtractedAsset[]) {
   const seen = new Map<string, ExtractedAsset>();
+  const duplicateNames: string[] = [];
   for (const asset of assets) {
     const key = `${(asset.name || "").trim().toLowerCase()}|${(asset.category || "").toLowerCase()}|${(asset.source || "").toLowerCase()}`;
     const existing = seen.get(key);
     if (existing) {
       existing.quantity += asset.quantity;
       if (asset.confidence > existing.confidence) existing.confidence = asset.confidence;
+      duplicateNames.push(asset.name || "بدون اسم");
     } else {
       seen.set(key, { ...asset });
     }
   }
   const unique = Array.from(seen.values());
-  return { unique, removedCount: assets.length - unique.length };
+  return { unique, removedCount: assets.length - unique.length, duplicateNames };
 }
 
 // ── Smart Question generation ──
@@ -476,15 +478,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [sourceDetail, setSourceDetail] = useState<AssetSourceInfo | null>(null);
 
-  const { processed, removedCount } = useMemo(() => {
-    const { unique, removedCount } = deduplicateAssets(data.assets);
+  const { processed, removedCount, duplicateNames } = useMemo(() => {
+    const { unique, removedCount, duplicateNames } = deduplicateAssets(data.assets);
     const classified = unique.map(a => {
       if (a.license_status === "not_permitted" && a.license_reason) return a;
       return classifyAssetLicense(a);
     });
-    // Consistency check: same fingerprint → same status
     const processed = consistencyCheck(classified);
-    return { processed, removedCount };
+    return { processed, removedCount, duplicateNames };
   }, [data.assets]);
 
   const [assets, setAssets] = useState<ExtractedAsset[]>(processed);
@@ -527,14 +528,23 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       // Duplicates / مكرر
       const isDuplicateQ = ["مكرر", "مكررة", "تكرار", "duplicate", "متكرر", "حذف المكرر"].some(k => t.includes(k));
       if (isDuplicateQ) {
+        // Show up to 20 sample duplicate names
+        const uniqueDupNames = [...new Set(duplicateNames)];
+        const sample = uniqueDupNames.slice(0, 20);
+        const sampleList = sample.map((n, i) => `${i + 1}. ${n}`).join("\n");
+        const moreNote = uniqueDupNames.length > 20 ? `\n... و ${uniqueDupNames.length - 20} عنصر آخر` : "";
+
         reply = `تم فحص جميع العناصر المرفقة تلقائياً بحثاً عن التكرارات.
 
-📊 النتيجة: تم اكتشاف وإزالة ${removedCount} عنصر مكرر تلقائياً.
+📊 النتيجة: تم اكتشاف وإزالة ${removedCount} عنصر مكرر من أصل ${data.assets.length} عنصر.
+
+📋 أمثلة على العناصر المكررة التي تم دمجها:
+${sampleList}${moreNote}
 
 🔍 آلية الكشف عن التكرار:
-• مطابقة اسم الأصل والوصف والفئة
+• مطابقة اسم الأصل والفئة والمصدر
 • مقارنة البيانات بين الملفات المختلفة المرفوعة
-• العناصر المتطابقة يتم دمجها والاحتفاظ بنسخة واحدة فقط
+• العناصر المتطابقة يتم دمج كمياتها والاحتفاظ بنسخة واحدة
 
 ✅ الأصول المعروضة حالياً (${assets.length}) هي العناصر الفريدة بعد إزالة التكرارات.
 
@@ -690,7 +700,7 @@ ${COMPANY.services.map(s => `• ${s}`).join("\n")}
         timestamp: Date.now(),
       }]);
     }, 400);
-  }, [freeText, excluded, assets, autoApproved, flagged, removedCount, data.assets.length]);
+  }, [freeText, excluded, assets, autoApproved, flagged, removedCount, duplicateNames, data.assets.length]);
 
 
   // Compute initial excluded from processed data
