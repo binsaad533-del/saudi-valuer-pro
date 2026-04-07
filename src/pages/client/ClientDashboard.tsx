@@ -521,6 +521,7 @@ export default function ClientDashboard() {
             </Button>
           </div>
         </DialogContent>
+      </Dialog>
       </main>
     </div>
   );
