@@ -676,7 +676,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       setIsThinking(false);
     }
   }, [freeText, isThinking, messages, assetContextStr, assetDetailsStr, pendingAttachments]);
-import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
+
 
   // Compute initial excluded from processed data
   const initialExcluded = useMemo(() => processed.filter(a => a.license_status === "not_permitted"), [processed]);
