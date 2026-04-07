@@ -46,8 +46,10 @@ function coordsToGoogleMapsUrl(lat: number, lng: number): string {
   return `https://www.google.com/maps?q=${lat},${lng}`;
 }
 
-export default function AssetLocationPicker({ locations, onChange }: AssetLocationPickerProps) {
+export default function AssetLocationPicker({ locations, onChange, maxLocations = 50, compact = false }: AssetLocationPickerProps) {
   const [showForm, setShowForm] = useState(false);
+  const [quickUrl, setQuickUrl] = useState("");
+  const [quickUrlError, setQuickUrlError] = useState("");
   const [inputMode, setInputMode] = useState<InputMode>("url");
   const [form, setForm] = useState({ name: "", city: "", googleMapsUrl: "" });
   const [coordsForm, setCoordsForm] = useState({ name: "", city: "", latitude: "", longitude: "" });
