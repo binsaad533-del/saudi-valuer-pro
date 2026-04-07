@@ -56,27 +56,71 @@ interface Props {
   onBack: () => void;
 }
 
-// ── Company Identity & Credentials ──
+// ── Company Identity & Credentials (Source: jsaas-valuation.com + official docs) ──
 const COMPANY = {
-  name_ar: "جساس للتقييم",
+  name_ar: "شركة جسّاس للتقييم",
+  name_en: "Jsaas Valuation",
+  legal_form: "شركة ذات مسؤولية محدودة (مهنية)",
   cr_number: "1010625839",
+  unified_number: "7016803038",
+  cr_date: "2020/02/05",
+  ceo: "أحمد سعد المالكي",
+  ceo_id: "1017487701",
+  website: "www.jsaas-valuation.com",
+  email: "care@jsaas-valuation.com",
+  phone: "920015029",
+  mobile: "966500668089",
+  address: "السعودية — الرياض — حي الياسمين — طريق الثمامة",
+  bank: { name: "مصرف الراجحي", iban: "SA7080000611608010112580" },
   branches: [
     {
       name: "تقييم العقارات",
+      name_en: "Real Estate Valuation",
       license: "1210001217",
       fellowship: "1210001217",
       label: "ترخيص وعضوية زمالة",
+      expiry: "2026-12-31",
     },
     {
       name: "تقييم الآلات والمعدات",
+      name_en: "Machinery & Equipment Valuation",
       license: "4114000015",
       fellowship: "4210000041",
       label: "ترخيص + عضوية زمالة",
+      expiry: "2026-12-31",
     },
   ],
   authority: "الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  accreditations: [
+    "عضوية الزمالة — الهيئة السعودية للمقيمين المعتمدين (TAQEEM)",
+    "اعتماد الجمعية الأمريكية للمقيّمين (ASA) — USPAP",
+    "التوافق مع معايير التقييم الدولية (IVS)",
+  ],
+  services: [
+    "تقييم العقارات",
+    "تقييم الآلات والمعدات",
+    "نزع الملكية والتعويضات",
+  ],
+  vision: "نصنع للأصل قيمة",
+  mission: "نقيّم الأصول بعِلم وفنْ",
+  values: "الكفاءة والاستقلالية",
+  achievements: {
+    total_assets_valued: "111,641+ أصل",
+    total_value: "1.185+ مليار ريال سعودي",
+  },
+  strengths: [
+    "الثقة — شركة سعودية مرخصة بسجل إنجازات معتمدة",
+    "المرونة — نتعامل مع المشاريع الصغيرة والكبيرة بنفس الكفاءة",
+    "القيمة مقابل التكلفة — جودة بأسعار منطقية وتنفيذ سريع",
+    "الالتزام والتنظيم — إدارة رقمية وجدولة تضمن التسليم في الوقت",
+  ],
   permitted_assets: ["عقارات", "أراضي", "مباني", "فلل", "شقق", "آلات", "معدات", "مركبات", "أثاث", "أجهزة"],
-  excluded_scope: "تقييم المنشآت الاقتصادية (Business Valuation) — يتطلب ترخيصاً مستقلاً لا تملكه الشركة حالياً",
+  excluded_scope: "تقييم المنشآت الاقتصادية (Business Valuation) — يتطلب ترخيصاً مستقلاً",
+  valuation_purposes: [
+    "التأمين", "الرهن", "التمويل", "البيع والشراء",
+    "الاندماج والاستحواذ", "التصفية", "التركات ونزع الملكية",
+    "تقدير القيمة الإيجارية", "تحليل القيمة المتبقية", "الحسابات والمراجعة",
+  ],
 };
 
 // ── Professional Knowledge References ──
