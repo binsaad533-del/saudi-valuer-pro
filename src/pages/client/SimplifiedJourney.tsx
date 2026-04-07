@@ -856,7 +856,7 @@ export default function SimplifiedJourney() {
                             الأصول التالية تتطلب ترخيص «تقييم المنشآت الاقتصادية» ولا يمكن تقييمها ضمن هذا الطلب وسيتم استبعادها تلقائياً:
                           </p>
                           <ul className="text-xs text-destructive/70 space-y-1 pr-4">
-                            {restrictedTypes.map(type => (
+                            {restrictedTypes.map((type: string) => (
                               <li key={type} className="flex justify-between">
                                 <span>• {ASSET_COMPLIANCE[type]?.note || type}</span>
                                 <Badge variant="outline" className="text-[9px] border-destructive/30 text-destructive">{(scopeData.assets || []).filter((a: any) => a.asset_type === type).length}</Badge>
@@ -872,7 +872,7 @@ export default function SimplifiedJourney() {
                             <span>ملاحظات مهنية</span>
                           </div>
                           <ul className="text-[11px] text-amber-600 dark:text-amber-400/80 space-y-1 pr-4">
-                            {warningTypes.map(type => (
+                            {warningTypes.map((type: string) => (
                               <li key={type}>• {ASSET_COMPLIANCE[type]?.note}</li>
                             ))}
                           </ul>
