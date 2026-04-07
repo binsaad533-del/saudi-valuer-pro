@@ -5271,6 +5271,7 @@ export type Database = {
           basis_of_value: Database["public"]["Enums"]["basis_of_value"] | null
           building_area: number | null
           client_email: string | null
+          client_id: string | null
           client_id_number: string | null
           client_name_ar: string | null
           client_phone: string | null
@@ -5348,6 +5349,7 @@ export type Database = {
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
           building_area?: number | null
           client_email?: string | null
+          client_id?: string | null
           client_id_number?: string | null
           client_name_ar?: string | null
           client_phone?: string | null
@@ -5425,6 +5427,7 @@ export type Database = {
           basis_of_value?: Database["public"]["Enums"]["basis_of_value"] | null
           building_area?: number | null
           client_email?: string | null
+          client_id?: string | null
           client_id_number?: string | null
           client_name_ar?: string | null
           client_phone?: string | null
@@ -5501,6 +5504,13 @@ export type Database = {
             columns: ["assignment_id"]
             isOneToOne: false
             referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "valuation_requests_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
           {

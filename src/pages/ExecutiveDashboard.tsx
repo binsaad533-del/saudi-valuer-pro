@@ -80,7 +80,7 @@ export default function ExecutiveDashboard() {
       const [{ data: aData }, { data: pData }, { data: reqData }, { data: cData }] = await Promise.all([
         supabase.from("valuation_assignments").select("id, reference_number, status, property_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)").order("created_at", { ascending: false }).limit(500),
         supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
-        supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(100),
+        supabase.from("valuation_requests" as any).select("*, clients:client_id(id, name_ar, phone, email)").order("created_at", { ascending: false }).limit(100),
         supabase.from("clients").select("id, name_ar, email, phone, client_type, client_status, city_ar, created_at").order("created_at", { ascending: false }).limit(200),
       ]);
       if (pData) setProfileName(pData.full_name_ar || "");
@@ -110,11 +110,12 @@ export default function ExecutiveDashboard() {
   /* ── Filtered requests ── */
   const filteredRequests = useMemo(() => {
     return clientRequests.filter(req => {
-      const name = req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "";
+      const clientObj = req.clients;
+      const name = clientObj?.name_ar || req.client_name_ar || "";
       if (searchTerm && !name.includes(searchTerm) && !req.id.includes(searchTerm)) return false;
       if (statusFilter !== "all" && req.status !== statusFilter) return false;
       if (typeFilter !== "all") {
-        const mode = req.ai_intake_summary?.valuation_mode || "";
+        const mode = req.valuation_mode || req.ai_intake_summary?.valuation_mode || "";
         if (typeFilter !== mode) return false;
       }
       return true;
@@ -250,14 +251,14 @@ export default function ExecutiveDashboard() {
                           onClick={() => navigate("/client-requests", { state: { selectedRequestId: req.id } })}
                         >
                           <td className="px-4 py-3 font-medium text-foreground">
-                            {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
+                            {req.clients?.name_ar || req.client_name_ar || "طلب جديد"}
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {purposeLabel[req.purpose] || req.purpose || "—"}
                           </td>
                           <td className="px-4 py-3">
                             <Badge variant="outline" className="text-[10px]">
-                              {req.ai_intake_summary?.valuation_mode === "desktop" ? "مكتبي" : "ميداني"}
+                              {req.valuation_mode === "desktop" ? "مكتبي" : "ميداني"}
                             </Badge>
                           </td>
                           <td className="px-4 py-3">
@@ -348,7 +349,6 @@ export default function ExecutiveDashboard() {
             </Card>
           </TabsContent>
 
-          {/* ── Clients Tab ── */}
           <TabsContent value="clients" className="space-y-4">
             <Card className="shadow-sm">
               <CardHeader className="pb-3">
@@ -368,9 +368,9 @@ export default function ExecutiveDashboard() {
                     <thead>
                       <tr className="border-b border-border bg-muted/40">
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">الاسم</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">البريد</th>
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">الهاتف</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">المدينة</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">البريد</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الطلبات</th>
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">النوع</th>
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
                       </tr>
@@ -378,25 +378,30 @@ export default function ExecutiveDashboard() {
                     <tbody>
                       {clients.length === 0 ? (
                         <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">لا يوجد عملاء</td></tr>
-                      ) : clients.slice(0, 30).map(c => (
-                        <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/clients/${c.id}`)}>
-                          <td className="px-4 py-3 font-medium text-foreground">{c.name_ar}</td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs">{c.email || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs" dir="ltr">{c.phone || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{c.city_ar || "—"}</td>
-                          <td className="px-4 py-3">
-                            <Badge variant="outline" className="text-[10px]">
-                              {c.client_type === "individual" ? "فرد" : c.client_type === "corporate" ? "شركة" : c.client_type === "government" ? "حكومي" : c.client_type}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge variant={c.client_status === "active" ? "default" : "secondary"} className="text-[10px]">
-                              {c.client_status === "active" ? "نشط" : c.client_status === "inactive" ? "غير نشط" : c.client_status}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
+                      ) : clients.slice(0, 30).map(c => {
+                        const reqCount = clientRequests.filter(r => r.client_id === c.id).length;
+                        return (
+                          <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/clients/${c.id}`)}>
+                            <td className="px-4 py-3 font-medium text-foreground">{c.name_ar}</td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs" dir="ltr">{c.phone || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs">{c.email || "—"}</td>
+                            <td className="px-4 py-3">
+                              <Badge variant="secondary" className="text-[10px]">{reqCount}</Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className="text-[10px]">
+                                {c.client_type === "individual" ? "فرد" : c.client_type === "corporate" ? "شركة" : c.client_type === "government" ? "حكومي" : c.client_type}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant={c.client_status === "active" ? "default" : "secondary"} className="text-[10px]">
+                                {c.client_status === "active" ? "نشط" : c.client_status === "portal" ? "بوابة" : c.client_status === "potential" ? "محتمل" : c.client_status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
