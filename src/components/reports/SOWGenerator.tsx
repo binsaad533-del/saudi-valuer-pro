@@ -33,16 +33,34 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
   const handleGenerate = () => {
     setGenerating(true);
     try {
+      // Resolve discipline from asset_data or valuation_type
+      const resolvedDiscipline = request.asset_data?.discipline 
+        || request.discipline 
+        || request.valuation_type 
+        || "real_estate";
+
+      const DISCIPLINE_LABELS: Record<string, string> = {
+        machinery_equipment: "آلات ومعدات",
+        machinery: "آلات ومعدات",
+        real_estate: "عقار",
+        mixed: "مختلط (عقاري + آلات ومعدات)",
+        both: "مختلط (عقاري + آلات ومعدات)",
+      };
+
+      const propertyTypeLabel = DISCIPLINE_LABELS[resolvedDiscipline] 
+        || request.property_type 
+        || "غير محدد";
+
       const result = generateSOW({
         clientName,
         purpose: request.purpose || "other",
         purposeAr,
-        propertyType: request.property_type || request.valuation_type || "غير محدد",
+        propertyType: propertyTypeLabel,
         propertyAddress: request.property_address_ar || "غير محدد",
         propertyCity: request.property_city_ar || "غير محدد",
         inspectionType,
         valuationDate: request.valuation_date || new Date().toISOString().split("T")[0],
-        discipline: request.discipline,
+        discipline: resolvedDiscipline,
       });
       setSOW(result);
     } finally {
