@@ -218,7 +218,7 @@ export default function RequestDetails() {
   const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
   const showDraftReport = ["draft_report_sent", "client_comments"].includes(request.status);
   const showFinalPaymentSection = needsFinalPayment;
-  const showFinalReport = ["final_report_ready", "completed"].includes(request.status);
+  const showFinalReport = ["final_report_ready", "report_issued", "completed"].includes(request.status);
   const showSOW = request.status === "sow_sent";
 
   return (
@@ -544,18 +544,37 @@ export default function RequestDetails() {
 
             {/* Final Report */}
             {showFinalReport && (
-              <Card className="shadow-card border-success/20">
+              <Card className="shadow-card border-green-200 dark:border-green-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-success" />التقرير النهائي
+                    <Shield className="w-4 h-4 text-green-600" />التقرير النهائي
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="p-4 bg-success/5 rounded-lg text-center">
-                    <CheckCircle className="w-8 h-8 text-success mx-auto mb-2" />
+                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
+                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
                     <p className="font-bold text-foreground">التقرير النهائي جاهز</p>
                     <p className="text-xs text-muted-foreground">موقّع ومعتمد رسمياً</p>
+                    {request.report_number && (
+                      <p className="text-xs font-mono text-primary mt-2" dir="ltr">
+                        رقم التقرير: {request.report_number}
+                      </p>
+                    )}
                   </div>
+                  {request.verification_code && (
+                    <div className="p-3 bg-muted/30 rounded-lg text-center">
+                      <p className="text-[10px] text-muted-foreground mb-1">رمز التحقق</p>
+                      <p className="text-xs font-mono text-foreground select-all" dir="ltr">{request.verification_code}</p>
+                      <a
+                        href={`/verify/${request.verification_code}`}
+                        target="_blank"
+                        rel="noopener"
+                        className="text-[10px] text-primary hover:underline mt-1 inline-block"
+                      >
+                        التحقق من صحة التقرير ←
+                      </a>
+                    </div>
+                  )}
                   <Button className="w-full" size="sm">
                     <Download className="w-4 h-4 ml-1" />تحميل التقرير النهائي
                   </Button>
