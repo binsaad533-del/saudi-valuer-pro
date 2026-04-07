@@ -511,12 +511,54 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const assetContextStr = useMemo(() => {
     return `📊 إحصائيات الأصول:
 • إجمالي الأصول الأصلية المرفوعة: ${data.assets.length}
-• عناصر مكررة تم إزالتها تلقائياً: ${removedCount}${removedCount > 0 ? ` (أمثلة: ${[...new Set(duplicateNames)].slice(0, 10).join("، ")})` : ""}
-• الأصول الفريدة: ${assets.length}
+• عناصر مكررة تم إزالتها تلقائياً: ${removedCount}${removedCount > 0 ? ` (أمثلة: ${[...new Set(duplicateNames)].slice(0, 15).join("، ")})` : ""}
+• الأصول الفريدة بعد الدمج: ${assets.length}
 • جاهز للتقييم: ${autoApproved.length} ✅
-• مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫${excluded.length > 0 ? `\n  أمثلة مستبعدة: ${excluded.slice(0, 5).map(a => `"${a.name}" — ${a.license_reason || "خارج النطاق"}`).join("، ")}` : ""}
-• بانتظار التوضيح: ${flagged.length} ❓`;
-  }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged.length]);
+• مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫${excluded.length > 0 ? `\n  المستبعدة: ${excluded.map(a => `"${a.name}" — ${a.license_reason || "خارج النطاق"}`).join("، ")}` : ""}
+• بانتظار التوضيح: ${flagged.length} ❓${flagged.length > 0 ? `\n  بانتظار المراجعة: ${flagged.map(a => `"${a.name}" — ${a.license_reason || "بيانات ناقصة"}`).join("، ")}` : ""}`;
+  }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged]);
+
+  // Build detailed asset list for AI deep context
+  const assetDetailsStr = useMemo(() => {
+    const lines: string[] = [];
+    
+    // Show all duplicate names
+    if (duplicateNames.length > 0) {
+      const uniqueDups = [...new Set(duplicateNames)];
+      lines.push(`\n### العناصر المكررة التي تم دمجها (${removedCount} عنصر):`);
+      uniqueDups.forEach((name, i) => {
+        const count = duplicateNames.filter(n => n === name).length;
+        lines.push(`${i + 1}. "${name}" — تكرر ${count + 1} مرة (تم الإبقاء على نسخة واحدة)`);
+      });
+    }
+
+    // Show approved assets
+    if (autoApproved.length > 0) {
+      lines.push(`\n### الأصول المعتمدة للتقييم (${autoApproved.length}):`);
+      autoApproved.slice(0, 50).forEach((a, i) => {
+        lines.push(`${i + 1}. "${a.name}" | النوع: ${a.type || "غير محدد"} | التصنيف: ${a.category || "—"} | الكمية: ${a.quantity} | الحالة: ${a.condition || "—"} | المصدر: ${a.source || "—"} | الثقة: ${Math.round(a.confidence * 100)}%`);
+      });
+      if (autoApproved.length > 50) lines.push(`... و${autoApproved.length - 50} أصل آخر`);
+    }
+
+    // Show excluded with reasons
+    if (excluded.length > 0) {
+      lines.push(`\n### الأصول المستبعدة (${excluded.length}):`);
+      excluded.forEach((a, i) => {
+        lines.push(`${i + 1}. "${a.name}" — السبب: ${a.license_reason || "خارج نطاق الترخيص"}`);
+      });
+    }
+
+    // Show flagged
+    if (flagged.length > 0) {
+      lines.push(`\n### أصول بانتظار التوضيح (${flagged.length}):`);
+      flagged.forEach((a, i) => {
+        lines.push(`${i + 1}. "${a.name}" — السبب: ${a.license_reason || "بيانات ناقصة"}`);
+      });
+    }
+
+    return lines.join("\n");
+  }, [duplicateNames, removedCount, autoApproved, excluded, flagged]);
 
   // Free-text message from client
   const handleFreeTextSend = useCallback(async () => {
@@ -539,8 +581,9 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       const { data: fnData } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
           message: text,
-          conversationHistory: messages.filter(m => m.type === "answer" || m.type === "system").slice(-10),
+          conversationHistory: messages.filter(m => m.type === "answer" || m.type === "system").slice(-12),
           assetContext: assetContextStr,
+          assetDetails: assetDetailsStr,
         },
       });
 
@@ -568,7 +611,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     } finally {
       setIsThinking(false);
     }
-  }, [freeText, isThinking, messages, assetContextStr]);
+  }, [freeText, isThinking, messages, assetContextStr, assetDetailsStr]);
 
 
   // Compute initial excluded from processed data
