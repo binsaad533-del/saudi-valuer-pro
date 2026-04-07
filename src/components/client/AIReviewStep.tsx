@@ -450,20 +450,56 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       timestamp: Date.now(),
     }]);
 
-    // Raqeem auto-reply based on context
+    // Raqeem auto-reply — knowledge-grounded, every answer has a reference
     setTimeout(() => {
       let reply = "";
 
       // Check if asking about excluded items
-      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج"];
+      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"];
       const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
+
+      // Check if asking about methodology / approach
+      const methodKeywords = ["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"];
+      const isAskingMethod = methodKeywords.some(k => text.includes(k));
+
+      // Check if asking about license / credentials
+      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "تقييم", "هيئة", "مؤهل"];
+      const isAskingLicense = licenseKeywords.some(k => text.includes(k));
 
       if (isAskingAboutExcluded && excluded.length > 0) {
         reply = buildExclusionReply(excluded.length);
-      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد")) {
-        reply = `إجمالي الأصول: ${assets.length} — منها ${autoApproved.length} جاهز و${excluded.length} مستبعد و${flagged.length} بانتظار التوضيح.`;
+      } else if (isAskingMethod) {
+        reply = `نعتمد في التقييم على المنهجيات المعتمدة دولياً:
+
+• العقارات: أسلوب المقارنة، أسلوب الدخل، أسلوب التكلفة
+• الآلات والمعدات: أسلوب التكلفة (RCN) كمنهجية أساسية، مع أسلوب المقارنة
+
+📖 المرجع: IVS 105 — Valuation Approaches
+"يجب على المقيّم اختيار الأسلوب الأنسب بناءً على طبيعة الأصل وتوفر البيانات"
+
+يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
+      } else if (isAskingLicense) {
+        reply = `نحن مرخصون من ${KB_LICENSE.source} في فرعين:
+
+• تقييم العقارات
+• تقييم الآلات والمعدات
+
+📖 المرجع: ${KB_LICENSE.article}
+"${KB_LICENSE.principle}"`;
+      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد") || text.includes("كم")) {
+        reply = `📊 ملخص التحليل:
+• إجمالي الأصول المستخرجة: ${assets.length}
+• جاهز للتقييم: ${autoApproved.length} ✅
+• مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫
+• بانتظار التوضيح: ${flagged.length} ❓
+
+📖 المرجع: ${KB_LICENSE.source} — ${KB_LICENSE.article}`;
       } else {
-        reply = "شكراً لملاحظتك، تم تسجيلها وستؤخذ بالاعتبار عند التقييم. هل لديك شيء آخر؟";
+        reply = `شكراً لملاحظتك، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
+
+📖 جميع الملاحظات تُوثّق وفقاً لمتطلبات IVS 104 — Documentation وتُراجع ضمن إجراءات ضبط الجودة.
+
+هل لديك شيء آخر؟`;
         // Store as additional note
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
       }
