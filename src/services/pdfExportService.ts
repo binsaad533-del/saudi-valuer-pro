@@ -399,7 +399,9 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
   addHeader(doc, report.reportNumber, 2);
   addPageNumbers(doc, 2);
 
-  if (isDraft) {
+  if (isTest) {
+    drawTestWatermark(doc);
+  } else if (isDraft) {
     drawDraftWatermark(doc);
   }
 
