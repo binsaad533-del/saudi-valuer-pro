@@ -163,7 +163,7 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
           <div className="flex items-start gap-3">
             <div className="shrink-0 rounded-full border border-border bg-card/80 p-2">
-              <RaqeemAnimatedLogo size={44} />
+              <RaqeemAnimatedLogo size={88} />
             </div>
             <div className="space-y-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
