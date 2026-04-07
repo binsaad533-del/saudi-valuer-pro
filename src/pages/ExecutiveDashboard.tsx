@@ -81,17 +81,20 @@ export default function ExecutiveDashboard() {
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState("");
 
+  const [clientRequests, setClientRequests] = useState<any[]>([]);
+
   useEffect(() => {
     if (!user) return;
 
     const load = async () => {
-      const [{ data: aData }, { data: pData }] = await Promise.all([
+      const [{ data: aData }, { data: pData }, { data: reqData }] = await Promise.all([
         supabase
           .from("valuation_assignments")
           .select("id, reference_number, status, asset_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)")
           .order("created_at", { ascending: false })
           .limit(200),
         supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
+        supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(10),
       ]);
 
       if (pData) setProfileName(pData.full_name_ar || "");
@@ -101,6 +104,7 @@ export default function ExecutiveDashboard() {
         client: a.clients || null,
       }));
       setAssignments(mapped);
+      setClientRequests((reqData as any[]) || []);
       setLoading(false);
     };
     load();
