@@ -3,6 +3,8 @@
  * Generates legally-compliant SOW based on inspection type per IVS 2025 & Taqeem standards
  */
 
+import type { AssetBreakdown } from "@/lib/asset-discipline-engine";
+
 export type InspectionType = "field" | "desktop_with_photos" | "desktop_without_photos";
 
 /** النصوص القانونية للافتراضات الخاصة حسب نوع المعاينة */
@@ -47,6 +49,16 @@ export interface SOWContext {
   inspectionType: InspectionType;
   valuationDate?: string;
   discipline?: string;
+  /** Rich asset description from discipline engine */
+  assetDescription?: string;
+  /** Recommended methodologies */
+  methodologies?: string[];
+  /** Relevant IVS references */
+  ivsReferences?: string[];
+  /** Asset type breakdowns */
+  breakdowns?: AssetBreakdown[];
+  /** Whether multi-asset portfolio */
+  isPortfolio?: boolean;
 }
 
 export interface GeneratedSOW {
@@ -69,8 +81,37 @@ export function generateSOW(ctx: SOWContext): GeneratedSOW {
   const basis = PURPOSE_TO_BASIS[ctx.purpose] || PURPOSE_TO_BASIS.other;
   const specialAssumptions = SPECIAL_ASSUMPTIONS[ctx.inspectionType];
   const inspectionLabel = INSPECTION_TYPE_LABELS[ctx.inspectionType];
-
   const purposeLabel = ctx.purposeAr || ctx.purpose;
+
+  // Build asset description section intelligently
+  let assetDescContent = `النوع: ${ctx.propertyType || "غير محدد"}\nالعنوان: ${ctx.propertyAddress || "غير محدد"}\nالمدينة: ${ctx.propertyCity || "غير محدد"}`;
+
+  if (ctx.assetDescription) {
+    assetDescContent += `\n\nتفاصيل الجرد: ${ctx.assetDescription}`;
+  }
+
+  if (ctx.breakdowns && ctx.breakdowns.length > 0) {
+    assetDescContent += "\n\nتوزيع الأصول حسب النوع:";
+    for (const b of ctx.breakdowns) {
+      assetDescContent += `\n  • ${b.label}: ${b.count} أصل`;
+      if (b.examples.length > 0) {
+        assetDescContent += ` (مثال: ${b.examples.join("، ")})`;
+      }
+    }
+  }
+
+  if (ctx.isPortfolio) {
+    assetDescContent += "\n\nملاحظة: هذا تقييم محفظة أصول متعددة — سيتم تقييم كل أصل بشكل مستقل مع ملخص موحد.";
+  }
+
+  // Build methodology section
+  let methodologyContent = "";
+  if (ctx.methodologies && ctx.methodologies.length > 0) {
+    methodologyContent = "المنهجيات المعتمدة:\n" + ctx.methodologies.map((m, i) => `${i + 1}. ${m}`).join("\n");
+    if (ctx.ivsReferences && ctx.ivsReferences.length > 0) {
+      methodologyContent += `\n\nالمراجع المعيارية: ${ctx.ivsReferences.join("، ")}`;
+    }
+  }
 
   const sections: { heading: string; content: string }[] = [
     {
@@ -91,22 +132,26 @@ export function generateSOW(ctx: SOWContext): GeneratedSOW {
     },
     {
       heading: "5. الأصل محل التقييم",
-      content: `النوع: ${ctx.propertyType || "غير محدد"}\nالعنوان: ${ctx.propertyAddress || "غير محدد"}\nالمدينة: ${ctx.propertyCity || "غير محدد"}`,
+      content: assetDescContent,
     },
+    ...(methodologyContent ? [{
+      heading: "6. منهجيات التقييم",
+      content: methodologyContent,
+    }] : []),
     {
-      heading: "6. نوع المعاينة",
+      heading: methodologyContent ? "7. نوع المعاينة" : "6. نوع المعاينة",
       content: inspectionLabel,
     },
     {
-      heading: "7. تاريخ التقييم",
+      heading: methodologyContent ? "8. تاريخ التقييم" : "7. تاريخ التقييم",
       content: ctx.valuationDate || new Date().toISOString().split("T")[0],
     },
     {
-      heading: "8. الافتراضات العامة",
+      heading: methodologyContent ? "9. الافتراضات العامة" : "8. الافتراضات العامة",
       content: GENERAL_ASSUMPTIONS,
     },
     {
-      heading: "9. الافتراضات الخاصة والمحددات",
+      heading: methodologyContent ? "10. الافتراضات الخاصة والمحددات" : "9. الافتراضات الخاصة والمحددات",
       content: specialAssumptions,
     },
   ];
