@@ -275,32 +275,44 @@ export default function SimplifiedJourney() {
       return;
     }
 
-    // Otherwise use edge function for PDFs/images (+ include Excel if mixed)
+    // Mixed: Excel + images/PDFs → parse Excel locally, attach other files as supporting docs
     setStep("processing");
-    setProcessingProgress(0);
+    setProcessingProgress(10);
+    setProcessingStatus("جارٍ قراءة ملفات Excel...");
 
     try {
-      const { data, error } = await supabase.functions.invoke("asset-extraction-orchestrator", {
-        body: {
-          action: "create",
-          userId: user.id,
-          files: uploadedFiles.map(f => ({
-            name: f.name, path: f.path, size: f.size, mimeType: f.type,
-          })),
-        },
+      let assets: ScopeAsset[] = [];
+
+      // Always parse Excel files locally (fast)
+      if (excelFiles.length > 0) {
+        assets = await parseExcelFilesLocally(excelFiles);
+        setProcessingProgress(70);
+      }
+
+      // Images/PDFs are stored as supporting attachments (already uploaded to storage)
+      // No need to wait for slow AI extraction
+      setProcessingProgress(90);
+      setProcessingStatus("جارٍ إعداد نطاق العمل...");
+
+      const realEstate = assets.filter(a => a.asset_type === "real_estate").length;
+      const machinery = assets.filter(a => a.asset_type === "machinery_equipment").length;
+
+      setScopeData({
+        totalAssets: assets.length,
+        realEstate,
+        machinery,
+        assets,
+        attachedFiles: otherFiles.map(f => ({ name: f.name, path: f.path, type: f.type })),
+        discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
+        approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
       });
 
-      if (error) throw new Error(error.message);
-      if (data?.error) throw new Error(data.error);
-      setJobId(data.jobId);
-
-      // Also parse Excel files locally and merge later
-      if (excelFiles.length > 0) {
-        const localAssets = await parseExcelFilesLocally(excelFiles);
-        setScopeData((prev: any) => ({ ...prev, _localExcelAssets: localAssets }));
-      }
+      setProcessingProgress(100);
+      setProcessingStatus("اكتمل التحليل بنجاح");
+      await new Promise(r => setTimeout(r, 400));
+      setStep("scope");
     } catch (err: any) {
-      toast({ title: "خطأ في بدء المعالجة", description: err.message, variant: "destructive" });
+      toast({ title: "خطأ في قراءة الملفات", description: "تعذر تحليل الملفات — يرجى المحاولة مرة أخرى.", variant: "destructive" });
       setStep("upload");
     }
   };
