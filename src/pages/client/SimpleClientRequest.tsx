@@ -698,11 +698,27 @@ export default function SimpleClientRequest() {
             <img src={logo} alt="جساس" className="w-8 h-8" />
             <div>
               <h2 className="text-sm font-bold text-foreground">طلب تقييم جديد</h2>
-              <p className="text-[10px] text-muted-foreground">ارفع الملفات وأكد نوع الأصل</p>
+              <p className="text-[10px] text-muted-foreground">ارفع الملفات وأكد نوع الأصل للبدء</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-[10px]">الخطوة ١ من ٣</Badge>
+          <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-1.5">
+              {[
+                { n: 1, l: "رفع الملفات" },
+                { n: 2, l: "مراجعة الجرد" },
+                { n: 3, l: "التأكيد" },
+              ].map((step, i) => (
+                <div key={step.n} className="flex items-center gap-1.5">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                    step.n === 1 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                  }`}>{step.n}</div>
+                  <span className={`text-[10px] ${step.n === 1 ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                    {step.l}
+                  </span>
+                  {i < 2 && <div className="w-6 h-px bg-border" />}
+                </div>
+              ))}
+            </div>
             <Button variant="ghost" size="sm" onClick={() => navigate("/client/dashboard")}>
               <ArrowRight className="w-4 h-4 ml-1" />
               العودة
