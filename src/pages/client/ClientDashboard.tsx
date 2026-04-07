@@ -17,6 +17,7 @@ import {
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
+import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
 
 
 export default function ClientDashboard() {
