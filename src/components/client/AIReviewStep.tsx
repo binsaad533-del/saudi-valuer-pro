@@ -459,7 +459,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
 
       if (isAskingAboutExcluded && excluded.length > 0) {
-        reply = `نحن مرخصون من الهيئة السعودية للمقيمين المعتمدين (تقييم) في فرعين:\n\n• تقييم العقارات\n• تقييم الآلات والمعدات\n\nوهذا التقييم يندرج ضمن تقييم المنشآت الاقتصادية، ويشمل فقط الأصول الملموسة (عقارات، آلات، معدات، مركبات).\n\nأما الأصول غير الملموسة مثل العلامات التجارية، البرمجيات، الشهرة، والتراخيص فهي خارج نطاق الترخيص ولا يمكن تقييمها ضمن هذا التقرير وفقاً لمعايير التقييم الدولية (IVS 2025) ولوائح الهيئة.\n\nعدد البنود المستبعدة: ${excluded.length} بند.`;
+        reply = buildExclusionReply(excluded.length);
       } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد")) {
         reply = `إجمالي الأصول: ${assets.length} — منها ${autoApproved.length} جاهز و${excluded.length} مستبعد و${flagged.length} بانتظار التوضيح.`;
       } else {
@@ -489,22 +489,9 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       : "مرحباً، راجعت المرفقات وهذا ملخص النتائج";
     initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
 
-    // CASE 1: Explain excluded items FIRST (priority)
+    // CASE 1: Explain excluded items FIRST (priority) — with knowledge references
     if (initialExcluded.length > 0) {
-      // Group excluded by reason for concise explanation
-      const reasonGroups = new Map<string, string[]>();
-      for (const a of initialExcluded) {
-        const reason = a.license_reason || "خارج نطاق التقييم";
-        const list = reasonGroups.get(reason) || [];
-        list.push(a.name);
-        reasonGroups.set(reason, list);
-      }
-      let explanationText = `🚫 تم استبعاد ${initialExcluded.length} بند تلقائياً:\n`;
-      for (const [reason, names] of reasonGroups) {
-        const preview = names.slice(0, 3).map(n => `"${n}"`).join("، ");
-        const extra = names.length > 3 ? ` و${names.length - 3} آخرين` : "";
-        explanationText += `\n• ${preview}${extra}\n  ← ${reason}`;
-      }
+      const explanationText = buildExclusionExplanation(initialExcluded);
       initial.push({ id: "excluded-explain", type: "info", text: explanationText, timestamp: Date.now() + 1 });
     }
 
