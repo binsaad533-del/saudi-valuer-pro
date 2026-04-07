@@ -119,7 +119,9 @@ export default function SimpleClientRequest() {
   const [clientEmail, setClientEmail] = useState("");
   const [clientIdNumber, setClientIdNumber] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [purposeOther, setPurposeOther] = useState("");
   const [intendedUser, setIntendedUser] = useState("");
+  const [intendedUserOther, setIntendedUserOther] = useState("");
   const [valuationMode, setValuationMode] = useState("field");
 
   // AI detection state
@@ -506,8 +508,8 @@ export default function SimpleClientRequest() {
           client_email: clientEmail || null,
           client_id_number: clientIdNumber || null,
           purpose: purpose || null,
-          purpose_ar: purpose ? PURPOSE_OPTIONS[purpose] || null : null,
-          intended_users_ar: intendedUser ? INTENDED_USERS_OPTIONS[intendedUser] || null : null,
+          purpose_ar: purpose === "other" ? purposeOther : (purpose ? PURPOSE_OPTIONS[purpose] || null : null),
+          intended_users_ar: intendedUser === "other" ? intendedUserOther : (intendedUser ? INTENDED_USERS_OPTIONS[intendedUser] || null : null),
           valuation_mode: valuationMode || "field",
           valuation_type: (assetType === "machinery_equipment" ? "machinery" : assetType === "both" ? "mixed" : assetType) as any,
           property_description_ar: combinedNotes || null,
@@ -826,7 +828,7 @@ export default function SimpleClientRequest() {
                 <div className="border-t border-border/50 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                    <Select value={purpose} onValueChange={setPurpose}>
+                    <Select value={purpose} onValueChange={(v) => { setPurpose(v); if (v !== "other") setPurposeOther(""); }}>
                       <SelectTrigger className="text-sm">
                         <SelectValue placeholder="اختر الغرض" />
                       </SelectTrigger>
@@ -836,10 +838,14 @@ export default function SimpleClientRequest() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {purpose === "other" && (
+                      <Input value={purposeOther} onChange={e => setPurposeOther(e.target.value)}
+                        placeholder="حدد الغرض..." className="text-sm mt-1.5" />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">المستخدم المستهدف</Label>
-                    <Select value={intendedUser} onValueChange={setIntendedUser}>
+                    <Select value={intendedUser} onValueChange={(v) => { setIntendedUser(v); if (v !== "other") setIntendedUserOther(""); }}>
                       <SelectTrigger className="text-sm">
                         <SelectValue placeholder="اختر المستخدم" />
                       </SelectTrigger>
@@ -849,6 +855,10 @@ export default function SimpleClientRequest() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {intendedUser === "other" && (
+                      <Input value={intendedUserOther} onChange={e => setIntendedUserOther(e.target.value)}
+                        placeholder="حدد المستخدم..." className="text-sm mt-1.5" />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">نوع التقييم</Label>
@@ -1066,7 +1076,7 @@ export default function SimpleClientRequest() {
             ) : null}
 
             <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !purpose}>
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !purpose || (purpose === "other" && !purposeOther.trim())}>
               <Sparkles className="w-4 h-4" />
               متابعة — تحليل الملفات ومراجعة الجرد
             </Button>
