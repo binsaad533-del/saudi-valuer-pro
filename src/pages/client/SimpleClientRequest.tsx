@@ -29,6 +29,26 @@ interface UploadedFile {
 
 type PageState = "form" | "analyzing" | "review" | "extraction_failed" | "processing" | "done";
 
+// ── Infer individual asset type from name/category keywords ──
+const RE_KEYWORDS: Record<string, RegExp> = {
+  real_estate: /عقار|أرض|ارض|مبنى|مبنی|فيلا|فلة|شقة|شقق|دوبلكس|بناء|عمارة|برج|مجمع|سكني|تجاري|مستودع|مخزن|أرض خام|محل|معرض|مول|فندق|land|building|villa|apartment|warehouse|hotel/i,
+  vehicle: /سيارة|سيارات|مركبة|شاحنة|رافعة شوكية|فورك|لفت|حافلة|باص|دراجة|vehicle|car|truck|forklift|bus|trailer|مقطورة/i,
+  furniture: /أثاث|مكتب|كرسي|طاولة|خزانة|رف|أريكة|سرير|furniture|desk|chair|table|cabinet/i,
+  it_equipment: /حاسب|كمبيوتر|لابتوب|سيرفر|خادم|شاشة|طابعة|ماسح|راوتر|سويتش|شبكة|computer|laptop|server|printer|scanner|router|switch|monitor/i,
+  medical_equipment: /طبي|أشعة|تعقيم|مختبر|جراح|تخدير|أسنان|medical|x-ray|lab|surgical|dental|ultrasound/i,
+  hvac: /تكييف|تبريد|تدفئة|مكيف|تهوية|hvac|ac unit|chiller|cooling|heating/i,
+  electrical: /كهربائي|محول|مولد|لوحة كهرب|ups|generator|transformer|electrical|panel/i,
+};
+
+function inferAssetType(name: string, category: string | null, fallback: string): string {
+  const text = `${name} ${category || ""}`.toLowerCase();
+  for (const [type, regex] of Object.entries(RE_KEYWORDS)) {
+    if (regex.test(text)) return type;
+  }
+  // If fallback is "both", default to machinery_equipment for non-matched
+  return fallback === "both" ? "machinery_equipment" : fallback;
+}
+
 const ASSET_TYPES = [
   { key: "real_estate", label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
   { key: "machinery_equipment", label: "آلات ومعدات", icon: Cog, desc: "معدات صناعية، أجهزة، مركبات، أثاث" },
