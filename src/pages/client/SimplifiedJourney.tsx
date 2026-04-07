@@ -933,17 +933,26 @@ export default function SimplifiedJourney() {
                       if (ASSET_COMPLIANCE[a.asset_type] && !ASSET_COMPLIANCE[a.asset_type].permitted) continue;
                       counts[a.asset_type] = (counts[a.asset_type] || 0) + 1;
                     }
-                    return Object.entries(counts).map(([type, count]) => (
-                      <div key={type} className="flex justify-between items-start text-xs gap-2">
-                        <div className="min-w-0">
-                          <span className="text-foreground font-medium">{TYPE_INFO[type]?.label || type}</span>
-                          {TYPE_INFO[type]?.desc && (
-                            <p className="text-[10px] text-muted-foreground mt-0.5">{TYPE_INFO[type].desc}</p>
-                          )}
+                    const total = Object.values(counts).reduce((s, c) => s + c, 0);
+                    return (
+                      <>
+                        <div className="flex justify-between items-center text-xs border-b border-border pb-2 mb-1">
+                          <span className="text-foreground font-bold">إجمالي الأصول المعتمدة للتقييم</span>
+                          <Badge className="text-[11px]">{total}</Badge>
                         </div>
-                        <Badge variant="secondary" className="text-[10px] shrink-0">{count}</Badge>
-                      </div>
-                    ));
+                        {Object.entries(counts).map(([type, count]) => (
+                          <div key={type} className="flex justify-between items-start text-xs gap-2">
+                            <div className="min-w-0">
+                              <span className="text-foreground font-medium">{TYPE_INFO[type]?.label || type}</span>
+                              {TYPE_INFO[type]?.desc && (
+                                <p className="text-[10px] text-muted-foreground mt-0.5">{TYPE_INFO[type].desc}</p>
+                              )}
+                            </div>
+                            <Badge variant="secondary" className="text-[10px] shrink-0">{count}</Badge>
+                          </div>
+                        ))}
+                      </>
+                    );
                   })()}
                 </div>
 
