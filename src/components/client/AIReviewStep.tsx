@@ -700,7 +700,7 @@ ${COMPANY.services.map(s => `• ${s}`).join("\n")}
         timestamp: Date.now(),
       }]);
     }, 400);
-  }, [freeText, excluded, assets, autoApproved, flagged, removedCount, data.assets.length]);
+  }, [freeText, excluded, assets, autoApproved, flagged, removedCount, duplicateNames, data.assets.length]);
 
 
   // Compute initial excluded from processed data
