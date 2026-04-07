@@ -733,7 +733,7 @@ export default function ExecutiveDashboard() {
               </Card>
 
               {/* Report Draft Generator */}
-              <ReportDraftGenerator request={selectedRequest} userId={user!.id} />
+              <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => loadRequests()} />
             </div>
           )}
         </DrawerContent>
