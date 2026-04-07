@@ -14,6 +14,7 @@ import {
   ArrowRight, FileText, MessageSquare, Send, Loader2, Bot, User,
   CreditCard, Building2, CheckCircle, XCircle, Upload, Download,
   Clock, DollarSign, Shield, AlertCircle, MessageSquareText,
+  Package, Trash2, Edit,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
@@ -308,7 +309,90 @@ export default function RequestDetails() {
               </CardContent>
             </Card>
 
-            {/* Quotation Card */}
+            {/* Asset Summary */}
+            {request.asset_data?.inventory && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><Package className="w-4 h-4 text-primary" />ملخص الأصول</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {(() => {
+                    const TYPE_INFO: Record<string, { label: string; desc: string }> = {
+                      real_estate: { label: "عقارات", desc: "أراضي، مباني، فلل، شقق، عمائر" },
+                      machinery_equipment: { label: "آلات ومعدات", desc: "معدات تشغيلية وصناعية وإنتاجية" },
+                      furniture_fixtures: { label: "أثاث ومفروشات", desc: "أثاث مكتبي وتجهيزات داخلية" },
+                      vehicles: { label: "مركبات", desc: "تقييم قيمة المركبة كأصل ثابت" },
+                      technology_equipment: { label: "أجهزة تقنية", desc: "حاسبات، طابعات، شاشات، سيرفرات" },
+                      medical_equipment: { label: "أجهزة طبية", desc: "أجهزة تحليل ومختبرات ومعدات طبية" },
+                      leasehold_improvements: { label: "تحسينات مستأجرة", desc: "تشطيبات، ديكورات، لوحات" },
+                      right_of_use: { label: "مصالح مستأجرة", desc: "حقوق منفعة عقارية أو حق استخدام آلة" },
+                    };
+                    const NON_PERMITTED = ["intangible_assets", "financial_instruments", "biological_assets", "inventory_stock"];
+                    const inventory = request.asset_data.inventory as any[];
+                    const counts: Record<string, number> = {};
+                    for (const a of inventory) {
+                      if (NON_PERMITTED.includes(a.type)) continue;
+                      counts[a.type] = (counts[a.type] || 0) + 1;
+                    }
+                    const total = Object.values(counts).reduce((s: number, c: number) => s + c, 0);
+                    return (
+                      <>
+                        <div className="flex justify-between items-center text-xs border-b border-border pb-2 mb-1">
+                          <span className="text-foreground font-bold">إجمالي الأصول المعتمدة</span>
+                          <Badge className="text-[11px]">{total}</Badge>
+                        </div>
+                        {Object.entries(counts).map(([type, count]) => {
+                          const info = TYPE_INFO[type];
+                          return (
+                            <div key={type} className="flex justify-between items-start text-xs gap-2">
+                              <div className="min-w-0">
+                                <span className="font-medium text-foreground">{info?.label || type}</span>
+                                {info?.desc && <p className="text-[10px] text-muted-foreground truncate">{info.desc}</p>}
+                              </div>
+                              <Badge variant="secondary" className="text-[10px] shrink-0">{count}</Badge>
+                            </div>
+                          );
+                        })}
+                      </>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Client Actions */}
+            {["submitted", "under_pricing", "needs_clarification", "quotation_sent"].includes(request.status) && (
+              <Card className="shadow-card">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4 text-primary" />إجراءات</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2" onClick={() => navigate(`/client/new-request?edit=${id}`)}>
+                    <Edit className="w-3.5 h-3.5" />تعديل الطلب
+                  </Button>
+                  <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2 text-destructive hover:text-destructive hover:bg-destructive/5" onClick={async () => {
+                    if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
+                    setSending(true);
+                    try {
+                      await supabase.from("valuation_requests" as any).update({ status: "cancelled" as any } as any).eq("id", id!);
+                      await supabase.from("request_messages" as any).insert({
+                        request_id: id!, sender_type: "system" as any,
+                        content: "❌ تم إلغاء الطلب من قبل العميل",
+                      });
+                      toast({ title: "تم إلغاء الطلب" });
+                      navigate("/client");
+                    } catch (err: any) {
+                      toast({ title: "خطأ", description: err.message, variant: "destructive" });
+                    } finally {
+                      setSending(false);
+                    }
+                  }}>
+                    <Trash2 className="w-3.5 h-3.5" />إلغاء الطلب
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             {showQuotation && (
               <Card className="shadow-card border-primary/20">
                 <CardHeader className="pb-3">
