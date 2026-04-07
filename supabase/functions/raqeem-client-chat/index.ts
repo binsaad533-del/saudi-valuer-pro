@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationHistory, assetContext, assetDetails } = await req.json();
+    const { message, conversationHistory, assetContext, assetDetails, attachments } = await req.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: "الرسالة مطلوبة" }), {

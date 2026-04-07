@@ -12,7 +12,7 @@ import {
 import {
   CheckCircle, Cog, Sparkles, Building2,
   Shield, ArrowRight, Package, FileCheck, Send,
-  FileText, AlertCircle, Eye, Paperclip, Image, Loader2, X,
+  FileText, AlertCircle, Eye, Paperclip, Loader2, X,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
