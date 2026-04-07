@@ -839,8 +839,8 @@ export default function SimplifiedJourney() {
                 {(() => {
                   const restricted = (scopeData.assets || []).filter((a: any) => ASSET_COMPLIANCE[a.asset_type] && !ASSET_COMPLIANCE[a.asset_type].permitted);
                   const warnings = (scopeData.assets || []).filter((a: any) => ASSET_COMPLIANCE[a.asset_type]?.note && ASSET_COMPLIANCE[a.asset_type]?.permitted);
-                  const restrictedTypes: string[] = [...new Set(restricted.map((a: any) => a.asset_type as string))];
-                  const warningTypes: string[] = [...new Set(warnings.map((a: any) => a.asset_type as string))];
+                  const restrictedTypes = Array.from(new Set(restricted.map((a: any) => String(a.asset_type))));
+                  const warningTypes = Array.from(new Set(warnings.map((a: any) => String(a.asset_type))));
 
                   if (restrictedTypes.length === 0 && warningTypes.length === 0) return null;
 
