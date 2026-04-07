@@ -5,14 +5,23 @@ import { parseExcelFile, autoMapColumns, applyMapping } from "@/lib/excel-parser
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import {
   Upload, FileText, Image, File, X, Loader2, CheckCircle,
   ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
-  PenLine, RotateCcw,
+  PenLine, RotateCcw, User as UserIcon,
 } from "lucide-react";
 import AIReviewStep, { classifyAssetLicense, type ExtractedAsset, type AIReviewData } from "@/components/client/AIReviewStep";
 import logo from "@/assets/logo.png";
@@ -55,6 +64,35 @@ const ASSET_TYPES = [
   { key: "both", label: "عقار + آلات ومعدات", icon: Sparkles, desc: "تقييم مختلط يشمل كلا النوعين" },
 ] as const;
 
+const PURPOSE_OPTIONS: Record<string, string> = {
+  sale_purchase: "بيع / شراء",
+  mortgage: "رهن / تمويل",
+  financial_reporting: "تقارير مالية",
+  insurance: "تأمين",
+  taxation: "زكاة / ضريبة",
+  expropriation: "نزع ملكية",
+  litigation: "نزاع / قضاء",
+  investment: "استثمار",
+  lease_renewal: "تجديد إيجار",
+  internal_decision: "قرار داخلي",
+  regulatory: "تنظيمي",
+  other: "أخرى",
+};
+
+const INTENDED_USERS_OPTIONS: Record<string, string> = {
+  bank: "بنك / مؤسسة مالية",
+  government: "جهة حكومية",
+  court: "محكمة",
+  internal_management: "إدارة داخلية",
+  investor: "مستثمر",
+  other: "أخرى",
+};
+
+const VALUATION_MODE_OPTIONS: Record<string, string> = {
+  field: "ميداني (معاينة ميدانية)",
+  desktop: "مكتبي (بدون معاينة)",
+};
+
 const ASSET_TYPE_MAP: Record<string, typeof ASSET_TYPES[number]> = Object.fromEntries(
   ASSET_TYPES.map(t => [t.key, t])
 );
@@ -74,6 +112,15 @@ export default function SimpleClientRequest() {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Client & valuation info
+  const [clientNameInput, setClientNameInput] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
+  const [clientEmail, setClientEmail] = useState("");
+  const [clientIdNumber, setClientIdNumber] = useState("");
+  const [purpose, setPurpose] = useState("");
+  const [intendedUser, setIntendedUser] = useState("");
+  const [valuationMode, setValuationMode] = useState("field");
 
   // AI detection state
   const [detectedType, setDetectedType] = useState<string | null>(null);
@@ -102,14 +149,18 @@ export default function SimpleClientRequest() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
       setUser(user);
-      // Fetch client name for Raqeem greeting
+      // Fetch client info for pre-filling
       const { data: clientRow } = await supabase
         .from("clients")
-        .select("name_ar")
+        .select("name_ar, phone, email, id_number")
         .eq("portal_user_id", user.id)
         .maybeSingle();
       if (clientRow?.name_ar) setClientName(clientRow.name_ar);
-      else setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
+      if (clientRow?.name_ar) setClientNameInput(clientRow.name_ar);
+      if (clientRow?.phone) setClientPhone(clientRow.phone);
+      if (clientRow?.email) setClientEmail(clientRow.email);
+      if (clientRow?.id_number) setClientIdNumber(clientRow.id_number);
+      if (!clientRow?.name_ar) setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
     };
     checkAuth();
   }, [navigate]);
@@ -450,6 +501,14 @@ export default function SimpleClientRequest() {
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
+          client_name_ar: clientNameInput || null,
+          client_phone: clientPhone || null,
+          client_email: clientEmail || null,
+          client_id_number: clientIdNumber || null,
+          purpose: purpose || null,
+          purpose_ar: purpose ? PURPOSE_OPTIONS[purpose] || null : null,
+          intended_users_ar: intendedUser ? INTENDED_USERS_OPTIONS[intendedUser] || null : null,
+          valuation_mode: valuationMode || "field",
           valuation_type: (assetType === "machinery_equipment" ? "machinery" : assetType === "both" ? "mixed" : assetType) as any,
           property_description_ar: combinedNotes || null,
           status: "submitted" as any,
@@ -730,8 +789,84 @@ export default function SimpleClientRequest() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── العمود الرئيسي: رفع الملفات + الملاحظات ── */}
+          {/* ── العمود الرئيسي: معلومات العميل + رفع الملفات + الملاحظات ── */}
           <div className="lg:col-span-2 space-y-5">
+
+            {/* معلومات العميل والتقييم */}
+            <Card>
+              <CardContent className="p-6 space-y-4">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <UserIcon className="w-4 h-4 text-primary" />
+                  معلومات العميل والتقييم
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">اسم العميل <span className="text-destructive">*</span></Label>
+                    <Input value={clientNameInput} onChange={e => setClientNameInput(e.target.value)}
+                      placeholder="الاسم الكامل" className="text-sm" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">رقم الهوية / السجل التجاري</Label>
+                    <Input value={clientIdNumber} onChange={e => setClientIdNumber(e.target.value)}
+                      placeholder="رقم الهوية أو السجل" className="text-sm" dir="ltr" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">الجوال</Label>
+                    <Input value={clientPhone} onChange={e => setClientPhone(e.target.value)}
+                      placeholder="05xxxxxxxx" className="text-sm" dir="ltr" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">البريد الإلكتروني</Label>
+                    <Input value={clientEmail} onChange={e => setClientEmail(e.target.value)}
+                      placeholder="email@example.com" className="text-sm" dir="ltr" />
+                  </div>
+                </div>
+
+                <div className="border-t border-border/50 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">الغرض من التقييم <span className="text-destructive">*</span></Label>
+                    <Select value={purpose} onValueChange={setPurpose}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر الغرض" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(PURPOSE_OPTIONS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">المستخدم المستهدف</Label>
+                    <Select value={intendedUser} onValueChange={setIntendedUser}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر المستخدم" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(INTENDED_USERS_OPTIONS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs text-muted-foreground">نوع التقييم</Label>
+                    <Select value={valuationMode} onValueChange={setValuationMode}>
+                      <SelectTrigger className="text-sm">
+                        <SelectValue placeholder="اختر النوع" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(VALUATION_MODE_OPTIONS).map(([key, label]) => (
+                          <SelectItem key={key} value={key}>{label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="p-6 space-y-4">
                 <div className="flex items-center justify-between">
@@ -931,7 +1066,7 @@ export default function SimpleClientRequest() {
             ) : null}
 
             <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType}>
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !purpose}>
               <Sparkles className="w-4 h-4" />
               متابعة — تحليل الملفات ومراجعة الجرد
             </Button>
