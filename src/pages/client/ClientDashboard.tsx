@@ -10,16 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
-  Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
+  Plus, FileText, Clock, CheckCircle, AlertCircle,
   Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
-  Phone, Mail, MessageCircle, FileCheck, Search, BarChart3, ClipboardCheck, Settings,
+  Phone, Mail, MessageCircle, FileCheck, Search, BarChart3, ClipboardCheck,
 } from "lucide-react";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
-import ClientNotificationsBell from "@/components/client/ClientNotificationsBell";
-import { toast } from "sonner";
-import { formatDate } from "@/lib/utils";
-import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
-import AppFooter from "@/components/layout/AppFooter";
 
 
 export default function ClientDashboard() {
