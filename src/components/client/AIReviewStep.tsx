@@ -528,14 +528,23 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       // Duplicates / مكرر
       const isDuplicateQ = ["مكرر", "مكررة", "تكرار", "duplicate", "متكرر", "حذف المكرر"].some(k => t.includes(k));
       if (isDuplicateQ) {
+        // Show up to 20 sample duplicate names
+        const uniqueDupNames = [...new Set(duplicateNames)];
+        const sample = uniqueDupNames.slice(0, 20);
+        const sampleList = sample.map((n, i) => `${i + 1}. ${n}`).join("\n");
+        const moreNote = uniqueDupNames.length > 20 ? `\n... و ${uniqueDupNames.length - 20} عنصر آخر` : "";
+
         reply = `تم فحص جميع العناصر المرفقة تلقائياً بحثاً عن التكرارات.
 
-📊 النتيجة: تم اكتشاف وإزالة ${removedCount} عنصر مكرر تلقائياً.
+📊 النتيجة: تم اكتشاف وإزالة ${removedCount} عنصر مكرر من أصل ${data.assets.length} عنصر.
+
+📋 أمثلة على العناصر المكررة التي تم دمجها:
+${sampleList}${moreNote}
 
 🔍 آلية الكشف عن التكرار:
-• مطابقة اسم الأصل والوصف والفئة
+• مطابقة اسم الأصل والفئة والمصدر
 • مقارنة البيانات بين الملفات المختلفة المرفوعة
-• العناصر المتطابقة يتم دمجها والاحتفاظ بنسخة واحدة فقط
+• العناصر المتطابقة يتم دمج كمياتها والاحتفاظ بنسخة واحدة
 
 ✅ الأصول المعروضة حالياً (${assets.length}) هي العناصر الفريدة بعد إزالة التكرارات.
 
