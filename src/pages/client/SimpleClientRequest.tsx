@@ -964,26 +964,53 @@ export default function SimpleClientRequest() {
               <CardContent className="p-4 space-y-3">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-primary" />
-                  نصائح لأفضل نتائج
+                  ماذا أرفق لأفضل تقييم؟
                 </p>
-                <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>ارفع ملف Excel مُنظّم بأعمدة واضحة (اسم الأصل، الكمية، الحالة)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>أرفق صور عالية الجودة من عدة زوايا لكل أصل</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>أضف صكوك الملكية أو عقود الإيجار إن وُجدت</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>تأكد أن ملفات PDF ليست مشفرة أو ممسوحة ضوئياً بجودة منخفضة</span>
-                  </li>
-                </ul>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-[11px] font-semibold text-foreground mb-1.5 flex items-center gap-1">
+                      <Cog className="w-3 h-3 text-primary" /> للمعدات والآلات:
+                    </p>
+                    <ul className="text-[11px] text-muted-foreground space-y-1.5 leading-relaxed">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                        <span>صور من كل الجوانب + من الداخل</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                        <span>صور العدادات ولوحة البيانات (Nameplate)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                        <span>فواتير الشراء وبرامج الصيانة</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-foreground mb-1.5 flex items-center gap-1">
+                      <Building2 className="w-3 h-3 text-primary" /> للعقارات:
+                    </p>
+                    <ul className="text-[11px] text-muted-foreground space-y-1.5 leading-relaxed">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                        <span>صور الواجهة الخارجية من عدة زوايا</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                        <span>صور داخلية: كل الغرف، الحوش، الممرات، المرافق</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                        <span>صكوك الملكية وعقود الإيجار إن وُجدت</span>
+                      </li>
+                    </ul>
+                  </div>
+                  <div className="border-t border-border/50 pt-2">
+                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                      💡 كل ملف إضافي يساعد في الوصول لتقييم أدق — لا تتردد في رفع أي وثيقة تخص الأصل
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
