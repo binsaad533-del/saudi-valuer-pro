@@ -178,6 +178,63 @@ export default function ExecutiveDashboard() {
           })}
         </div>
 
+        {/* Client Requests from valuation_requests */}
+        {clientRequests.length > 0 && (
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-primary" />
+                  طلبات العملاء الواردة ({clientRequests.length})
+                </CardTitle>
+                <Link to="/client-requests">
+                  <Button variant="ghost" size="sm" className="text-xs">عرض الكل</Button>
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40">
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">العميل</th>
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">الغرض</th>
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">النوع</th>
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">الحالة</th>
+                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">التاريخ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clientRequests.map((req: any) => (
+                      <tr key={req.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate("/client-requests")}>
+                        <td className="px-4 py-2.5 font-medium text-foreground">
+                          {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
+                        </td>
+                        <td className="px-4 py-2.5 text-muted-foreground">{req.purpose || "—"}</td>
+                        <td className="px-4 py-2.5">
+                          {req.ai_intake_summary?.valuation_mode === "desktop" ? (
+                            <Badge variant="outline" className="text-[10px]">مكتبي</Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px]">معاينة</Badge>
+                          )}
+                        </td>
+                        <td className="px-4 py-2.5">
+                          <Badge variant="secondary" className="text-[10px]">
+                            {req.status === "submitted" ? "جديد" : req.status === "completed" ? "مكتمل" : req.status}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-2.5 text-muted-foreground text-xs">
+                          {new Date(req.created_at).toLocaleDateString("ar-SA")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Requests Table */}
           <Card className="lg:col-span-2 shadow-sm">
