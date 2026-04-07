@@ -51,6 +51,7 @@ const NOTIFICATION_DEFS: Record<string, {
 // Arabic templates
 const TEMPLATES_AR: Record<string, { title: string; body: string }> = {
   new_request: { title: "طلب تقييم جديد", body: "يوجد طلب تقييم جديد يحتاج متابعة." },
+  new_request_pricing: { title: "طلب جديد بانتظار التسعير", body: "يوجد طلب تقييم جديد بحاجة لإعداد عرض سعر." },
   request_ready_review: { title: "طلب جاهز للمراجعة", body: "طلب التقييم جاهز للمراجعة والاعتماد." },
   critical_compliance: { title: "مشكلة حرجة في الامتثال", body: "تم رصد مشكلة حرجة في الامتثال تحتاج تدخل فوري." },
   high_risk_valuation: { title: "تقييم عالي المخاطر", body: "تم رصد تقييم عالي المخاطر يحتاج مراجعة." },
