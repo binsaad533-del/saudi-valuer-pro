@@ -194,7 +194,7 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
                   <CheckCircle className="w-3 h-3 text-primary shrink-0" />
                   <p className="text-xs font-semibold text-foreground">{SECTION_LABELS[key]}</p>
                 </div>
-                <p className="text-xs text-muted-foreground leading-6 bg-muted/30 rounded p-2 whitespace-pre-wrap line-clamp-4">
+                <p dir="rtl" className="text-xs text-muted-foreground leading-7 bg-muted/30 rounded p-3 whitespace-pre-wrap line-clamp-4 text-right" style={{ unicodeBidi: 'plaintext' }}>
                   {String(value)}
                 </p>
               </div>
