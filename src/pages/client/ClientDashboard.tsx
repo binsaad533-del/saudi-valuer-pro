@@ -231,7 +231,7 @@ export default function ClientDashboard() {
                           </div>
                         </div>
                       </div>
-                      <EnhancedRequestTracker status={req.status} createdAt={req.created_at} compact />
+                      <EnhancedRequestTracker status={req.status} createdAt={req.created_at} compact valuationMode={req.ai_intake_summary?.valuation_mode || "field"} />
                     </Link>
                   ))}
                 </div>
