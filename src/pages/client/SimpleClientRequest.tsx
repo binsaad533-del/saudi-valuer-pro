@@ -525,6 +525,13 @@ export default function SimpleClientRequest() {
             quick_request: true,
             ai_asset_type_detection: aiClassification,
             user_review_completed: true,
+            locations: assetLocations.map(l => ({
+              name: l.name,
+              city: l.city,
+              googleMapsUrl: l.googleMapsUrl,
+              latitude: l.latitude,
+              longitude: l.longitude,
+            })),
           },
           asset_data: assetData,
         } as any)
