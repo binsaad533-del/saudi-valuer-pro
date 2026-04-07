@@ -548,9 +548,8 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
         )}
       </Card>
 
-      {/* ── 3. Raqeem Chat (complementary, not replacement) ── */}
-      {(questions.length > 0 || phase !== "done") && (
-        <Card className="border-primary/20">
+      {/* ── 3. Raqeem Chat (ALWAYS visible) ── */}
+      <Card className="border-primary/20">
           <CardContent className="p-0">
             {/* Chat header */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-primary/5 rounded-t-lg">
