@@ -35,6 +35,10 @@ import {
   Shield,
   AlertTriangle,
   Table2,
+  Monitor,
+  Eye,
+  Zap,
+  BadgeCheck,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
@@ -93,6 +97,8 @@ export default function SimplifiedJourney() {
   const [purposeOther, setPurposeOther] = useState("");
   const [intendedUsers, setIntendedUsers] = useState("");
   const [intendedUsersOther, setIntendedUsersOther] = useState("");
+  const [valuationMode, setValuationMode] = useState<"field" | "desktop">("field");
+  const [desktopDisclaimer, setDesktopDisclaimer] = useState(false);
 
   // Step 2: Files
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -183,6 +189,8 @@ export default function SimplifiedJourney() {
   const removeFile = (id: string) => setUploadedFiles(prev => prev.filter(f => f.id !== id));
 
   // ── Step 1 → Step 2 ──
+  const DESKTOP_BLOCKED_PURPOSES = ["mortgage", "expropriation"];
+
   const handleStartRequest = () => {
     if (!clientName.trim()) { toast({ title: "يرجى إدخال اسم العميل", variant: "destructive" }); return; }
     if (!clientPhone.trim()) { toast({ title: "يرجى إدخال رقم الجوال", variant: "destructive" }); return; }
@@ -190,6 +198,12 @@ export default function SimplifiedJourney() {
     if (purpose === "other" && !purposeOther.trim()) { toast({ title: "يرجى تحديد الغرض", variant: "destructive" }); return; }
     if (!intendedUsers) { toast({ title: "يرجى اختيار مستخدمي التقرير", variant: "destructive" }); return; }
     if (intendedUsers === "other" && !intendedUsersOther.trim()) { toast({ title: "يرجى تحديد مستخدمي التقرير", variant: "destructive" }); return; }
+    if (valuationMode === "desktop" && DESKTOP_BLOCKED_PURPOSES.includes(purpose)) {
+      toast({ title: "التقييم المكتبي غير مسموح لهذا الغرض", description: "يرجى اختيار التقييم الميداني أو تغيير الغرض.", variant: "destructive" }); return;
+    }
+    if (valuationMode === "desktop" && !desktopDisclaimer) {
+      toast({ title: "يرجى الموافقة على إقرار التقييم المكتبي", variant: "destructive" }); return;
+    }
     setStep("upload");
   };
 
@@ -556,6 +570,8 @@ export default function SimplifiedJourney() {
             clientInfo: { contactName: clientName, contactPhone: clientPhone, contactEmail: clientEmail },
             totalAssets: scopeData.totalAssets,
             simplified: true,
+            valuation_mode: valuationMode,
+            desktop_disclaimer_accepted: valuationMode === "desktop" ? desktopDisclaimer : undefined,
           },
           asset_data: assetData,
         } as any)
@@ -686,7 +702,7 @@ export default function SimplifiedJourney() {
 
               <div className="space-y-1.5">
                 <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                <Select value={purpose} onValueChange={(val) => { setPurpose(val); if (val !== "other") setPurposeOther(""); }}>
+                <Select value={purpose} onValueChange={(val) => { setPurpose(val); if (val !== "other") setPurposeOther(""); if (DESKTOP_BLOCKED_PURPOSES.includes(val) && valuationMode === "desktop") { setValuationMode("field"); setDesktopDisclaimer(false); } }}>
                   <SelectTrigger><SelectValue placeholder="اختر الغرض" /></SelectTrigger>
                   <SelectContent>
                     {Object.entries(PURPOSE_OPTIONS).map(([k, v]) => (
@@ -711,6 +727,120 @@ export default function SimplifiedJourney() {
                 </Select>
                 {intendedUsers === "other" && (
                   <Input value={intendedUsersOther} onChange={e => setIntendedUsersOther(e.target.value)} placeholder="حدد المستخدمين" className="mt-2" />
+                )}
+              </div>
+
+              {/* ── Valuation Mode ── */}
+              <div className="space-y-3 pt-2">
+                <Label className="text-sm font-semibold">نوع التقييم <span className="text-destructive">*</span></Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Field Inspection */}
+                  <button
+                    type="button"
+                    onClick={() => { setValuationMode("field"); setDesktopDisclaimer(false); }}
+                    className={`relative text-right border-2 rounded-xl p-4 transition-all ${
+                      valuationMode === "field"
+                        ? "border-primary bg-primary/5 shadow-sm"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                        valuationMode === "field" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <Eye className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-sm text-foreground">تقييم ميداني</h4>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          يشمل معاينة فعلية للعقار أو الأصل من قبل مقيّم معتمد — مطلوب للتمويل والرهن العقاري
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-[10px]">الأكثر شمولاً</Badge>
+                        </div>
+                      </div>
+                    </div>
+                    {valuationMode === "field" && (
+                      <div className="absolute top-2 left-2">
+                        <CheckCircle className="w-5 h-5 text-primary" />
+                      </div>
+                    )}
+                  </button>
+
+                  {/* Desktop */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (DESKTOP_BLOCKED_PURPOSES.includes(purpose)) {
+                        toast({ title: "التقييم المكتبي غير متاح لهذا الغرض", description: "التمويل ونزع الملكية يتطلبان تقييماً ميدانياً.", variant: "destructive" });
+                        return;
+                      }
+                      setValuationMode("desktop");
+                    }}
+                    className={`relative text-right border-2 rounded-xl p-4 transition-all ${
+                      DESKTOP_BLOCKED_PURPOSES.includes(purpose)
+                        ? "border-border opacity-50 cursor-not-allowed"
+                        : valuationMode === "desktop"
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+                        valuationMode === "desktop" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}>
+                        <Monitor className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-bold text-sm text-foreground">تقييم مكتبي</h4>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          بدون معاينة ميدانية — أسرع وأقل تكلفة — معتمد وفق معايير IVS وتقييم
+                        </p>
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <Badge variant="secondary" className="text-[10px] gap-1">
+                            <Zap className="w-3 h-3" /> أسرع
+                          </Badge>
+                          <Badge variant="secondary" className="text-[10px] gap-1">
+                            <BadgeCheck className="w-3 h-3" /> معتمد
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    {valuationMode === "desktop" && (
+                      <div className="absolute top-2 left-2">
+                        <CheckCircle className="w-5 h-5 text-primary" />
+                      </div>
+                    )}
+                  </button>
+                </div>
+
+                {/* Desktop disclaimer */}
+                {valuationMode === "desktop" && (
+                  <div className="bg-accent/50 border border-accent rounded-lg p-3 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-semibold text-foreground">ما هو التقييم المكتبي؟</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          تقييم احترافي معتمد يتم دون معاينة مادية للأصل، بالاعتماد على المستندات والصور المقدمة.
+                          يتوافق مع معايير التقييم الدولية (IVS) ومتطلبات الهيئة السعودية للمقيّمين المعتمدين (تقييم).
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2 border-t border-border pt-2">
+                      <input
+                        type="checkbox"
+                        id="desktop-disclaimer"
+                        checked={desktopDisclaimer}
+                        onChange={e => setDesktopDisclaimer(e.target.checked)}
+                        className="mt-0.5 accent-primary"
+                      />
+                      <label htmlFor="desktop-disclaimer" className="text-xs text-foreground leading-relaxed cursor-pointer">
+                        أقر بأن التقييم سيتم <strong>بدون معاينة ميدانية</strong>، وأتحمل مسؤولية دقة المستندات والصور المقدمة،
+                        وأوافق على أن التقرير سيتضمن إفصاحاً بذلك.
+                      </label>
+                    </div>
+                  </div>
                 )}
               </div>
 
