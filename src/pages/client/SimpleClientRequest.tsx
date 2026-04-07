@@ -124,6 +124,7 @@ export default function SimpleClientRequest() {
   const [intendedUser, setIntendedUser] = useState("");
   const [intendedUserOther, setIntendedUserOther] = useState("");
   const [valuationMode, setValuationMode] = useState("field");
+  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
   // AI detection state
   const [detectedType, setDetectedType] = useState<string | null>(null);
