@@ -499,7 +499,7 @@ export default function SimplifiedJourney() {
           client_user_id: user.id,
           valuation_type: scopeData.discipline as any,
           purpose: (purpose || null) as any,
-          purpose_other: purpose === "other" ? purposeOther : null,
+          purpose_ar: purpose === "other" ? purposeOther : null,
           intended_users_ar: usersText,
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
