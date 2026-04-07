@@ -71,7 +71,7 @@ export default function RaqeemAnimatedLogo({ size = 40, className = "" }: Raqeem
       {/* Colored squares - fixed position, random blink */}
       {squares.map((sq, i) => {
         const rad = (sq.angle * Math.PI) / 180;
-        const dist = size * 0.48;
+        const dist = sq.dist;
         const x = cx + dist * Math.cos(rad) - sq.s / 2;
         const y = cy + dist * Math.sin(rad) - sq.s / 2;
         const delay = (i * 0.7 + Math.random() * 0.5).toFixed(2);
