@@ -213,13 +213,14 @@ export default function SimpleClientRequest() {
 
   const finalAssetType = confirmedType;
 
-  // ── Start AI Analysis (transition form → analyzing → review) ──
+  // ── Start AI Analysis (transition form → analyzing → review OR extraction_failed) ──
   const handleStartAnalysis = async () => {
     if (!finalAssetType || uploadedFiles.length === 0 || !user) return;
 
     setState("analyzing");
     setAnalysisProgress(10);
     setAnalysisLabel("جارٍ قراءة الملفات...");
+    setExtractionFailureReason("");
 
     try {
       const assetType = finalAssetType;
@@ -227,8 +228,9 @@ export default function SimpleClientRequest() {
       const otherFiles = uploadedFiles.filter(f => !isExcel(f.type, f.name));
       let assetInventory: ExtractedAsset[] = [];
       let idCounter = 1;
+      let aiDiscipline = assetType;
 
-      // Parse Excel files
+      // Parse Excel files locally
       if (excelFiles.length > 0) {
         setAnalysisLabel("جارٍ قراءة ملفات Excel...");
         setAnalysisProgress(20);
@@ -259,55 +261,82 @@ export default function SimpleClientRequest() {
         }
       }
 
-      setAnalysisProgress(50);
-      setAnalysisLabel("جارٍ تحليل المستندات بالذكاء الاصطناعي...");
-
-      // AI orchestrator for non-Excel files
+      // AI Vision extraction for images/PDFs (synchronous — waits for results)
       if (otherFiles.length > 0) {
+        setAnalysisProgress(40);
+        setAnalysisLabel("جارٍ تحليل الصور والمستندات بالذكاء الاصطناعي...");
+
         try {
-          const { data: jobData } = await supabase.functions.invoke("asset-extraction-orchestrator", {
+          const { data: jobData, error: jobError } = await supabase.functions.invoke("asset-extraction-orchestrator", {
             body: {
-              action: "create",
+              action: "create_and_process",
               userId: user.id,
               files: otherFiles.map(f => ({ name: f.name, path: f.path, size: f.size, mimeType: f.type })),
             },
           });
-          // If AI extracted assets from documents, add them
-          if (jobData?.assets && Array.isArray(jobData.assets)) {
+
+          if (jobError) {
+            console.error("Orchestrator error:", jobError);
+          } else if (jobData?.assets && Array.isArray(jobData.assets) && jobData.assets.length > 0) {
             for (const a of jobData.assets) {
               assetInventory.push({
                 id: idCounter++,
                 name: a.name || `أصل ${idCounter}`,
-                type: assetType,
+                type: a.type || assetType,
                 category: a.category || null,
                 quantity: a.quantity || 1,
                 condition: a.condition || "unknown",
                 confidence: a.confidence || 60,
-                source: a.source || "تحليل مستندات",
+                source: a.source || "تحليل بصري",
                 license_status: "permitted",
               });
             }
+            // Use AI-determined discipline if available
+            if (jobData.discipline) {
+              aiDiscipline = jobData.discipline;
+            }
           }
-        } catch { /* AI extraction is optional */ }
+        } catch (err) {
+          console.error("AI extraction failed:", err);
+        }
       }
 
       setAnalysisProgress(80);
       setAnalysisLabel("جارٍ تصنيف الأصول وفحص الترخيص...");
 
-      // If no assets extracted, add a placeholder
+      // ── CRITICAL: No phantom assets — if nothing extracted, show failure ──
       if (assetInventory.length === 0) {
-        assetInventory.push({
-          id: 1,
-          name: "طلب تقييم (بدون جرد تفصيلي)",
-          type: assetType,
-          category: assetType === "real_estate" ? "عقار" : assetType === "machinery_equipment" ? "معدات" : "مختلط",
-          quantity: 1,
-          condition: "unknown",
-          confidence: 100,
-          source: "إدخال يدوي",
-          license_status: "permitted",
+        // Log failure in audit
+        await supabase.from("audit_logs").insert({
+          user_id: user.id,
+          action: "create" as any,
+          table_name: "valuation_requests",
+          description: `فشل استخراج الأصول — ${uploadedFiles.length} ملف — لم يتم التعرف على أي أصول`,
+          new_data: {
+            action_type: "ai_extraction_failed",
+            files_count: uploadedFiles.length,
+            file_names: uploadedFiles.map(f => f.name),
+            confirmed_type: assetType,
+            reason: "zero_assets_extracted",
+          } as any,
+          user_role: "client",
         });
+
+        setExtractionFailureReason(
+          "لم يتمكن النظام من استخراج الأصول من الملفات المرفوعة.\n\nيرجى:\n- رفع صور أوضح\n- أو إضافة مستند يحتوي على تفاصيل الأصول (مثل جدول Excel)"
+        );
+        setState("extraction_failed");
+        return;
       }
+
+      // Reclassify type based on actual extracted content (≥70% rule)
+      const meCount = assetInventory.filter(a => a.type === "machinery_equipment").length;
+      const reCount = assetInventory.filter(a => a.type === "real_estate").length;
+      const total = assetInventory.length;
+      let finalDiscipline = aiDiscipline;
+      if (meCount / total >= 0.7) finalDiscipline = "machinery_equipment";
+      else if (reCount / total >= 0.7) finalDiscipline = "real_estate";
+      else if (meCount > 0 && reCount > 0) finalDiscipline = "both";
 
       // Classify each asset for license compliance
       assetInventory = assetInventory.map(classifyAssetLicense);
@@ -319,8 +348,8 @@ export default function SimpleClientRequest() {
 
       // Build review data
       setReviewData({
-        detectedType: detectedType || assetType,
-        confirmedType: assetType,
+        detectedType: finalDiscipline,
+        confirmedType: finalDiscipline,
         confidence: detectionConfidence,
         assets: assetInventory,
         totalFiles: uploadedFiles.length,
