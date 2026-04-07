@@ -3,19 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
-import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
-  CheckCircle, XCircle, AlertTriangle, Building2, Cog, Sparkles,
-  Shield, ArrowRight, Package, FileCheck, Edit3,
-  FileText, Image, Table2, Lightbulb, Pencil, Eye, AlertOctagon,
+  CheckCircle, XCircle, Building2, Cog, Sparkles,
+  Shield, ArrowRight, Package, FileCheck,
+  FileText, Image, Table2, Eye, AlertOctagon, MessageCircleQuestion,
+  ChevronLeft,
 } from "lucide-react";
 
 // ── Types ──
@@ -57,7 +56,7 @@ interface Props {
   onBack: () => void;
 }
 
-// ── Exclusion rules (hard block — outside license scope) ──
+// ── Exclusion rules ──
 const EXCLUSION_RULES: { keywords: string[]; reason: string }[] = [
   { keywords: ["intangible", "أصول غير ملموسة"], reason: "أصل غير ملموس — يتطلب تقييم مالي متخصص" },
   { keywords: ["goodwill", "شهرة"], reason: "شهرة محل — تتطلب تقييم أعمال متخصص" },
@@ -69,28 +68,22 @@ const EXCLUSION_RULES: { keywords: string[]; reason: string }[] = [
   { keywords: ["cryptocurrency"], reason: "عملة رقمية — غير مشمولة" },
 ];
 
-// ── Smart verification triggers (only these cause a flag) ──
-type VerificationTrigger = { check: (a: ExtractedAsset) => boolean; reason: string };
+// ── Smart verification triggers ──
+type TriggerType = "low_confidence" | "unclear_name" | "no_category" | "bad_quantity" | "conflict";
+type VerificationTrigger = { check: (a: ExtractedAsset) => boolean; reason: string; triggerType: TriggerType };
+
 const VERIFICATION_TRIGGERS: VerificationTrigger[] = [
-  { check: a => a.confidence < 35, reason: "ثقة منخفضة جداً — بيانات قد تكون غير دقيقة" },
-  { check: a => !a.name || a.name.trim().length < 3, reason: "اسم غير واضح" },
-  { check: a => !a.category && !a.type, reason: "تصنيف غير محدد" },
-  { check: a => a.quantity <= 0 || isNaN(a.quantity), reason: "كمية غير صحيحة" },
+  { check: a => a.confidence < 35, reason: "ثقة منخفضة جداً", triggerType: "low_confidence" },
+  { check: a => !a.name || a.name.trim().length < 3, reason: "اسم غير واضح", triggerType: "unclear_name" },
+  { check: a => !a.category && !a.type, reason: "تصنيف غير محدد", triggerType: "no_category" },
+  { check: a => a.quantity <= 0 || isNaN(a.quantity), reason: "كمية غير صحيحة", triggerType: "bad_quantity" },
   { check: a => {
-    // conflicting: name says one type but category says another
     const name = (a.name || "").toLowerCase();
     const cat = (a.category || "").toLowerCase();
     const isNameProperty = ["أرض", "عقار", "مبنى", "فيلا", "شقة", "land", "building"].some(k => name.includes(k));
     const isCatMachinery = ["آلات", "معدات", "machinery", "equipment"].some(k => cat.includes(k));
     return isNameProperty && isCatMachinery;
-  }, reason: "تعارض بين الاسم والتصنيف" },
-];
-
-const RECLASSIFY_OPTIONS = [
-  { value: "real_estate", label: "عقار" },
-  { value: "machinery_equipment", label: "آلات ومعدات" },
-  { value: "expense", label: "مصروف — ليس أصلاً" },
-  { value: "not_asset", label: "غير أصل — استبعاد" },
+  }, reason: "تعارض بين الاسم والتصنيف", triggerType: "conflict" },
 ];
 
 const ASSET_TYPE_MAP: Record<string, { label: string; icon: typeof Building2 }> = {
@@ -103,25 +96,103 @@ const FILE_TYPE_ICONS: Record<string, typeof FileText> = {
   excel: Table2, pdf: FileText, image: Image, unknown: FileText,
 };
 
-// ── Smart Classification (auto-pass unless flagged) ──
+// ── Smart Question generator ──
+interface SmartQuestion {
+  assetId: number;
+  question: string;
+  options: { label: string; action: "approve" | "exclude" | "update"; updateField?: string; updateValue?: string }[];
+  allowCustom: boolean;
+  customPlaceholder?: string;
+}
+
+function generateSmartQuestion(asset: ExtractedAsset, triggerType: TriggerType): SmartQuestion {
+  const base = { assetId: asset.id, allowCustom: false } as SmartQuestion;
+
+  switch (triggerType) {
+    case "unclear_name":
+      return {
+        ...base,
+        question: `ما هو الاسم الصحيح لهذا البند؟ (الحالي: "${asset.name || "—"}")`,
+        options: [
+          { label: "استبعاد هذا البند", action: "exclude" },
+        ],
+        allowCustom: true,
+        customPlaceholder: "اكتب الاسم الصحيح...",
+      };
+
+    case "no_category":
+      return {
+        ...base,
+        question: `ما تصنيف "${asset.name}"؟`,
+        options: [
+          { label: "عقار", action: "update", updateField: "category", updateValue: "real_estate" },
+          { label: "آلات ومعدات", action: "update", updateField: "category", updateValue: "machinery_equipment" },
+          { label: "أثاث ومفروشات", action: "update", updateField: "category", updateValue: "furniture" },
+          { label: "استبعاد — ليس أصلاً", action: "exclude" },
+        ],
+        allowCustom: true,
+        customPlaceholder: "تصنيف آخر...",
+      };
+
+    case "bad_quantity":
+      return {
+        ...base,
+        question: `الكمية لـ "${asset.name}" غير صحيحة (${asset.quantity}). ما الكمية الفعلية؟`,
+        options: [
+          { label: "1", action: "update", updateField: "quantity", updateValue: "1" },
+          { label: "استبعاد", action: "exclude" },
+        ],
+        allowCustom: true,
+        customPlaceholder: "أدخل الكمية...",
+      };
+
+    case "conflict":
+      return {
+        ...base,
+        question: `"${asset.name}" مصنف كـ "${asset.category}" — هل هذا صحيح؟`,
+        options: [
+          { label: "نعم، التصنيف صحيح", action: "approve" },
+          { label: "عقار", action: "update", updateField: "category", updateValue: "real_estate" },
+          { label: "آلات ومعدات", action: "update", updateField: "category", updateValue: "machinery_equipment" },
+          { label: "استبعاد", action: "exclude" },
+        ],
+        allowCustom: false,
+      };
+
+    case "low_confidence":
+    default:
+      return {
+        ...base,
+        question: `"${asset.name}" — ثقة الاستخراج منخفضة (${asset.confidence}%). هل تريد تضمينه؟`,
+        options: [
+          { label: "نعم، تضمينه كأصل", action: "approve" },
+          { label: "لا، استبعاده", action: "exclude" },
+        ],
+        allowCustom: false,
+      };
+  }
+}
+
+function detectTriggerType(asset: ExtractedAsset): TriggerType {
+  for (const t of VERIFICATION_TRIGGERS) {
+    if (t.check(asset)) return t.triggerType;
+  }
+  return "low_confidence";
+}
+
+// ── Classification ──
 export function classifyAssetLicense(asset: ExtractedAsset): ExtractedAsset {
   const combined = `${(asset.category || asset.type || "").toLowerCase()} ${(asset.name || "").toLowerCase()}`;
-
-  // 1. Hard exclusion
   for (const rule of EXCLUSION_RULES) {
     if (rule.keywords.some(k => combined.includes(k.toLowerCase()))) {
       return { ...asset, license_status: "not_permitted", license_reason: rule.reason };
     }
   }
-
-  // 2. Check verification triggers — flag only if needed
   for (const trigger of VERIFICATION_TRIGGERS) {
     if (trigger.check(asset)) {
       return { ...asset, license_status: "needs_review", license_reason: trigger.reason };
     }
   }
-
-  // 3. Everything else passes automatically
   return { ...asset, license_status: "permitted", license_reason: "تمت المعالجة تلقائياً" };
 }
 
@@ -143,7 +214,7 @@ function deduplicateAssets(assets: ExtractedAsset[]) {
 }
 
 // ══════════════════════════════════════
-// MAIN COMPONENT — Smart Verification
+// MAIN COMPONENT
 // ══════════════════════════════════════
 export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const { processed, removedCount } = useMemo(() => {
@@ -156,32 +227,56 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   }, [data.assets]);
 
   const [assets, setAssets] = useState<ExtractedAsset[]>(processed);
-  const [reviewNotes, setReviewNotes] = useState("");
+  const [additionalNotes, setAdditionalNotes] = useState("");
   const [sourcePreviewAsset, setSourcePreviewAsset] = useState<ExtractedAsset | null>(null);
-  const [reclassifyingId, setReclassifyingId] = useState<number | null>(null);
+  const [showFinalQuestion, setShowFinalQuestion] = useState(false);
 
   const autoApproved = useMemo(() => assets.filter(a => a.license_status === "permitted"), [assets]);
   const flagged = useMemo(() => assets.filter(a => a.license_status === "needs_review"), [assets]);
   const excluded = useMemo(() => assets.filter(a => a.license_status === "not_permitted"), [assets]);
 
+  // Current question = first flagged item
+  const currentFlagged = flagged.length > 0 ? flagged[0] : null;
+  const currentQuestion = currentFlagged ? generateSmartQuestion(currentFlagged, detectTriggerType(currentFlagged)) : null;
+
   const typeInfo = ASSET_TYPE_MAP[data.confirmedType];
   const TypeIcon = typeInfo?.icon || Sparkles;
-  const canSubmit = autoApproved.length > 0;
+  const canSubmit = autoApproved.length > 0 && flagged.length === 0;
 
-  const resolveAsset = useCallback((id: number, status: "permitted" | "not_permitted", reason: string) => {
-    setAssets(prev => prev.map(a => a.id === id ? { ...a, license_status: status, license_reason: reason } : a));
+  // All questions answered, show final question
+  const allResolved = flagged.length === 0 && !showFinalQuestion && assets.some(a => a.license_status === "permitted");
+
+  const resolveAsset = useCallback((id: number, status: "permitted" | "not_permitted", reason: string, updates?: Partial<ExtractedAsset>) => {
+    setAssets(prev => prev.map(a => a.id === id ? { ...a, ...updates, license_status: status, license_reason: reason } : a));
   }, []);
 
-  const reclassifyAsset = useCallback((id: number, newType: string) => {
-    if (newType === "expense" || newType === "not_asset") {
-      resolveAsset(id, "not_permitted", newType === "expense" ? "أعيد تصنيفه كمصروف" : "أعيد تصنيفه كغير أصل");
-    } else {
-      resolveAsset(id, "permitted", `أعيد تصنيفه كـ ${RECLASSIFY_OPTIONS.find(o => o.value === newType)?.label || newType}`);
+  const handleQuestionAnswer = useCallback((assetId: number, option: SmartQuestion["options"][0]) => {
+    if (option.action === "approve") {
+      resolveAsset(assetId, "permitted", "تم تأكيده من العميل");
+    } else if (option.action === "exclude") {
+      resolveAsset(assetId, "not_permitted", "تم استبعاده من العميل");
+    } else if (option.action === "update" && option.updateField) {
+      const updates: any = { [option.updateField]: option.updateValue };
+      resolveAsset(assetId, "permitted", `تم تحديث ${option.updateField}`, updates);
     }
-    setReclassifyingId(null);
   }, [resolveAsset]);
 
-  const handleApprove = () => onApprove(assets.filter(a => a.license_status === "permitted"), reviewNotes);
+  const handleCustomAnswer = useCallback((assetId: number, triggerType: TriggerType, value: string) => {
+    if (!value.trim()) return;
+    if (triggerType === "unclear_name") {
+      resolveAsset(assetId, "permitted", "تم تصحيح الاسم", { name: value.trim() });
+    } else if (triggerType === "no_category") {
+      resolveAsset(assetId, "permitted", "تم تحديد التصنيف", { category: value.trim() });
+    } else if (triggerType === "bad_quantity") {
+      const qty = parseInt(value);
+      if (qty > 0) resolveAsset(assetId, "permitted", "تم تصحيح الكمية", { quantity: qty });
+    }
+  }, [resolveAsset]);
+
+  const handleApprove = () => onApprove(assets.filter(a => a.license_status === "permitted"), additionalNotes);
+
+  // Auto-trigger final question when all resolved
+  const shouldShowFinal = allResolved && !showFinalQuestion;
 
   return (
     <TooltipProvider>
@@ -217,63 +312,105 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
             {/* Quick stats */}
             <div className="grid grid-cols-3 gap-2">
-              <QuickStat icon={<CheckCircle className="w-3.5 h-3.5 text-emerald-600" />} value={autoApproved.length} label="تمت المعالجة" color="text-emerald-600" />
-              <QuickStat icon={<AlertTriangle className="w-3.5 h-3.5 text-amber-500" />} value={flagged.length} label="يتطلب تحقق" color="text-amber-500" />
+              <QuickStat icon={<CheckCircle className="w-3.5 h-3.5 text-emerald-600" />} value={autoApproved.length} label="جاهز" color="text-emerald-600" />
+              <QuickStat icon={<MessageCircleQuestion className="w-3.5 h-3.5 text-amber-500" />} value={flagged.length} label="بانتظارك" color="text-amber-500" />
               <QuickStat icon={<Shield className="w-3.5 h-3.5 text-destructive" />} value={excluded.length} label="مستبعد" color="text-destructive" />
             </div>
 
-            {/* Status message */}
+            {/* Status */}
             {flagged.length === 0 ? (
               <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-900/10 rounded-lg p-2.5 border border-emerald-200 dark:border-emerald-800">
                 <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-                <p className="text-xs text-emerald-700 dark:text-emerald-400">جميع البنود تمت معالجتها تلقائياً — لا يوجد ما يتطلب تدخلك</p>
+                <p className="text-xs text-emerald-700 dark:text-emerald-400">تم — جميع البنود جاهزة</p>
               </div>
             ) : (
               <div className="flex items-center gap-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg p-2.5 border border-amber-200 dark:border-amber-800">
                 <AlertOctagon className="w-4 h-4 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-400">
-                  يوجد <strong>{flagged.length}</strong> بند يحتاج تأكيدك — باقي البنود ({autoApproved.length}) تمت معالجتها تلقائياً
+                  <strong>{flagged.length}</strong> سؤال بسيط قبل المتابعة
                 </p>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* ── Flagged Items (needs verification) ── */}
-        {flagged.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 px-1">
-              <AlertTriangle className="w-4 h-4 text-amber-500" />
-              <h4 className="text-xs font-bold text-foreground">بنود تتطلب تحقق ({flagged.length})</h4>
-            </div>
+        {/* ── Smart Question (one at a time) ── */}
+        {currentFlagged && currentQuestion && (
+          <SmartQuestionCard
+            question={currentQuestion}
+            remainingCount={flagged.length}
+            onAnswer={(opt) => handleQuestionAnswer(currentFlagged.id, opt)}
+            onCustomAnswer={(val) => handleCustomAnswer(currentFlagged.id, detectTriggerType(currentFlagged), val)}
+            onViewSource={() => setSourcePreviewAsset(currentFlagged)}
+          />
+        )}
 
-            {flagged.map(asset => (
-              <FlaggedItemCard
-                key={asset.id}
-                asset={asset}
-                isReclassifying={reclassifyingId === asset.id}
-                onViewSource={() => setSourcePreviewAsset(asset)}
-                onApprove={() => resolveAsset(asset.id, "permitted", "تم تأكيده يدوياً")}
-                onReject={() => resolveAsset(asset.id, "not_permitted", "تم استبعاده يدوياً")}
-                onStartReclassify={() => setReclassifyingId(asset.id)}
-                onReclassify={(type) => reclassifyAsset(asset.id, type)}
-                onCancelReclassify={() => setReclassifyingId(null)}
+        {/* ── Final Question (after all resolved) ── */}
+        {shouldShowFinal && (
+          <Card className="border-primary/30">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <MessageCircleQuestion className="w-4 h-4 text-primary" />
+                <p className="text-xs font-bold text-foreground">سؤال أخير</p>
+              </div>
+              <p className="text-sm text-foreground">هل ترغب بإضافة أي معلومات مهمة قد تؤثر على التقييم؟</p>
+              <Textarea
+                value={additionalNotes}
+                onChange={e => setAdditionalNotes(e.target.value)}
+                placeholder="مثال: بعض المعدات متوقفة عن العمل، أو يوجد رهن على العقار..."
+                rows={2}
               />
-            ))}
-          </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" className="flex-1 text-xs" onClick={() => setShowFinalQuestion(true)}>
+                  لا، متابعة بدون إضافة
+                </Button>
+                <Button size="sm" className="flex-1 text-xs" onClick={() => setShowFinalQuestion(true)} disabled={!additionalNotes.trim()}>
+                  حفظ والمتابعة
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* ── Auto-approved summary (collapsed) ── */}
+        {/* ── Auto-approved (collapsed) ── */}
         {autoApproved.length > 0 && (
-          <AutoApprovedSection assets={autoApproved} onRemove={(id) => resolveAsset(id, "not_permitted", "تم استبعاده يدوياً")} />
+          <CollapsibleSection
+            icon={<CheckCircle className="w-4 h-4 text-emerald-600" />}
+            title="بنود جاهزة للتقييم"
+            count={autoApproved.length}
+            borderClass="border-emerald-200 dark:border-emerald-800"
+          >
+            {autoApproved.map(a => (
+              <div key={a.id} className="flex items-center gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg px-2.5 py-1.5 border border-border/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <p className="text-[11px] text-foreground flex-1 truncate">{a.name}</p>
+                {a.quantity > 1 && <span className="text-[9px] text-muted-foreground">×{a.quantity}</span>}
+                {a.category && <span className="text-[9px] text-muted-foreground bg-muted px-1 rounded">{a.category}</span>}
+              </div>
+            ))}
+          </CollapsibleSection>
         )}
 
-        {/* ── Excluded summary ── */}
+        {/* ── Excluded (collapsed) ── */}
         {excluded.length > 0 && (
-          <ExcludedSection assets={excluded} />
+          <CollapsibleSection
+            icon={<Shield className="w-4 h-4 text-destructive" />}
+            title="بنود مستبعدة"
+            count={excluded.length}
+            borderClass="border-destructive/20"
+          >
+            {excluded.map(a => (
+              <div key={a.id} className="flex items-center gap-2 bg-destructive/5 rounded-lg px-2.5 py-1.5 border border-border/20">
+                <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] text-foreground truncate">{a.name}</p>
+                  {a.license_reason && <p className="text-[9px] text-muted-foreground">{a.license_reason}</p>}
+                </div>
+              </div>
+            ))}
+          </CollapsibleSection>
         )}
 
-        {/* Empty state */}
         {assets.length === 0 && (
           <div className="text-center py-8">
             <Package className="w-10 h-10 text-muted-foreground/30 mx-auto mb-2" />
@@ -281,161 +418,116 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
           </div>
         )}
 
-        {/* ── Notes ── */}
-        <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-            <Edit3 className="w-3.5 h-3.5 text-muted-foreground" />
-            ملاحظات
-            <Badge variant="secondary" className="text-[10px]">اختياري</Badge>
-          </p>
-          <Textarea value={reviewNotes} onChange={e => setReviewNotes(e.target.value)} placeholder="أي ملاحظات إضافية..." rows={2} />
-        </div>
-
-        {/* ── Actions ── */}
+        {/* ── Submit ── */}
         <div className="space-y-2">
-          <Button onClick={handleApprove} className="w-full gap-2" size="lg" disabled={!canSubmit}>
+          <Button onClick={handleApprove} className="w-full gap-2" size="lg" disabled={!canSubmit && !showFinalQuestion}>
             <FileCheck className="w-4 h-4" />
             اعتماد وإرسال الطلب ({autoApproved.length} أصل)
           </Button>
           <Button onClick={onBack} variant="outline" className="w-full gap-2" size="sm">
             <ArrowRight className="w-4 h-4" /> العودة لتعديل الملفات
           </Button>
-          {!canSubmit && <p className="text-[10px] text-destructive text-center">لا يوجد أصول معتمدة — يرجى تأكيد عنصر واحد على الأقل</p>}
+          {autoApproved.length === 0 && flagged.length === 0 && (
+            <p className="text-[10px] text-destructive text-center">لا يوجد أصول معتمدة</p>
+          )}
         </div>
       </div>
     </TooltipProvider>
   );
 }
 
-// ── Flagged Item Card ──
-function FlaggedItemCard({ asset, isReclassifying, onViewSource, onApprove, onReject, onStartReclassify, onReclassify, onCancelReclassify }: {
-  asset: ExtractedAsset; isReclassifying: boolean;
-  onViewSource: () => void; onApprove: () => void; onReject: () => void;
-  onStartReclassify: () => void; onReclassify: (type: string) => void; onCancelReclassify: () => void;
+// ── Smart Question Card ──
+function SmartQuestionCard({ question, remainingCount, onAnswer, onCustomAnswer, onViewSource }: {
+  question: SmartQuestion;
+  remainingCount: number;
+  onAnswer: (opt: SmartQuestion["options"][0]) => void;
+  onCustomAnswer: (val: string) => void;
+  onViewSource: () => void;
 }) {
+  const [customValue, setCustomValue] = useState("");
+  const [showCustom, setShowCustom] = useState(false);
+
   return (
-    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/30 dark:bg-amber-900/5">
-      <CardContent className="p-3 space-y-2">
-        <div className="flex items-start gap-2">
-          <div className="w-2 h-2 rounded-full bg-amber-500 shrink-0 mt-1.5" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-foreground">{asset.name}</p>
-            <div className="flex flex-wrap gap-1.5 mt-1">
-              {asset.category && <Badge variant="secondary" className="text-[9px]">{asset.category}</Badge>}
-              {asset.quantity > 1 && <Badge variant="outline" className="text-[9px]">×{asset.quantity}</Badge>}
-              <Badge variant="outline" className="text-[9px]">ثقة {asset.confidence}%</Badge>
-            </div>
+    <Card className="border-amber-200 dark:border-amber-800 bg-amber-50/20 dark:bg-amber-900/5">
+      <CardContent className="p-4 space-y-3">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircleQuestion className="w-4 h-4 text-amber-600" />
+            <span className="text-[10px] font-medium text-amber-700 dark:text-amber-400">
+              سؤال {remainingCount > 1 ? `(${remainingCount} متبقي)` : "(أخير)"}
+            </span>
           </div>
+          <Button size="sm" variant="ghost" className="h-6 text-[10px] gap-1 text-muted-foreground" onClick={onViewSource}>
+            <Eye className="w-3 h-3" /> المصدر
+          </Button>
         </div>
 
-        {/* Reason for flagging */}
-        <div className="flex items-start gap-1.5 bg-amber-100/60 dark:bg-amber-900/20 rounded-lg px-2.5 py-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[10px] font-medium text-amber-700 dark:text-amber-400">سبب التوقف:</p>
-            <p className="text-[11px] text-amber-800 dark:text-amber-300">{asset.license_reason}</p>
-          </div>
-        </div>
+        {/* Question */}
+        <p className="text-sm font-semibold text-foreground leading-relaxed">{question.question}</p>
 
-        {/* AI suggestion if available */}
-        {asset.ai_suggestion && (
-          <div className="flex items-start gap-1.5 bg-primary/5 rounded-lg px-2.5 py-1.5">
-            <Lightbulb className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-            <p className="text-[10px] text-foreground">{asset.ai_suggestion}</p>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 flex-wrap">
-          <Button size="sm" variant="outline" className="h-7 text-[10px] gap-1" onClick={onViewSource}>
-            <Eye className="w-3 h-3" /> عرض المصدر
-          </Button>
-          <Button size="sm" variant="default" className="h-7 text-[10px] gap-1" onClick={onApprove}>
-            <CheckCircle className="w-3 h-3" /> تأكيد كأصل
-          </Button>
-          <Button size="sm" variant="destructive" className="h-7 text-[10px] gap-1" onClick={onReject}>
-            <XCircle className="w-3 h-3" /> استبعاد
-          </Button>
-          {isReclassifying ? (
-            <div className="flex gap-1">
-              <Select onValueChange={onReclassify}>
-                <SelectTrigger className="h-7 text-[10px] w-32"><SelectValue placeholder="التصنيف" /></SelectTrigger>
-                <SelectContent>
-                  {RECLASSIFY_OPTIONS.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <Button size="sm" variant="ghost" className="h-7 text-[10px] px-1" onClick={onCancelReclassify}>×</Button>
-            </div>
-          ) : (
-            <Button size="sm" variant="ghost" className="h-7 text-[10px] gap-1" onClick={onStartReclassify}>
-              <Pencil className="w-3 h-3" /> تعديل
+        {/* Options */}
+        <div className="flex flex-wrap gap-2">
+          {question.options.map((opt, i) => (
+            <Button
+              key={i}
+              size="sm"
+              variant={opt.action === "exclude" ? "destructive" : opt.action === "approve" ? "default" : "secondary"}
+              className="h-8 text-xs gap-1"
+              onClick={() => onAnswer(opt)}
+            >
+              {opt.action === "exclude" && <XCircle className="w-3 h-3" />}
+              {opt.action === "approve" && <CheckCircle className="w-3 h-3" />}
+              {opt.label}
             </Button>
-          )}
+          ))}
         </div>
+
+        {/* Custom input */}
+        {question.allowCustom && (
+          <>
+            {!showCustom ? (
+              <button
+                onClick={() => setShowCustom(true)}
+                className="text-[10px] text-primary hover:underline"
+              >
+                إدخال إجابة مخصصة ←
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <Input
+                  value={customValue}
+                  onChange={e => setCustomValue(e.target.value)}
+                  placeholder={question.customPlaceholder}
+                  className="h-8 text-xs flex-1"
+                  onKeyDown={e => { if (e.key === "Enter" && customValue.trim()) onCustomAnswer(customValue); }}
+                />
+                <Button size="sm" className="h-8 text-xs" disabled={!customValue.trim()} onClick={() => onCustomAnswer(customValue)}>
+                  تأكيد
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-// ── Auto-Approved Section (clean, collapsed) ──
-function AutoApprovedSection({ assets, onRemove }: { assets: ExtractedAsset[]; onRemove: (id: number) => void }) {
+// ── Collapsible Section ──
+function CollapsibleSection({ icon, title, count, borderClass, children }: {
+  icon: React.ReactNode; title: string; count: number; borderClass: string; children: React.ReactNode;
+}) {
   const [expanded, setExpanded] = useState(false);
-
   return (
-    <Card className="border-emerald-200 dark:border-emerald-800">
+    <Card className={borderClass}>
       <button onClick={() => setExpanded(!expanded)} className="w-full p-3 flex items-center gap-2 text-right">
-        <CheckCircle className="w-4 h-4 text-emerald-600" />
-        <span className="text-xs font-semibold text-foreground flex-1">بنود تمت معالجتها تلقائياً</span>
-        <Badge variant="secondary" className="text-[10px]">{assets.length}</Badge>
+        {icon}
+        <span className="text-xs font-semibold text-foreground flex-1">{title}</span>
+        <Badge variant="secondary" className="text-[10px]">{count}</Badge>
+        <ChevronLeft className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${expanded ? "-rotate-90" : ""}`} />
       </button>
-      {expanded && (
-        <div className="px-3 pb-3 space-y-1">
-          {assets.map(a => (
-            <div key={a.id} className="flex items-center gap-2 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-lg px-2.5 py-1.5 border border-border/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <p className="text-[11px] text-foreground flex-1 truncate">{a.name}</p>
-              {a.quantity > 1 && <span className="text-[9px] text-muted-foreground">×{a.quantity}</span>}
-              {a.category && <span className="text-[9px] text-muted-foreground bg-muted px-1 rounded">{a.category}</span>}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button onClick={() => onRemove(a.id)} className="text-muted-foreground hover:text-destructive p-0.5">
-                    <XCircle className="w-3 h-3" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[10px]">استبعاد هذا البند</TooltipContent>
-              </Tooltip>
-            </div>
-          ))}
-        </div>
-      )}
-    </Card>
-  );
-}
-
-// ── Excluded Section ──
-function ExcludedSection({ assets }: { assets: ExtractedAsset[] }) {
-  const [expanded, setExpanded] = useState(false);
-
-  return (
-    <Card className="border-destructive/20">
-      <button onClick={() => setExpanded(!expanded)} className="w-full p-3 flex items-center gap-2 text-right">
-        <Shield className="w-4 h-4 text-destructive" />
-        <span className="text-xs font-semibold text-foreground flex-1">بنود مستبعدة</span>
-        <Badge variant="secondary" className="text-[10px]">{assets.length}</Badge>
-      </button>
-      {expanded && (
-        <div className="px-3 pb-3 space-y-1">
-          {assets.map(a => (
-            <div key={a.id} className="flex items-center gap-2 bg-destructive/5 rounded-lg px-2.5 py-1.5 border border-border/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] text-foreground truncate">{a.name}</p>
-                {a.license_reason && <p className="text-[9px] text-muted-foreground">{a.license_reason}</p>}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {expanded && <div className="px-3 pb-3 space-y-1">{children}</div>}
     </Card>
   );
 }
@@ -460,19 +552,12 @@ function SourcePreview({ asset }: { asset: ExtractedAsset }) {
           </div>
         </div>
       </div>
-
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="bg-muted/20 rounded p-2"><span className="text-muted-foreground">الاسم:</span> <strong>{asset.name}</strong></div>
         <div className="bg-muted/20 rounded p-2"><span className="text-muted-foreground">النوع:</span> <strong>{asset.type || "—"}</strong></div>
         <div className="bg-muted/20 rounded p-2"><span className="text-muted-foreground">الكمية:</span> <strong>{asset.quantity}</strong></div>
         <div className="bg-muted/20 rounded p-2"><span className="text-muted-foreground">الفئة:</span> <strong>{asset.category || "—"}</strong></div>
       </div>
-
-      {info?.row_number && (
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded p-2 text-[10px] text-amber-700 dark:text-amber-400">
-          ← الصف {info.row_number} في الشيت "{info.sheet_name || "الأول"}"
-        </div>
-      )}
     </div>
   );
 }
