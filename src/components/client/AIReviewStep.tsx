@@ -354,8 +354,49 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
+  const [freeText, setFreeText] = useState("");
 
-  
+  // Free-text message from client
+  const handleFreeTextSend = useCallback(() => {
+    if (!freeText.trim()) return;
+    const text = freeText.trim();
+    setFreeText("");
+
+    // Add client message
+    setMessages(prev => [...prev, {
+      id: `client-${Date.now()}`,
+      type: "answer",
+      text,
+      timestamp: Date.now(),
+    }]);
+
+    // Raqeem auto-reply based on context
+    setTimeout(() => {
+      let reply = "";
+
+      // Check if asking about excluded items
+      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج"];
+      const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
+
+      if (isAskingAboutExcluded && excluded.length > 0) {
+        reply = `البنود المستبعدة (${excluded.length}) هي أصول خارج نطاق ترخيص التقييم — مثل الأصول غير الملموسة والحقوق التعاقدية والأدوات المالية. هذا الاستبعاد تلقائي ولا يمكن تجاوزه حسب اللوائح.`;
+      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد")) {
+        reply = `إجمالي الأصول: ${assets.length} — منها ${autoApproved.length} جاهز و${excluded.length} مستبعد و${flagged.length} بانتظار التوضيح.`;
+      } else {
+        reply = "شكراً لملاحظتك، تم تسجيلها وستؤخذ بالاعتبار عند التقييم. هل لديك شيء آخر؟";
+        // Store as additional note
+        setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
+      }
+
+      setMessages(prev => [...prev, {
+        id: `raqeem-${Date.now()}`,
+        type: "system",
+        text: reply,
+        timestamp: Date.now(),
+      }]);
+    }, 400);
+  }, [freeText, excluded, assets, autoApproved, flagged]);
+
 
   // Compute initial excluded from processed data
   const initialExcluded = useMemo(() => processed.filter(a => a.license_status === "not_permitted"), [processed]);
@@ -624,6 +665,20 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Free-text input bar */}
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-muted/20">
+              <Input
+                value={freeText}
+                onChange={e => setFreeText(e.target.value)}
+                placeholder="اكتب سؤالك أو ملاحظتك لرقيم..."
+                className="h-8 text-[12px] flex-1 bg-background"
+                onKeyDown={e => { if (e.key === "Enter" && freeText.trim()) handleFreeTextSend(); }}
+              />
+              <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={!freeText.trim()} onClick={handleFreeTextSend}>
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
