@@ -77,8 +77,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     switch (role) {
       case "owner":
       case "admin_coordinator":
-      case "financial_manager":
         return "/";
+      case "financial_manager":
+        return "/cfo-dashboard";
       case "inspector":
         return "/inspector";
       default:

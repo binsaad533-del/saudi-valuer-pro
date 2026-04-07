@@ -69,6 +69,7 @@ import FieldInspectionPage from "@/pages/FieldInspectionPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
+const OWNER_ONLY_ROLES = ["owner", "admin_coordinator"];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
