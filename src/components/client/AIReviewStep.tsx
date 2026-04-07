@@ -596,18 +596,31 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     return lines.join("\n");
   }, [duplicateNames, removedCount, autoApproved, excluded, flagged]);
 
-  // Free-text message from client
+  // Free-text message from client (with optional attachments)
   const handleFreeTextSend = useCallback(async () => {
-    if (!freeText.trim() || isThinking) return;
+    const hasText = freeText.trim().length > 0;
+    const hasFiles = pendingAttachments.length > 0;
+    if ((!hasText && !hasFiles) || isThinking) return;
+
     const text = freeText.trim();
+    const attachments = [...pendingAttachments];
     setFreeText("");
+    setPendingAttachments([]);
+
+    // Build display text
+    const fileNames = attachments.map(a => a.name);
+    const displayText = hasText && hasFiles
+      ? `${text}\n📎 مرفقات: ${fileNames.join("، ")}`
+      : hasText ? text
+        : `📎 مرفقات: ${fileNames.join("، ")}`;
 
     // Add client message
     setMessages(prev => [...prev, {
       id: `client-${Date.now()}`,
       type: "answer",
-      text,
+      text: displayText,
       timestamp: Date.now(),
+      attachments,
     }]);
 
     // Show thinking indicator
@@ -616,10 +629,11 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     try {
       const { data: fnData } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
-          message: text,
+          message: text || `العميل أرسل مرفقات: ${fileNames.join("، ")}`,
           conversationHistory: messages.filter(m => m.type === "answer" || m.type === "system").slice(-12),
           assetContext: assetContextStr,
           assetDetails: assetDetailsStr,
+          attachments: attachments.map(a => ({ name: a.name, type: a.type, size: a.size, path: a.path })),
         },
       });
 
@@ -633,8 +647,12 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       }]);
 
       // Store as additional note if it seems like client feedback
-      if (!["من أنتم", "ترخيص", "تواصل", "خدمات", "سلام", "هلا", "شكرا"].some(k => text.includes(k))) {
+      if (hasText && !["من أنتم", "ترخيص", "تواصل", "خدمات", "سلام", "هلا", "شكرا"].some(k => text.includes(k))) {
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
+      }
+      // Always note attachments
+      if (hasFiles) {
+        setAdditionalNotes(prev => prev ? `${prev}\nمرفقات إضافية: ${fileNames.join("، ")}` : `مرفقات إضافية: ${fileNames.join("، ")}`);
       }
     } catch (err) {
       console.error("Raqeem chat error:", err);
@@ -647,7 +665,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     } finally {
       setIsThinking(false);
     }
-  }, [freeText, isThinking, messages, assetContextStr, assetDetailsStr]);
+  }, [freeText, isThinking, messages, assetContextStr, assetDetailsStr, pendingAttachments]);
 
 
   // Compute initial excluded from processed data
