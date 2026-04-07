@@ -173,7 +173,8 @@ const App = () => (
             <Route path="/client" element={<ClientDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
             <Route path="/client/requests" element={<ClientRequestsPage />} />
-            <Route path="/client/new-request" element={<SimplifiedJourney />} />
+            <Route path="/client/new-request" element={<SimpleClientRequest />} />
+            <Route path="/client/new-request-full" element={<SimplifiedJourney />} />
             <Route path="/client/new-request-advanced" element={<NewRequest />} />
             <Route path="/client/request/:id" element={<RequestDetails />} />
             <Route path="/client/settings" element={<UserSettingsPage />} />
