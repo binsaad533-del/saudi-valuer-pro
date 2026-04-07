@@ -27,7 +27,7 @@ interface UploadedFile {
   rawFile?: File;
 }
 
-type PageState = "form" | "analyzing" | "review" | "processing" | "done";
+type PageState = "form" | "analyzing" | "review" | "extraction_failed" | "processing" | "done";
 
 const ASSET_TYPES = [
   { key: "real_estate", label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
