@@ -192,13 +192,28 @@ export default function SimplifiedJourney() {
     type.includes("sheet") || type.includes("excel") || type.includes("csv") ||
     /\.(xlsx|xls|csv)$/i.test(name);
 
+  /** Compliance: which asset types are permitted under our license */
+  const ASSET_COMPLIANCE: Record<string, { permitted: boolean; note?: string }> = {
+    real_estate: { permitted: true },
+    machinery_equipment: { permitted: true },
+    medical_equipment: { permitted: true },
+    vehicle: { permitted: true, note: "تقييم قيمة المركبة كأصل فقط — تقييم أضرار الحوادث يتطلب ترخيصاً مستقلاً" },
+    furniture: { permitted: true },
+    it_equipment: { permitted: true },
+    leasehold_improvements: { permitted: true },
+    right_of_use: { permitted: true, note: "مسموح كـ«مصلحة مستأجرة» عقارية أو حق استخدام آلة — غير مسموح كأداة مالية مشتقة" },
+    intangible: { permitted: false, note: "يتطلب ترخيص فرع تقييم المنشآت الاقتصادية" },
+    goodwill: { permitted: false, note: "شهرة المحل — يتطلب ترخيص فرع تقييم المنشآت الاقتصادية" },
+    financial_instrument: { permitted: false, note: "أدوات مالية (أسهم، سندات) — يتطلب ترخيص فرع تقييم المنشآت الاقتصادية" },
+  };
+
   /** Smart asset type inference based on name and category keywords */
   const inferAssetType = (name: string, category: string | null): { type: string; category: string | null } => {
     const text = `${name} ${category || ""}`.toLowerCase();
 
-    // Right of use / Lease contracts
+    // Right of use / Lease contracts (permitted as leasehold interest)
     if (/عقد\s*ايجار|عقد\s*إيجار|right\s*of\s*use|إيجار\s*فرع|ايجار\s*فرع|lease/i.test(text))
-      return { type: "right_of_use", category: "حق استخدام (إيجار)" };
+      return { type: "right_of_use", category: "حق استخدام (مصلحة مستأجرة)" };
 
     // Real estate
     if (/عقار|أرض|ارض|فيلا|شقة|عمارة|مبنى|real.?estate|land|building|villa|apartment/i.test(text))
@@ -220,7 +235,7 @@ export default function SimplifiedJourney() {
     if (/كمبيوتر|حاسب|لابتوب|طابعة|سيرفر|شاشة|computer|laptop|printer|server|monitor|it\s*equip/i.test(text))
       return { type: "it_equipment", category: "أجهزة تقنية" };
 
-    // Intangible assets
+    // Intangible assets (NOT permitted)
     if (/برنامج|برمج|تطبيق|نظام|software|program|app|license|ترخيص|intangible|موقع\s*الكتروني|موبايل\s*اب/i.test(text))
       return { type: "intangible", category: "أصول غير ملموسة" };
 
