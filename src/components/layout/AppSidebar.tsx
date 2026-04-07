@@ -34,6 +34,11 @@ const inspectorNav: NavItem[] = [
   { label: "الإعدادات", icon: Settings, path: "/inspector/settings" },
 ];
 
+const financialNav: NavItem[] = [
+  { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
+  { label: "الإعدادات", icon: Settings, path: "/settings" },
+];
+
 const clientNav: NavItem[] = [
   { label: "لوحة التحكم", icon: LayoutDashboard, path: "/client" },
   { label: "الإعدادات", icon: Settings, path: "/client/settings" },
@@ -50,6 +55,7 @@ const roleKeyMap: Record<string, string> = {
 function getNavForRole(role: string | null): NavItem[] {
   switch (role) {
     case "inspector": return inspectorNav;
+    case "financial_manager": return financialNav;
     case "client": return clientNav;
     default: return ownerNav;
   }
