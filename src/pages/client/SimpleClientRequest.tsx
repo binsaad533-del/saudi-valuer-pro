@@ -816,7 +816,7 @@ export default function SimpleClientRequest() {
               <CardContent className="p-6 space-y-3">
                 <p className="text-sm font-semibold text-foreground">ملاحظات <Badge variant="secondary" className="text-[10px] mr-1">اختياري</Badge></p>
                 <Textarea value={notes} onChange={e => setNotes(e.target.value)}
-                  placeholder="مثال: الأصول في مدينة الرياض — المعدات قيد التشغيل — يوجد عقد إيجار ساري..."
+                  placeholder="مثال: تقييم لغرض البيع — عدد الأصول 15 — الموقع: جدة، حي الروضة..."
                   rows={3} className="text-sm" />
                 <p className="text-[10px] text-muted-foreground">أضف أي معلومات تساعد فريق التقييم: الموقع، حالة الأصول، الغرض من التقييم، إلخ.</p>
               </CardContent>
