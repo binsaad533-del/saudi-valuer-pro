@@ -303,6 +303,7 @@ export default function RequestDetails() {
                 {request.property_city_ar && <div className="flex justify-between"><span className="text-muted-foreground text-xs">المدينة:</span><span>{request.property_city_ar}</span></div>}
                 {request.land_area && <div className="flex justify-between"><span className="text-muted-foreground text-xs">مساحة الأرض:</span><span dir="ltr">{request.land_area} م²</span></div>}
                 <div className="flex justify-between"><span className="text-muted-foreground text-xs">تاريخ الطلب:</span><span>{formatDate(request.created_at)}</span></div>
+                <div className="flex justify-between"><span className="text-muted-foreground text-xs">التسليم المتوقع:</span><span>{(() => { const d = new Date(request.created_at); d.setDate(d.getDate() + (request.ai_intake_summary?.valuation_mode === "desktop" ? 5 : 10)); return formatDate(d.toISOString()); })()}</span></div>
               </CardContent>
             </Card>
 
