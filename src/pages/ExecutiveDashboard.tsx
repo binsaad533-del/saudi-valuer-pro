@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import TopBar from "@/components/layout/TopBar";
 import ReportDraftGenerator from "@/components/reports/ReportDraftGenerator";
 import SOWGenerator from "@/components/reports/SOWGenerator";
+import ProfessionalJudgmentPanel from "@/components/valuation/ProfessionalJudgmentPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
