@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   CheckCircle, XCircle, AlertTriangle, Building2, Cog, Sparkles,
-  Shield, ArrowRight, Package, FileCheck, Edit3, Info,
+  Shield, ArrowRight, Package, FileCheck, Edit3,
   FileText, Image, Table2, Lightbulb, Pencil, Eye, AlertOctagon,
 } from "lucide-react";
 
