@@ -3860,6 +3860,59 @@ export type Database = {
           },
         ]
       }
+      report_drafts: {
+        Row: {
+          ai_model: string | null
+          created_at: string
+          generated_by: string | null
+          generation_mode: string | null
+          id: string
+          notes: string | null
+          raw_content: string | null
+          request_id: string
+          sections: Json
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          ai_model?: string | null
+          created_at?: string
+          generated_by?: string | null
+          generation_mode?: string | null
+          id?: string
+          notes?: string | null
+          raw_content?: string | null
+          request_id: string
+          sections?: Json
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          ai_model?: string | null
+          created_at?: string
+          generated_by?: string | null
+          generation_mode?: string | null
+          id?: string
+          notes?: string | null
+          raw_content?: string | null
+          request_id?: string
+          sections?: Json
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_drafts_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_signatures: {
         Row: {
           id: string

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import TopBar from "@/components/layout/TopBar";
+import ReportDraftGenerator from "@/components/reports/ReportDraftGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -730,6 +731,9 @@ export default function ExecutiveDashboard() {
                   </form>
                 </CardContent>
               </Card>
+
+              {/* Report Draft Generator */}
+              <ReportDraftGenerator request={selectedRequest} userId={user!.id} />
             </div>
           )}
         </DrawerContent>
