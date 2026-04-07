@@ -936,13 +936,30 @@ export default function SimpleClientRequest() {
               </CardContent>
             </Card>
 
+            {/* مواقع الأصول */}
+            <Card>
+              <CardContent className="p-6 space-y-3">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  مواقع الأصول <span className="text-destructive">*</span>
+                </p>
+                <p className="text-[10px] text-muted-foreground">الصق روابط خرائط قوقل لمواقع الأصول (حتى 50 موقع). يمكن أيضاً استخراج المواقع تلقائياً من الملفات المرفوعة.</p>
+                <AssetLocationPicker
+                  locations={assetLocations}
+                  onChange={setAssetLocations}
+                  maxLocations={50}
+                  compact
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="p-6 space-y-3">
                 <p className="text-sm font-semibold text-foreground">ملاحظات <Badge variant="secondary" className="text-[10px] mr-1">اختياري</Badge></p>
                 <Textarea value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder="مثال: تقييم لغرض البيع — عدد الأصول 15 — الموقع: جدة، حي الروضة..."
                   rows={3} className="text-sm" />
-                <p className="text-[10px] text-muted-foreground">أضف أي معلومات تساعد فريق التقييم: الموقع، حالة الأصول، الغرض من التقييم، إلخ.</p>
+                <p className="text-[10px] text-muted-foreground">أضف أي معلومات تساعد فريق التقييم: حالة الأصول، تفاصيل إضافية، إلخ.</p>
               </CardContent>
             </Card>
           </div>
