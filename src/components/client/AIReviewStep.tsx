@@ -1,7 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
-import { parseExcelFile, autoMapColumns, applyMapping } from "@/lib/excel-parser";
+import { buildSafeStorageObject } from "@/lib/storage-path";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
