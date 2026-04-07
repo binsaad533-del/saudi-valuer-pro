@@ -135,6 +135,7 @@ export default function ExecutiveDashboard() {
     setActiveTab("requests");
     setStatusGroupFilter(group);
     setStatusFilter("all");
+    setTypeFilter("all");
     setSearchTerm("");
   };
 
@@ -151,7 +152,7 @@ export default function ExecutiveDashboard() {
       }
       return true;
     });
-  }, [requests, searchTerm, statusFilter, typeFilter]);
+  }, [requests, searchTerm, statusFilter, statusGroupFilter, typeFilter]);
 
   /* ── Derive unique clients from requests ── */
   const derivedClients = useMemo(() => {
