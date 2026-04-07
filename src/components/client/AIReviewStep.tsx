@@ -58,14 +58,17 @@ interface Props {
 
 // ── Exclusion rules ──
 const EXCLUSION_RULES: { keywords: string[]; reason: string }[] = [
-  { keywords: ["intangible", "أصول غير ملموسة"], reason: "أصل غير ملموس — يتطلب تقييم مالي متخصص" },
-  { keywords: ["goodwill", "شهرة"], reason: "شهرة محل — تتطلب تقييم أعمال متخصص" },
-  { keywords: ["trademark", "علامة تجارية"], reason: "علامة تجارية — أصل غير ملموس" },
-  { keywords: ["patent", "براءة اختراع"], reason: "براءة اختراع — أصل فكري" },
-  { keywords: ["copyright"], reason: "حقوق ملكية فكرية — خارج نطاق الترخيص" },
-  { keywords: ["software_license"], reason: "رخصة برمجية — أصل غير ملموس" },
-  { keywords: ["financial_instrument", "stock", "bond", "derivative"], reason: "أداة مالية — تتطلب تقييم مالي متخصص" },
-  { keywords: ["cryptocurrency"], reason: "عملة رقمية — غير مشمولة" },
+  { keywords: ["intangible", "أصول غير ملموسة", "غير ملموس"], reason: "أصل غير ملموس — خارج نطاق التقييم" },
+  { keywords: ["goodwill", "شهرة", "شهرة محل"], reason: "شهرة محل — خارج نطاق التقييم" },
+  { keywords: ["trademark", "علامة تجارية", "brand"], reason: "علامة تجارية — خارج نطاق التقييم" },
+  { keywords: ["patent", "براءة اختراع", "براءة"], reason: "براءة اختراع — خارج نطاق التقييم" },
+  { keywords: ["copyright", "حقوق ملكية فكرية", "حقوق نشر"], reason: "حقوق ملكية فكرية — خارج نطاق التقييم" },
+  { keywords: ["software_license", "رخصة برمجية", "license", "ترخيص", "رخصة"], reason: "رخصة / ترخيص — أصل غير ملموس" },
+  { keywords: ["franchise", "امتياز", "حق امتياز"], reason: "حق امتياز — خارج نطاق التقييم" },
+  { keywords: ["financial_instrument", "stock", "bond", "derivative", "أسهم", "سندات", "مشتقات", "أداة مالية"], reason: "أداة مالية — خارج نطاق التقييم" },
+  { keywords: ["cryptocurrency", "عملة رقمية", "بتكوين", "crypto"], reason: "عملة رقمية — خارج نطاق التقييم" },
+  { keywords: ["customer_list", "قائمة عملاء", "customer relationship"], reason: "علاقات عملاء — أصل غير ملموس" },
+  { keywords: ["domain_name", "نطاق", "اسم نطاق"], reason: "اسم نطاق — أصل غير ملموس" },
 ];
 
 // ── Verification triggers ──
