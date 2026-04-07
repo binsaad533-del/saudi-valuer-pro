@@ -21,14 +21,14 @@ export default function RaqeemAnimatedLogo({ size = 40, className = "" }: Raqeem
   ];
 
   const squares = [
-    { angle: 20, color: "#4A90D9", s: size * 0.055 },
-    { angle: 40, color: "#E74C3C", s: size * 0.05 },
-    { angle: 55, color: "#2ECC71", s: size * 0.045 },
-    { angle: 70, color: "#9B59B6", s: size * 0.04 },
-    { angle: 85, color: "#F39C12", s: size * 0.05 },
-    { angle: 100, color: "#1ABC9C", s: size * 0.045 },
-    { angle: 340, color: "#3498DB", s: size * 0.04 },
-    { angle: 355, color: "#E67E22", s: size * 0.035 },
+    { angle: 295, color: "#4A90D9", s: size * 0.055, dist: size * 0.46 },
+    { angle: 305, color: "#E74C3C", s: size * 0.05, dist: size * 0.40 },
+    { angle: 312, color: "#2ECC71", s: size * 0.045, dist: size * 0.48 },
+    { angle: 320, color: "#9B59B6", s: size * 0.04, dist: size * 0.35 },
+    { angle: 328, color: "#F39C12", s: size * 0.05, dist: size * 0.44 },
+    { angle: 338, color: "#1ABC9C", s: size * 0.045, dist: size * 0.38 },
+    { angle: 345, color: "#3498DB", s: size * 0.04, dist: size * 0.48 },
+    { angle: 355, color: "#E67E22", s: size * 0.035, dist: size * 0.42 },
   ];
 
   function arcPath(radius: number, startAngle: number, sweep: number) {
@@ -71,7 +71,7 @@ export default function RaqeemAnimatedLogo({ size = 40, className = "" }: Raqeem
       {/* Colored squares - fixed position, random blink */}
       {squares.map((sq, i) => {
         const rad = (sq.angle * Math.PI) / 180;
-        const dist = size * 0.48;
+        const dist = sq.dist;
         const x = cx + dist * Math.cos(rad) - sq.s / 2;
         const y = cy + dist * Math.sin(rad) - sq.s / 2;
         const delay = (i * 0.7 + Math.random() * 0.5).toFixed(2);
