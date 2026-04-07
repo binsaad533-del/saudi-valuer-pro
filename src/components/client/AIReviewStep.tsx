@@ -58,14 +58,17 @@ interface Props {
 
 // ── Exclusion rules ──
 const EXCLUSION_RULES: { keywords: string[]; reason: string }[] = [
-  { keywords: ["intangible", "أصول غير ملموسة"], reason: "أصل غير ملموس — يتطلب تقييم مالي متخصص" },
-  { keywords: ["goodwill", "شهرة"], reason: "شهرة محل — تتطلب تقييم أعمال متخصص" },
-  { keywords: ["trademark", "علامة تجارية"], reason: "علامة تجارية — أصل غير ملموس" },
-  { keywords: ["patent", "براءة اختراع"], reason: "براءة اختراع — أصل فكري" },
-  { keywords: ["copyright"], reason: "حقوق ملكية فكرية — خارج نطاق الترخيص" },
-  { keywords: ["software_license"], reason: "رخصة برمجية — أصل غير ملموس" },
-  { keywords: ["financial_instrument", "stock", "bond", "derivative"], reason: "أداة مالية — تتطلب تقييم مالي متخصص" },
-  { keywords: ["cryptocurrency"], reason: "عملة رقمية — غير مشمولة" },
+  { keywords: ["intangible", "أصول غير ملموسة", "غير ملموس"], reason: "أصل غير ملموس — خارج نطاق التقييم" },
+  { keywords: ["goodwill", "شهرة", "شهرة محل"], reason: "شهرة محل — خارج نطاق التقييم" },
+  { keywords: ["trademark", "علامة تجارية", "brand"], reason: "علامة تجارية — خارج نطاق التقييم" },
+  { keywords: ["patent", "براءة اختراع", "براءة"], reason: "براءة اختراع — خارج نطاق التقييم" },
+  { keywords: ["copyright", "حقوق ملكية فكرية", "حقوق نشر"], reason: "حقوق ملكية فكرية — خارج نطاق التقييم" },
+  { keywords: ["software_license", "رخصة برمجية", "license", "ترخيص", "رخصة"], reason: "رخصة / ترخيص — أصل غير ملموس" },
+  { keywords: ["franchise", "امتياز", "حق امتياز"], reason: "حق امتياز — خارج نطاق التقييم" },
+  { keywords: ["financial_instrument", "stock", "bond", "derivative", "أسهم", "سندات", "مشتقات", "أداة مالية"], reason: "أداة مالية — خارج نطاق التقييم" },
+  { keywords: ["cryptocurrency", "عملة رقمية", "بتكوين", "crypto"], reason: "عملة رقمية — خارج نطاق التقييم" },
+  { keywords: ["customer_list", "قائمة عملاء", "customer relationship"], reason: "علاقات عملاء — أصل غير ملموس" },
+  { keywords: ["domain_name", "نطاق", "اسم نطاق"], reason: "اسم نطاق — أصل غير ملموس" },
 ];
 
 // ── Verification triggers ──
@@ -124,6 +127,30 @@ export function classifyAssetLicense(asset: ExtractedAsset): ExtractedAsset {
     }
   }
   return { ...asset, license_status: "permitted", license_reason: "تمت المعالجة تلقائياً" };
+}
+
+/** Check if asset is hard-excluded by EXCLUSION_RULES (immutable, cannot be overridden) */
+function isHardExcluded(asset: ExtractedAsset): boolean {
+  const combined = `${(asset.category || asset.type || "").toLowerCase()} ${(asset.name || "").toLowerCase()}`;
+  return EXCLUSION_RULES.some(rule => rule.keywords.some(k => combined.includes(k.toLowerCase())));
+}
+
+/** Consistency check: same input → same output (deterministic) */
+function consistencyCheck(assets: ExtractedAsset[]): ExtractedAsset[] {
+  const fingerprints = new Map<string, ExtractedAsset["license_status"]>();
+  return assets.map(a => {
+    const fp = `${(a.name || "").trim().toLowerCase()}|${(a.category || "").toLowerCase()}|${(a.type || "").toLowerCase()}`;
+    const existing = fingerprints.get(fp);
+    if (existing && existing !== a.license_status) {
+      // Force consistency: same data = same result (use the stricter status)
+      const strict = existing === "not_permitted" || a.license_status === "not_permitted" ? "not_permitted"
+        : existing === "needs_review" || a.license_status === "needs_review" ? "needs_review" : "permitted";
+      fingerprints.set(fp, strict);
+      return { ...a, license_status: strict };
+    }
+    fingerprints.set(fp, a.license_status);
+    return a;
+  });
 }
 
 // ── Deduplication ──
@@ -256,10 +283,12 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
   const { processed, removedCount } = useMemo(() => {
     const { unique, removedCount } = deduplicateAssets(data.assets);
-    const processed = unique.map(a => {
+    const classified = unique.map(a => {
       if (a.license_status === "not_permitted" && a.license_reason) return a;
       return classifyAssetLicense(a);
     });
+    // Consistency check: same fingerprint → same status
+    const processed = consistencyCheck(classified);
     return { processed, removedCount };
   }, [data.assets]);
 
@@ -300,7 +329,12 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   }, [messages]);
 
   const resolveAssets = useCallback((ids: number[], status: "permitted" | "not_permitted", reason: string, updates?: Partial<ExtractedAsset>) => {
-    setAssets(prev => prev.map(a => ids.includes(a.id) ? { ...a, ...updates, license_status: status, license_reason: reason } : a));
+    setAssets(prev => prev.map(a => {
+      if (!ids.includes(a.id)) return a;
+      // IMMUTABLE: never override exclusion rules — excluded assets cannot be changed via chat
+      if (a.license_status === "not_permitted" && isHardExcluded(a)) return a;
+      return { ...a, ...updates, license_status: status, license_reason: reason };
+    }));
   }, []);
 
   const advanceToNext = useCallback((answerText: string) => {
