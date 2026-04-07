@@ -566,16 +566,16 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
             </div>
 
             {/* Messages */}
-            <div className="px-3 py-2 space-y-2 max-h-[30vh] overflow-y-auto">
+            <div className="px-4 py-3 space-y-3 max-h-[50vh] overflow-y-auto">
               {messages.map(msg => (
                 <div key={msg.id} className={`flex ${msg.type === "answer" ? "justify-start" : "justify-end"}`}>
-                  <div className={`max-w-[88%] rounded-lg px-3 py-2 text-[12px] leading-relaxed ${
-                    msg.type === "system" ? "bg-primary/10 text-primary"
-                      : msg.type === "info" ? "bg-muted text-muted-foreground"
+                  <div className={`max-w-[92%] rounded-xl px-4 py-3 text-[13px] leading-[1.8] ${
+                    msg.type === "system" ? "bg-primary/10 text-primary font-semibold"
+                      : msg.type === "info" ? "bg-muted text-foreground"
                         : msg.type === "answer" ? "bg-card text-foreground border border-border shadow-sm"
                           : "bg-card text-foreground border border-border shadow-sm"
                   }`}>
-                    <p>{msg.text}</p>
+                    <p className="whitespace-pre-line">{msg.text}</p>
 
                     {/* Action buttons for active question */}
                     {msg.type === "question" && msg.questionData && isLastMessage(msg.id) && activeQuestion && (
