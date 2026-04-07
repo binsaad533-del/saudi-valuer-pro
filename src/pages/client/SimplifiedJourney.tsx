@@ -35,6 +35,10 @@ import {
   Shield,
   AlertTriangle,
   Table2,
+  Monitor,
+  Eye,
+  Zap,
+  BadgeCheck,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
@@ -185,6 +189,8 @@ export default function SimplifiedJourney() {
   const removeFile = (id: string) => setUploadedFiles(prev => prev.filter(f => f.id !== id));
 
   // ── Step 1 → Step 2 ──
+  const DESKTOP_BLOCKED_PURPOSES = ["mortgage", "expropriation"];
+
   const handleStartRequest = () => {
     if (!clientName.trim()) { toast({ title: "يرجى إدخال اسم العميل", variant: "destructive" }); return; }
     if (!clientPhone.trim()) { toast({ title: "يرجى إدخال رقم الجوال", variant: "destructive" }); return; }
@@ -192,6 +198,12 @@ export default function SimplifiedJourney() {
     if (purpose === "other" && !purposeOther.trim()) { toast({ title: "يرجى تحديد الغرض", variant: "destructive" }); return; }
     if (!intendedUsers) { toast({ title: "يرجى اختيار مستخدمي التقرير", variant: "destructive" }); return; }
     if (intendedUsers === "other" && !intendedUsersOther.trim()) { toast({ title: "يرجى تحديد مستخدمي التقرير", variant: "destructive" }); return; }
+    if (valuationMode === "desktop" && DESKTOP_BLOCKED_PURPOSES.includes(purpose)) {
+      toast({ title: "التقييم المكتبي غير مسموح لهذا الغرض", description: "يرجى اختيار التقييم الميداني أو تغيير الغرض.", variant: "destructive" }); return;
+    }
+    if (valuationMode === "desktop" && !desktopDisclaimer) {
+      toast({ title: "يرجى الموافقة على إقرار التقييم المكتبي", variant: "destructive" }); return;
+    }
     setStep("upload");
   };
 
