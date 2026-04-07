@@ -728,29 +728,6 @@ export default function SimpleClientRequest() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* توجيهات */}
-        <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 justify-center text-center">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Upload className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="text-xs text-foreground">ارفع أي نوع ملفات (Excel, PDF, صور, Word...) — كل الصيغ مدعومة</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Image className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="text-xs text-foreground">كلما زادت المرفقات والتفاصيل، كانت نتائج التقييم أدق وأقرب للسعر العادل</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Shield className="w-3.5 h-3.5 text-primary" />
-              </div>
-              <span className="text-xs text-foreground">أرفق الفواتير وبرامج الصيانة وأي وثيقة تخص الأصل</span>
-            </div>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── العمود الرئيسي: رفع الملفات + الملاحظات ── */}
