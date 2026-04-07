@@ -782,9 +782,11 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const activeQuestion = phase === "questions" && currentQIdx < questions.length ? questions[currentQIdx] : null;
   const isLastMessage = (msgId: string) => messages.length > 0 && messages[messages.length - 1].id === msgId;
 
-  // Visible assets for table (first 10, expandable)
-  const [showAll, setShowAll] = useState(false);
-  const visibleAssets = showAll ? assets : assets.slice(0, 10);
+  // Visible assets for table (paginated, load more)
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visibleAssets = assets.slice(0, visibleCount);
+  const hasMore = visibleCount < assets.length;
 
   return (
     <div className="space-y-4">
@@ -850,13 +852,13 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
             </TableBody>
           </table>
         </div>
-        {assets.length > 10 && !showAll && (
-          <button onClick={() => setShowAll(true)} className="w-full py-2 text-[11px] text-primary hover:bg-primary/5 border-t border-border transition-colors">
-            عرض الكل ({assets.length} أصل) ↓
+        {hasMore && (
+          <button onClick={() => setVisibleCount(prev => Math.min(prev + PAGE_SIZE, assets.length))} className="w-full py-2 text-[11px] text-primary hover:bg-primary/5 border-t border-border transition-colors">
+            عرض المزيد ({assets.length - visibleCount} أصل متبقي) ↓
           </button>
         )}
-        {showAll && assets.length > 10 && (
-          <button onClick={() => setShowAll(false)} className="w-full py-2 text-[11px] text-muted-foreground hover:bg-muted/30 border-t border-border transition-colors">
+        {!hasMore && visibleCount > PAGE_SIZE && (
+          <button onClick={() => setVisibleCount(PAGE_SIZE)} className="w-full py-2 text-[11px] text-muted-foreground hover:bg-muted/30 border-t border-border transition-colors">
             إخفاء ↑
           </button>
         )}
