@@ -500,10 +500,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
 يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
       } else if (isAskingLicense) {
-        reply = `نحن مرخصون من ${KB_LICENSE.source} في فرعين:
+        const branchDetails = COMPANY.branches.map(b =>
+          `• ${b.name}\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}`
+        ).join("\n");
+        reply = `${COMPANY.name_ar} مرخصة من ${COMPANY.authority}:
 
-• تقييم العقارات
-• تقييم الآلات والمعدات
+${branchDetails}
+
+السجل التجاري: ${COMPANY.cr_number}
 
 📖 المرجع: ${KB_LICENSE.article}
 "${KB_LICENSE.principle}"`;
