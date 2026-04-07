@@ -64,9 +64,9 @@ export default function SimpleClientRequest() {
 
   // ── File helpers ──
   const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-blue-500" />;
-    if (type.includes("pdf")) return <FileText className="w-4 h-4 text-red-500" />;
-    if (type.includes("sheet") || type.includes("excel") || type.includes("csv")) return <Table2 className="w-4 h-4 text-green-500" />;
+    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-primary" />;
+    if (type.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
+    if (type.includes("sheet") || type.includes("excel") || type.includes("csv")) return <Table2 className="w-4 h-4 text-success" />;
     return <File className="w-4 h-4 text-muted-foreground" />;
   };
 
