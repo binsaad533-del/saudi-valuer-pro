@@ -36,7 +36,7 @@ const inspectorNav: NavItem[] = [
 
 const financialNav: NavItem[] = [
   { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
-  { label: "الإعدادات", icon: Settings, path: "/settings" },
+  { label: "الإعدادات", icon: Settings, path: "/account" },
 ];
 
 const clientNav: NavItem[] = [
