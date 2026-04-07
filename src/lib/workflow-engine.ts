@@ -190,15 +190,14 @@ export async function transitionStatus(
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
 
   // ── Payment gate enforcement ──
-  // Look up the request_id from the assignment to check payment status
-  const { data: assignmentForPayment } = await supabase
-    .from("valuation_assignments")
-    .select("request_id")
-    .eq("id", assignmentId)
-    .single();
+  const { data: linkedRequest } = await supabase
+    .from("valuation_requests")
+    .select("id")
+    .eq("assignment_id", assignmentId)
+    .maybeSingle();
 
-  if (assignmentForPayment?.request_id) {
-    const paymentCheck = await checkPaymentGate(toStatus, assignmentForPayment.request_id);
+  if (linkedRequest?.id) {
+    const paymentCheck = await checkPaymentGate(toStatus, linkedRequest.id);
     if (paymentCheck.blocked) {
       return { success: false, error: paymentCheck.reason_ar || "بوابة الدفع تمنع الانتقال" };
     }
@@ -379,9 +378,25 @@ export async function triggerPostInspectionPipeline(assignmentId: string) {
   }
 }
 
-// ── Deprecated helpers kept for backward compat ──
-export async function autoAdvanceAfterPayment(_assignmentId: string, _paymentStage: "first" | "final") {
-  // Payment no longer blocks workflow — no-op
+// ── Auto-advance after payment confirmation (NOW ACTIVE) ──
+export async function autoAdvanceAfterPayment(assignmentId: string, paymentStage: "first" | "final") {
+  try {
+    const { data } = await supabase
+      .from("valuation_assignments")
+      .select("status")
+      .eq("id", assignmentId)
+      .single();
+
+    const currentStatus = data?.status as string;
+
+    if (paymentStage === "first" && currentStatus === "submitted") {
+      // First payment confirmed → trigger automation pipeline
+      await triggerAutomationPipeline(assignmentId);
+    }
+    // Final payment is enforced at issuance gate level, no auto-advance needed
+  } catch (err) {
+    console.error("Auto-advance after payment error:", err);
+  }
 }
 
 export async function autoAdvanceAfterInspection(assignmentId: string) {
