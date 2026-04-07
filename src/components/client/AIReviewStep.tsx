@@ -486,7 +486,7 @@ interface ChatMessage {
 
 // ── Status badge ──
 function StatusBadge({ status }: { status: ExtractedAsset["license_status"] }) {
-  if (status === "permitted") return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0">✓ جاهز</Badge>;
+  if (status === "permitted") return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0">✓ ضمن النطاق</Badge>;
   if (status === "not_permitted") return <Badge variant="destructive" className="text-[9px] px-1.5 py-0">✗ مستبعد</Badge>;
   return <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 animate-pulse">⟳ بانتظار</Badge>;
 }
@@ -559,7 +559,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 • إجمالي الأصول الأصلية المرفوعة: ${data.assets.length}
 • عناصر مكررة تم إزالتها تلقائياً: ${removedCount}${removedCount > 0 ? ` (أمثلة: ${[...new Set(duplicateNames)].slice(0, 15).join("، ")})` : ""}
 • الأصول الفريدة بعد الدمج: ${assets.length}
-• جاهز للتقييم: ${autoApproved.length} ✅
+• ضمن النطاق: ${autoApproved.length} ✅
 • مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫${excluded.length > 0 ? `\n  المستبعدة: ${excluded.map(a => `"${a.name}" — ${a.license_reason || "خارج النطاق"}`).join("، ")}` : ""}
 • بانتظار التوضيح: ${flagged.length} ❓${flagged.length > 0 ? `\n  بانتظار المراجعة: ${flagged.map(a => `"${a.name}" — ${a.license_reason || "بيانات ناقصة"}`).join("، ")}` : ""}`;
   }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged]);
