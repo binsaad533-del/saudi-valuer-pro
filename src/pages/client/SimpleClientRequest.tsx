@@ -938,74 +938,41 @@ export default function SimpleClientRequest() {
 
             {/* نصائح */}
             <Card className="bg-muted/30 border-dashed">
-              <CardContent className="p-4 space-y-4">
+              <CardContent className="p-4 space-y-3">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Shield className="w-3.5 h-3.5 text-primary" />
-                  ماذا أرفق لأفضل تقييم؟
+                  دليل المرفقات لأفضل تقييم
                 </p>
 
-                {/* عام */}
-                <div className="bg-primary/5 rounded-lg p-3 space-y-2">
-                  <div className="flex items-start gap-2">
-                    <Upload className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-[11px] text-foreground">ارفع أي نوع ملفات (Excel, PDF, صور, Word...) — كل الصيغ مدعومة</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-[11px] text-foreground">كلما زادت المرفقات والتفاصيل، كانت نتائج التقييم أدق وأقرب للسعر العادل</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <FileText className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-                    <span className="text-[11px] text-foreground">أرفق الفواتير وبرامج الصيانة وأي وثيقة تخص الأصل</span>
-                  </div>
-                </div>
+                <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <Upload className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                    <span>جميع صيغ الملفات مدعومة (Excel, PDF, صور, Word...)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Sparkles className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                    <span>كلما زادت المرفقات، كان التقييم أدق وأقرب للسعر العادل</span>
+                  </li>
+                </ul>
 
-                {/* معدات */}
-                <div>
-                  <p className="text-[11px] font-semibold text-foreground mb-1.5 flex items-center gap-1">
-                    <Cog className="w-3 h-3 text-primary" /> للمعدات والآلات:
+                <div className="border-t border-border/50 pt-3 space-y-2.5">
+                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                    <Cog className="w-3 h-3 text-primary" /> المعدات والآلات
                   </p>
-                  <ul className="text-[11px] text-muted-foreground space-y-1.5 leading-relaxed">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                      <span>صور من كل الجوانب + من الداخل</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                      <span>صور العدادات ولوحة البيانات (Nameplate)</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                      <span>فواتير الشراء وبرامج الصيانة</span>
-                    </li>
+                  <ul className="text-[11px] text-muted-foreground space-y-1 leading-relaxed mr-4">
+                    <li>• صور من كل الجوانب + الداخل + العدادات + لوحة البيانات</li>
+                    <li>• فواتير الشراء وبرامج الصيانة</li>
                   </ul>
                 </div>
 
-                {/* عقارات */}
-                <div>
-                  <p className="text-[11px] font-semibold text-foreground mb-1.5 flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-primary" /> للعقارات:
+                <div className="border-t border-border/50 pt-3 space-y-2.5">
+                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1">
+                    <Building2 className="w-3 h-3 text-primary" /> العقارات
                   </p>
-                  <ul className="text-[11px] text-muted-foreground space-y-1.5 leading-relaxed">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                      <span>صور الواجهة الخارجية من عدة زوايا</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                      <span>صور داخلية: كل الغرف، الحوش، الممرات، المرافق</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                      <span>صكوك الملكية وعقود الإيجار إن وُجدت</span>
-                    </li>
+                  <ul className="text-[11px] text-muted-foreground space-y-1 leading-relaxed mr-4">
+                    <li>• صور خارجية من عدة زوايا + داخلية لكل الغرف والممرات والحوش</li>
+                    <li>• صكوك الملكية وعقود الإيجار والوثائق ذات الصلة</li>
                   </ul>
-                </div>
-
-                <div className="border-t border-border/50 pt-2">
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    💡 كل ملف إضافي يساعد في الوصول لتقييم أدق — لا تتردد في رفع أي وثيقة تخص الأصل
-                  </p>
                 </div>
               </CardContent>
             </Card>
