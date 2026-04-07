@@ -782,9 +782,11 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const activeQuestion = phase === "questions" && currentQIdx < questions.length ? questions[currentQIdx] : null;
   const isLastMessage = (msgId: string) => messages.length > 0 && messages[messages.length - 1].id === msgId;
 
-  // Visible assets for table (first 10, expandable)
-  const [showAll, setShowAll] = useState(false);
-  const visibleAssets = showAll ? assets : assets.slice(0, 10);
+  // Visible assets for table (paginated, load more)
+  const PAGE_SIZE = 20;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const visibleAssets = assets.slice(0, visibleCount);
+  const hasMore = visibleCount < assets.length;
 
   return (
     <div className="space-y-4">
