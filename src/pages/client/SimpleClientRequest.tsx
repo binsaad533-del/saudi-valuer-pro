@@ -939,7 +939,27 @@ export default function SimpleClientRequest() {
             {/* نصائح */}
             <Card className="bg-muted/30 border-dashed">
               <CardContent className="p-4 space-y-4">
-                <div className="space-y-2.5">
+                <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
+                  <span>دليل المرفقات لأفضل تقييم</span>
+                  <Shield className="w-4 h-4 text-primary" />
+                </p>
+
+                <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
+                  <li className="flex items-center justify-end gap-2">
+                    <span>جميع صيغ الملفات مدعومة (Excel, PDF, صور, Word...)</span>
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  </li>
+                  <li className="flex items-center justify-end gap-2">
+                    <span>كلما زادت المرفقات، كان التقييم أدق وأقرب للسعر العادل</span>
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  </li>
+                  <li className="flex items-center justify-end gap-2">
+                    <span>أرفق الفواتير وبرامج الصيانة وأي وثيقة تخص الأصل</span>
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                  </li>
+                </ul>
+
+                <div className="border-t border-border/50 pt-4 space-y-2.5">
                   <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
                     <span>للمعدات والآلات:</span>
                     <Cog className="w-4 h-4 text-primary" />
