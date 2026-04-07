@@ -280,10 +280,19 @@ const VERIFICATION_TRIGGERS: VerificationTrigger[] = [
 const TYPE_LABELS: Record<string, string> = {
   real_estate: "عقار",
   machinery_equipment: "آلات ومعدات",
+  both: "عقار + آلات ومعدات",
   furniture: "أثاث",
   vehicle: "مركبة",
   it_equipment: "تقنية",
   medical_equipment: "طبي",
+  industrial: "صناعي",
+  equipment: "معدات",
+  machinery: "آلات",
+  office: "مكتبي",
+  electrical: "كهربائي",
+  hvac: "تكييف وتبريد",
+  plumbing: "سباكة",
+  other: "أخرى",
 };
 
 const ASSET_TYPE_MAP: Record<string, { label: string; icon: typeof Building2 }> = {
