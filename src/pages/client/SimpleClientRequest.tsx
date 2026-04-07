@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import AIReviewStep, { classifyAssetLicense, type ExtractedAsset, type AIReviewData } from "@/components/client/AIReviewStep";
 import logo from "@/assets/logo.png";
+import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
 
 // ── Types ──
 interface UploadedFile {
