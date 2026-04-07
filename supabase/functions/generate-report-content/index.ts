@@ -213,7 +213,7 @@ ${disciplineInstructions}
 
     const contextBlock = `بيانات التقييم:
 - التخصص: ${discipline === "real_estate" ? "تقييم عقاري" : discipline === "machinery_equipment" ? "آلات ومعدات" : "مختلط (عقاري + آلات ومعدات)"}
-- نوع الأصل: ${context.assetType || "عقاري"}
+- نوع الأصل: ${(context.assetType === "machinery" || context.assetType === "machinery_equipment") ? "آلات ومعدات" : (context.assetType === "mixed" || context.assetType === "both") ? "مختلط" : context.assetType || "عقاري"}
 - الوصف: ${context.assetDescription || "غير محدد"}
 - الموقع: ${context.assetLocation || "غير محدد"}
 - المدينة: ${context.assetCity || "غير محددة"}
