@@ -62,6 +62,7 @@ const COMPANY = {
   name_en: "Jsaas Valuation",
   legal_form: "شركة ذات مسؤولية محدودة (مهنية)",
   cr_number: "1010625839",
+  vat_number: "310625839900003",
   unified_number: "7016803038",
   cr_date: "2020/02/05",
   ceo: "أحمد سعد المالكي",
@@ -598,6 +599,7 @@ ${COMPANY.valuation_purposes.map(p => `• ${p}`).join("\n")}
 ${branchDetails}
 
 السجل التجاري: ${COMPANY.cr_number}
+الرقم الضريبي: ${COMPANY.vat_number}
 الرقم الموحد: ${COMPANY.unified_number}
 
 📖 المرجع: ${KB_LICENSE.article}
