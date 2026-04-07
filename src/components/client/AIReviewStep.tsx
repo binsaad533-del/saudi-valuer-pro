@@ -303,7 +303,12 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   }, [messages]);
 
   const resolveAssets = useCallback((ids: number[], status: "permitted" | "not_permitted", reason: string, updates?: Partial<ExtractedAsset>) => {
-    setAssets(prev => prev.map(a => ids.includes(a.id) ? { ...a, ...updates, license_status: status, license_reason: reason } : a));
+    setAssets(prev => prev.map(a => {
+      if (!ids.includes(a.id)) return a;
+      // IMMUTABLE: never override exclusion rules — excluded assets cannot be changed via chat
+      if (a.license_status === "not_permitted" && isHardExcluded(a)) return a;
+      return { ...a, ...updates, license_status: status, license_reason: reason };
+    }));
   }, []);
 
   const advanceToNext = useCallback((answerText: string) => {
