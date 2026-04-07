@@ -14,6 +14,7 @@ interface ClientEditRequestButtonProps {
 }
 
 const EDITABLE_STATUSES = [
+  "first_payment_confirmed",
   "data_collection_open", "data_collection_complete",
   "inspection_pending", "inspection_completed",
   "data_validated", "analysis_complete", "professional_review",
@@ -30,7 +31,7 @@ export function ClientEditRequestButton({ assignmentId, currentStatus }: ClientE
     setLoading(true);
     const result = await requestPostPaymentEdit(assignmentId, reason);
     if (result.success) {
-      toast.success("تم إرسال طلب التعديل للمالك");
+      toast.success("تم إرسال طلب التعديل للإدارة — سيتم مراجعته قبل التنفيذ");
       setOpen(false);
       setReason("");
     } else {
@@ -52,7 +53,7 @@ export function ClientEditRequestButton({ assignmentId, currentStatus }: ClientE
             <DialogTitle>طلب تعديل بيانات بعد الدفع</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            سيتم إرسال طلبك للمالك للمراجعة. يرجى توضيح البيانات المطلوب تعديلها بالتفصيل.
+            سيتم إرسال طلبك للإدارة للمراجعة. لن يتم تنفيذ التعديل مباشرة — يجب موافقة المالك أولاً.
           </p>
           <Textarea
             value={reason}
