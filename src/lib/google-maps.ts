@@ -66,20 +66,11 @@ export function getLocationUrl(location: Pick<AssetLocation, "googleMapsUrl" | "
 }
 
 export function openLocationInGoogleMaps(location: Pick<AssetLocation, "googleMapsUrl" | "latitude" | "longitude">) {
-  const url = getLocationUrl(location);
-
-  const popup = window.open("", "_blank");
-  if (popup) {
-    popup.opener = null;
-    popup.location.replace(url);
-    popup.focus();
-    return;
-  }
-
   const link = document.createElement("a");
-  link.href = url;
+  link.href = getLocationUrl(location);
   link.target = "_blank";
   link.rel = "noopener noreferrer";
-  link.referrerPolicy = "no-referrer";
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
 }
