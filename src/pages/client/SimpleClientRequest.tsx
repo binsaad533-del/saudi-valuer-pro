@@ -938,41 +938,54 @@ export default function SimpleClientRequest() {
 
             {/* نصائح */}
             <Card className="bg-muted/30 border-dashed">
-              <CardContent className="p-4 space-y-3">
-                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Shield className="w-3.5 h-3.5 text-primary" />
-                  دليل المرفقات لأفضل تقييم
-                </p>
-
-                <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
-                  <li className="flex items-start gap-2">
-                    <Upload className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>جميع صيغ الملفات مدعومة (Excel, PDF, صور, Word...)</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Sparkles className="w-3 h-3 text-primary shrink-0 mt-0.5" />
-                    <span>كلما زادت المرفقات، كان التقييم أدق وأقرب للسعر العادل</span>
-                  </li>
-                </ul>
-
-                <div className="border-t border-border/50 pt-3 space-y-2.5">
-                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1">
-                    <Cog className="w-3 h-3 text-primary" /> المعدات والآلات
+              <CardContent className="p-4 space-y-4">
+                <div className="space-y-2.5">
+                  <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
+                    <span>للمعدات والآلات:</span>
+                    <Cog className="w-4 h-4 text-primary" />
                   </p>
-                  <ul className="text-[11px] text-muted-foreground space-y-1 leading-relaxed mr-4">
-                    <li>• صور من كل الجوانب + الداخل + العدادات + لوحة البيانات</li>
-                    <li>• فواتير الشراء وبرامج الصيانة</li>
+                  <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
+                    <li className="flex items-center justify-end gap-2">
+                      <span>صور من كل الجوانب + من الداخل</span>
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    </li>
+                    <li className="flex items-center justify-end gap-2">
+                      <span>صور العدادات ولوحة البيانات (Nameplate)</span>
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    </li>
+                    <li className="flex items-center justify-end gap-2">
+                      <span>فواتير الشراء وبرامج الصيانة</span>
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    </li>
                   </ul>
                 </div>
 
-                <div className="border-t border-border/50 pt-3 space-y-2.5">
-                  <p className="text-[11px] font-semibold text-foreground flex items-center gap-1">
-                    <Building2 className="w-3 h-3 text-primary" /> العقارات
+                <div className="border-t border-border/50 pt-4 space-y-2.5">
+                  <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
+                    <span>للعقارات:</span>
+                    <Building2 className="w-4 h-4 text-primary" />
                   </p>
-                  <ul className="text-[11px] text-muted-foreground space-y-1 leading-relaxed mr-4">
-                    <li>• صور خارجية من عدة زوايا + داخلية لكل الغرف والممرات والحوش</li>
-                    <li>• صكوك الملكية وعقود الإيجار والوثائق ذات الصلة</li>
+                  <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
+                    <li className="flex items-center justify-end gap-2">
+                      <span>صور الواجهة الخارجية من عدة زوايا</span>
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    </li>
+                    <li className="flex items-center justify-end gap-2">
+                      <span>صور داخلية: كل الغرف، الحوش، الممرات، المرافق</span>
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    </li>
+                    <li className="flex items-center justify-end gap-2">
+                      <span>صكوك الملكية وعقود الإيجار إن وُجدت</span>
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    </li>
                   </ul>
+                </div>
+
+                <div className="border-t border-border/50 pt-3">
+                  <p className="text-[11px] text-muted-foreground text-center flex items-center justify-center gap-1.5">
+                    <span>💡</span>
+                    <span>كل ملف إضافي يساعد في الوصول لتقييم أدق — لا تتردد في رفع أي وثيقة تخص الأصل</span>
+                  </p>
                 </div>
               </CardContent>
             </Card>
