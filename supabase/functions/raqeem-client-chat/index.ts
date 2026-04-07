@@ -68,6 +68,17 @@ serve(async (req) => {
       assetDetailsSection = `\n\n## تفاصيل الأصول المستخرجة من ملفات العميل (هذه البيانات الفعلية — ارجع إليها عند أي سؤال عن الأصول)\n${assetDetails}`;
     }
 
+    // ── Build attachments section ──
+    let attachmentsSection = "";
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      attachmentsSection = `\n\n## مرفقات أرسلها العميل في هذه الرسالة (${attachments.length} ملف)\n`;
+      for (const att of attachments) {
+        const sizeKB = att.size ? `${Math.round(att.size / 1024)} KB` : "غير محدد";
+        attachmentsSection += `• ${att.name} (${att.type || "نوع غير محدد"}, ${sizeKB})\n`;
+      }
+      attachmentsSection += `\nملاحظة: هذه المرفقات تم رفعها بنجاح وسيتم ربطها بملف الطلب. إذا كانت تحتوي على أصول إضافية، أخبر العميل أنها ستُضاف للمراجعة. إذا كانت مستندات داعمة (عقود، صكوك، تقارير سابقة)، أكّد استلامها وأوضح أنها ستُرفق بملف التقييم.`;
+    }
+
     // ── Build system prompt ──
     const systemPrompt = `أنت "رقيم" — مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation). أنت لست مجرد مساعد عام — أنت خبير في تقييم الأصول (عقارات وآلات ومعدات) وتفهم المعايير المهنية بعمق.
 
