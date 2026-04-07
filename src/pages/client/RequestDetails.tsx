@@ -26,9 +26,9 @@ import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 const STATUS_TIMELINE = [
   { key: "submitted", label: "تم الإرسال" },
-  { key: "under_pricing", label: "قيد التسعير" },
-  { key: "quotation_sent", label: "عرض السعر" },
-  { key: "awaiting_payment", label: "الدفع" },
+  { key: "sow_sent", label: "نطاق العمل" },
+  { key: "sow_approved", label: "الموافقة" },
+  { key: "awaiting_payment", label: "الدفعة الأولى" },
   { key: "in_production", label: "التنفيذ" },
   { key: "draft_report_sent", label: "المسودة" },
   { key: "final_report_ready", label: "التقرير النهائي" },
@@ -36,8 +36,9 @@ const STATUS_TIMELINE = [
 ];
 
 const STATUS_ORDER = [
-  "draft", "ai_review", "submitted", "needs_clarification", "under_pricing",
-  "quotation_sent", "quotation_approved", "quotation_rejected",
+  "draft", "ai_review", "submitted", "needs_clarification",
+  "sow_generated", "sow_sent", "sow_approved",
+  "under_pricing", "quotation_sent", "quotation_approved", "quotation_rejected",
   "awaiting_payment", "payment_uploaded", "payment_under_review",
   "partially_paid", "fully_paid", "in_production", "draft_report_sent",
   "client_comments", "final_payment_pending", "final_payment_uploaded",
