@@ -196,9 +196,9 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
       // Send notification message in chat
       await supabase.from("request_messages").insert({
         request_id: request.id,
-        sender_role: "owner",
+        sender_type: "admin" as const,
         sender_id: userId,
-        message: "📄 تم إرسال مسودة التقرير للمراجعة. يرجى الاطلاع وإبداء الملاحظات.",
+        content: "📄 تم إرسال مسودة التقرير للمراجعة. يرجى الاطلاع وإبداء الملاحظات.",
       });
 
       setDraft({ ...draft, status: "sent_to_client" });
