@@ -11,7 +11,7 @@ export default function RaqeemAnimatedLogo({ size = 112, className = "" }: Raqee
 
   const cx = size / 2;
   const cy = size / 2;
-  const pupilR = size * 0.14;
+  const pupilR = size * 0.10;
 
   const arcs = [
     { radius: size * 0.18, width: size * 0.06, color: "hsl(var(--primary))", dir: 1, startAngle: 200, sweep: 280 },
