@@ -818,6 +818,16 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                   </div>
                 </div>
               ))}
+              {isThinking && (
+                <div className="flex items-start gap-2 justify-end">
+                  <div className="bg-muted rounded-xl px-4 py-3 max-w-[85%]">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Cog className="w-3.5 h-3.5 animate-spin" />
+                      <span>رقيم يفكر...</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={chatEndRef} />
             </div>
 
