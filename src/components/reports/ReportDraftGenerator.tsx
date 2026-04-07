@@ -68,17 +68,30 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
     const intake = request.ai_intake_summary || {};
     const assetData = request.asset_data || {};
     const clientInfo = intake.clientInfo || {};
-    const discipline =
-      request.discipline === "real_estate"
-        ? "real_estate"
-        : request.valuation_type === "machinery"
-        ? "machinery_equipment"
-        : "real_estate";
+    const inventory = Array.isArray(assetData.inventory) ? assetData.inventory : [];
 
-    const machineryInventory = (assetData.inventory || [])
-      .filter((a: any) => a.type === "machinery_equipment" || a.type === "medical_equipment")
+    const discipline = (() => {
+      const raw = assetData.discipline || request.discipline || request.valuation_type || "";
+      if (raw === "machinery" || raw === "machinery_equipment") return "machinery_equipment";
+      if (raw === "mixed" || raw === "both") return "mixed";
+      return "real_estate";
+    })();
+
+    const disciplineLabel =
+      discipline === "machinery_equipment"
+        ? "آلات ومعدات"
+        : discipline === "mixed"
+        ? "مختلط (عقاري + آلات ومعدات)"
+        : "عقار";
+
+    const machineryInventory = inventory
+      .filter((a: any) => a.type !== "real_estate")
       .slice(0, 50)
-      .map((a: any) => ({ name: a.name, type: a.type, condition: a.condition || "غير محددة" }));
+      .map((a: any) => ({
+        name: a.name,
+        type: a.type,
+        condition: a.condition || "غير محددة",
+      }));
 
     const purposeLabels: Record<string, string> = {
       sale_purchase: "البيع أو الشراء",
@@ -90,16 +103,21 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
       merger_acquisition: "الاندماج والاستحواذ",
     };
 
+    const derivedAssetDescription =
+      request.property_description_ar
+      || inventory.slice(0, 5).map((a: any) => a.name).filter(Boolean).join("، ")
+      || disciplineLabel;
+
     return {
-      assetType: request.valuation_type || "real_estate",
+      assetType: discipline,
       discipline,
       purposeOfValuation: purposeLabels[request.purpose] || request.purpose || "تقدير القيمة السوقية",
       clientName: clientInfo.contactName || request.client_name_ar || "غير محدد",
       clientIdNumber: request.client_id_number || "",
-      assetDescription: request.property_description_ar || "",
+      assetDescription: derivedAssetDescription,
       assetLocation: request.property_address_ar || "",
       assetCity: request.property_city_ar || "",
-      propertyType: request.property_type || "",
+      propertyType: request.property_type || disciplineLabel,
       landArea: request.land_area?.toString() || "",
       buildingArea: request.building_area?.toString() || "",
       estimatedValue: request.quotation_amount || 0,
