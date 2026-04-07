@@ -56,34 +56,114 @@ interface Props {
   onBack: () => void;
 }
 
+// ── Professional Knowledge References ──
+interface KnowledgeRef {
+  source: string;     // e.g. "IVS 400", "RICS Red Book"
+  article: string;    // e.g. "الفقرة 40.1"
+  principle: string;  // Arabic explanation
+}
+
+const KB_INTANGIBLE: KnowledgeRef = {
+  source: "IVS 210 — Intangible Assets",
+  article: "الفقرة 210.1",
+  principle: "الأصول غير الملموسة تتطلب ترخيصاً مستقلاً في فرع تقييم المنشآت الاقتصادية (Business Valuation) ولا تدخل ضمن ترخيص العقار أو الآلات والمعدات",
+};
+
+const KB_CONTRACTUAL: KnowledgeRef = {
+  source: "IVS 105 — Valuation Approaches",
+  article: "الفقرة 105.3",
+  principle: "الحقوق التعاقدية ليست أصولاً ملموسة قابلة للتقييم ضمن نطاق ترخيص العقار والآلات",
+};
+
+const KB_FINANCIAL: KnowledgeRef = {
+  source: "IVS 500 — Financial Instruments",
+  article: "الفقرة 500.1",
+  principle: "الأدوات المالية تخضع لمعايير تقييم مختلفة وتتطلب ترخيصاً في فرع تقييم المنشآت الاقتصادية",
+};
+
+const KB_LICENSE: KnowledgeRef = {
+  source: "نظام المقيمين المعتمدين — الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  article: "المادة 5 — فروع التقييم",
+  principle: "يُرخص للمقيم في فروع محددة: العقار، الآلات والمعدات، المنشآت الاقتصادية، أو أضرار المركبات. لا يجوز ممارسة التقييم في فرع غير مرخص فيه",
+};
+
 // ── LAYER 1: Hard Exclusion — Intangible Assets (NOT_PERMITTED, immutable) ──
-const INTANGIBLE_RULES: { keywords: string[]; tag: string; reason: string }[] = [
-  { keywords: ["intangible", "أصول غير ملموسة", "غير ملموس"], tag: "Intangible", reason: "أصل غير ملموس خارج نطاق التقييم" },
-  { keywords: ["goodwill", "شهرة", "شهرة محل"], tag: "Intangible", reason: "شهرة محل — أصل غير ملموس خارج نطاق التقييم" },
-  { keywords: ["trademark", "علامة تجارية", "brand", "logo", "شعار"], tag: "Intangible", reason: "علامة تجارية — أصل غير ملموس خارج نطاق التقييم" },
-  { keywords: ["patent", "براءة اختراع", "براءة"], tag: "Intangible", reason: "براءة اختراع — أصل غير ملموس خارج نطاق التقييم" },
-  { keywords: ["copyright", "حقوق ملكية فكرية", "حقوق نشر"], tag: "Intangible", reason: "حقوق ملكية فكرية — خارج نطاق التقييم" },
-  { keywords: ["software", "software_license", "رخصة برمجية", "برنامج", "برمجيات"], tag: "Intangible", reason: "برمجيات / رخصة — أصل غير ملموس" },
-  { keywords: ["license", "ترخيص", "رخصة"], tag: "Intangible", reason: "رخصة / ترخيص — أصل غير ملموس" },
-  { keywords: ["customer_list", "قائمة عملاء", "customer relationship"], tag: "Intangible", reason: "علاقات عملاء — أصل غير ملموس" },
-  { keywords: ["domain_name", "نطاق", "اسم نطاق"], tag: "Intangible", reason: "اسم نطاق — أصل غير ملموس" },
+const INTANGIBLE_RULES: { keywords: string[]; tag: string; reason: string; ref: KnowledgeRef }[] = [
+  { keywords: ["intangible", "أصول غير ملموسة", "غير ملموس"], tag: "Intangible", reason: "أصل غير ملموس — خارج نطاق ترخيص العقار والآلات", ref: KB_INTANGIBLE },
+  { keywords: ["goodwill", "شهرة", "شهرة محل"], tag: "Intangible", reason: "شهرة محل (Goodwill) — أصل غير ملموس يتطلب ترخيص منشآت اقتصادية", ref: KB_INTANGIBLE },
+  { keywords: ["trademark", "علامة تجارية", "brand", "logo", "شعار"], tag: "Intangible", reason: "علامة تجارية — أصل غير ملموس (IVS 210)", ref: KB_INTANGIBLE },
+  { keywords: ["patent", "براءة اختراع", "براءة"], tag: "Intangible", reason: "براءة اختراع — ملكية فكرية خارج نطاق الترخيص", ref: KB_INTANGIBLE },
+  { keywords: ["copyright", "حقوق ملكية فكرية", "حقوق نشر"], tag: "Intangible", reason: "حقوق ملكية فكرية — تتطلب ترخيص منشآت اقتصادية", ref: KB_INTANGIBLE },
+  { keywords: ["software", "software_license", "رخصة برمجية", "برنامج", "برمجيات"], tag: "Intangible", reason: "برمجيات / رخصة برمجية — أصل غير ملموس (IVS 210)", ref: KB_INTANGIBLE },
+  { keywords: ["license", "ترخيص", "رخصة"], tag: "Intangible", reason: "رخصة / ترخيص — أصل غير ملموس", ref: KB_INTANGIBLE },
+  { keywords: ["customer_list", "قائمة عملاء", "customer relationship"], tag: "Intangible", reason: "علاقات عملاء — أصل غير ملموس (IVS 210)", ref: KB_INTANGIBLE },
+  { keywords: ["domain_name", "نطاق", "اسم نطاق"], tag: "Intangible", reason: "اسم نطاق — أصل غير ملموس رقمي", ref: KB_INTANGIBLE },
 ];
 
 // ── LAYER 2: Hard Exclusion — Contractual Rights (NOT_PERMITTED, immutable) ──
-const CONTRACTUAL_RULES: { keywords: string[]; tag: string; reason: string }[] = [
-  { keywords: ["contract", "عقد", "اتفاقية", "agreement"], tag: "Contractual", reason: "حق تعاقدي وليس أصل — خارج نطاق التقييم" },
-  { keywords: ["concession", "امتياز حكومي", "حق انتفاع"], tag: "Contractual", reason: "حق امتياز / انتفاع — خارج نطاق التقييم" },
-  { keywords: ["franchise", "امتياز", "حق امتياز"], tag: "Contractual", reason: "حق امتياز تجاري — خارج نطاق التقييم" },
+const CONTRACTUAL_RULES: { keywords: string[]; tag: string; reason: string; ref: KnowledgeRef }[] = [
+  { keywords: ["contract", "عقد", "اتفاقية", "agreement"], tag: "Contractual", reason: "حق تعاقدي وليس أصل ملموس (IVS 105)", ref: KB_CONTRACTUAL },
+  { keywords: ["concession", "امتياز حكومي", "حق انتفاع"], tag: "Contractual", reason: "حق امتياز / انتفاع — ليس أصلاً ملموساً", ref: KB_CONTRACTUAL },
+  { keywords: ["franchise", "امتياز", "حق امتياز"], tag: "Contractual", reason: "حق امتياز تجاري — ليس أصلاً ملموساً (IVS 105)", ref: KB_CONTRACTUAL },
 ];
 
 // ── LAYER 3: Hard Exclusion — Financial Instruments (NOT_PERMITTED, immutable) ──
-const FINANCIAL_RULES: { keywords: string[]; tag: string; reason: string }[] = [
-  { keywords: ["financial_instrument", "stock", "bond", "derivative", "أسهم", "سندات", "مشتقات", "أداة مالية"], tag: "Financial", reason: "أداة مالية — خارج نطاق التقييم" },
-  { keywords: ["cryptocurrency", "عملة رقمية", "بتكوين", "crypto"], tag: "Financial", reason: "عملة رقمية — خارج نطاق التقييم" },
+const FINANCIAL_RULES: { keywords: string[]; tag: string; reason: string; ref: KnowledgeRef }[] = [
+  { keywords: ["financial_instrument", "stock", "bond", "derivative", "أسهم", "سندات", "مشتقات", "أداة مالية"], tag: "Financial", reason: "أداة مالية — تخضع لمعيار IVS 500 المستقل", ref: KB_FINANCIAL },
+  { keywords: ["cryptocurrency", "عملة رقمية", "بتكوين", "crypto"], tag: "Financial", reason: "عملة رقمية — أداة مالية خارج نطاق الترخيص", ref: KB_FINANCIAL },
 ];
 
-// Combined exclusion rules for backward compatibility
+// Combined exclusion rules
 const EXCLUSION_RULES = [...INTANGIBLE_RULES, ...CONTRACTUAL_RULES, ...FINANCIAL_RULES];
+
+// ── Knowledge-Grounded Response Builder ──
+function buildExclusionExplanation(excludedAssets: ExtractedAsset[]): string {
+  const groups = new Map<string, { names: string[]; ref: KnowledgeRef }>();
+  
+  for (const a of excludedAssets) {
+    const matchedRule = EXCLUSION_RULES.find(r =>
+      r.keywords.some(k => (a.name || "").toLowerCase().includes(k.toLowerCase()) || (a.license_reason || "").includes(k))
+    );
+    const ref = matchedRule?.ref || KB_LICENSE;
+    const reason = a.license_reason || "خارج نطاق التقييم";
+    const key = reason;
+    const existing = groups.get(key) || { names: [], ref };
+    existing.names.push(a.name);
+    groups.set(key, existing);
+  }
+
+  let text = `🚫 تم استبعاد ${excludedAssets.length} بند تلقائياً:\n`;
+  
+  for (const [reason, { names, ref }] of groups) {
+    const preview = names.slice(0, 3).map(n => `"${n}"`).join("، ");
+    const extra = names.length > 3 ? ` و${names.length - 3} آخرين` : "";
+    text += `\n• ${preview}${extra}\n  ← ${reason}\n  📖 المرجع: ${ref.source} — ${ref.article}`;
+  }
+
+  text += `\n\n⚖️ الأساس النظامي:\n${KB_LICENSE.source}\n${KB_LICENSE.article}: ${KB_LICENSE.principle}`;
+  
+  return text;
+}
+
+function buildExclusionReply(excludedCount: number): string {
+  return `نحن مرخصون من الهيئة السعودية للمقيمين المعتمدين (تقييم) في فرعين:
+
+• تقييم العقارات
+• تقييم الآلات والمعدات
+
+وهذا التقييم يندرج ضمن تقييم المنشآت الاقتصادية، ويشمل فقط الأصول الملموسة (عقارات، آلات، معدات، مركبات).
+
+📖 الأساس النظامي:
+• ${KB_LICENSE.source} — ${KB_LICENSE.article}
+  "${KB_LICENSE.principle}"
+
+• ${KB_INTANGIBLE.source} — ${KB_INTANGIBLE.article}
+  "${KB_INTANGIBLE.principle}"
+
+الأصول غير الملموسة (علامات تجارية، برمجيات، شهرة، تراخيص) تتطلب ترخيصاً مستقلاً في فرع "تقييم المنشآت الاقتصادية" وفقاً لمعايير التقييم الدولية IVS 2025 ولوائح الهيئة.
+
+عدد البنود المستبعدة: ${excludedCount} بند.`
+}
 
 // ── LAYER 4: Verification triggers (NEEDS_REVIEW) ──
 type TriggerType = "low_confidence" | "unclear_name" | "no_category" | "bad_quantity" | "conflict" | "mixed";
@@ -370,20 +450,56 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       timestamp: Date.now(),
     }]);
 
-    // Raqeem auto-reply based on context
+    // Raqeem auto-reply — knowledge-grounded, every answer has a reference
     setTimeout(() => {
       let reply = "";
 
       // Check if asking about excluded items
-      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج"];
+      const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"];
       const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
 
+      // Check if asking about methodology / approach
+      const methodKeywords = ["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"];
+      const isAskingMethod = methodKeywords.some(k => text.includes(k));
+
+      // Check if asking about license / credentials
+      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "تقييم", "هيئة", "مؤهل"];
+      const isAskingLicense = licenseKeywords.some(k => text.includes(k));
+
       if (isAskingAboutExcluded && excluded.length > 0) {
-        reply = `نحن مرخصون من الهيئة السعودية للمقيمين المعتمدين (تقييم) في فرعين:\n\n• تقييم العقارات\n• تقييم الآلات والمعدات\n\nوهذا التقييم يندرج ضمن تقييم المنشآت الاقتصادية، ويشمل فقط الأصول الملموسة (عقارات، آلات، معدات، مركبات).\n\nأما الأصول غير الملموسة مثل العلامات التجارية، البرمجيات، الشهرة، والتراخيص فهي خارج نطاق الترخيص ولا يمكن تقييمها ضمن هذا التقرير وفقاً لمعايير التقييم الدولية (IVS 2025) ولوائح الهيئة.\n\nعدد البنود المستبعدة: ${excluded.length} بند.`;
-      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد")) {
-        reply = `إجمالي الأصول: ${assets.length} — منها ${autoApproved.length} جاهز و${excluded.length} مستبعد و${flagged.length} بانتظار التوضيح.`;
+        reply = buildExclusionReply(excluded.length);
+      } else if (isAskingMethod) {
+        reply = `نعتمد في التقييم على المنهجيات المعتمدة دولياً:
+
+• العقارات: أسلوب المقارنة، أسلوب الدخل، أسلوب التكلفة
+• الآلات والمعدات: أسلوب التكلفة (RCN) كمنهجية أساسية، مع أسلوب المقارنة
+
+📖 المرجع: IVS 105 — Valuation Approaches
+"يجب على المقيّم اختيار الأسلوب الأنسب بناءً على طبيعة الأصل وتوفر البيانات"
+
+يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
+      } else if (isAskingLicense) {
+        reply = `نحن مرخصون من ${KB_LICENSE.source} في فرعين:
+
+• تقييم العقارات
+• تقييم الآلات والمعدات
+
+📖 المرجع: ${KB_LICENSE.article}
+"${KB_LICENSE.principle}"`;
+      } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد") || text.includes("كم")) {
+        reply = `📊 ملخص التحليل:
+• إجمالي الأصول المستخرجة: ${assets.length}
+• جاهز للتقييم: ${autoApproved.length} ✅
+• مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫
+• بانتظار التوضيح: ${flagged.length} ❓
+
+📖 المرجع: ${KB_LICENSE.source} — ${KB_LICENSE.article}`;
       } else {
-        reply = "شكراً لملاحظتك، تم تسجيلها وستؤخذ بالاعتبار عند التقييم. هل لديك شيء آخر؟";
+        reply = `شكراً لملاحظتك، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
+
+📖 جميع الملاحظات تُوثّق وفقاً لمتطلبات IVS 104 — Documentation وتُراجع ضمن إجراءات ضبط الجودة.
+
+هل لديك شيء آخر؟`;
         // Store as additional note
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
       }
@@ -409,22 +525,9 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       : "مرحباً، راجعت المرفقات وهذا ملخص النتائج";
     initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
 
-    // CASE 1: Explain excluded items FIRST (priority)
+    // CASE 1: Explain excluded items FIRST (priority) — with knowledge references
     if (initialExcluded.length > 0) {
-      // Group excluded by reason for concise explanation
-      const reasonGroups = new Map<string, string[]>();
-      for (const a of initialExcluded) {
-        const reason = a.license_reason || "خارج نطاق التقييم";
-        const list = reasonGroups.get(reason) || [];
-        list.push(a.name);
-        reasonGroups.set(reason, list);
-      }
-      let explanationText = `🚫 تم استبعاد ${initialExcluded.length} بند تلقائياً:\n`;
-      for (const [reason, names] of reasonGroups) {
-        const preview = names.slice(0, 3).map(n => `"${n}"`).join("، ");
-        const extra = names.length > 3 ? ` و${names.length - 3} آخرين` : "";
-        explanationText += `\n• ${preview}${extra}\n  ← ${reason}`;
-      }
+      const explanationText = buildExclusionExplanation(initialExcluded);
       initial.push({ id: "excluded-explain", type: "info", text: explanationText, timestamp: Date.now() + 1 });
     }
 
