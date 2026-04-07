@@ -349,7 +349,6 @@ export default function ExecutiveDashboard() {
             </Card>
           </TabsContent>
 
-          {/* ── Clients Tab ── */}
           <TabsContent value="clients" className="space-y-4">
             <Card className="shadow-sm">
               <CardHeader className="pb-3">
@@ -369,9 +368,9 @@ export default function ExecutiveDashboard() {
                     <thead>
                       <tr className="border-b border-border bg-muted/40">
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">الاسم</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">البريد</th>
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">الهاتف</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">المدينة</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">البريد</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الطلبات</th>
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">النوع</th>
                         <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
                       </tr>
@@ -379,25 +378,30 @@ export default function ExecutiveDashboard() {
                     <tbody>
                       {clients.length === 0 ? (
                         <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">لا يوجد عملاء</td></tr>
-                      ) : clients.slice(0, 30).map(c => (
-                        <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/clients/${c.id}`)}>
-                          <td className="px-4 py-3 font-medium text-foreground">{c.name_ar}</td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs">{c.email || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground text-xs" dir="ltr">{c.phone || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{c.city_ar || "—"}</td>
-                          <td className="px-4 py-3">
-                            <Badge variant="outline" className="text-[10px]">
-                              {c.client_type === "individual" ? "فرد" : c.client_type === "corporate" ? "شركة" : c.client_type === "government" ? "حكومي" : c.client_type}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge variant={c.client_status === "active" ? "default" : "secondary"} className="text-[10px]">
-                              {c.client_status === "active" ? "نشط" : c.client_status === "inactive" ? "غير نشط" : c.client_status}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
+                      ) : clients.slice(0, 30).map(c => {
+                        const reqCount = clientRequests.filter(r => r.client_id === c.id).length;
+                        return (
+                          <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                            onClick={() => navigate(`/clients/${c.id}`)}>
+                            <td className="px-4 py-3 font-medium text-foreground">{c.name_ar}</td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs" dir="ltr">{c.phone || "—"}</td>
+                            <td className="px-4 py-3 text-muted-foreground text-xs">{c.email || "—"}</td>
+                            <td className="px-4 py-3">
+                              <Badge variant="secondary" className="text-[10px]">{reqCount}</Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant="outline" className="text-[10px]">
+                                {c.client_type === "individual" ? "فرد" : c.client_type === "corporate" ? "شركة" : c.client_type === "government" ? "حكومي" : c.client_type}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge variant={c.client_status === "active" ? "default" : "secondary"} className="text-[10px]">
+                                {c.client_status === "active" ? "نشط" : c.client_status === "portal" ? "بوابة" : c.client_status === "potential" ? "محتمل" : c.client_status}
+                              </Badge>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
