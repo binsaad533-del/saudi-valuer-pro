@@ -854,7 +854,10 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     }, 200);
   };
 
-  const handleApprove = () => onApprove(assets.filter(a => a.license_status === "permitted"), additionalNotes);
+  const handleApprove = () => {
+    console.log("[AIReviewStep] handleApprove called", { phase, canSubmit: phase === "done" || (questions.length === 0 && phase === "final"), approvedCount: assets.filter(a => a.license_status === "permitted").length });
+    onApprove(assets.filter(a => a.license_status === "permitted"), additionalNotes);
+  };
   const canSubmit = phase === "done" || (questions.length === 0 && phase === "final");
   const approvedCount = autoApproved.length;
   const activeQuestion = phase === "questions" && currentQIdx < questions.length ? questions[currentQIdx] : null;
