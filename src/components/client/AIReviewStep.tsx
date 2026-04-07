@@ -1020,7 +1020,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
             {/* Chat header */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-primary/5 rounded-t-lg">
               <RaqeemAnimatedLogo size={56} />
-              <span className="text-[11px] font-bold text-foreground">رقيم</span>
+              <span className="text-[11px] font-bold text-foreground">رقيم .. مساعدك الذكي</span>
               {phase === "questions" && questions.length > 0 && (
                 <span className="text-[9px] text-muted-foreground mr-auto">{currentQIdx + 1}/{questions.length}</span>
               )}
