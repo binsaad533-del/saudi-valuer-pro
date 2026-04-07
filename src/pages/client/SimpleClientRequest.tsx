@@ -693,7 +693,7 @@ export default function SimpleClientRequest() {
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logo} alt="جساس" className="w-8 h-8" />
             <div>
@@ -711,10 +711,10 @@ export default function SimpleClientRequest() {
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* ── العمود الأيمن: رفع الملفات + الملاحظات ── */}
-          <div className="space-y-5">
+          <div className="lg:col-span-3 space-y-5">
             <Card>
               <CardContent className="p-5 space-y-3">
                 <p className="text-sm font-semibold text-foreground">المستندات <span className="text-destructive">*</span></p>
@@ -780,7 +780,7 @@ export default function SimpleClientRequest() {
           </div>
 
           {/* ── العمود الأيسر: نوع الأصل + زر المتابعة ── */}
-          <div className="space-y-5">
+          <div className="lg:col-span-2 space-y-5">
             {uploadedFiles.length > 0 ? (
               <Card>
                 <CardContent className="p-5 space-y-3">
