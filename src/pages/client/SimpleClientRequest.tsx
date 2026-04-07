@@ -273,11 +273,13 @@ export default function SimpleClientRequest() {
               for (const row of mapped) {
                 const hasData = (row.name && row.name !== `أصل ${row._rowIndex}`) || row.value || row.type;
                 if (!hasData && !row.quantity) continue;
+                const assetName = String(row.name || `أصل ${assetInventory.length + 1}`);
+                const assetCat = row.type ? String(row.type) : null;
                 assetInventory.push({
                   id: idCounter++,
-                  name: String(row.name || `أصل ${assetInventory.length + 1}`),
-                  type: assetType,
-                  category: row.type ? String(row.type) : null,
+                  name: assetName,
+                  type: inferAssetType(assetName, assetCat, assetType),
+                  category: assetCat,
                   quantity: Number(row.quantity) || 1,
                   condition: row.condition ? String(row.condition) : "unknown",
                   confidence: mappings.filter(m => m.autoMapped).length >= 2 ? 80 : 50,
@@ -308,11 +310,13 @@ export default function SimpleClientRequest() {
             console.error("Orchestrator error:", jobError);
           } else if (jobData?.assets && Array.isArray(jobData.assets) && jobData.assets.length > 0) {
             for (const a of jobData.assets) {
+              const aName = a.name || `أصل ${idCounter}`;
+              const aCat = a.category || null;
               assetInventory.push({
                 id: idCounter++,
-                name: a.name || `أصل ${idCounter}`,
-                type: a.type || assetType,
-                category: a.category || null,
+                name: aName,
+                type: a.type && a.type !== "both" ? a.type : inferAssetType(aName, aCat, assetType),
+                category: aCat,
                 quantity: a.quantity || 1,
                 condition: a.condition || "unknown",
                 confidence: a.confidence || 60,
