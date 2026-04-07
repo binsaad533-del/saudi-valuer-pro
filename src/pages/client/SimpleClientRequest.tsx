@@ -21,10 +21,11 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Upload, FileText, Image, File, X, Loader2, CheckCircle,
   ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
-  PenLine, RotateCcw, User as UserIcon,
+  PenLine, RotateCcw, User as UserIcon, MapPin,
 } from "lucide-react";
 import AIReviewStep, { classifyAssetLicense, type ExtractedAsset, type AIReviewData } from "@/components/client/AIReviewStep";
 import logo from "@/assets/logo.png";
+import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
 
 // ── Types ──
 interface UploadedFile {
@@ -123,6 +124,7 @@ export default function SimpleClientRequest() {
   const [intendedUser, setIntendedUser] = useState("");
   const [intendedUserOther, setIntendedUserOther] = useState("");
   const [valuationMode, setValuationMode] = useState("field");
+  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
   // AI detection state
   const [detectedType, setDetectedType] = useState<string | null>(null);
@@ -523,6 +525,13 @@ export default function SimpleClientRequest() {
             quick_request: true,
             ai_asset_type_detection: aiClassification,
             user_review_completed: true,
+            locations: assetLocations.map(l => ({
+              name: l.name,
+              city: l.city,
+              googleMapsUrl: l.googleMapsUrl,
+              latitude: l.latitude,
+              longitude: l.longitude,
+            })),
           },
           asset_data: assetData,
         } as any)
@@ -934,13 +943,30 @@ export default function SimpleClientRequest() {
               </CardContent>
             </Card>
 
+            {/* مواقع الأصول */}
+            <Card>
+              <CardContent className="p-6 space-y-3">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-primary" />
+                  مواقع الأصول <span className="text-destructive">*</span>
+                </p>
+                <p className="text-[10px] text-muted-foreground">الصق روابط خرائط قوقل لمواقع الأصول (حتى 50 موقع). يمكن أيضاً استخراج المواقع تلقائياً من الملفات المرفوعة.</p>
+                <AssetLocationPicker
+                  locations={assetLocations}
+                  onChange={setAssetLocations}
+                  maxLocations={50}
+                  compact
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="p-6 space-y-3">
                 <p className="text-sm font-semibold text-foreground">ملاحظات <Badge variant="secondary" className="text-[10px] mr-1">اختياري</Badge></p>
                 <Textarea value={notes} onChange={e => setNotes(e.target.value)}
                   placeholder="مثال: تقييم لغرض البيع — عدد الأصول 15 — الموقع: جدة، حي الروضة..."
                   rows={3} className="text-sm" />
-                <p className="text-[10px] text-muted-foreground">أضف أي معلومات تساعد فريق التقييم: الموقع، حالة الأصول، الغرض من التقييم، إلخ.</p>
+                <p className="text-[10px] text-muted-foreground">أضف أي معلومات تساعد فريق التقييم: حالة الأصول، تفاصيل إضافية، إلخ.</p>
               </CardContent>
             </Card>
           </div>
@@ -1076,7 +1102,7 @@ export default function SimpleClientRequest() {
             ) : null}
 
             <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !clientPhone.trim() || !purpose || (purpose === "other" && !purposeOther.trim()) || !intendedUser || (intendedUser === "other" && !intendedUserOther.trim())}>
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !clientPhone.trim() || !purpose || (purpose === "other" && !purposeOther.trim()) || !intendedUser || (intendedUser === "other" && !intendedUserOther.trim()) || assetLocations.length === 0}>
               <Sparkles className="w-4 h-4" />
               متابعة — تحليل الملفات ومراجعة الجرد
             </Button>
