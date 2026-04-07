@@ -513,9 +513,35 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
   const [freeText, setFreeText] = useState("");
+  const chatFileRef = useRef<HTMLInputElement>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<ChatAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Track if AI is thinking
   const [isThinking, setIsThinking] = useState(false);
+
+  // ── Chat file upload handler ──
+  const handleChatFileUpload = useCallback(async (fileList: FileList) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setIsUploading(true);
+    const newAttachments: ChatAttachment[] = [];
+    for (const file of Array.from(fileList)) {
+      try {
+        const { storageKey, originalFilename } = buildSafeStorageObject({ userId: user.id, originalFilename: file.name });
+        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
+        if (error) { console.error("Upload error:", error); continue; }
+        newAttachments.push({ name: originalFilename, size: file.size, type: file.type, path: storageKey });
+      } catch (err) { console.error("File upload failed:", err); }
+    }
+    setPendingAttachments(prev => [...prev, ...newAttachments]);
+    setIsUploading(false);
+    if (chatFileRef.current) chatFileRef.current.value = "";
+  }, []);
+
+  const removePendingAttachment = useCallback((idx: number) => {
+    setPendingAttachments(prev => prev.filter((_, i) => i !== idx));
+  }, []);
 
   // Build asset context string for AI
   const assetContextStr = useMemo(() => {
