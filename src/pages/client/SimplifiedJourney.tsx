@@ -850,18 +850,23 @@ export default function SimplifiedJourney() {
                     <span className="text-muted-foreground">مستخدمو التقرير</span>
                     <span className="font-medium text-foreground">{intendedUsers === "other" ? intendedUsersOther : USERS_OPTIONS[intendedUsers]}</span>
                   </div>
-                  {scopeData.realEstate > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">عقارات</span>
-                      <Badge variant="secondary" className="text-[10px]">{scopeData.realEstate}</Badge>
-                    </div>
-                  )}
-                  {scopeData.machinery > 0 && (
-                    <div className="flex justify-between text-xs">
-                      <span className="text-muted-foreground">معدات / آلات</span>
-                      <Badge variant="secondary" className="text-[10px]">{scopeData.machinery}</Badge>
-                    </div>
-                  )}
+                  {(() => {
+                    const TYPE_AR: Record<string, string> = {
+                      real_estate: "عقارات", machinery_equipment: "آلات ومعدات",
+                      right_of_use: "حقوق استخدام (إيجار)", vehicle: "مركبات",
+                      furniture: "أثاث ومفروشات", it_equipment: "أجهزة تقنية",
+                      intangible: "أصول غير ملموسة", leasehold_improvements: "تحسينات مستأجرة",
+                      medical_equipment: "أجهزة طبية",
+                    };
+                    const counts: Record<string, number> = {};
+                    for (const a of (scopeData.assets || [])) counts[a.asset_type] = (counts[a.asset_type] || 0) + 1;
+                    return Object.entries(counts).map(([type, count]) => (
+                      <div key={type} className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">{TYPE_AR[type] || type}</span>
+                        <Badge variant="secondary" className="text-[10px]">{count}</Badge>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 <div className="flex gap-3">
