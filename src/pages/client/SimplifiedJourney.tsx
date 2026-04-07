@@ -784,19 +784,33 @@ export default function SimplifiedJourney() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Summary row */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
                     <p className="text-xs text-muted-foreground">الأصول المستخرجة</p>
                     <p className="text-2xl font-bold text-foreground">{scopeData.assets?.length || 0}</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
-                    <p className="text-xs text-muted-foreground">المنهج المقترح</p>
-                    <p className="text-xs font-semibold text-foreground mt-1">{scopeData.approach}</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
                     <p className="text-xs text-muted-foreground">المستندات</p>
                     <p className="text-2xl font-bold text-foreground">{uploadedFiles.length}</p>
                   </div>
+                  {/* Dynamic type breakdown */}
+                  {(() => {
+                    const typeCounts: Record<string, number> = {};
+                    const TYPE_AR: Record<string, string> = {
+                      real_estate: "عقارات", machinery_equipment: "آلات ومعدات",
+                      right_of_use: "حقوق استخدام", vehicle: "مركبات",
+                      furniture: "أثاث", it_equipment: "أجهزة تقنية",
+                      intangible: "غير ملموسة", leasehold_improvements: "تحسينات",
+                      medical_equipment: "أجهزة طبية",
+                    };
+                    for (const a of (scopeData.assets || [])) typeCounts[a.asset_type] = (typeCounts[a.asset_type] || 0) + 1;
+                    return Object.entries(typeCounts).map(([type, count]) => (
+                      <div key={type} className="bg-muted/50 rounded-lg p-3 border border-border text-center">
+                        <p className="text-xs text-muted-foreground">{TYPE_AR[type] || type}</p>
+                        <p className="text-2xl font-bold text-primary">{count}</p>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 {/* Assets detail table */}
