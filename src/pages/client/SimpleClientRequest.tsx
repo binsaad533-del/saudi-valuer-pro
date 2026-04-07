@@ -824,7 +824,7 @@ export default function SimpleClientRequest() {
           </div>
 
           {/* ── العمود الأيسر: نوع الأصل + زر المتابعة ── */}
-          <div className="lg:col-span-2 space-y-5">
+          <div className="space-y-5">
             {uploadedFiles.length > 0 ? (
               <Card>
                 <CardContent className="p-5 space-y-3">
@@ -953,20 +953,39 @@ export default function SimpleClientRequest() {
               </Card>
             ) : null}
 
-            <Button
-              onClick={handleStartAnalysis}
-              className="w-full gap-2"
-              size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType}
-            >
+            <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
+              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType}>
               <Sparkles className="w-4 h-4" />
               متابعة — تحليل الملفات ومراجعة الجرد
             </Button>
 
-            <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-              سيتم تحليل ملفاتك واستخراج قائمة الأصول لمراجعتها قبل إرسال الطلب النهائي.
-              <br />لن يتم إنشاء الطلب إلا بعد اعتمادك للتحليل.
-            </p>
+            {/* نصائح */}
+            <Card className="bg-muted/30 border-dashed">
+              <CardContent className="p-4 space-y-3">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 text-primary" />
+                  نصائح لأفضل نتائج
+                </p>
+                <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                    <span>ارفع ملف Excel مُنظّم بأعمدة واضحة (اسم الأصل، الكمية، الحالة)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                    <span>أرفق صور عالية الجودة من عدة زوايا لكل أصل</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                    <span>أضف صكوك الملكية أو عقود الإيجار إن وُجدت</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle className="w-3 h-3 text-primary shrink-0 mt-0.5" />
+                    <span>حدد الغرض من التقييم في الملاحظات (بيع، تمويل، تأمين...)</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
