@@ -149,14 +149,18 @@ export default function SimpleClientRequest() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
       setUser(user);
-      // Fetch client name for Raqeem greeting
+      // Fetch client info for pre-filling
       const { data: clientRow } = await supabase
         .from("clients")
-        .select("name_ar")
+        .select("name_ar, phone, email, id_number")
         .eq("portal_user_id", user.id)
         .maybeSingle();
       if (clientRow?.name_ar) setClientName(clientRow.name_ar);
-      else setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
+      if (clientRow?.name_ar) setClientNameInput(clientRow.name_ar);
+      if (clientRow?.phone) setClientPhone(clientRow.phone);
+      if (clientRow?.email) setClientEmail(clientRow.email);
+      if (clientRow?.id_number) setClientIdNumber(clientRow.id_number);
+      if (!clientRow?.name_ar) setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
     };
     checkAuth();
   }, [navigate]);
