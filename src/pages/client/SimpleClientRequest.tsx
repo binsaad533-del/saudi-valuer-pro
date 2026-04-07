@@ -998,6 +998,10 @@ export default function SimpleClientRequest() {
                       <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                       <span>صكوك الملكية وعقود الإيجار إن وُجدت</span>
                     </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                      <span>حدد الموقع بدقة — الموقع عامل أساسي في التقييم</span>
+                    </li>
                   </ul>
                 </div>
 
