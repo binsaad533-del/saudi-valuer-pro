@@ -253,7 +253,6 @@ export default function ExecutiveDashboard() {
                           <td className="px-4 py-3 font-medium text-foreground">
                             {req.clients?.name_ar || req.client_name_ar || "طلب جديد"}
                           </td>
-                          </td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {purposeLabel[req.purpose] || req.purpose || "—"}
                           </td>
