@@ -277,7 +277,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
 
-  const typeInfo = ASSET_TYPE_MAP[data.confirmedType];
+  
 
   // Initialize chat
   useEffect(() => {
