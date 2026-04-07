@@ -828,7 +828,7 @@ export default function SimpleClientRequest() {
                 <div className="border-t border-border/50 pt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                    <Select value={purpose} onValueChange={setPurpose}>
+                    <Select value={purpose} onValueChange={(v) => { setPurpose(v); if (v !== "other") setPurposeOther(""); }}>
                       <SelectTrigger className="text-sm">
                         <SelectValue placeholder="اختر الغرض" />
                       </SelectTrigger>
@@ -838,10 +838,14 @@ export default function SimpleClientRequest() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {purpose === "other" && (
+                      <Input value={purposeOther} onChange={e => setPurposeOther(e.target.value)}
+                        placeholder="حدد الغرض..." className="text-sm mt-1.5" />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">المستخدم المستهدف</Label>
-                    <Select value={intendedUser} onValueChange={setIntendedUser}>
+                    <Select value={intendedUser} onValueChange={(v) => { setIntendedUser(v); if (v !== "other") setIntendedUserOther(""); }}>
                       <SelectTrigger className="text-sm">
                         <SelectValue placeholder="اختر المستخدم" />
                       </SelectTrigger>
@@ -851,6 +855,10 @@ export default function SimpleClientRequest() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {intendedUser === "other" && (
+                      <Input value={intendedUserOther} onChange={e => setIntendedUserOther(e.target.value)}
+                        placeholder="حدد المستخدم..." className="text-sm mt-1.5" />
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs text-muted-foreground">نوع التقييم</Label>
