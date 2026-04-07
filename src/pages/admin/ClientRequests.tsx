@@ -31,11 +31,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.f
 );
 
 const ADMIN_TABS = [
-  { value: "intake", label: "الاستقبال", statuses: ["draft", "client_submitted", "under_ai_review", "awaiting_client_info"] },
-  { value: "pricing", label: "التسعير", statuses: ["priced", "awaiting_payment_initial", "payment_received_initial"] },
-  { value: "inspection", label: "المعاينة", statuses: ["inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted"] },
-  { value: "valuation", label: "التقييم والتقرير", statuses: ["valuation_in_progress", "draft_report_ready", "under_client_review", "revision_in_progress"] },
-  { value: "final", label: "الإصدار", statuses: ["awaiting_final_payment", "final_payment_received", "report_issued", "closed"] },
+  { value: "intake", label: "الاستقبال", statuses: ["draft", "ai_review", "submitted", "client_submitted", "under_ai_review", "awaiting_client_info", "needs_clarification"] },
+  { value: "pricing", label: "التسعير", statuses: ["under_pricing", "priced", "quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment_initial", "payment_received_initial"] },
+  { value: "payment", label: "الدفع", statuses: ["awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid"] },
+  { value: "production", label: "الإنتاج", statuses: ["in_production", "inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted", "valuation_in_progress", "draft_report_ready", "draft_report_sent", "under_client_review", "client_comments", "revision_in_progress"] },
+  { value: "final", label: "الإصدار", statuses: ["final_payment_pending", "final_payment_uploaded", "final_payment_approved", "awaiting_final_payment", "final_payment_received", "final_report_ready", "report_issued", "completed", "closed", "archived", "cancelled"] },
 ];
 
 export default function ClientRequests() {
@@ -276,8 +276,8 @@ export default function ClientRequests() {
         <Badge variant="secondary" className="text-sm">{requests.length} طلب</Badge>
       </div>
 
-      <Tabs defaultValue="new" dir="rtl">
-        <TabsList className="grid w-full grid-cols-7 h-auto">
+      <Tabs defaultValue="intake" dir="rtl">
+        <TabsList className="grid w-full grid-cols-6 h-auto">
           {ADMIN_TABS.map(tab => {
             const count = requests.filter(r => tab.statuses.includes(r.status)).length;
             return (
@@ -303,7 +303,8 @@ export default function ClientRequests() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Building2 className="w-4 h-4 text-primary" />
-                          <span className="font-medium text-sm">{req.property_description_ar || "طلب تقييم"}</span>
+                          <span className="font-semibold text-sm">{req.clients?.name_ar || req.client_name_ar || "طلب تقييم"}</span>
+                          <span className="text-xs text-muted-foreground">— {req.property_description_ar || ""}</span>
                           {req.reference_number && <span className="text-xs text-muted-foreground font-mono" dir="ltr">{req.reference_number}</span>}
                         </div>
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
