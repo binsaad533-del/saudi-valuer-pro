@@ -13,7 +13,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationHistory, assetContext, assetDetails } = await req.json();
+    const { message, conversationHistory, assetContext, assetDetails, attachments } = await req.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: "الرسالة مطلوبة" }), {
@@ -68,6 +68,17 @@ serve(async (req) => {
       assetDetailsSection = `\n\n## تفاصيل الأصول المستخرجة من ملفات العميل (هذه البيانات الفعلية — ارجع إليها عند أي سؤال عن الأصول)\n${assetDetails}`;
     }
 
+    // ── Build attachments section ──
+    let attachmentsSection = "";
+    if (attachments && Array.isArray(attachments) && attachments.length > 0) {
+      attachmentsSection = `\n\n## مرفقات أرسلها العميل في هذه الرسالة (${attachments.length} ملف)\n`;
+      for (const att of attachments) {
+        const sizeKB = att.size ? `${Math.round(att.size / 1024)} KB` : "غير محدد";
+        attachmentsSection += `• ${att.name} (${att.type || "نوع غير محدد"}, ${sizeKB})\n`;
+      }
+      attachmentsSection += `\nملاحظة: هذه المرفقات تم رفعها بنجاح وسيتم ربطها بملف الطلب. إذا كانت تحتوي على أصول إضافية، أخبر العميل أنها ستُضاف للمراجعة. إذا كانت مستندات داعمة (عقود، صكوك، تقارير سابقة)، أكّد استلامها وأوضح أنها ستُرفق بملف التقييم.`;
+    }
+
     // ── Build system prompt ──
     const systemPrompt = `أنت "رقيم" — مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation). أنت لست مجرد مساعد عام — أنت خبير في تقييم الأصول (عقارات وآلات ومعدات) وتفهم المعايير المهنية بعمق.
 
@@ -95,6 +106,7 @@ serve(async (req) => {
 - توضيح آلية كشف التكرارات: مطابقة (الاسم + التصنيف + المصدر) وحذف النسخ المتكررة
 - الإجابة عن أسئلة التسعير والمنهجية والمعايير من قاعدة المعرفة
 - مناقشة تفاصيل الآلات والمعدات: حالتها، عمرها، عوامل التقييم
+- **التعامل مع المرفقات**: عندما يرسل العميل مرفقات، أكّد استلامها باسم الملف ونوعه. إذا كانت جداول أو قوائم أصول، أوضح أنها ستُضاف للمراجعة. إذا كانت مستندات داعمة (صكوك، عقود، تقارير)، أكّد أنها ستُرفق بملف التقييم وأوضح فائدتها للعملية.
 
 ## قواعد الاستبعاد (ارجع إليها عند السؤال عن "لماذا تم استبعاد...")
 - الأصول غير الملموسة (شهرة، علامات تجارية، براءات، برمجيات) → IVS 210 — تتطلب ترخيص منشآت اقتصادية
@@ -105,6 +117,7 @@ serve(async (req) => {
 ## سياق الأصول الحالية
 ${assetContext || "لا يوجد سياق أصول حالياً"}
 ${assetDetailsSection}
+${attachmentsSection}
 ${correctionsSection}
 ${knowledgeSection}
 

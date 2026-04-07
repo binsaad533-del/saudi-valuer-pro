@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildSafeStorageObject } from "@/lib/storage-path";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +12,7 @@ import {
 import {
   CheckCircle, Cog, Sparkles, Building2,
   Shield, ArrowRight, Package, FileCheck, Send,
-  FileText, AlertCircle, Eye,
+  FileText, AlertCircle, Eye, Paperclip, Loader2, X,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -456,6 +457,14 @@ function sourceLabel(s?: AssetSourceInfo): string {
   return `${icon} ${s.file_name?.slice(0, 15) ?? "ملف"}`;
 }
 
+// ── Chat attachment ──
+interface ChatAttachment {
+  name: string;
+  size: number;
+  type: string;
+  path: string;
+}
+
 // ── Chat message ──
 interface ChatMessage {
   id: string;
@@ -463,6 +472,7 @@ interface ChatMessage {
   text: string;
   questionData?: SmartQuestion;
   timestamp: number;
+  attachments?: ChatAttachment[];
 }
 
 // ── Status badge ──
@@ -503,9 +513,35 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
   const [freeText, setFreeText] = useState("");
+  const chatFileRef = useRef<HTMLInputElement>(null);
+  const [pendingAttachments, setPendingAttachments] = useState<ChatAttachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Track if AI is thinking
   const [isThinking, setIsThinking] = useState(false);
+
+  // ── Chat file upload handler ──
+  const handleChatFileUpload = useCallback(async (fileList: FileList) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    setIsUploading(true);
+    const newAttachments: ChatAttachment[] = [];
+    for (const file of Array.from(fileList)) {
+      try {
+        const { storageKey, originalFilename } = buildSafeStorageObject({ userId: user.id, originalFilename: file.name });
+        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
+        if (error) { console.error("Upload error:", error); continue; }
+        newAttachments.push({ name: originalFilename, size: file.size, type: file.type, path: storageKey });
+      } catch (err) { console.error("File upload failed:", err); }
+    }
+    setPendingAttachments(prev => [...prev, ...newAttachments]);
+    setIsUploading(false);
+    if (chatFileRef.current) chatFileRef.current.value = "";
+  }, []);
+
+  const removePendingAttachment = useCallback((idx: number) => {
+    setPendingAttachments(prev => prev.filter((_, i) => i !== idx));
+  }, []);
 
   // Build asset context string for AI
   const assetContextStr = useMemo(() => {
@@ -560,18 +596,31 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     return lines.join("\n");
   }, [duplicateNames, removedCount, autoApproved, excluded, flagged]);
 
-  // Free-text message from client
+  // Free-text message from client (with optional attachments)
   const handleFreeTextSend = useCallback(async () => {
-    if (!freeText.trim() || isThinking) return;
+    const hasText = freeText.trim().length > 0;
+    const hasFiles = pendingAttachments.length > 0;
+    if ((!hasText && !hasFiles) || isThinking) return;
+
     const text = freeText.trim();
+    const attachments = [...pendingAttachments];
     setFreeText("");
+    setPendingAttachments([]);
+
+    // Build display text
+    const fileNames = attachments.map(a => a.name);
+    const displayText = hasText && hasFiles
+      ? `${text}\n📎 مرفقات: ${fileNames.join("، ")}`
+      : hasText ? text
+        : `📎 مرفقات: ${fileNames.join("، ")}`;
 
     // Add client message
     setMessages(prev => [...prev, {
       id: `client-${Date.now()}`,
       type: "answer",
-      text,
+      text: displayText,
       timestamp: Date.now(),
+      attachments,
     }]);
 
     // Show thinking indicator
@@ -580,10 +629,11 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     try {
       const { data: fnData } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
-          message: text,
+          message: text || `العميل أرسل مرفقات: ${fileNames.join("، ")}`,
           conversationHistory: messages.filter(m => m.type === "answer" || m.type === "system").slice(-12),
           assetContext: assetContextStr,
           assetDetails: assetDetailsStr,
+          attachments: attachments.map(a => ({ name: a.name, type: a.type, size: a.size, path: a.path })),
         },
       });
 
@@ -597,8 +647,12 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       }]);
 
       // Store as additional note if it seems like client feedback
-      if (!["من أنتم", "ترخيص", "تواصل", "خدمات", "سلام", "هلا", "شكرا"].some(k => text.includes(k))) {
+      if (hasText && !["من أنتم", "ترخيص", "تواصل", "خدمات", "سلام", "هلا", "شكرا"].some(k => text.includes(k))) {
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
+      }
+      // Always note attachments
+      if (hasFiles) {
+        setAdditionalNotes(prev => prev ? `${prev}\nمرفقات إضافية: ${fileNames.join("، ")}` : `مرفقات إضافية: ${fileNames.join("، ")}`);
       }
     } catch (err) {
       console.error("Raqeem chat error:", err);
@@ -611,7 +665,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     } finally {
       setIsThinking(false);
     }
-  }, [freeText, isThinking, messages, assetContextStr, assetDetailsStr]);
+  }, [freeText, isThinking, messages, assetContextStr, assetDetailsStr, pendingAttachments]);
 
 
   // Compute initial excluded from processed data
@@ -883,16 +937,46 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
               </div>
             )}
 
-            {/* Free-text input bar */}
-            <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-muted/20">
+            {/* Pending attachments preview */}
+            {pendingAttachments.length > 0 && (
+              <div className="px-3 pt-2 flex flex-wrap gap-1.5 border-t border-border bg-muted/10">
+                {pendingAttachments.map((att, idx) => (
+                  <div key={idx} className="flex items-center gap-1 bg-primary/10 text-primary rounded-full px-2.5 py-1 text-[10px]">
+                    <Paperclip className="w-3 h-3" />
+                    <span className="max-w-[120px] truncate">{att.name}</span>
+                    <button onClick={() => removePendingAttachment(idx)} className="hover:text-destructive">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Free-text input bar with attachment button */}
+            <div className="flex items-center gap-1.5 px-3 py-2 border-t border-border bg-muted/20">
+              <button
+                onClick={() => chatFileRef.current?.click()}
+                disabled={isUploading || isThinking}
+                className="h-8 w-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors shrink-0 disabled:opacity-40"
+                title="إرفاق ملف"
+              >
+                {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
+              </button>
+              <input
+                ref={chatFileRef}
+                type="file"
+                multiple
+                className="hidden"
+                onChange={e => e.target.files && handleChatFileUpload(e.target.files)}
+              />
               <Input
                 value={freeText}
                 onChange={e => setFreeText(e.target.value)}
-                placeholder="اكتب سؤالك أو ملاحظتك لرقيم..."
+                placeholder={pendingAttachments.length > 0 ? "أضف رسالة مع المرفقات..." : "اكتب سؤالك أو ملاحظتك لرقيم..."}
                 className="h-8 text-[12px] flex-1 bg-background"
-                onKeyDown={e => { if (e.key === "Enter" && freeText.trim() && !isThinking) handleFreeTextSend(); }}
+                onKeyDown={e => { if (e.key === "Enter" && (freeText.trim() || pendingAttachments.length > 0) && !isThinking) handleFreeTextSend(); }}
               />
-              <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={!freeText.trim() || isThinking} onClick={handleFreeTextSend}>
+              <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={(!freeText.trim() && pendingAttachments.length === 0) || isThinking} onClick={handleFreeTextSend}>
                 <Send className="w-3.5 h-3.5" />
               </Button>
             </div>
