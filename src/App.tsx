@@ -10,6 +10,8 @@ import ClientLayout from "@/components/layout/ClientLayout";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
 import Dashboard from "@/pages/Dashboard";
 import ExecutiveDashboard from "@/pages/ExecutiveDashboard";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import ValuationsList from "@/pages/ValuationsList";
 import NewValuation from "@/pages/NewValuation";
 
@@ -69,7 +71,11 @@ import FieldInspectionPage from "@/pages/FieldInspectionPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
-const OWNER_ONLY_ROLES = ["owner", "admin_coordinator"];
+function ExecutiveDashboardOrRedirect() {
+  const { role } = useAuth();
+  if (role === "financial_manager") return <Navigate to="/cfo-dashboard" replace />;
+  return <ExecutiveDashboard />;
+}
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
