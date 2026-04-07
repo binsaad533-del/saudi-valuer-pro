@@ -68,7 +68,20 @@ export default function PaymentCheckout({ request, paymentStage, onPaymentComple
 
       if (simResult?.status === "paid") {
         setPaymentResult("success");
-        toast({ title: "✅ تم الدفع بنجاح", description: `تم دفع ${formatNumber(amount)} ر.س - ${stageLabel}` });
+        toast({ title: "✅ تم الدفع بنجاح (وضع تجريبي)", description: `تم دفع ${formatNumber(amount)} ر.س - ${stageLabel}` });
+
+        // Auto-advance workflow using simulated action_type
+        if (request.assignment_id) {
+          const targetStatus = paymentStage === "first" ? "first_payment_confirmed" : "final_payment_confirmed";
+          const { data: wfResult } = await supabase.rpc("update_request_status", {
+            _assignment_id: request.assignment_id,
+            _new_status: targetStatus,
+            _action_type: "simulated",
+            _reason: `دفع تجريبي - ${stageLabel} - ${formatNumber(amount)} ر.س`,
+          });
+          console.log("Simulated workflow transition:", wfResult);
+        }
+
         setTimeout(() => onPaymentComplete(), 1500);
       } else if (simResult?.status === "failed") {
         setPaymentResult("failed");
