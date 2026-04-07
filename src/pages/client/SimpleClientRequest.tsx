@@ -907,14 +907,7 @@ export default function SimpleClientRequest() {
                   )}
                 </CardContent>
               </Card>
-            ) : (
-              <Card>
-                <CardContent className="p-8 text-center">
-                  <Upload className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">ارفع الملفات أولاً لتحديد نوع الأصل تلقائياً</p>
-                </CardContent>
-              </Card>
-            )}
+            ) : null}
 
             <Button
               onClick={handleStartAnalysis}
