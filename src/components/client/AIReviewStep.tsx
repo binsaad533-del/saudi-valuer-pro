@@ -626,7 +626,6 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
             )}
           </CardContent>
         </Card>
-      )}
 
       {/* ── 4. Stats footer ── */}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground bg-muted/30 rounded-lg px-3 py-1.5 border border-border/30">
