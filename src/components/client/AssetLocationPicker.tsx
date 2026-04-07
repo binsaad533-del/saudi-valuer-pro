@@ -423,7 +423,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
               </>
             )}
           </div>
-        ) : (
+        ) : !atLimit ? (
           <Button
             variant="outline"
             size="sm"
@@ -433,6 +433,8 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
             <Plus className="w-3.5 h-3.5" />
             {locations.length === 0 ? "إضافة موقع الأصل" : "إضافة موقع آخر"}
           </Button>
+        ) : (
+          <p className="text-[11px] text-amber-600 bg-amber-50 rounded-md px-2 py-1 text-center">تم الوصول للحد الأقصى ({maxLocations} موقع)</p>
         )}
       </CardContent>
     </Card>
