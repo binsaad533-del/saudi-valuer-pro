@@ -518,21 +518,67 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     // Raqeem auto-reply — knowledge-grounded, every answer has a reference
     setTimeout(() => {
       let reply = "";
+      const lowerText = text.toLowerCase();
 
-      // Check if asking about excluded items
+      // Check categories
       const excludedKeywords = ["مستبعد", "استبعاد", "ليش", "لماذا", "سبب", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"];
       const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
 
-      // Check if asking about methodology / approach
+      const aboutUsKeywords = ["من أنتم", "من انتم", "عن الشركة", "عن جساس", "عن جسّاس", "من نحن", "تعريف", "نبذة", "about"];
+      const isAskingAboutUs = aboutUsKeywords.some(k => lowerText.includes(k));
+
       const methodKeywords = ["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"];
       const isAskingMethod = methodKeywords.some(k => text.includes(k));
 
-      // Check if asking about license / credentials
-      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "تقييم", "هيئة", "مؤهل"];
+      const licenseKeywords = ["ترخيص", "مرخص", "رخصة", "هيئة", "مؤهل", "شهادة"];
       const isAskingLicense = licenseKeywords.some(k => text.includes(k));
+
+      const contactKeywords = ["تواصل", "رقم", "هاتف", "جوال", "إيميل", "بريد", "عنوان", "موقع"];
+      const isAskingContact = contactKeywords.some(k => text.includes(k));
+
+      const purposeKeywords = ["أغراض", "غرض", "ليش أقيم", "متى أحتاج", "فايدة التقييم"];
+      const isAskingPurpose = purposeKeywords.some(k => text.includes(k));
 
       if (isAskingAboutExcluded && excluded.length > 0) {
         reply = buildExclusionReply(excluded.length);
+      } else if (isAskingAboutUs) {
+        reply = `${COMPANY.name_ar} (${COMPANY.name_en})
+${COMPANY.legal_form}
+
+📌 الرؤية: ${COMPANY.vision}
+📌 الرسالة: ${COMPANY.mission}
+📌 القيم: ${COMPANY.values}
+
+🏢 الرئيس التنفيذي: ${COMPANY.ceo}
+📍 المقر: ${COMPANY.address}
+🌐 الموقع: ${COMPANY.website}
+
+🏅 الاعتمادات:
+${COMPANY.accreditations.map(a => `• ${a}`).join("\n")}
+
+📊 الإنجازات:
+• تقييم أكثر من ${COMPANY.achievements.total_assets_valued}
+• بقيمة إجمالية تجاوزت ${COMPANY.achievements.total_value}
+
+💪 مرتكزات التميز:
+${COMPANY.strengths.map(s => `• ${s}`).join("\n")}
+
+📖 السجل التجاري: ${COMPANY.cr_number}`;
+      } else if (isAskingContact) {
+        reply = `📞 معلومات التواصل — ${COMPANY.name_ar}:
+
+• الهاتف الموحد: ${COMPANY.phone}
+• الجوال: ${COMPANY.mobile}
+• البريد: ${COMPANY.email}
+• الموقع: ${COMPANY.website}
+• العنوان: ${COMPANY.address}`;
+      } else if (isAskingPurpose) {
+        reply = `أغراض التقييم المعتمدة:
+
+${COMPANY.valuation_purposes.map(p => `• ${p}`).join("\n")}
+
+📖 المرجع: IVS 104 — Scope of Work
+"يجب تحديد غرض التقييم بوضوح في نطاق العمل"`;
       } else if (isAskingMethod) {
         reply = `نعتمد في التقييم على المنهجيات المعتمدة دولياً:
 
@@ -545,13 +591,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
       } else if (isAskingLicense) {
         const branchDetails = COMPANY.branches.map(b =>
-          `• ${b.name}\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}`
+          `• ${b.name} (${b.name_en})\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}\n  صالح حتى: ${b.expiry}`
         ).join("\n");
         reply = `${COMPANY.name_ar} مرخصة من ${COMPANY.authority}:
 
 ${branchDetails}
 
 السجل التجاري: ${COMPANY.cr_number}
+الرقم الموحد: ${COMPANY.unified_number}
 
 📖 المرجع: ${KB_LICENSE.article}
 "${KB_LICENSE.principle}"`;
