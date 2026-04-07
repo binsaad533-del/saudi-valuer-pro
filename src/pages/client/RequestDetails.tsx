@@ -442,6 +442,17 @@ export default function RequestDetails() {
               </Card>
             )}
 
+            {/* Data Portal - بوابة البيانات */}
+            <DataPortalUploader
+              requestId={id!}
+              inspectionType={deriveInspectionType(
+                request.inspection_type || request.ai_intake_summary?.valuation_mode || "field",
+                (request.inspection_type === "desktop_with_photos") || undefined
+              )}
+              status={request.status}
+              onUploadComplete={loadData}
+            />
+
             {showQuotation && (
               <Card className="shadow-card border-primary/20">
                 <CardHeader className="pb-3">
