@@ -612,7 +612,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isThinking]);
 
   const resolveAssets = useCallback((ids: number[], status: "permitted" | "not_permitted", reason: string, updates?: Partial<ExtractedAsset>) => {
     setAssets(prev => prev.map(a => {
