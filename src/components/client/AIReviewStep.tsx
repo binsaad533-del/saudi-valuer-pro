@@ -8,11 +8,11 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
-  CheckCircle, XCircle, AlertTriangle, Building2, Cog, Sparkles,
-  Shield, ArrowRight, Package, FileCheck, Edit3,
+  CheckCircle, XCircle, Building2, Cog, Sparkles,
+  Shield, ArrowRight, Package, FileCheck,
   FileText, Image, Table2, Eye, AlertOctagon, MessageCircleQuestion,
   ChevronLeft,
 } from "lucide-react";
