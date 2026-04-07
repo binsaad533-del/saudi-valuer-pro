@@ -5359,6 +5359,7 @@ export type Database = {
           portfolio_scope_confirmed: boolean | null
           portfolio_scope_en: string | null
           production_started_at: string | null
+          professional_judgment: Json | null
           property_address_ar: string | null
           property_address_en: string | null
           property_city_ar: string | null
@@ -5443,6 +5444,7 @@ export type Database = {
           portfolio_scope_confirmed?: boolean | null
           portfolio_scope_en?: string | null
           production_started_at?: string | null
+          professional_judgment?: Json | null
           property_address_ar?: string | null
           property_address_en?: string | null
           property_city_ar?: string | null
@@ -5527,6 +5529,7 @@ export type Database = {
           portfolio_scope_confirmed?: boolean | null
           portfolio_scope_en?: string | null
           production_started_at?: string | null
+          professional_judgment?: Json | null
           property_address_ar?: string | null
           property_address_en?: string | null
           property_city_ar?: string | null
