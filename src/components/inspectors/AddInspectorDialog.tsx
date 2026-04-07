@@ -56,47 +56,20 @@ export default function AddInspectorDialog({ onCreated }: Props) {
 
     setLoading(true);
     try {
-      // 1. Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name_ar: fullName },
+      const { data, error } = await supabase.functions.invoke("create-staff-account", {
+        body: {
+          email,
+          password,
+          full_name_ar: fullName,
+          phone: phone || null,
+          role: "inspector",
+          city: city || null,
+          specialization: specialization || null,
         },
       });
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("فشل إنشاء المستخدم");
 
-      const userId = authData.user.id;
-
-      // 2. Create profile
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        user_id: userId,
-        full_name_ar: fullName,
-        email,
-        phone: phone || null,
-        user_type: "inspector",
-        account_status: "active",
-        is_active: true,
-      }, { onConflict: "user_id" });
-      if (profileError) console.error("Profile error:", profileError);
-
-      // 3. Assign inspector role
-      const { error: roleError } = await supabase.from("user_roles").upsert({
-        user_id: userId,
-        role: "inspector" as any,
-      }, { onConflict: "user_id,role" });
-      if (roleError) console.error("Role error:", roleError);
-
-      // 4. Create inspector profile
-      const { error: inspError } = await supabase.from("inspector_profiles").insert({
-        user_id: userId,
-        is_active: true,
-        availability_status: "available",
-        cities_ar: city ? [city] : [],
-        specializations: specialization ? [specialization] : [],
-      });
-      if (inspError) console.error("Inspector profile error:", inspError);
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       toast({ title: "تم بنجاح", description: `تم إنشاء حساب المعاين ${fullName}` });
       resetForm();
