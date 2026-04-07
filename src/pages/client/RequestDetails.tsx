@@ -394,6 +394,51 @@ export default function RequestDetails() {
               </Card>
             )}
 
+            {/* SOW Approval */}
+            {showSOW && (
+              <Card className="shadow-card border-primary/20">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="w-4 h-4 text-primary" />نطاق العمل</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="p-3 bg-primary/5 rounded-lg space-y-3 max-h-64 overflow-y-auto">
+                    <p className="text-xs text-foreground whitespace-pre-line leading-6">{request.scope_of_work_ar}</p>
+                  </div>
+                  {request.sow_special_assumptions_ar && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                      <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-1">الافتراضات الخاصة:</p>
+                      <p className="text-xs text-amber-700 dark:text-amber-300 whitespace-pre-line leading-5">{request.sow_special_assumptions_ar}</p>
+                    </div>
+                  )}
+                  <div className="border-t border-border pt-3 space-y-2">
+                    <p className="text-xs text-muted-foreground">بالموافقة على نطاق العمل، أقر بأنني اطلعت على الافتراضات والمحددات وأوافق عليها.</p>
+                    <div className="flex gap-2">
+                      <Button className="flex-1" size="sm" onClick={async () => {
+                        setSending(true);
+                        try {
+                          await supabase.from("valuation_requests" as any).update({
+                            status: "sow_approved" as any,
+                            sow_signed_at: new Date().toISOString(),
+                          } as any).eq("id", id!);
+                          await supabase.from("request_messages" as any).insert({
+                            request_id: id!, sender_type: "system" as any,
+                            content: "✅ تم اعتماد نطاق العمل والتوقيع الإلكتروني من قبل العميل",
+                          });
+                          toast({ title: "تم اعتماد نطاق العمل بنجاح" });
+                          loadData();
+                        } catch (err: any) {
+                          toast({ title: "خطأ", description: err.message, variant: "destructive" });
+                        } finally {
+                          setSending(false);
+                        }
+                      }} disabled={sending}>
+                        <CheckCircle className="w-3 h-3 ml-1" />موافقة وتوقيع إلكتروني
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
             {showQuotation && (
               <Card className="shadow-card border-primary/20">
                 <CardHeader className="pb-3">
