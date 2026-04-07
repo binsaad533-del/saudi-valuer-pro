@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   CheckCircle, XCircle, AlertTriangle, Building2, Cog, Sparkles,
-  Shield, Trash2, Edit3, Send, ArrowRight, Package, Eye, Ban,
+  Shield, Trash2, Edit3, ArrowRight, Package, Ban,
   HelpCircle, FileCheck, ChevronDown, ChevronUp,
 } from "lucide-react";
 
