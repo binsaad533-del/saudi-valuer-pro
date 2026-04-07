@@ -830,7 +830,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                   <TableCell className="py-1.5">
                     <span className="text-[11px] font-medium">{asset.name || "—"}</span>
                   </TableCell>
-                  <TableCell className="py-1.5">
+                  <TableCell className="py-1.5 whitespace-nowrap">
                     <span className="text-[10px] text-muted-foreground">{TYPE_LABELS[asset.category] || TYPE_LABELS[asset.type] || asset.category || (asset.type === "both" ? "—" : asset.type) || "—"}</span>
                   </TableCell>
                   <TableCell className="text-[11px] py-1.5">{asset.quantity}</TableCell>
