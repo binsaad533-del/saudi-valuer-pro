@@ -56,11 +56,34 @@ interface Props {
   onBack: () => void;
 }
 
+// ── Company Identity & Credentials ──
+const COMPANY = {
+  name_ar: "جساس للتقييم",
+  cr_number: "1010625839",
+  branches: [
+    {
+      name: "تقييم العقارات",
+      license: "1210001217",
+      fellowship: "1210001217",
+      label: "ترخيص وعضوية زمالة",
+    },
+    {
+      name: "تقييم الآلات والمعدات",
+      license: "4114000015",
+      fellowship: "4210000041",
+      label: "ترخيص + عضوية زمالة",
+    },
+  ],
+  authority: "الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  permitted_assets: ["عقارات", "أراضي", "مباني", "فلل", "شقق", "آلات", "معدات", "مركبات", "أثاث", "أجهزة"],
+  excluded_scope: "تقييم المنشآت الاقتصادية (Business Valuation) — يتطلب ترخيصاً مستقلاً لا تملكه الشركة حالياً",
+};
+
 // ── Professional Knowledge References ──
 interface KnowledgeRef {
-  source: string;     // e.g. "IVS 400", "RICS Red Book"
-  article: string;    // e.g. "الفقرة 40.1"
-  principle: string;  // Arabic explanation
+  source: string;
+  article: string;
+  principle: string;
 }
 
 const KB_INTANGIBLE: KnowledgeRef = {
@@ -82,7 +105,7 @@ const KB_FINANCIAL: KnowledgeRef = {
 };
 
 const KB_LICENSE: KnowledgeRef = {
-  source: "نظام المقيمين المعتمدين — الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+  source: `نظام المقيمين المعتمدين — ${COMPANY.authority}`,
   article: "المادة 5 — فروع التقييم",
   principle: "يُرخص للمقيم في فروع محددة: العقار، الآلات والمعدات، المنشآت الاقتصادية، أو أضرار المركبات. لا يجوز ممارسة التقييم في فرع غير مرخص فيه",
 };
