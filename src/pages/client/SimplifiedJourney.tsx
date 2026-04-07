@@ -395,7 +395,7 @@ export default function SimplifiedJourney() {
 
       // Store excel assets to merge later when polling completes
       if (excelAssets.length > 0) {
-        setScopeData((prev: any) => ({ ...prev, _pendingExcelAssets: excelAssets }));
+        pendingExcelAssetsRef.current = excelAssets;
       }
     } catch (err: any) {
       console.error("Processing error:", err);
@@ -463,7 +463,7 @@ export default function SimplifiedJourney() {
           }));
 
           // Merge with any pending Excel assets
-          const pendingExcel = scopeData?._pendingExcelAssets || [];
+          const pendingExcel = pendingExcelAssetsRef.current;
           const allAssets = [...pendingExcel, ...aiAssets];
 
           const realEstate = allAssets.filter(a => a.asset_type === "real_estate").length;
