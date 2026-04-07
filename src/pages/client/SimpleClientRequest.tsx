@@ -484,9 +484,9 @@ export default function SimpleClientRequest() {
                 </div>
 
                 {detectionConfidence < 60 && (
-                  <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                    <p className="text-[10px] text-amber-700 dark:text-amber-400">
+                  <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+                    <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-destructive">
                       ثقة التصنيف منخفضة — سيتم التحقق من قبل فريق التقييم بعد الإرسال
                     </p>
                   </div>
