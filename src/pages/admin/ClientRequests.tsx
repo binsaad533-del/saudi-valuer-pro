@@ -75,7 +75,7 @@ export default function ClientRequests() {
   const loadRequests = async () => {
     const { data } = await supabase
       .from("valuation_requests" as any)
-      .select("*")
+      .select("*, clients:client_id(id, name_ar, phone, email)")
       .order("created_at", { ascending: false });
     const reqs = data || [];
     setRequests(reqs);
