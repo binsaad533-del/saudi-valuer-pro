@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import TopBar from "@/components/layout/TopBar";
@@ -7,32 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
-  FileText,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  ShieldCheck,
-  Eye,
-  RotateCcw,
-  FileOutput,
-  ThumbsUp,
-  XCircle,
-  AlertCircle,
+  FileText, Clock, CheckCircle2, AlertTriangle, ShieldCheck, Eye,
+  RotateCcw, FileOutput, ThumbsUp, XCircle, AlertCircle,
+  Users, MapPin, BarChart3, Shield, Search, Filter,
+  ClipboardCheck, FolderOpen,
 } from "lucide-react";
-
-/* ── Types ── */
-interface Assignment {
-  id: string;
-  reference_number: string;
-  status: string;
-  asset_type: string | null;
-  confidence_score: number | null;
-  final_value_approved: boolean | null;
-  created_at: string;
-  client_id: string | null;
-  client?: { name_ar: string } | null;
-}
 
 /* ── Status helpers ── */
 const STATUS_NEW = ["draft", "submitted"];
@@ -42,17 +25,23 @@ const STATUS_COMPLETE = ["approved", "issued"];
 const STATUS_BLOCKED = ["rejected", "on_hold", "cancelled"];
 
 const statusLabel: Record<string, string> = {
-  draft: "مسودة",
-  submitted: "مقدم",
-  processing: "قيد المعالجة",
-  inspection: "معاينة",
-  valuation_ready: "جاهز للتقييم",
-  under_review: "تحت المراجعة",
-  approved: "معتمد",
-  issued: "صادر",
-  rejected: "مرفوض",
-  on_hold: "معلق",
-  cancelled: "ملغى",
+  draft: "مسودة", submitted: "مقدم", processing: "قيد المعالجة",
+  inspection: "معاينة", valuation_ready: "جاهز للتقييم", under_review: "تحت المراجعة",
+  approved: "معتمد", issued: "صادر", rejected: "مرفوض",
+  on_hold: "معلق", cancelled: "ملغى",
+};
+
+const requestStatusLabel: Record<string, string> = {
+  submitted: "جديد", pending_review: "قيد المراجعة", processing: "قيد المعالجة",
+  completed: "مكتمل", cancelled: "ملغى", draft: "مسودة",
+  final_report_ready: "التقرير جاهز",
+};
+
+const purposeLabel: Record<string, string> = {
+  sale_purchase: "بيع / شراء", mortgage: "تمويل / رهن", financial_reporting: "تقارير مالية",
+  insurance: "تأمين", taxation: "زكاة / ضريبة", expropriation: "نزع ملكية",
+  litigation: "نزاع / قضاء", investment: "استثمار", lease_renewal: "تجديد إيجار",
+  internal_decision: "قرار داخلي", regulatory: "تنظيمي", other: "أخرى",
 };
 
 const statusVariant = (s: string): "default" | "secondary" | "destructive" | "outline" => {
@@ -63,68 +52,52 @@ const statusVariant = (s: string): "default" | "secondary" | "destructive" | "ou
 };
 
 const assetTypeLabel: Record<string, string> = {
-  real_estate: "عقار",
-  land: "أرض",
-  apartment: "شقة",
-  villa: "فيلا",
-  commercial: "تجاري",
-  industrial: "صناعي",
-  equipment: "آلات ومعدات",
-  vehicle: "مركبة",
+  real_estate: "عقار", land: "أرض", apartment: "شقة", villa: "فيلا",
+  commercial: "تجاري", industrial: "صناعي", equipment: "آلات ومعدات", vehicle: "مركبة",
 };
 
-/* ── Component ── */
+/* ── Lazy-loaded tab content ── */
+import AnalyticsDashboardPage from "@/pages/AnalyticsDashboardPage";
+import AuditLogPage from "@/pages/AuditLogPage";
+
 export default function ExecutiveDashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [clientRequests, setClientRequests] = useState<any[]>([]);
+  const [clients, setClients] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState("");
 
-  const [clientRequests, setClientRequests] = useState<any[]>([]);
+  // Filters
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     if (!user) return;
-
     const load = async () => {
-      const [{ data: aData }, { data: pData }, { data: reqData }] = await Promise.all([
-        supabase
-          .from("valuation_assignments")
-          .select("id, reference_number, status, asset_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)")
-          .order("created_at", { ascending: false })
-          .limit(200),
+      const [{ data: aData }, { data: pData }, { data: reqData }, { data: cData }] = await Promise.all([
+        supabase.from("valuation_assignments").select("id, reference_number, status, asset_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)").order("created_at", { ascending: false }).limit(500),
         supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
-        supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(10),
+        supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(100),
+        supabase.from("clients").select("id, name_ar, email, phone, client_type, client_status, city_ar, created_at").order("created_at", { ascending: false }).limit(200),
       ]);
-
       if (pData) setProfileName(pData.full_name_ar || "");
-
-      const mapped = (aData || []).map((a: any) => ({
-        ...a,
-        client: a.clients || null,
-      }));
-      setAssignments(mapped);
+      setAssignments((aData || []).map((a: any) => ({ ...a, client: a.clients || null })));
       setClientRequests((reqData as any[]) || []);
+      setClients(cData || []);
       setLoading(false);
     };
     load();
   }, [user]);
 
-  /* ── Derived counts ── */
-  const newCount = assignments.filter(a => STATUS_NEW.includes(a.status)).length;
+  /* ── KPI counts ── */
+  const newCount = clientRequests.filter(r => ["submitted"].includes(r.status)).length;
   const progressCount = assignments.filter(a => STATUS_PROGRESS.includes(a.status)).length;
   const approvalCount = assignments.filter(a => STATUS_APPROVAL.includes(a.status)).length;
   const completedCount = assignments.filter(a => STATUS_COMPLETE.includes(a.status)).length;
   const blockedCount = assignments.filter(a => STATUS_BLOCKED.includes(a.status)).length;
-
-  /* ── Alerts ── */
-  const highRisk = assignments.filter(a => a.confidence_score !== null && a.confidence_score < 60 && !STATUS_COMPLETE.includes(a.status));
-  const lowConfidence = assignments.filter(a => a.confidence_score !== null && a.confidence_score >= 60 && a.confidence_score < 75 && !STATUS_COMPLETE.includes(a.status));
-  const alerts = [
-    ...highRisk.map(a => ({ id: a.id, ref: a.reference_number, type: "risk" as const, msg: `تقييم عالي المخاطر — ثقة ${a.confidence_score}%` })),
-    ...lowConfidence.map(a => ({ id: a.id, ref: a.reference_number, type: "warning" as const, msg: `مستوى ثقة منخفض — ${a.confidence_score}%` })),
-    ...assignments.filter(a => STATUS_BLOCKED.includes(a.status)).map(a => ({ id: a.id, ref: a.reference_number, type: "blocked" as const, msg: `تقرير متوقف — ${statusLabel[a.status] || a.status}` })),
-  ];
 
   const metrics = [
     { label: "طلبات جديدة", value: newCount, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
@@ -133,6 +106,20 @@ export default function ExecutiveDashboard() {
     { label: "مكتملة", value: completedCount, icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
     { label: "متوقفة", value: blockedCount, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
   ];
+
+  /* ── Filtered requests ── */
+  const filteredRequests = useMemo(() => {
+    return clientRequests.filter(req => {
+      const name = req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "";
+      if (searchTerm && !name.includes(searchTerm) && !req.id.includes(searchTerm)) return false;
+      if (statusFilter !== "all" && req.status !== statusFilter) return false;
+      if (typeFilter !== "all") {
+        const mode = req.ai_intake_summary?.valuation_mode || "";
+        if (typeFilter !== mode) return false;
+      }
+      return true;
+    });
+  }, [clientRequests, searchTerm, statusFilter, typeFilter]);
 
   if (loading) {
     return (
@@ -154,13 +141,11 @@ export default function ExecutiveDashboard() {
       <div className="p-6 space-y-6">
         {/* Greeting */}
         <div>
-          <h1 className="text-xl font-bold text-foreground">
-            مرحباً، {profileName || "المالك"}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">نظرة شاملة على جميع التقييمات</p>
+          <h1 className="text-xl font-bold text-foreground">مرحباً، {profileName || "المالك"}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">مركز التحكم الرئيسي</p>
         </div>
 
-        {/* Metrics */}
+        {/* KPI Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           {metrics.map(m => {
             const Icon = m.icon;
@@ -178,216 +163,257 @@ export default function ExecutiveDashboard() {
           })}
         </div>
 
-        {/* Client Requests from valuation_requests */}
-        {clientRequests.length > 0 && (
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-primary" />
-                  طلبات العملاء الواردة ({clientRequests.length})
-                </CardTitle>
-                <Link to="/client-requests">
-                  <Button variant="ghost" size="sm" className="text-xs">عرض الكل</Button>
-                </Link>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40">
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">العميل</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">الغرض</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">النوع</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">الحالة</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">التاريخ</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clientRequests.map((req: any) => (
-                      <tr key={req.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer" onClick={() => navigate("/client-requests")}>
-                        <td className="px-4 py-2.5 font-medium text-foreground">
-                          {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
-                        </td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{req.purpose || "—"}</td>
-                        <td className="px-4 py-2.5">
-                          {req.ai_intake_summary?.valuation_mode === "desktop" ? (
-                            <Badge variant="outline" className="text-[10px]">مكتبي</Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[10px]">معاينة</Badge>
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <Badge variant="secondary" className="text-[10px]">
-                            {req.status === "submitted" ? "جديد" : req.status === "completed" ? "مكتمل" : req.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2.5 text-muted-foreground text-xs">
-                          {new Date(req.created_at).toLocaleDateString("ar-SA")}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Main Tabs */}
+        <Tabs defaultValue="requests" dir="rtl" className="space-y-4">
+          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-xl">
+            <TabsTrigger value="requests" className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-2">
+              <ClipboardCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">الطلبات</span>
+            </TabsTrigger>
+            <TabsTrigger value="operations" className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-2">
+              <FolderOpen className="w-4 h-4" />
+              <span className="hidden sm:inline">العمليات</span>
+            </TabsTrigger>
+            <TabsTrigger value="clients" className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-2">
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">العملاء</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-2">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">التحليلات</span>
+            </TabsTrigger>
+            <TabsTrigger value="audit" className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-2">
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">سجل المراجعة</span>
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Requests Table */}
-          <Card className="lg:col-span-2 shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold">جميع الطلبات</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/40">
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">رقم الطلب</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">العميل</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">نوع الأصل</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">الحالة</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">الثقة</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">القرار</th>
-                      <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">إجراءات</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {assignments.slice(0, 20).map(a => (
-                      <tr key={a.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                        <td className="px-4 py-2.5 font-medium text-foreground">{a.reference_number}</td>
-                        <td className="px-4 py-2.5 text-foreground">{a.client?.name_ar || "—"}</td>
-                        <td className="px-4 py-2.5 text-muted-foreground">{assetTypeLabel[a.asset_type || ""] || a.asset_type || "—"}</td>
-                        <td className="px-4 py-2.5">
-                          <Badge variant={statusVariant(a.status)} className="text-[11px]">
-                            {statusLabel[a.status] || a.status}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2.5">
-                          {a.confidence_score !== null ? (
-                            <span className={`font-semibold text-xs ${a.confidence_score >= 75 ? "text-success" : a.confidence_score >= 60 ? "text-warning" : "text-destructive"}`}>
-                              {a.confidence_score}%
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          {a.final_value_approved ? (
-                            <Badge variant="default" className="text-[10px] bg-success text-success-foreground">معتمد</Badge>
-                          ) : STATUS_APPROVAL.includes(a.status) ? (
-                            <Badge variant="secondary" className="text-[10px]">بانتظار</Badge>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">—</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2.5">
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7"
-                              title="عرض التفاصيل"
-                              onClick={() => navigate(`/assignment/${a.id}`)}
-                            >
+          {/* ── Requests Tab ── */}
+          <TabsContent value="requests" className="space-y-4">
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="بحث بالاسم..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="pr-9 text-sm"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[160px] text-sm">
+                  <SelectValue placeholder="الحالة" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الحالات</SelectItem>
+                  <SelectItem value="submitted">جديد</SelectItem>
+                  <SelectItem value="processing">قيد المعالجة</SelectItem>
+                  <SelectItem value="completed">مكتمل</SelectItem>
+                  <SelectItem value="cancelled">ملغى</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={typeFilter} onValueChange={setTypeFilter}>
+                <SelectTrigger className="w-[160px] text-sm">
+                  <SelectValue placeholder="النوع" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">جميع الأنواع</SelectItem>
+                  <SelectItem value="desktop">مكتبي</SelectItem>
+                  <SelectItem value="field">ميداني</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Requests Table */}
+            <Card className="shadow-sm">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">العميل</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الغرض</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">النوع</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">التاريخ</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">إجراءات</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredRequests.length === 0 ? (
+                        <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">لا توجد طلبات</td></tr>
+                      ) : filteredRequests.map((req: any) => (
+                        <tr
+                          key={req.id}
+                          className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/client-requests?id=${req.id}`)}
+                        >
+                          <td className="px-4 py-3 font-medium text-foreground">
+                            {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">
+                            {purposeLabel[req.purpose] || req.purpose || "—"}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className="text-[10px]">
+                              {req.ai_intake_summary?.valuation_mode === "desktop" ? "مكتبي" : "ميداني"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant="secondary" className="text-[10px]">
+                              {requestStatusLabel[req.status] || req.status}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground text-xs">
+                            {new Date(req.created_at).toLocaleDateString("ar-SA")}
+                          </td>
+                          <td className="px-4 py-3">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" title="عرض التفاصيل"
+                              onClick={e => { e.stopPropagation(); navigate(`/client-requests?id=${req.id}`); }}>
                               <Eye className="w-3.5 h-3.5" />
                             </Button>
-                            {STATUS_APPROVAL.includes(a.status) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-success hover:text-success"
-                                title="اعتماد"
-                                onClick={() => navigate(`/assignment/${a.id}`)}
-                              >
-                                <ThumbsUp className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                            {!STATUS_COMPLETE.includes(a.status) && !STATUS_BLOCKED.includes(a.status) && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-warning hover:text-warning"
-                                title="طلب مراجعة"
-                                onClick={() => navigate(`/assignment/${a.id}`)}
-                              >
-                                <RotateCcw className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                            {a.status === "approved" && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-7 w-7 text-primary hover:text-primary"
-                                title="إصدار التقرير"
-                                onClick={() => navigate(`/reports/generate/${a.id}`)}
-                              >
-                                <FileOutput className="w-3.5 h-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </td>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Operations Tab ── */}
+          <TabsContent value="operations" className="space-y-4">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold">المعاينات والتقييمات والتقارير</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">رقم الطلب</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">العميل</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">نوع الأصل</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الثقة</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">القرار</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">إجراءات</th>
                       </tr>
-                    ))}
-                    {assignments.length === 0 && (
-                      <tr>
-                        <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                          لا توجد طلبات حالياً
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-              {assignments.length > 20 && (
-                <div className="p-3 text-center border-t border-border">
-                  <Button variant="link" size="sm" onClick={() => navigate("/valuations")}>
-                    عرض جميع الطلبات ({assignments.length})
+                    </thead>
+                    <tbody>
+                      {assignments.length === 0 ? (
+                        <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">لا توجد عمليات حالياً</td></tr>
+                      ) : assignments.slice(0, 30).map(a => (
+                        <tr key={a.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/assignment/${a.id}`)}>
+                          <td className="px-4 py-3 font-medium text-foreground">{a.reference_number}</td>
+                          <td className="px-4 py-3 text-foreground">{a.client?.name_ar || "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{assetTypeLabel[a.asset_type || ""] || a.asset_type || "—"}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant={statusVariant(a.status)} className="text-[11px]">
+                              {statusLabel[a.status] || a.status}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            {a.confidence_score !== null ? (
+                              <span className={`font-semibold text-xs ${a.confidence_score >= 75 ? "text-success" : a.confidence_score >= 60 ? "text-warning" : "text-destructive"}`}>
+                                {a.confidence_score}%
+                              </span>
+                            ) : <span className="text-muted-foreground text-xs">—</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            {a.final_value_approved ? (
+                              <Badge variant="default" className="text-[10px] bg-success text-success-foreground">معتمد</Badge>
+                            ) : STATUS_APPROVAL.includes(a.status) ? (
+                              <Badge variant="secondary" className="text-[10px]">بانتظار</Badge>
+                            ) : <span className="text-muted-foreground text-xs">—</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              <Button variant="ghost" size="icon" className="h-7 w-7" title="عرض"
+                                onClick={e => { e.stopPropagation(); navigate(`/assignment/${a.id}`); }}>
+                                <Eye className="w-3.5 h-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Clients Tab ── */}
+          <TabsContent value="clients" className="space-y-4">
+            <Card className="shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base font-semibold flex items-center gap-2">
+                    <Users className="w-4 h-4 text-primary" />
+                    العملاء ({clients.length})
+                  </CardTitle>
+                  <Button variant="outline" size="sm" onClick={() => navigate("/clients-management")}>
+                    إدارة العملاء
                   </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Alerts Panel */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-destructive" />
-                تنبيهات ({alerts.length})
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 max-h-[450px] overflow-y-auto">
-              {alerts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-                  <CheckCircle2 className="w-8 h-8 text-success mb-2" />
-                  <p className="text-sm">لا توجد تنبيهات</p>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/40">
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الاسم</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">البريد</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الهاتف</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">المدينة</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">النوع</th>
+                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {clients.length === 0 ? (
+                        <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">لا يوجد عملاء</td></tr>
+                      ) : clients.slice(0, 30).map(c => (
+                        <tr key={c.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+                          onClick={() => navigate(`/clients/${c.id}`)}>
+                          <td className="px-4 py-3 font-medium text-foreground">{c.name_ar}</td>
+                          <td className="px-4 py-3 text-muted-foreground text-xs">{c.email || "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground text-xs" dir="ltr">{c.phone || "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{c.city_ar || "—"}</td>
+                          <td className="px-4 py-3">
+                            <Badge variant="outline" className="text-[10px]">
+                              {c.client_type === "individual" ? "فرد" : c.client_type === "corporate" ? "شركة" : c.client_type === "government" ? "حكومي" : c.client_type}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-3">
+                            <Badge variant={c.client_status === "active" ? "default" : "secondary"} className="text-[10px]">
+                              {c.client_status === "active" ? "نشط" : c.client_status === "inactive" ? "غير نشط" : c.client_status}
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ) : (
-                alerts.slice(0, 15).map((alert, i) => (
-                  <button
-                    key={`${alert.id}-${i}`}
-                    onClick={() => navigate(`/assignment/${alert.id}`)}
-                    className="w-full text-right p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors"
-                  >
-                    <div className="flex items-start gap-2">
-                      {alert.type === "risk" && <XCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />}
-                      {alert.type === "warning" && <AlertTriangle className="w-4 h-4 text-warning mt-0.5 shrink-0" />}
-                      {alert.type === "blocked" && <AlertCircle className="w-4 h-4 text-destructive mt-0.5 shrink-0" />}
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-foreground">{alert.ref}</p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">{alert.msg}</p>
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Analytics Tab ── */}
+          <TabsContent value="analytics">
+            <AnalyticsDashboardPage />
+          </TabsContent>
+
+          {/* ── Audit Log Tab ── */}
+          <TabsContent value="audit">
+            <AuditLogPage />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

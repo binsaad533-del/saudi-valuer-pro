@@ -1,25 +1,20 @@
-import { Settings, Building2, UserCircle, FileText, Monitor, Database, Plug, Ticket, ArrowRight, User, DollarSign, Wallet, CreditCard } from "lucide-react";
+import { Settings, User, Shield, FileText, Bell, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import MyAccountSettings from "@/components/settings/MyAccountSettings";
 import CompanySettings from "@/components/settings/CompanySettings";
 import ValuerSettings from "@/components/settings/ValuerSettings";
 import ReportSettings from "@/components/settings/ReportSettings";
 import SystemSettings from "@/components/settings/SystemSettings";
-import BackupSettings from "@/components/settings/BackupSettings";
-import IntegrationSettings from "@/components/settings/IntegrationSettings";
-import DiscountCodesSettings from "@/components/settings/DiscountCodesSettings";
-import MyAccountSettings from "@/components/settings/MyAccountSettings";
-import CommercialSettingsPanel from "@/components/settings/CommercialSettings";
-import PricingMatrixManager from "@/components/pricing/PricingMatrixManager";
-import PaymentGatewaySettings from "@/components/settings/PaymentGatewaySettings";
+import NotificationPreferences from "@/components/notifications/NotificationPreferences";
+import NotificationDeliveryLog from "@/components/notifications/NotificationDeliveryLog";
 import { useAuth } from "@/hooks/useAuth";
-import { useLanguage } from "@/contexts/LanguageContext";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function SettingsPage() {
   const { role, loading } = useAuth();
   const navigate = useNavigate();
-  const { t } = useLanguage();
 
   if (loading) {
     return (
@@ -31,28 +26,18 @@ export default function SettingsPage() {
 
   const isOwner = role === "owner";
 
-  // Non-owner admins should use /account instead
   if (!isOwner) {
     navigate("/account", { replace: true });
     return null;
   }
 
   const tabs = [
-    { value: "myaccount", label: "حسابي", icon: User },
-    { value: "company", label: t("companyData"), icon: Building2 },
-    { value: "valuer", label: t("valuerData"), icon: UserCircle },
-    { value: "reports", label: t("reportsSettings"), icon: FileText },
-    { value: "system", label: t("system"), icon: Monitor },
-    { value: "backup", label: t("backupSecurity"), icon: Database },
-    { value: "integrations", label: t("integrations"), icon: Plug },
-    { value: "discounts", label: "أكواد الخصم", icon: Ticket },
-    { value: "pricing", label: "مصفوفة التسعير", icon: DollarSign },
-    { value: "payment-gateway", label: "بوابة الدفع", icon: CreditCard },
-    { value: "commercial", label: "الإعدادات التجارية", icon: Wallet },
+    { value: "account", label: "حسابي والمستخدمين", icon: User },
+    { value: "company", label: "بيانات المنشأة", icon: Shield },
+    { value: "templates", label: "القوالب والتقارير", icon: FileText },
+    { value: "notifications", label: "الإشعارات", icon: Bell },
+    { value: "system", label: "النظام", icon: Settings },
   ];
-  const defaultTab = "myaccount";
-  const pageTitle = t("settingsTitle");
-  const pageDesc = t("settingsDesc");
 
   return (
     <div className="space-y-6">
@@ -64,45 +49,55 @@ export default function SettingsPage() {
           <Settings className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{pageTitle}</h1>
-          <p className="text-sm text-muted-foreground">{pageDesc}</p>
+          <h1 className="text-2xl font-bold text-foreground">الإعدادات</h1>
+          <p className="text-sm text-muted-foreground">إدارة المستخدمين والقوالب والإشعارات والنظام</p>
         </div>
       </div>
 
-      <Tabs defaultValue={defaultTab} dir="rtl">
-        {tabs.length > 1 && (
-          <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-xl">
-            {tabs.map(tab => {
-              const Icon = tab.icon;
-              return (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="flex items-center gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm px-3 py-2"
-                >
-                  <Icon className="w-4 h-4" />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
-        )}
+      <Tabs defaultValue="account" dir="rtl">
+        <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-xl">
+          {tabs.map(tab => {
+            const Icon = tab.icon;
+            return (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex items-center gap-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:shadow-sm px-3 py-2"
+              >
+                <Icon className="w-4 h-4" />
+                <span className="hidden sm:inline">{tab.label}</span>
+              </TabsTrigger>
+            );
+          })}
+        </TabsList>
 
-        <TabsContent value="myaccount"><MyAccountSettings /></TabsContent>
-        <TabsContent value="valuer"><ValuerSettings isOwnerView={isOwner} /></TabsContent>
-        {isOwner && (
-          <>
-            <TabsContent value="company"><CompanySettings /></TabsContent>
-            <TabsContent value="reports"><ReportSettings /></TabsContent>
-            <TabsContent value="system"><SystemSettings /></TabsContent>
-            <TabsContent value="backup"><BackupSettings /></TabsContent>
-            <TabsContent value="integrations"><IntegrationSettings /></TabsContent>
-            <TabsContent value="discounts"><DiscountCodesSettings /></TabsContent>
-            <TabsContent value="pricing"><PricingMatrixManager /></TabsContent>
-            <TabsContent value="payment-gateway"><PaymentGatewaySettings /></TabsContent>
-            <TabsContent value="commercial"><CommercialSettingsPanel /></TabsContent>
-          </>
-        )}
+        {/* Users & Roles */}
+        <TabsContent value="account" className="space-y-6">
+          <MyAccountSettings />
+          <ValuerSettings isOwnerView={true} />
+          <CompanySettings />
+        </TabsContent>
+
+        {/* Templates & Reports */}
+        <TabsContent value="templates">
+          <ReportSettings />
+        </TabsContent>
+
+        {/* Notifications */}
+        <TabsContent value="notifications" className="space-y-6">
+          <NotificationPreferences />
+          <NotificationDeliveryLog />
+        </TabsContent>
+
+        {/* Company / Status */}
+        <TabsContent value="company">
+          <CompanySettings />
+        </TabsContent>
+
+        {/* System */}
+        <TabsContent value="system">
+          <SystemSettings />
+        </TabsContent>
       </Tabs>
     </div>
   );
