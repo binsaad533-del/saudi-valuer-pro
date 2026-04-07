@@ -495,6 +495,58 @@ export default function SimpleClientRequest() {
     setReviewData(null);
   };
 
+  const handleRetryAnalysis = () => {
+    setExtractionFailureReason("");
+    handleStartAnalysis();
+  };
+
+  const handleModifyFiles = () => {
+    setState("form");
+    setExtractionFailureReason("");
+  };
+
+  // ── EXTRACTION FAILED ──
+  if (state === "extraction_failed") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground mb-2">تعذر استخراج الأصول</h2>
+              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                {extractionFailureReason || "لم يتمكن النظام من استخراج الأصول من الملفات المرفوعة."}
+              </p>
+            </div>
+
+            <div className="bg-muted/50 rounded-xl p-4 text-right space-y-2">
+              <p className="text-xs font-semibold text-foreground">نصائح لتحسين النتائج:</p>
+              <ul className="text-[11px] text-muted-foreground space-y-1.5 list-disc list-inside">
+                <li>ارفع صور واضحة وعالية الجودة للمعدات أو العقارات</li>
+                <li>أضف ملف Excel يحتوي على قائمة الأصول مع التفاصيل</li>
+                <li>تأكد من أن ملفات PDF ليست مشفرة أو ممسوحة ضوئياً بجودة منخفضة</li>
+                <li>استخدم صور مباشرة وليس لقطات شاشة</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <Button onClick={handleRetryAnalysis} className="w-full gap-2">
+                <RotateCcw className="w-4 h-4" />
+                إعادة التحليل
+              </Button>
+              <Button onClick={handleModifyFiles} variant="outline" className="w-full gap-2">
+                <Upload className="w-4 h-4" />
+                تعديل الملفات
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // ── DONE ──
   if (state === "done") {
     return (
