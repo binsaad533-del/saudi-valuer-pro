@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Upload, FileText, Image, File, X, Loader2, CheckCircle,
   ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
-  PenLine, RotateCcw, User as UserIcon,
+  PenLine, RotateCcw, User as UserIcon, MapPin,
 } from "lucide-react";
 import AIReviewStep, { classifyAssetLicense, type ExtractedAsset, type AIReviewData } from "@/components/client/AIReviewStep";
 import logo from "@/assets/logo.png";
