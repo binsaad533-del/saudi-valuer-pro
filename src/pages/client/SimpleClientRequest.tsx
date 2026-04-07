@@ -473,7 +473,11 @@ export default function SimpleClientRequest() {
 
   // ── Final Submit (after review approval) ──
   const handleReviewApprove = async (approvedAssets: ExtractedAsset[], reviewNotes: string) => {
-    if (!user || !finalAssetType) return;
+    console.log("[SimpleClientRequest] handleReviewApprove called", { approvedAssets: approvedAssets.length, finalAssetType, confirmedType, user: !!user });
+    if (!user || !finalAssetType) {
+      console.error("[SimpleClientRequest] handleReviewApprove BLOCKED", { user: !!user, finalAssetType, confirmedType });
+      return;
+    }
 
     setSubmitting(true);
     setState("processing");
