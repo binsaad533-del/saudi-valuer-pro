@@ -438,6 +438,7 @@ export default function RequestDetails() {
                   </div>
                 </CardContent>
               </Card>
+            )}
 
             {showQuotation && (
               <Card className="shadow-card border-primary/20">
