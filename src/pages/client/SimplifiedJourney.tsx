@@ -33,6 +33,7 @@ import {
   Edit3,
   Clock,
   Shield,
+  AlertTriangle,
   Table2,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
@@ -192,13 +193,28 @@ export default function SimplifiedJourney() {
     type.includes("sheet") || type.includes("excel") || type.includes("csv") ||
     /\.(xlsx|xls|csv)$/i.test(name);
 
+  /** Compliance: which asset types are permitted under our license */
+  const ASSET_COMPLIANCE: Record<string, { permitted: boolean; note?: string }> = {
+    real_estate: { permitted: true },
+    machinery_equipment: { permitted: true },
+    medical_equipment: { permitted: true },
+    vehicle: { permitted: true, note: "تقييم قيمة المركبة كأصل فقط — تقييم أضرار الحوادث يتطلب ترخيصاً مستقلاً" },
+    furniture: { permitted: true },
+    it_equipment: { permitted: true },
+    leasehold_improvements: { permitted: true },
+    right_of_use: { permitted: true, note: "مسموح كـ«مصلحة مستأجرة» عقارية أو حق استخدام آلة — غير مسموح كأداة مالية مشتقة" },
+    intangible: { permitted: false, note: "يتطلب ترخيص فرع تقييم المنشآت الاقتصادية" },
+    goodwill: { permitted: false, note: "شهرة المحل — يتطلب ترخيص فرع تقييم المنشآت الاقتصادية" },
+    financial_instrument: { permitted: false, note: "أدوات مالية (أسهم، سندات) — يتطلب ترخيص فرع تقييم المنشآت الاقتصادية" },
+  };
+
   /** Smart asset type inference based on name and category keywords */
   const inferAssetType = (name: string, category: string | null): { type: string; category: string | null } => {
     const text = `${name} ${category || ""}`.toLowerCase();
 
-    // Right of use / Lease contracts
+    // Right of use / Lease contracts (permitted as leasehold interest)
     if (/عقد\s*ايجار|عقد\s*إيجار|right\s*of\s*use|إيجار\s*فرع|ايجار\s*فرع|lease/i.test(text))
-      return { type: "right_of_use", category: "حق استخدام (إيجار)" };
+      return { type: "right_of_use", category: "حق استخدام (مصلحة مستأجرة)" };
 
     // Real estate
     if (/عقار|أرض|ارض|فيلا|شقة|عمارة|مبنى|real.?estate|land|building|villa|apartment/i.test(text))
@@ -220,7 +236,7 @@ export default function SimplifiedJourney() {
     if (/كمبيوتر|حاسب|لابتوب|طابعة|سيرفر|شاشة|computer|laptop|printer|server|monitor|it\s*equip/i.test(text))
       return { type: "it_equipment", category: "أجهزة تقنية" };
 
-    // Intangible assets
+    // Intangible assets (NOT permitted)
     if (/برنامج|برمج|تطبيق|نظام|software|program|app|license|ترخيص|intangible|موقع\s*الكتروني|موبايل\s*اب/i.test(text))
       return { type: "intangible", category: "أصول غير ملموسة" };
 
@@ -804,16 +820,67 @@ export default function SimplifiedJourney() {
                       medical_equipment: "أجهزة طبية",
                     };
                     for (const a of (scopeData.assets || [])) typeCounts[a.asset_type] = (typeCounts[a.asset_type] || 0) + 1;
-                    return Object.entries(typeCounts).map(([type, count]) => (
-                      <div key={type} className="bg-muted/50 rounded-lg p-3 border border-border text-center">
-                        <p className="text-xs text-muted-foreground">{TYPE_AR[type] || type}</p>
-                        <p className="text-2xl font-bold text-primary">{count}</p>
-                      </div>
-                    ));
+                    return Object.entries(typeCounts).map(([type, count]) => {
+                      const compliance = ASSET_COMPLIANCE[type];
+                      const isRestricted = compliance && !compliance.permitted;
+                      return (
+                        <div key={type} className={`rounded-lg p-3 border text-center ${isRestricted ? "bg-destructive/5 border-destructive/30" : "bg-muted/50 border-border"}`}>
+                          <p className={`text-xs ${isRestricted ? "text-destructive" : "text-muted-foreground"}`}>
+                            {isRestricted && "⛔ "}{TYPE_AR[type] || type}
+                          </p>
+                          <p className={`text-2xl font-bold ${isRestricted ? "text-destructive/60 line-through" : "text-primary"}`}>{count}</p>
+                        </div>
+                      );
+                    });
                   })()}
                 </div>
 
-                {/* Assets detail table */}
+                {/* Compliance alerts */}
+                {(() => {
+                  const restricted = (scopeData.assets || []).filter((a: any) => ASSET_COMPLIANCE[a.asset_type] && !ASSET_COMPLIANCE[a.asset_type].permitted);
+                  const warnings = (scopeData.assets || []).filter((a: any) => ASSET_COMPLIANCE[a.asset_type]?.note && ASSET_COMPLIANCE[a.asset_type]?.permitted);
+                  const restrictedTypes = Array.from(new Set(restricted.map((a: any) => String(a.asset_type))));
+                  const warningTypes = Array.from(new Set(warnings.map((a: any) => String(a.asset_type))));
+
+                  if (restrictedTypes.length === 0 && warningTypes.length === 0) return null;
+
+                  return (
+                    <div className="space-y-2">
+                      {restrictedTypes.length > 0 && (
+                        <div className="bg-destructive/5 border border-destructive/30 rounded-lg p-4 space-y-2">
+                          <div className="flex items-center gap-2 text-destructive font-semibold text-sm">
+                            <AlertTriangle className="w-4 h-4 shrink-0" />
+                            <span>أصول خارج نطاق الترخيص ({restricted.length} أصل)</span>
+                          </div>
+                          <p className="text-xs text-destructive/80">
+                            الأصول التالية تتطلب ترخيص «تقييم المنشآت الاقتصادية» ولا يمكن تقييمها ضمن هذا الطلب وسيتم استبعادها تلقائياً:
+                          </p>
+                          <ul className="text-xs text-destructive/70 space-y-1 pr-4">
+                            {restrictedTypes.map(type => (
+                              <li key={type} className="flex justify-between">
+                                <span>• {ASSET_COMPLIANCE[type]?.note || type}</span>
+                                <Badge variant="outline" className="text-[9px] border-destructive/30 text-destructive">{(scopeData.assets || []).filter((a: any) => a.asset_type === type).length}</Badge>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {warningTypes.length > 0 && (
+                        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-lg p-3 space-y-1">
+                          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-medium text-xs">
+                            <Shield className="w-3.5 h-3.5 shrink-0" />
+                            <span>ملاحظات مهنية</span>
+                          </div>
+                          <ul className="text-[11px] text-amber-600 dark:text-amber-400/80 space-y-1 pr-4">
+                            {warningTypes.map(type => (
+                              <li key={type}>• {ASSET_COMPLIANCE[type]?.note}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
                 <ScopeAssetsTable
                   assets={(scopeData.assets || []).map((a: any) => ({
                     id: a.id || crypto.randomUUID(),
