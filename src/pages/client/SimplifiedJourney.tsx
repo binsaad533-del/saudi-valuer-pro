@@ -570,6 +570,8 @@ export default function SimplifiedJourney() {
             clientInfo: { contactName: clientName, contactPhone: clientPhone, contactEmail: clientEmail },
             totalAssets: scopeData.totalAssets,
             simplified: true,
+            valuation_mode: valuationMode,
+            desktop_disclaimer_accepted: valuationMode === "desktop" ? desktopDisclaimer : undefined,
           },
           asset_data: assetData,
         } as any)
