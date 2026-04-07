@@ -10,7 +10,7 @@ import {
 import {
   CheckCircle, Cog, Sparkles, Building2,
   Shield, ArrowRight, Package, FileCheck, Send,
-  FileSpreadsheet, FileText, Image, AlertCircle, Eye,
+  FileText, AlertCircle, Eye,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
