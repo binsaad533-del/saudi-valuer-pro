@@ -29,13 +29,24 @@ function extractCoordsFromUrl(url: string): { lat?: number; lng?: number } {
   if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
   const qMatch = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
+  const queryMatch = url.match(/[?&]query=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (queryMatch) return { lat: parseFloat(queryMatch[1]), lng: parseFloat(queryMatch[2]) };
+  const searchMatch = url.match(/\/maps\/search\/(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  if (searchMatch) return { lat: parseFloat(searchMatch[1]), lng: parseFloat(searchMatch[2]) };
   const placeMatch = url.match(/place\/[^/]+\/(-?\d+\.?\d*),(-?\d+\.?\d*)/);
   if (placeMatch) return { lat: parseFloat(placeMatch[1]), lng: parseFloat(placeMatch[2]) };
   return {};
 }
 
+function normalizeGoogleMapsUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 function isValidGoogleMapsUrl(url: string): boolean {
-  return /^https?:\/\/(www\.)?(google\.\w+\/maps|maps\.google|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(url);
+  const normalized = normalizeGoogleMapsUrl(url);
+  return /^(https?:\/\/)(www\.)?(google\.\w+\/maps|maps\.google|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(normalized);
 }
 
 function isValidCoordinate(lat: number, lng: number): boolean {
@@ -43,7 +54,18 @@ function isValidCoordinate(lat: number, lng: number): boolean {
 }
 
 function coordsToGoogleMapsUrl(lat: number, lng: number): string {
-  return `https://maps.google.com/maps?q=${lat},${lng}&z=15`;
+  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+}
+
+function getLocationUrl(location: AssetLocation): string {
+  if (location.latitude != null && location.longitude != null) {
+    return coordsToGoogleMapsUrl(location.latitude, location.longitude);
+  }
+  return normalizeGoogleMapsUrl(location.googleMapsUrl);
+}
+
+function openLocationInGoogleMaps(location: AssetLocation) {
+  window.open(getLocationUrl(location), "_blank", "noopener,noreferrer");
 }
 
 export default function AssetLocationPicker({ locations, onChange, maxLocations = 50, compact = false }: AssetLocationPickerProps) {
@@ -59,22 +81,25 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
   const atLimit = locations.length >= maxLocations;
 
   const handleQuickAdd = () => {
-    const url = quickUrl.trim();
-    if (!url) return;
-    if (!isValidGoogleMapsUrl(url)) {
+    const rawUrl = quickUrl.trim();
+    if (!rawUrl) return;
+    if (!isValidGoogleMapsUrl(rawUrl)) {
       setQuickUrlError("يرجى إدخال رابط خرائط قوقل صالح");
       return;
     }
     if (atLimit) return;
-    const coords = extractCoordsFromUrl(url);
+
+    const normalizedUrl = normalizeGoogleMapsUrl(rawUrl);
+    const coords = extractCoordsFromUrl(normalizedUrl);
     const newLocation: AssetLocation = {
       id: crypto.randomUUID(),
       name: `موقع ${locations.length + 1}`,
       city: "",
-      googleMapsUrl: url,
+      googleMapsUrl: coords.lat != null && coords.lng != null ? coordsToGoogleMapsUrl(coords.lat, coords.lng) : normalizedUrl,
       latitude: coords.lat,
       longitude: coords.lng,
     };
+
     onChange([...locations, newLocation]);
     setQuickUrl("");
     setQuickUrlError("");
@@ -89,12 +114,13 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
       return;
     }
 
-    const coords = extractCoordsFromUrl(form.googleMapsUrl);
+    const normalizedUrl = normalizeGoogleMapsUrl(form.googleMapsUrl);
+    const coords = extractCoordsFromUrl(normalizedUrl);
     const newLocation: AssetLocation = {
       id: crypto.randomUUID(),
       name: form.name.trim(),
       city: form.city.trim(),
-      googleMapsUrl: form.googleMapsUrl.trim(),
+      googleMapsUrl: coords.lat != null && coords.lng != null ? coordsToGoogleMapsUrl(coords.lat, coords.lng) : normalizedUrl,
       latitude: coords.lat,
       longitude: coords.lng,
     };
@@ -133,7 +159,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
   };
 
   const handleRemove = (id: string) => {
-    onChange(locations.filter(l => l.id !== id));
+    onChange(locations.filter((l) => l.id !== id));
   };
 
   const resetAndClose = () => {
@@ -145,16 +171,14 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
   if (compact) {
     return (
       <div className="space-y-3">
-        {/* Location chips */}
         {locations.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-2">
-            {locations.map(loc => (
+            {locations.map((loc) => (
               <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
             ))}
           </div>
         )}
 
-        {/* Quick URL paste - always visible unless at limit */}
         {!atLimit && (
           <>
             {locations.length > 0 && (
@@ -163,11 +187,16 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
             <div className="flex gap-2">
               <Input
                 value={quickUrl}
-                onChange={e => { setQuickUrl(e.target.value); setQuickUrlError(""); }}
+                onChange={(e) => {
+                  setQuickUrl(e.target.value);
+                  setQuickUrlError("");
+                }}
                 placeholder="الصق رابط خرائط قوقل هنا..."
                 className="text-sm font-mono flex-1"
                 dir="ltr"
-                onKeyDown={e => { if (e.key === "Enter") handleQuickAdd(); }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleQuickAdd();
+                }}
               />
               <Button size="sm" onClick={handleQuickAdd} disabled={!quickUrl.trim()} className="text-xs gap-1 shrink-0">
                 <Plus className="w-3.5 h-3.5" />
@@ -192,12 +221,14 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
           <p className="text-[11px] text-amber-600 bg-amber-50 rounded-md px-2 py-1">تم الوصول للحد الأقصى ({maxLocations} موقع)</p>
         )}
 
-        {/* Detailed form */}
         {showForm && !atLimit && (
           <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
             <div className="flex gap-1 p-0.5 rounded-lg bg-muted w-fit">
               <button
-                onClick={() => { setInputMode("url"); setCoordsError(""); }}
+                onClick={() => {
+                  setInputMode("url");
+                  setCoordsError("");
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   inputMode === "url" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -206,7 +237,10 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                 رابط
               </button>
               <button
-                onClick={() => { setInputMode("coords"); setUrlError(""); }}
+                onClick={() => {
+                  setInputMode("coords");
+                  setUrlError("");
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   inputMode === "coords" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -221,16 +255,19 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">اسم الموقع <span className="text-destructive">*</span></Label>
-                    <Input value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="مثال: فيلا حي النرجس" className="text-sm" />
+                    <Input value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))} placeholder="مثال: فيلا حي النرجس" className="text-sm" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">المدينة</Label>
-                    <Input value={form.city} onChange={e => setForm(p => ({ ...p, city: e.target.value }))} placeholder="مثال: الرياض" className="text-sm" />
+                    <Input value={form.city} onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))} placeholder="مثال: الرياض" className="text-sm" />
                   </div>
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">رابط خرائط قوقل <span className="text-destructive">*</span></Label>
-                  <Input value={form.googleMapsUrl} onChange={e => { setForm(p => ({ ...p, googleMapsUrl: e.target.value })); setUrlError(""); }} placeholder="https://maps.google.com/..." className="text-sm font-mono" dir="ltr" />
+                  <Input value={form.googleMapsUrl} onChange={(e) => {
+                    setForm((p) => ({ ...p, googleMapsUrl: e.target.value }));
+                    setUrlError("");
+                  }} placeholder="https://maps.google.com/..." className="text-sm font-mono" dir="ltr" />
                   {urlError && <p className="text-[11px] text-destructive">{urlError}</p>}
                 </div>
                 <div className="flex gap-2">
@@ -243,21 +280,27 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">اسم الموقع <span className="text-destructive">*</span></Label>
-                    <Input value={coordsForm.name} onChange={e => setCoordsForm(p => ({ ...p, name: e.target.value }))} placeholder="مثال: مصنع" className="text-sm" />
+                    <Input value={coordsForm.name} onChange={(e) => setCoordsForm((p) => ({ ...p, name: e.target.value }))} placeholder="مثال: مصنع" className="text-sm" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">المدينة</Label>
-                    <Input value={coordsForm.city} onChange={e => setCoordsForm(p => ({ ...p, city: e.target.value }))} placeholder="مثال: جدة" className="text-sm" />
+                    <Input value={coordsForm.city} onChange={(e) => setCoordsForm((p) => ({ ...p, city: e.target.value }))} placeholder="مثال: جدة" className="text-sm" />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs">خط العرض <span className="text-destructive">*</span></Label>
-                    <Input value={coordsForm.latitude} onChange={e => { setCoordsForm(p => ({ ...p, latitude: e.target.value })); setCoordsError(""); }} placeholder="24.7136" className="text-sm font-mono" dir="ltr" inputMode="decimal" />
+                    <Input value={coordsForm.latitude} onChange={(e) => {
+                      setCoordsForm((p) => ({ ...p, latitude: e.target.value }));
+                      setCoordsError("");
+                    }} placeholder="24.7136" className="text-sm font-mono" dir="ltr" inputMode="decimal" />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">خط الطول <span className="text-destructive">*</span></Label>
-                    <Input value={coordsForm.longitude} onChange={e => { setCoordsForm(p => ({ ...p, longitude: e.target.value })); setCoordsError(""); }} placeholder="46.6753" className="text-sm font-mono" dir="ltr" inputMode="decimal" />
+                    <Input value={coordsForm.longitude} onChange={(e) => {
+                      setCoordsForm((p) => ({ ...p, longitude: e.target.value }));
+                      setCoordsError("");
+                    }} placeholder="46.6753" className="text-sm font-mono" dir="ltr" inputMode="decimal" />
                   </div>
                 </div>
                 {coordsError && <p className="text-[11px] text-destructive">{coordsError}</p>}
@@ -286,24 +329,24 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
         </p>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* Location chips */}
         {locations.length > 0 && (
           <div className="space-y-2">
             <div className="flex flex-wrap gap-2">
-              {locations.map(loc => (
+              {locations.map((loc) => (
                 <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
               ))}
             </div>
           </div>
         )}
 
-        {/* Add form */}
         {showForm ? (
           <div className="p-3 rounded-lg border border-primary/20 bg-primary/5 space-y-3">
-            {/* Mode toggle */}
             <div className="flex gap-1 p-0.5 rounded-lg bg-muted w-fit">
               <button
-                onClick={() => { setInputMode("url"); setCoordsError(""); }}
+                onClick={() => {
+                  setInputMode("url");
+                  setCoordsError("");
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   inputMode === "url" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -312,7 +355,10 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                 رابط خرائط قوقل
               </button>
               <button
-                onClick={() => { setInputMode("coords"); setUrlError(""); }}
+                onClick={() => {
+                  setInputMode("coords");
+                  setUrlError("");
+                }}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
                   inputMode === "coords" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -329,7 +375,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                     <Label className="text-xs">اسم الموقع / الأصل <span className="text-destructive">*</span></Label>
                     <Input
                       value={form.name}
-                      onChange={e => setForm(p => ({ ...p, name: e.target.value }))}
+                      onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
                       placeholder="مثال: فيلا حي النرجس"
                       className="text-sm"
                     />
@@ -338,7 +384,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                     <Label className="text-xs">المدينة</Label>
                     <Input
                       value={form.city}
-                      onChange={e => setForm(p => ({ ...p, city: e.target.value }))}
+                      onChange={(e) => setForm((p) => ({ ...p, city: e.target.value }))}
                       placeholder="مثال: الرياض"
                       className="text-sm"
                     />
@@ -348,7 +394,10 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                   <Label className="text-xs">رابط خرائط قوقل <span className="text-destructive">*</span></Label>
                   <Input
                     value={form.googleMapsUrl}
-                    onChange={e => { setForm(p => ({ ...p, googleMapsUrl: e.target.value })); setUrlError(""); }}
+                    onChange={(e) => {
+                      setForm((p) => ({ ...p, googleMapsUrl: e.target.value }));
+                      setUrlError("");
+                    }}
                     placeholder="https://maps.google.com/..."
                     className="text-sm font-mono"
                     dir="ltr"
@@ -373,7 +422,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                     <Label className="text-xs">اسم الموقع / الأصل <span className="text-destructive">*</span></Label>
                     <Input
                       value={coordsForm.name}
-                      onChange={e => setCoordsForm(p => ({ ...p, name: e.target.value }))}
+                      onChange={(e) => setCoordsForm((p) => ({ ...p, name: e.target.value }))}
                       placeholder="مثال: مصنع المنطقة الصناعية"
                       className="text-sm"
                     />
@@ -382,7 +431,7 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                     <Label className="text-xs">المدينة</Label>
                     <Input
                       value={coordsForm.city}
-                      onChange={e => setCoordsForm(p => ({ ...p, city: e.target.value }))}
+                      onChange={(e) => setCoordsForm((p) => ({ ...p, city: e.target.value }))}
                       placeholder="مثال: جدة"
                       className="text-sm"
                     />
@@ -393,7 +442,10 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                     <Label className="text-xs">خط العرض (Latitude) <span className="text-destructive">*</span></Label>
                     <Input
                       value={coordsForm.latitude}
-                      onChange={e => { setCoordsForm(p => ({ ...p, latitude: e.target.value })); setCoordsError(""); }}
+                      onChange={(e) => {
+                        setCoordsForm((p) => ({ ...p, latitude: e.target.value }));
+                        setCoordsError("");
+                      }}
                       placeholder="مثال: 24.7136"
                       className="text-sm font-mono"
                       dir="ltr"
@@ -405,7 +457,10 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
                     <Label className="text-xs">خط الطول (Longitude) <span className="text-destructive">*</span></Label>
                     <Input
                       value={coordsForm.longitude}
-                      onChange={e => { setCoordsForm(p => ({ ...p, longitude: e.target.value })); setCoordsError(""); }}
+                      onChange={(e) => {
+                        setCoordsForm((p) => ({ ...p, longitude: e.target.value }));
+                        setCoordsError("");
+                      }}
                       placeholder="مثال: 46.6753"
                       className="text-sm font-mono"
                       dir="ltr"
@@ -449,23 +504,23 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
 function LocationChip({ location, onRemove }: { location: AssetLocation; onRemove: (id: string) => void }) {
   return (
     <div className="group inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors shadow-sm">
-      <a
-        href={location.googleMapsUrl}
-        target="_blank"
-        rel="noopener noreferrer"
+      <button
+        type="button"
+        onClick={() => openLocationInGoogleMaps(location)}
         className="flex items-center gap-1.5 text-sm font-medium text-foreground hover:text-primary transition-colors"
         title="فتح في خرائط قوقل"
       >
         <Navigation className="w-3.5 h-3.5 text-primary shrink-0" />
         <span className="max-w-[160px] truncate">{location.name}</span>
-        {location.latitude && location.longitude && (
+        {location.latitude != null && location.longitude != null && (
           <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono">
             {location.latitude.toFixed(4)},{location.longitude.toFixed(4)}
           </Badge>
         )}
         <ExternalLink className="w-3 h-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-      </a>
+      </button>
       <button
+        type="button"
         onClick={() => onRemove(location.id)}
         className="text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100 mr-0.5"
       >
