@@ -733,21 +733,21 @@ export default function SimpleClientRequest() {
           <div className="flex flex-wrap items-center gap-x-8 gap-y-3 justify-center text-center">
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <FileText className="w-3.5 h-3.5 text-primary" />
+                <Upload className="w-3.5 h-3.5 text-primary" />
               </div>
-              <span className="text-xs text-foreground">ارفع ملف Excel يحتوي على جرد الأصول أو صكوك العقارات</span>
+              <span className="text-xs text-foreground">ارفع أي نوع ملفات (Excel, PDF, صور, Word...) — كل الصيغ مدعومة</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Image className="w-3.5 h-3.5 text-primary" />
               </div>
-              <span className="text-xs text-foreground">أضف صوراً واضحة للمعدات أو العقار من عدة زوايا</span>
+              <span className="text-xs text-foreground">كلما زادت المرفقات والتفاصيل، كانت نتائج التقييم أدق وأقرب للسعر العادل</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                 <Shield className="w-3.5 h-3.5 text-primary" />
               </div>
-              <span className="text-xs text-foreground">سيتم التحليل وفق معايير IVS 2025 وهيئة المقيمين</span>
+              <span className="text-xs text-foreground">أرفق الفواتير وبرامج الصيانة وأي وثيقة تخص الأصل</span>
             </div>
           </div>
         </div>
