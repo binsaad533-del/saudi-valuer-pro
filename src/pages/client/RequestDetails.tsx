@@ -24,6 +24,7 @@ import DraftReportReview from "@/components/client/DraftReportReview";
 import DataPortalUploader from "@/components/client/DataPortalUploader";
 import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { isolateBidiText } from "@/lib/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 
