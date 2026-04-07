@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
+import { isolateBidiText } from "@/lib/bidi-text";
 import {
   Loader2, FileText, CheckCircle, MessageSquareText,
   ThumbsUp, AlertTriangle, ChevronDown, ChevronUp,
@@ -195,7 +196,7 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
                   <p className="text-xs font-semibold text-foreground">{SECTION_LABELS[key]}</p>
                 </div>
                 <p dir="rtl" className="text-xs text-muted-foreground leading-7 bg-muted/30 rounded p-3 whitespace-pre-wrap line-clamp-4 text-right" style={{ unicodeBidi: 'plaintext' }}>
-                  {String(value)}
+                  {isolateBidiText(String(value))}
                 </p>
               </div>
             ))}
