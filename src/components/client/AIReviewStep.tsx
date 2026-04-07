@@ -478,15 +478,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [sourceDetail, setSourceDetail] = useState<AssetSourceInfo | null>(null);
 
-  const { processed, removedCount } = useMemo(() => {
-    const { unique, removedCount } = deduplicateAssets(data.assets);
+  const { processed, removedCount, duplicateNames } = useMemo(() => {
+    const { unique, removedCount, duplicateNames } = deduplicateAssets(data.assets);
     const classified = unique.map(a => {
       if (a.license_status === "not_permitted" && a.license_reason) return a;
       return classifyAssetLicense(a);
     });
-    // Consistency check: same fingerprint → same status
     const processed = consistencyCheck(classified);
-    return { processed, removedCount };
+    return { processed, removedCount, duplicateNames };
   }, [data.assets]);
 
   const [assets, setAssets] = useState<ExtractedAsset[]>(processed);
