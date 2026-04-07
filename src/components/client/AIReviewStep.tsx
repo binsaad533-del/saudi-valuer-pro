@@ -280,10 +280,19 @@ const VERIFICATION_TRIGGERS: VerificationTrigger[] = [
 const TYPE_LABELS: Record<string, string> = {
   real_estate: "عقار",
   machinery_equipment: "آلات ومعدات",
+  both: "عقار + آلات ومعدات",
   furniture: "أثاث",
   vehicle: "مركبة",
   it_equipment: "تقنية",
   medical_equipment: "طبي",
+  industrial: "صناعي",
+  equipment: "معدات",
+  machinery: "آلات",
+  office: "مكتبي",
+  electrical: "كهربائي",
+  hvac: "تكييف وتبريد",
+  plumbing: "سباكة",
+  other: "أخرى",
 };
 
 const ASSET_TYPE_MAP: Record<string, { label: string; icon: typeof Building2 }> = {
@@ -822,7 +831,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                     <span className="text-[11px] font-medium">{asset.name || "—"}</span>
                   </TableCell>
                   <TableCell className="py-1.5">
-                    <span className="text-[10px] text-muted-foreground">{TYPE_LABELS[asset.category || asset.type] || asset.category || asset.type || "—"}</span>
+                    <span className="text-[10px] text-muted-foreground">{TYPE_LABELS[asset.category] || TYPE_LABELS[asset.type] || asset.category || (asset.type === "both" ? "—" : asset.type) || "—"}</span>
                   </TableCell>
                   <TableCell className="text-[11px] py-1.5">{asset.quantity}</TableCell>
                   <TableCell className="py-1.5">
