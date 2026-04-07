@@ -106,6 +106,7 @@ export default function SimplifiedJourney() {
 
   // Step 4: Scope
   const [scopeData, setScopeData] = useState<any>(null);
+  const pendingExcelAssetsRef = useRef<ScopeAsset[]>([]);
   const [scopeConfirmed, setScopeConfirmed] = useState(false);
 
   useEffect(() => {
@@ -337,44 +338,68 @@ export default function SimplifiedJourney() {
       return;
     }
 
-    // Mixed: Excel + images/PDFs → parse Excel locally, attach other files as supporting docs
+    // Images/PDFs present → use AI orchestrator for analysis
     setStep("processing");
-    setProcessingProgress(10);
-    setProcessingStatus("جارٍ قراءة ملفات Excel...");
+    setProcessingProgress(5);
+    setProcessingStatus("جارٍ تجهيز الملفات للتحليل الذكي...");
 
     try {
-      let assets: ScopeAsset[] = [];
+      let excelAssets: ScopeAsset[] = [];
 
-      // Always parse Excel files locally (fast)
+      // Parse Excel files locally first (fast)
       if (excelFiles.length > 0) {
-        assets = await parseExcelFilesLocally(excelFiles);
-        setProcessingProgress(70);
+        setProcessingStatus("جارٍ قراءة ملفات Excel...");
+        excelAssets = await parseExcelFilesLocally(excelFiles);
+        setProcessingProgress(20);
       }
 
-      // Images/PDFs are stored as supporting attachments (already uploaded to storage)
-      // No need to wait for slow AI extraction
-      setProcessingProgress(90);
-      setProcessingStatus("جارٍ إعداد نطاق العمل...");
+      // Send images/PDFs to AI orchestrator for asset extraction
+      setProcessingStatus("جارٍ تحليل الصور والمستندات بالذكاء الاصطناعي...");
+      const filesToAnalyze = otherFiles.map(f => ({
+        name: f.name,
+        path: f.path,
+        size: f.size,
+        mimeType: f.type,
+      }));
 
-      const realEstate = assets.filter(a => a.asset_type === "real_estate").length;
-      const machinery = assets.filter(a => a.asset_type === "machinery_equipment").length;
+      const { data: jobData, error: jobError } = await supabase.functions.invoke(
+        "asset-extraction-orchestrator",
+        { body: { action: "create", userId: user.id, files: filesToAnalyze, requestId } }
+      );
 
-      setScopeData({
-        totalAssets: assets.length,
-        realEstate,
-        machinery,
-        assets,
-        attachedFiles: otherFiles.map(f => ({ name: f.name, path: f.path, type: f.type })),
-        discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
-        approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
-      });
+      if (jobError || !jobData?.jobId) {
+        console.error("Orchestrator error:", jobError, jobData);
+        // Fallback: proceed with Excel assets only + images as attachments
+        const realEstate = excelAssets.filter(a => a.asset_type === "real_estate").length;
+        const machinery = excelAssets.filter(a => a.asset_type === "machinery_equipment").length;
+        setScopeData({
+          totalAssets: excelAssets.length,
+          realEstate,
+          machinery,
+          assets: excelAssets,
+          attachedFiles: otherFiles.map(f => ({ name: f.name, path: f.path, type: f.type })),
+          discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
+          approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
+        });
+        setProcessingProgress(100);
+        setProcessingStatus("اكتمل التحليل بنجاح");
+        await new Promise(r => setTimeout(r, 400));
+        setStep("scope");
+        return;
+      }
 
-      setProcessingProgress(100);
-      setProcessingStatus("اكتمل التحليل بنجاح");
-      await new Promise(r => setTimeout(r, 400));
-      setStep("scope");
+      // Store jobId and let the polling useEffect handle the rest
+      setJobId(jobData.jobId);
+      setProcessingProgress(25);
+      setProcessingStatus("جارٍ تحليل الصور بالذكاء الاصطناعي...");
+
+      // Store excel assets to merge later when polling completes
+      if (excelAssets.length > 0) {
+        pendingExcelAssetsRef.current = excelAssets;
+      }
     } catch (err: any) {
-      toast({ title: "خطأ في قراءة الملفات", description: "تعذر تحليل الملفات — يرجى المحاولة مرة أخرى.", variant: "destructive" });
+      console.error("Processing error:", err);
+      toast({ title: "خطأ في تحليل الملفات", description: "تعذر تحليل الملفات — يرجى المحاولة مرة أخرى.", variant: "destructive" });
       setStep("upload");
     }
   };
@@ -416,20 +441,39 @@ export default function SimplifiedJourney() {
           setProcessingProgress(100);
           setProcessingStatus("اكتمل التحليل بنجاح");
 
-          const { data: assets } = await supabase
+          const { data: rawAssets } = await supabase
             .from("extracted_assets")
             .select("*")
             .eq("job_id", jobId);
 
-          const realEstate = (assets || []).filter(a => a.asset_type === "real_estate").length;
-          const machinery = (assets || []).filter(a => a.asset_type === "machinery_equipment").length;
-          const totalAssets = (assets || []).length;
+          // Convert extracted_assets to ScopeAsset format
+          const aiAssets: ScopeAsset[] = (rawAssets || []).map((a: any, idx: number) => ({
+            id: a.id,
+            asset_index: idx,
+            name: a.name || "أصل مستخرج",
+            asset_type: a.asset_type || "machinery_equipment",
+            category: a.category || a.subcategory || null,
+            subcategory: a.subcategory || null,
+            quantity: a.quantity || 1,
+            condition: a.condition || null,
+            confidence: a.confidence || 0.5,
+            review_status: a.review_status || "pending",
+            source_evidence: a.source_evidence || "صورة مرفوعة",
+            asset_data: a.asset_data || {},
+          }));
+
+          // Merge with any pending Excel assets
+          const pendingExcel = pendingExcelAssetsRef.current;
+          const allAssets = [...pendingExcel, ...aiAssets];
+
+          const realEstate = allAssets.filter(a => a.asset_type === "real_estate").length;
+          const machinery = allAssets.filter(a => a.asset_type === "machinery_equipment").length;
 
           setScopeData({
-            totalAssets,
+            totalAssets: allAssets.length,
             realEstate,
             machinery,
-            assets: assets || [],
+            assets: allAssets,
             discipline: realEstate >= machinery ? "real_estate" : "machinery_equipment",
             approach: realEstate > 0 ? "المقارنة السوقية + التكلفة" : "التكلفة + الإهلاك",
           });
