@@ -159,6 +159,55 @@ export default function ExecutiveDashboard() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [drawerMessages, setDrawerMessages] = useState<any[]>([]);
+  const [drawerReply, setDrawerReply] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Load messages when a request is selected
+  useEffect(() => {
+    if (!selectedRequest) { setDrawerMessages([]); return; }
+    let cancelled = false;
+    const loadMsgs = async () => {
+      setLoadingMessages(true);
+      const { data } = await supabase
+        .from("request_messages" as any)
+        .select("*")
+        .eq("request_id", selectedRequest.id)
+        .order("created_at");
+      if (!cancelled) setDrawerMessages(data || []);
+      setLoadingMessages(false);
+    };
+    loadMsgs();
+
+    const channel = supabase
+      .channel(`owner-msg-${selectedRequest.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "request_messages", filter: `request_id=eq.${selectedRequest.id}` },
+        (payload) => setDrawerMessages(prev => [...prev, payload.new]))
+      .subscribe();
+
+    return () => { cancelled = true; supabase.removeChannel(channel); };
+  }, [selectedRequest?.id]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [drawerMessages]);
+
+  const sendOwnerReply = useCallback(async () => {
+    if (!drawerReply.trim() || !selectedRequest || !user) return;
+    setSendingReply(true);
+    try {
+      await supabase.from("request_messages" as any).insert({
+        request_id: selectedRequest.id,
+        sender_id: user.id,
+        sender_type: "admin" as any,
+        content: drawerReply.trim(),
+      });
+      setDrawerReply("");
+    } catch { /* toast handled by realtime */ }
+    setSendingReply(false);
+  }, [drawerReply, selectedRequest, user]);
 
   useEffect(() => {
     if (!user) return;
