@@ -96,6 +96,12 @@ export const AUTOMATED_TRANSITIONS: Record<string, { to: string; trigger: string
   approved: { to: "issued", trigger: "auto_issue_report" },
 };
 
+// ── Payment gate: stages that require confirmed payment ──
+export const PAYMENT_GATES: Record<string, { required_stage: "first" | "final"; label_ar: string }> = {
+  processing: { required_stage: "first", label_ar: "يجب تأكيد الدفعة الأولى قبل بدء المعالجة" },
+  issued: { required_stage: "final", label_ar: "يجب تأكيد الدفعة النهائية قبل الإصدار" },
+};
+
 // ── Human checkpoints — only owner ──
 export const HUMAN_CHECKPOINTS: Record<string, { role: string; action: string }> = {
   under_review: { role: "owner", action: "مراجعة واعتماد المالك" },
@@ -104,6 +110,27 @@ export const HUMAN_CHECKPOINTS: Record<string, { role: string; action: string }>
 // ── Core transition function ──
 export function canTransition(from: string, to: string): boolean {
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+// ── Check if payment gate blocks a transition ──
+export async function checkPaymentGate(
+  toStatus: string,
+  requestId: string
+): Promise<{ blocked: boolean; reason_ar?: string }> {
+  const gate = PAYMENT_GATES[toStatus];
+  if (!gate) return { blocked: false };
+
+  const { isFirstPaymentConfirmed, isFinalPaymentConfirmed } = await import("./payment-workflow");
+  
+  if (gate.required_stage === "first") {
+    const paid = await isFirstPaymentConfirmed(requestId);
+    if (!paid) return { blocked: true, reason_ar: gate.label_ar };
+  } else if (gate.required_stage === "final") {
+    const paid = await isFinalPaymentConfirmed(requestId);
+    if (!paid) return { blocked: true, reason_ar: gate.label_ar };
+  }
+
+  return { blocked: false };
 }
 
 export function getNextStatuses(current: string): string[] {
