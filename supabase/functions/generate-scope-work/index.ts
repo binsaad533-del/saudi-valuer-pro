@@ -192,7 +192,7 @@ serve(async (req) => {
 - الغرض من التقييم: ${purposeLabel}
 - المستخدمون المقصودون: ${intendedUsersLabel}
 - أساس القيمة المقترح: ${basis.ar} (${basis.en}) — ${basis.ivs}
-- نوع الأصل: ${assetType === "machinery" ? "آلات ومعدات" : assetType === "mixed" ? "مختلط" : "عقاري"}
+- نوع الأصل: ${(assetType === "machinery" || assetType === "machinery_equipment") ? "آلات ومعدات" : (assetType === "mixed" || assetType === "both") ? "مختلط (عقاري + آلات ومعدات)" : "عقاري"}
 - وصف الأصل: ${assetDescription || "غير متوفر — يرجى الافتراض بناءً على المعلومات المتاحة"}
 - العميل: ${clientName || "غير محدد"}
 - المدينة: ${city || "غير محددة"}
