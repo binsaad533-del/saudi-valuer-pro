@@ -106,6 +106,7 @@ export default function SimplifiedJourney() {
 
   // Step 4: Scope
   const [scopeData, setScopeData] = useState<any>(null);
+  const pendingExcelAssetsRef = useRef<ScopeAsset[]>([]);
   const [scopeConfirmed, setScopeConfirmed] = useState(false);
 
   useEffect(() => {
