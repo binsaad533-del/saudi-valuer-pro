@@ -446,17 +446,19 @@ export default function SimplifiedJourney() {
             .eq("job_id", jobId);
 
           // Convert extracted_assets to ScopeAsset format
-          const aiAssets: ScopeAsset[] = (rawAssets || []).map((a: any) => ({
+          const aiAssets: ScopeAsset[] = (rawAssets || []).map((a: any, idx: number) => ({
             id: a.id,
+            asset_index: idx,
             name: a.name || "أصل مستخرج",
             asset_type: a.asset_type || "machinery_equipment",
-            category: a.category || a.subcategory || "",
+            category: a.category || a.subcategory || null,
+            subcategory: a.subcategory || null,
             quantity: a.quantity || 1,
-            condition: a.condition || "",
-            estimated_value: a.asset_data?.estimated_value || a.asset_data?.value || null,
+            condition: a.condition || null,
             confidence: a.confidence || 0.5,
-            source: "ai",
-            description: a.description || "",
+            review_status: a.review_status || "pending",
+            source_evidence: a.source_evidence || "صورة مرفوعة",
+            asset_data: a.asset_data || {},
           }));
 
           // Merge with any pending Excel assets
