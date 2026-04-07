@@ -1164,11 +1164,36 @@ export default function SimpleClientRequest() {
               </Card>
             ) : null}
 
-            <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg"
-              disabled={uploadedFiles.length === 0 || uploading || detecting || !confirmedType || !clientNameInput.trim() || !clientPhone.trim() || !purpose || (purpose === "other" && !purposeOther.trim()) || !intendedUser || (intendedUser === "other" && !intendedUserOther.trim()) || assetLocations.length === 0}>
-              <Sparkles className="w-4 h-4" />
-              متابعة — تحليل الملفات ومراجعة الجرد
-            </Button>
+            {(() => {
+              const missing: string[] = [];
+              if (uploadedFiles.length === 0) missing.push("المستندات");
+              if (!confirmedType) missing.push("نوع الأصل");
+              if (!clientNameInput.trim()) missing.push("اسم العميل");
+              if (!clientPhone.trim()) missing.push("الجوال");
+              if (!purpose) missing.push("الغرض من التقييم");
+              if (purpose === "other" && !purposeOther.trim()) missing.push("تحديد الغرض");
+              if (!intendedUser) missing.push("المستخدم المستهدف");
+              if (intendedUser === "other" && !intendedUserOther.trim()) missing.push("تحديد المستخدم");
+              if (assetLocations.length === 0) missing.push("موقع الأصل (رابط الخريطة)");
+              const isDisabled = missing.length > 0 || uploading || detecting;
+              return (
+                <>
+                  {missing.length > 0 && uploadedFiles.length > 0 && (
+                    <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-3 flex items-start gap-2 text-xs text-amber-800 dark:text-amber-300" dir="rtl">
+                      <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+                      <div>
+                        <p className="font-semibold mb-1">يرجى إكمال الحقول التالية للمتابعة:</p>
+                        <p>{missing.join(" • ")}</p>
+                      </div>
+                    </div>
+                  )}
+                  <Button onClick={handleStartAnalysis} className="w-full gap-2 h-12 text-sm" size="lg" disabled={isDisabled}>
+                    <Sparkles className="w-4 h-4" />
+                    متابعة — تحليل الملفات ومراجعة الجرد
+                  </Button>
+                </>
+              );
+            })()}
 
             {/* نصائح */}
             <Card className="bg-muted/30 border-dashed" dir="rtl">
