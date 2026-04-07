@@ -743,6 +743,11 @@ export default function ExecutiveDashboard() {
                 supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
               }} />
 
+              {/* Professional Judgment Panel */}
+              <ProfessionalJudgmentPanel request={selectedRequest} userId={user!.id} onStatusChange={() => {
+                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
+              }} />
+
               {/* Report Draft Generator */}
               <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => {
                 supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
