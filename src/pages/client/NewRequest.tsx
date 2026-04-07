@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
+import { openLocationInGoogleMaps } from "@/lib/google-maps";
 
 interface UploadedFile {
   id: string;
@@ -668,12 +669,12 @@ export default function NewRequest() {
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
                     {assetLocations.map(loc => (
-                      <a key={loc.id} href={loc.googleMapsUrl} target="_blank" rel="noopener noreferrer"
+                      <button key={loc.id} type="button" onClick={() => openLocationInGoogleMaps(loc)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-border hover:border-primary/40 transition-colors shadow-sm text-sm font-medium text-foreground hover:text-primary">
                         <Navigation className="w-3.5 h-3.5 text-primary shrink-0" />
                         <span className="max-w-[160px] truncate">{loc.name}</span>
                         <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                      </a>
+                      </button>
                     ))}
                   </div>
                 </CardContent>

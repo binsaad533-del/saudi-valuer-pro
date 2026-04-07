@@ -5,6 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Plus, X, ExternalLink, Navigation, Link2, LocateFixed } from "lucide-react";
+import {
+  coordsToGoogleMapsUrl,
+  extractCoordsFromUrl,
+  isValidCoordinate,
+  isValidGoogleMapsUrl,
+  openLocationInGoogleMaps,
+  normalizeGoogleMapsUrl,
+} from "@/lib/google-maps";
 
 export interface AssetLocation {
   id: string;
@@ -23,50 +31,6 @@ interface AssetLocationPickerProps {
 }
 
 type InputMode = "url" | "coords";
-
-function extractCoordsFromUrl(url: string): { lat?: number; lng?: number } {
-  const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
-  const qMatch = url.match(/[?&]q=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (qMatch) return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
-  const queryMatch = url.match(/[?&]query=(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (queryMatch) return { lat: parseFloat(queryMatch[1]), lng: parseFloat(queryMatch[2]) };
-  const searchMatch = url.match(/\/maps\/search\/(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (searchMatch) return { lat: parseFloat(searchMatch[1]), lng: parseFloat(searchMatch[2]) };
-  const placeMatch = url.match(/place\/[^/]+\/(-?\d+\.?\d*),(-?\d+\.?\d*)/);
-  if (placeMatch) return { lat: parseFloat(placeMatch[1]), lng: parseFloat(placeMatch[2]) };
-  return {};
-}
-
-function normalizeGoogleMapsUrl(url: string): string {
-  const trimmed = url.trim();
-  if (!trimmed) return "";
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-}
-
-function isValidGoogleMapsUrl(url: string): boolean {
-  const normalized = normalizeGoogleMapsUrl(url);
-  return /^(https?:\/\/)(www\.)?(google\.\w+\/maps|maps\.google|maps\.app\.goo\.gl|goo\.gl\/maps)/i.test(normalized);
-}
-
-function isValidCoordinate(lat: number, lng: number): boolean {
-  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
-}
-
-function coordsToGoogleMapsUrl(lat: number, lng: number): string {
-  return `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
-}
-
-function getLocationUrl(location: AssetLocation): string {
-  if (location.latitude != null && location.longitude != null) {
-    return coordsToGoogleMapsUrl(location.latitude, location.longitude);
-  }
-  return normalizeGoogleMapsUrl(location.googleMapsUrl);
-}
-
-function openLocationInGoogleMaps(location: AssetLocation) {
-  window.open(getLocationUrl(location), "_blank", "noopener,noreferrer");
-}
 
 export default function AssetLocationPicker({ locations, onChange, maxLocations = 50, compact = false }: AssetLocationPickerProps) {
   const [showForm, setShowForm] = useState(false);
