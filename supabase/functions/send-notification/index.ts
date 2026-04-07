@@ -17,6 +17,7 @@ const NOTIFICATION_DEFS: Record<string, {
 }> = {
   // Owner notifications
   new_request: { category: "workflow", roles: ["owner"], defaultPriority: "medium", defaultChannels: { in_app: true, email: true, sms: false } },
+  new_request_pricing: { category: "workflow", roles: ["owner"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
   request_ready_review: { category: "workflow", roles: ["owner"], defaultPriority: "high", defaultChannels: { in_app: true, email: true, sms: false } },
   critical_compliance: { category: "compliance", roles: ["owner"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
   high_risk_valuation: { category: "compliance", roles: ["owner"], defaultPriority: "critical", defaultChannels: { in_app: true, email: true, sms: true } },
