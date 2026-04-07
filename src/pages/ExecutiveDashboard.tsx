@@ -78,7 +78,7 @@ export default function ExecutiveDashboard() {
     if (!user) return;
     const load = async () => {
       const [{ data: aData }, { data: pData }, { data: reqData }, { data: cData }] = await Promise.all([
-        supabase.from("valuation_assignments").select("id, reference_number, status, asset_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)").order("created_at", { ascending: false }).limit(500),
+        supabase.from("valuation_assignments").select("id, reference_number, status, property_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)").order("created_at", { ascending: false }).limit(500),
         supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
         supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("clients").select("id, name_ar, email, phone, client_type, client_status, city_ar, created_at").order("created_at", { ascending: false }).limit(200),
