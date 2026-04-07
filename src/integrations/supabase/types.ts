@@ -5330,6 +5330,8 @@ export type Database = {
           client_phone: string | null
           client_user_id: string
           completed_at: string | null
+          conflict_of_interest_checked: boolean | null
+          conflict_of_interest_result: string | null
           created_at: string
           desktop_disclaimer_accepted: boolean | null
           discipline: string | null
@@ -5339,6 +5341,7 @@ export type Database = {
           first_payment_amount: number | null
           first_payment_percentage: number | null
           id: string
+          inspection_type: string | null
           intended_use_ar: string | null
           intended_use_en: string | null
           intended_user_ar: string | null
@@ -5377,6 +5380,9 @@ export type Database = {
           reference_number: string | null
           scope_of_work_ar: string | null
           scope_of_work_en: string | null
+          sow_assumptions_ar: string | null
+          sow_signed_at: string | null
+          sow_special_assumptions_ar: string | null
           status: Database["public"]["Enums"]["request_status"]
           submitted_at: string | null
           terms_ar: string | null
@@ -5408,6 +5414,8 @@ export type Database = {
           client_phone?: string | null
           client_user_id: string
           completed_at?: string | null
+          conflict_of_interest_checked?: boolean | null
+          conflict_of_interest_result?: string | null
           created_at?: string
           desktop_disclaimer_accepted?: boolean | null
           discipline?: string | null
@@ -5417,6 +5425,7 @@ export type Database = {
           first_payment_amount?: number | null
           first_payment_percentage?: number | null
           id?: string
+          inspection_type?: string | null
           intended_use_ar?: string | null
           intended_use_en?: string | null
           intended_user_ar?: string | null
@@ -5455,6 +5464,9 @@ export type Database = {
           reference_number?: string | null
           scope_of_work_ar?: string | null
           scope_of_work_en?: string | null
+          sow_assumptions_ar?: string | null
+          sow_signed_at?: string | null
+          sow_special_assumptions_ar?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           submitted_at?: string | null
           terms_ar?: string | null
@@ -5486,6 +5498,8 @@ export type Database = {
           client_phone?: string | null
           client_user_id?: string
           completed_at?: string | null
+          conflict_of_interest_checked?: boolean | null
+          conflict_of_interest_result?: string | null
           created_at?: string
           desktop_disclaimer_accepted?: boolean | null
           discipline?: string | null
@@ -5495,6 +5509,7 @@ export type Database = {
           first_payment_amount?: number | null
           first_payment_percentage?: number | null
           id?: string
+          inspection_type?: string | null
           intended_use_ar?: string | null
           intended_use_en?: string | null
           intended_user_ar?: string | null
@@ -5533,6 +5548,9 @@ export type Database = {
           reference_number?: string | null
           scope_of_work_ar?: string | null
           scope_of_work_en?: string | null
+          sow_assumptions_ar?: string | null
+          sow_signed_at?: string | null
+          sow_special_assumptions_ar?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           submitted_at?: string | null
           terms_ar?: string | null
@@ -5931,6 +5949,9 @@ export type Database = {
         | "final_payment_received"
         | "report_issued"
         | "closed"
+        | "sow_generated"
+        | "sow_sent"
+        | "sow_approved"
       review_finding_severity: "critical" | "major" | "minor" | "observation"
       valuation_approach:
         | "sales_comparison"
@@ -6250,6 +6271,9 @@ export const Constants = {
         "final_payment_received",
         "report_issued",
         "closed",
+        "sow_generated",
+        "sow_sent",
+        "sow_approved",
       ],
       review_finding_severity: ["critical", "major", "minor", "observation"],
       valuation_approach: [

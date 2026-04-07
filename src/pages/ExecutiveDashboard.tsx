@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import TopBar from "@/components/layout/TopBar";
 import ReportDraftGenerator from "@/components/reports/ReportDraftGenerator";
+import SOWGenerator from "@/components/reports/SOWGenerator";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,7 @@ import {
 } from "@/components/ui/drawer";
 
 const STATUS_NEW = ["draft", "ai_review", "submitted", "client_submitted", "under_ai_review", "awaiting_client_info", "needs_clarification"];
+const STATUS_SOW = ["sow_generated", "sow_sent", "sow_approved"];
 const STATUS_PROGRESS = ["under_pricing", "quotation_sent", "quotation_approved", "awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid", "in_production", "inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted", "valuation_in_progress", "draft_report_ready", "draft_report_sent", "under_client_review", "client_comments", "revision_in_progress", "priced", "awaiting_payment_initial", "payment_received_initial"];
 const STATUS_APPROVAL = ["final_payment_pending", "final_payment_uploaded", "final_payment_approved", "final_report_ready", "awaiting_final_payment", "final_payment_received"];
 const STATUS_COMPLETE = ["completed", "report_issued", "closed", "archived"];
@@ -53,13 +55,16 @@ const statusLabels: Record<string, string> = {
   under_ai_review: "مراجعة ذكية",
   awaiting_client_info: "بانتظار معلومات",
   needs_clarification: "يحتاج توضيح",
+  sow_generated: "نطاق العمل جاهز",
+  sow_sent: "نطاق العمل مُرسل",
+  sow_approved: "نطاق العمل مُعتمد",
   under_pricing: "قيد التسعير",
   priced: "تم التسعير",
   quotation_sent: "عرض مرسل",
   quotation_approved: "عرض مقبول",
   quotation_rejected: "عرض مرفوض",
   awaiting_payment: "بانتظار الدفع",
-  awaiting_payment_initial: "بانتظار الدفع",
+  awaiting_payment_initial: "بانتظار الدفعة الأولى",
   payment_uploaded: "إيصال مرفوع",
   payment_under_review: "مراجعة الدفع",
   payment_received_initial: "دفعة أولى مستلمة",
@@ -731,6 +736,11 @@ export default function ExecutiveDashboard() {
                   </form>
                 </CardContent>
               </Card>
+
+              {/* SOW Generator */}
+              <SOWGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => {
+                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
+              }} />
 
               {/* Report Draft Generator */}
               <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => {
