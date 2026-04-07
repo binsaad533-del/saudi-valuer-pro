@@ -406,7 +406,7 @@ export default function RequestDetails() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="p-3 bg-primary/5 rounded-lg space-y-3 max-h-64 overflow-y-auto">
-                    <p className="text-xs text-foreground whitespace-pre-line leading-6">{request.scope_of_work_ar}</p>
+                    <p dir="rtl" className="text-xs text-foreground whitespace-pre-line leading-7 text-right" style={{ unicodeBidi: 'plaintext' }}>{request.scope_of_work_ar}</p>
                   </div>
                   {request.sow_special_assumptions_ar && (
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
@@ -487,7 +487,7 @@ export default function RequestDetails() {
                     </div>
                   )}
                   {request.scope_of_work_ar && (
-                    <div><p className="text-xs text-muted-foreground mb-1">نطاق العمل:</p><p className="text-xs bg-muted/50 p-2 rounded">{request.scope_of_work_ar}</p></div>
+                    <div><p className="text-xs text-muted-foreground mb-1">نطاق العمل:</p><p dir="rtl" className="text-xs bg-muted/50 p-2 rounded text-right leading-7" style={{ unicodeBidi: 'plaintext' }}>{request.scope_of_work_ar}</p></div>
                   )}
                   {request.terms_ar && (
                     <div><p className="text-xs text-muted-foreground mb-1">الشروط:</p><p className="text-xs bg-muted/50 p-2 rounded">{request.terms_ar}</p></div>
