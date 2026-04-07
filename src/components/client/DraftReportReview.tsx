@@ -8,6 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
+import { isolateBidiText } from "@/lib/bidi-text";
 import {
   Loader2, FileText, CheckCircle, MessageSquareText,
   ThumbsUp, AlertTriangle, ChevronDown, ChevronUp,
