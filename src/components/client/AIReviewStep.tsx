@@ -559,7 +559,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 • إجمالي الأصول الأصلية المرفوعة: ${data.assets.length}
 • عناصر مكررة تم إزالتها تلقائياً: ${removedCount}${removedCount > 0 ? ` (أمثلة: ${[...new Set(duplicateNames)].slice(0, 15).join("، ")})` : ""}
 • الأصول الفريدة بعد الدمج: ${assets.length}
-• جاهز للتقييم: ${autoApproved.length} ✅
+• ضمن النطاق: ${autoApproved.length} ✅
 • مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫${excluded.length > 0 ? `\n  المستبعدة: ${excluded.map(a => `"${a.name}" — ${a.license_reason || "خارج النطاق"}`).join("، ")}` : ""}
 • بانتظار التوضيح: ${flagged.length} ❓${flagged.length > 0 ? `\n  بانتظار المراجعة: ${flagged.map(a => `"${a.name}" — ${a.license_reason || "بيانات ناقصة"}`).join("، ")}` : ""}`;
   }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged]);
