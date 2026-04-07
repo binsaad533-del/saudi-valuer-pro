@@ -157,51 +157,21 @@ const App = () => (
           <Route path="/client/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/recovery" element={<RecoveryCallback />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/client" element={
+          <Route element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <ClientDashboard />
+              <ClientLayout />
             </ProtectedRoute>
-          } />
-          <Route path="/client/dashboard" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <ClientDashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/requests" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <ClientRequestsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/new-request" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <SimplifiedJourney />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/new-request-advanced" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <NewRequest />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/request/:id" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <RequestDetails />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/settings" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <UserSettingsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/notifications" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <NotificationsPage />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/notification-settings" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <NotificationSettingsPage />
-            </ProtectedRoute>
-          } />
+          }>
+            <Route path="/client" element={<ClientDashboard />} />
+            <Route path="/client/dashboard" element={<ClientDashboard />} />
+            <Route path="/client/requests" element={<ClientRequestsPage />} />
+            <Route path="/client/new-request" element={<SimplifiedJourney />} />
+            <Route path="/client/new-request-advanced" element={<NewRequest />} />
+            <Route path="/client/request/:id" element={<RequestDetails />} />
+            <Route path="/client/settings" element={<UserSettingsPage />} />
+            <Route path="/client/notifications" element={<NotificationsPage />} />
+            <Route path="/client/notification-settings" element={<NotificationSettingsPage />} />
+          </Route>
 
           {/* Public Verification */}
           <Route path="/verify" element={<VerifyReport />} />
