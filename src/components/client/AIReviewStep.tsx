@@ -486,9 +486,9 @@ interface ChatMessage {
 
 // ── Status badge ──
 function StatusBadge({ status }: { status: ExtractedAsset["license_status"] }) {
-  if (status === "permitted") return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[9px] px-1.5 py-0">✓ ضمن النطاق</Badge>;
-  if (status === "not_permitted") return <Badge variant="destructive" className="text-[9px] px-1.5 py-0">✗ مستبعد</Badge>;
-  return <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-200 text-[9px] px-1.5 py-0 animate-pulse">⟳ بانتظار</Badge>;
+  if (status === "permitted") return <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-200 text-[9px] px-2 py-0.5 whitespace-nowrap">✓ ضمن النطاق</Badge>;
+  if (status === "not_permitted") return <Badge variant="destructive" className="text-[9px] px-2 py-0.5 whitespace-nowrap">✗ مستبعد</Badge>;
+  return <Badge variant="secondary" className="bg-amber-500/10 text-amber-700 border-amber-200 text-[9px] px-2 py-0.5 whitespace-nowrap animate-pulse">⟳ بانتظار</Badge>;
 }
 
 // ══════════════════════════════════════
