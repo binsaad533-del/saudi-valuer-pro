@@ -540,7 +540,7 @@ export default function SimpleClientRequest() {
           valuation_mode: valuationMode || "field",
           valuation_type: (assetType === "machinery_equipment" ? "machinery" : assetType === "both" ? "mixed" : assetType) as any,
           property_description_ar: combinedNotes || null,
-          status: "submitted" as any,
+          status: "under_pricing" as any,
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
             files: uploadedFiles.map(f => ({ name: f.name, path: f.path, type: f.type })),
@@ -600,9 +600,25 @@ export default function SimpleClientRequest() {
         user_role: "client",
       });
 
-      // Fire-and-forget notification
+      // System message to client
+      supabase.from("request_messages" as any).insert({
+        request_id: newRequestId,
+        sender_type: "system" as any,
+        content: "✅ تم استلام طلبك بنجاح، يتم الآن مراجعة الطلب وإعداد عرض السعر.\nسيتم إشعارك فور جاهزية العرض.",
+      }).then(() => {});
+
+      // Notify owner/pricing team
       supabase.functions.invoke("send-notification", {
-        body: { notification_type: "request_submitted", user_id: user.id, data: { requestId: newRequestId } },
+        body: {
+          notification_type: "new_request_pricing",
+          user_id: user.id,
+          data: {
+            requestId: newRequestId,
+            assetType,
+            assetsCount: supportedAssets.length,
+            clientName: clientNameInput || clientName,
+          },
+        },
       }).catch(() => {});
 
       setProcessingProgress(100);
@@ -685,8 +701,30 @@ export default function SimpleClientRequest() {
             <CheckCircle className="w-16 h-16 text-emerald-600 mx-auto" />
             <h2 className="text-xl font-bold text-foreground">تم إرسال طلبك بنجاح</h2>
             <p className="text-sm text-muted-foreground">
-              سيقوم فريقنا بمراجعة المستندات وإرسال نطاق العمل وعرض السعر تلقائياً.
+              تم استلام طلبك بنجاح، يتم الآن مراجعة الطلب وإعداد عرض السعر.
+              سيتم إشعارك فور جاهزية العرض.
             </p>
+
+            {/* Mini timeline */}
+            <div className="bg-muted/50 rounded-xl p-4 text-right space-y-3">
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold">✓</span>
+                <span className="text-sm text-foreground">تم الإرسال</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-xs animate-pulse">⏳</span>
+                <span className="text-sm text-foreground">مراجعة الطلب وإعداد التسعير</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs">⏳</span>
+                <span className="text-sm text-muted-foreground">إصدار عرض السعر</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-xs">🔒</span>
+                <span className="text-sm text-muted-foreground">بدء التقييم</span>
+              </div>
+            </div>
+
             <div className="space-y-2 pt-2">
               <Button onClick={() => navigate("/client/dashboard")} className="w-full">العودة للوحة التحكم</Button>
               {requestId && (

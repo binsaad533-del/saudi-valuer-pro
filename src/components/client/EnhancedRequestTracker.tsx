@@ -11,7 +11,7 @@ const ALL_STAGES = [
 
 const STATUS_TO_STAGE_KEY: Record<string, string> = {
   draft: "submitted", ai_review: "submitted", submitted: "submitted", needs_clarification: "submitted",
-  under_pricing: "payment", quotation_sent: "payment", quotation_approved: "payment", quotation_rejected: "payment",
+  under_pricing: "submitted", quotation_sent: "payment", quotation_approved: "payment", quotation_rejected: "payment",
   awaiting_payment: "payment", payment_uploaded: "payment", payment_under_review: "payment",
   partially_paid: "payment", fully_paid: "assigned",
   in_production: "assigned", inspection_scheduled: "inspection", inspection_completed: "inspection",
