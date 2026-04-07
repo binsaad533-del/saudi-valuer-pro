@@ -439,10 +439,8 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 }
 
 // ── Smart Question Card ──
-function SmartQuestionCard({ asset, question, triggerType, remainingCount, onAnswer, onCustomAnswer, onViewSource }: {
-  asset: ExtractedAsset;
+function SmartQuestionCard({ question, remainingCount, onAnswer, onCustomAnswer, onViewSource }: {
   question: SmartQuestion;
-  triggerType: TriggerType;
   remainingCount: number;
   onAnswer: (opt: SmartQuestion["options"][0]) => void;
   onCustomAnswer: (val: string) => void;
