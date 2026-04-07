@@ -52,14 +52,17 @@ interface UploadedFile {
 type JourneyStep = "start" | "upload" | "processing" | "scope" | "complete";
 
 const PURPOSE_OPTIONS: Record<string, string> = {
-  financing: "تمويل",
-  sale: "بيع",
-  purchase: "شراء",
+  sale_purchase: "بيع / شراء",
+  mortgage: "تمويل / رهن",
   financial_reporting: "تقارير مالية",
-  zakat_tax: "زكاة / ضريبة",
-  dispute_court: "نزاع / قضاء",
-  expropriation: "نزع ملكية",
   insurance: "تأمين",
+  taxation: "زكاة / ضريبة",
+  expropriation: "نزع ملكية",
+  litigation: "نزاع / قضاء",
+  investment: "استثمار",
+  lease_renewal: "تجديد إيجار",
+  internal_decision: "قرار داخلي",
+  regulatory: "تنظيمي",
   other: "أخرى",
 };
 
