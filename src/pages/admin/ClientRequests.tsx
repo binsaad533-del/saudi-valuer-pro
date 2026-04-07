@@ -12,17 +12,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Loader2, FileText, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Clock, AlertCircle, Building2, DollarSign, Bot, Brain, BarChart3, MessageSquareText,
+  Loader2, CreditCard, Eye, CheckCircle, XCircle, Send,
+  Building2, Bot, Brain, BarChart3, MessageSquareText,
 } from "lucide-react";
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
-import { StatusBadge, StatusTransitionButton } from "@/components/workflow/StatusComponents";
 import { formatDate, formatNumber } from "@/lib/utils";
 import {
   STATUS_LABELS as WF_STATUS_LABELS,
   STATUS_COLORS,
-  PIPELINE_PHASES,
 } from "@/lib/workflow-engine";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
@@ -55,7 +53,6 @@ export default function ClientRequests() {
   const [activeTab, setActiveTab] = useState("intake");
   const [pricingDialog, setPricingDialog] = useState(false);
   const [paymentReviewDialog, setPaymentReviewDialog] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<any>(null);
   const [payments, setPayments] = useState<any[]>([]);
   const [saving, setSaving] = useState(false);
   const [aiSuggesting, setAiSuggesting] = useState(false);
@@ -96,7 +93,7 @@ export default function ClientRequests() {
       .from("valuation_requests" as any)
       .select("*, clients:client_id(id, name_ar, phone, email)")
       .order("created_at", { ascending: false });
-    const reqs = data || [];
+    const reqs: any[] = (data as any[]) || [];
     setRequests(reqs);
     setLoading(false);
 
