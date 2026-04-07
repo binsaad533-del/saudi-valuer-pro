@@ -31,11 +31,11 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.f
 );
 
 const ADMIN_TABS = [
-  { value: "intake", label: "الاستقبال", statuses: ["draft", "client_submitted", "under_ai_review", "awaiting_client_info"] },
-  { value: "pricing", label: "التسعير", statuses: ["priced", "awaiting_payment_initial", "payment_received_initial"] },
-  { value: "inspection", label: "المعاينة", statuses: ["inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted"] },
-  { value: "valuation", label: "التقييم والتقرير", statuses: ["valuation_in_progress", "draft_report_ready", "under_client_review", "revision_in_progress"] },
-  { value: "final", label: "الإصدار", statuses: ["awaiting_final_payment", "final_payment_received", "report_issued", "closed"] },
+  { value: "intake", label: "الاستقبال", statuses: ["draft", "ai_review", "submitted", "client_submitted", "under_ai_review", "awaiting_client_info", "needs_clarification"] },
+  { value: "pricing", label: "التسعير", statuses: ["under_pricing", "priced", "quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment_initial", "payment_received_initial"] },
+  { value: "payment", label: "الدفع", statuses: ["awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid"] },
+  { value: "production", label: "الإنتاج", statuses: ["in_production", "inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted", "valuation_in_progress", "draft_report_ready", "draft_report_sent", "under_client_review", "client_comments", "revision_in_progress"] },
+  { value: "final", label: "الإصدار", statuses: ["final_payment_pending", "final_payment_uploaded", "final_payment_approved", "awaiting_final_payment", "final_payment_received", "final_report_ready", "report_issued", "completed", "closed", "archived", "cancelled"] },
 ];
 
 export default function ClientRequests() {
