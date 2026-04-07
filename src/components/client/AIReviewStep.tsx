@@ -599,6 +599,7 @@ ${COMPANY.valuation_purposes.map(p => `• ${p}`).join("\n")}
 ${branchDetails}
 
 السجل التجاري: ${COMPANY.cr_number}
+الرقم الضريبي: ${COMPANY.vat_number}
 الرقم الموحد: ${COMPANY.unified_number}
 
 📖 المرجع: ${KB_LICENSE.article}
