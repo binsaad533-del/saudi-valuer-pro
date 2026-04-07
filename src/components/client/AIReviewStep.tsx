@@ -613,11 +613,11 @@ ${branchDetails}
 
 📖 المرجع: ${KB_LICENSE.source} — ${KB_LICENSE.article}`;
       } else {
-        reply = `شكراً لملاحظتك، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
+        reply = `شكراً لك على ملاحظتك الكريمة، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
 
 📖 جميع الملاحظات تُوثّق وفقاً لمتطلبات IVS 104 — Documentation وتُراجع ضمن إجراءات ضبط الجودة.
 
-هل لديك شيء آخر؟`;
+هل يمكنني مساعدتك بشيء آخر؟`;
         // Store as additional note
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
       }
