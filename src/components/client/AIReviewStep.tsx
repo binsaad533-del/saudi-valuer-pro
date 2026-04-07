@@ -613,11 +613,11 @@ ${branchDetails}
 
 📖 المرجع: ${KB_LICENSE.source} — ${KB_LICENSE.article}`;
       } else {
-        reply = `شكراً لملاحظتك، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
+        reply = `شكراً لك على ملاحظتك الكريمة، تم تسجيلها وسيتم إرفاقها مع ملف العمل للمقيّم المعتمد.
 
 📖 جميع الملاحظات تُوثّق وفقاً لمتطلبات IVS 104 — Documentation وتُراجع ضمن إجراءات ضبط الجودة.
 
-هل لديك شيء آخر؟`;
+هل يمكنني مساعدتك بشيء آخر؟`;
         // Store as additional note
         setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
       }
@@ -638,9 +638,13 @@ ${branchDetails}
   // Initialize chat — Raqeem ALWAYS activates
   useEffect(() => {
     const initial: ChatMessage[] = [];
-    const greeting = data.clientName
-      ? `مرحباً ${data.clientName}، راجعت المرفقات وهذا ملخص النتائج`
-      : "مرحباً، راجعت المرفقات وهذا ملخص النتائج";
+    const clientGreeting = data.clientName ? `أهلاً وسهلاً ${data.clientName}` : "أهلاً وسهلاً بك";
+    const greeting = `${clientGreeting} 👋
+
+أنا رقيم، مساعدك الذكي في ${COMPANY.name_ar}.
+مهمتي مساعدتك في مراجعة الأصول المرفقة والإجابة على استفساراتك بدقة واحترافية.
+
+راجعت المرفقات وهذا ملخص النتائج:`;
     initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
 
     // CASE 1: Explain excluded items FIRST (priority) — with knowledge references
