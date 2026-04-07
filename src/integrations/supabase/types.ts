@@ -5889,6 +5889,19 @@ export type Database = {
         | "final_payment_received"
         | "report_issued"
         | "closed"
+        | "submitted"
+        | "scope_generated"
+        | "scope_approved"
+        | "first_payment_confirmed"
+        | "data_collection_complete"
+        | "data_validated"
+        | "inspection_pending"
+        | "inspection_completed"
+        | "analysis_complete"
+        | "professional_review"
+        | "client_review"
+        | "draft_approved"
+        | "final_payment_confirmed"
       assignment_type: "new" | "revaluation"
       attachment_category:
         | "title_deed"
@@ -6205,6 +6218,19 @@ export const Constants = {
         "final_payment_received",
         "report_issued",
         "closed",
+        "submitted",
+        "scope_generated",
+        "scope_approved",
+        "first_payment_confirmed",
+        "data_collection_complete",
+        "data_validated",
+        "inspection_pending",
+        "inspection_completed",
+        "analysis_complete",
+        "professional_review",
+        "client_review",
+        "draft_approved",
+        "final_payment_confirmed",
       ],
       assignment_type: ["new", "revaluation"],
       attachment_category: [
