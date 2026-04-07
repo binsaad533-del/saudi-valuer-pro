@@ -125,7 +125,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false, val
           )}
         </div>
       </div>
-      <Progress value={progressPercent} className="h-2.5" />
+      <Progress value={progressPercent} className="h-2.5" dir="rtl" />
 
       {/* Timeline */}
       <div className="relative pr-4">
