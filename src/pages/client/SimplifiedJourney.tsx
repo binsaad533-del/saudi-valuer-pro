@@ -537,7 +537,7 @@ export default function SimplifiedJourney() {
         </div>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 pb-10">
+      <div className={`mx-auto px-4 pb-10 ${step === "scope" ? "max-w-5xl" : "max-w-2xl"}`}>
 
         {/* ═══════ STEP 1: START ═══════ */}
         {step === "start" && (
