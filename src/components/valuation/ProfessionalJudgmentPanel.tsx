@@ -104,6 +104,7 @@ export default function ProfessionalJudgmentPanel({ request, userId, onStatusCha
 
   // Only show for requests in appropriate statuses
   const showPanel = ["in_production", "fully_paid", "partially_paid", "valuation_in_progress", "inspection_submitted"].includes(request.status);
+  if (!showPanel) return null;
 
   const updateAdjustment = (id: string, field: keyof AdjustmentEntry, value: any) => {
     setAdjustments(prev =>
