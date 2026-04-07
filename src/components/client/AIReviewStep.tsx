@@ -379,7 +379,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       const isAskingAboutExcluded = excludedKeywords.some(k => text.includes(k));
 
       if (isAskingAboutExcluded && excluded.length > 0) {
-        reply = `البنود المستبعدة (${excluded.length}) هي أصول خارج نطاق ترخيص التقييم — مثل الأصول غير الملموسة والحقوق التعاقدية والأدوات المالية. هذا الاستبعاد تلقائي ولا يمكن تجاوزه حسب اللوائح.`;
+        reply = `نحن مرخصون من الهيئة السعودية للمقيمين المعتمدين (تقييم) في فرعين:\n\n• تقييم العقارات\n• تقييم الآلات والمعدات\n\nوهذا التقييم يندرج ضمن تقييم المنشآت الاقتصادية، ويشمل فقط الأصول الملموسة (عقارات، آلات، معدات، مركبات).\n\nأما الأصول غير الملموسة مثل العلامات التجارية، البرمجيات، الشهرة، والتراخيص فهي خارج نطاق الترخيص ولا يمكن تقييمها ضمن هذا التقرير وفقاً لمعايير التقييم الدولية (IVS 2025) ولوائح الهيئة.\n\nعدد البنود المستبعدة: ${excluded.length} بند.`;
       } else if (text.includes("أصل") || text.includes("بند") || text.includes("عدد")) {
         reply = `إجمالي الأصول: ${assets.length} — منها ${autoApproved.length} جاهز و${excluded.length} مستبعد و${flagged.length} بانتظار التوضيح.`;
       } else {
