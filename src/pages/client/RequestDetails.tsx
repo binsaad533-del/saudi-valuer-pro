@@ -215,23 +215,19 @@ export default function RequestDetails() {
   const showFinalReport = ["final_report_ready", "completed"].includes(request.status);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="bg-card border-b border-border sticky top-0 z-30">
+    <div className="bg-background">
+      {/* Page sub-header */}
+      <div className="bg-card border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="جساس" className="w-8 h-8" />
             <div>
               <h2 className="text-sm font-bold text-foreground">تفاصيل الطلب</h2>
               {request.reference_number && <p className="text-xs text-muted-foreground font-mono" dir="ltr">{request.reference_number}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge className="bg-primary/10 text-primary">{getStatusLabel(request.status)}</Badge>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/client/dashboard")}>لوحة التحكم</Button>
-            <Button variant="outline" size="sm" onClick={() => navigate("/client")}><ArrowRight className="w-4 h-4 ml-1" />طلباتي</Button>
-          </div>
+          <Badge className="bg-primary/10 text-primary">{getStatusLabel(request.status)}</Badge>
         </div>
-      </header>
+      </div>
 
       {/* Progress Timeline */}
       <div className="bg-card border-b border-border">
