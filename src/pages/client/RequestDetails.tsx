@@ -20,6 +20,7 @@ import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
+import DraftReportReview from "@/components/client/DraftReportReview";
 import DataPortalUploader from "@/components/client/DataPortalUploader";
 import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
@@ -213,9 +214,10 @@ export default function RequestDetails() {
   }
 
   const needsPayment = ["awaiting_payment", "quotation_approved", "sow_approved"].includes(request.status);
-  const needsFinalPayment = ["final_payment_pending", "draft_report_sent"].includes(request.status) && request.payment_structure === "partial";
+  const needsFinalPayment = ["final_payment_pending"].includes(request.status) && request.payment_structure === "partial";
   const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
-  const showDraftReport = ["draft_report_sent", "client_comments", "final_payment_pending"].includes(request.status);
+  const showDraftReport = ["draft_report_sent", "client_comments"].includes(request.status);
+  const showFinalPaymentSection = needsFinalPayment;
   const showFinalReport = ["final_report_ready", "completed"].includes(request.status);
   const showSOW = request.status === "sow_sent";
 
@@ -530,29 +532,14 @@ export default function RequestDetails() {
               </Card>
             )}
 
-            {/* Draft Report */}
-            {showDraftReport && reports.length > 0 && (
-              <ClientReportReview reportId={reports[0].id} requestId={id!} />
-            )}
-            {showDraftReport && reports.length === 0 && (
-              <Card className="shadow-card border-info/20">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-info" />مسودة التقرير
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="p-4 bg-muted/30 rounded-lg border-2 border-dashed border-warning/30 text-center">
-                    <div className="text-warning font-bold text-lg mb-1 opacity-40">DRAFT / مسودة</div>
-                    <p className="text-xs text-muted-foreground">هذه مسودة للمراجعة - يمكنك إضافة ملاحظاتك عبر المحادثة</p>
-                  </div>
-                  {request.draft_report_url && (
-                    <Button variant="outline" className="w-full mt-3" size="sm">
-                      <Download className="w-3 h-3 ml-1" />تحميل المسودة
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+            {/* Draft Report Review */}
+            {showDraftReport && (
+              <DraftReportReview
+                requestId={id!}
+                userId={user.id}
+                paymentStructure={request.payment_structure}
+                onStatusChange={loadData}
+              />
             )}
 
             {/* Final Report */}
