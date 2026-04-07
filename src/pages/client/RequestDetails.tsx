@@ -188,6 +188,7 @@ export default function RequestDetails() {
   const getStatusLabel = (status: string) => {
     const map: Record<string, string> = {
       draft: "مسودة", submitted: "تم الإرسال", needs_clarification: "يحتاج توضيح",
+      sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل", sow_approved: "نطاق العمل مُعتمد",
       under_pricing: "قيد التسعير", quotation_sent: "عرض سعر مرسل",
       quotation_approved: "عرض معتمد", quotation_rejected: "عرض مرفوض",
       awaiting_payment: "بانتظار الدفع", payment_uploaded: "إيصال مرفوع",
