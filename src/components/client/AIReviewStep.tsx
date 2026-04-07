@@ -852,13 +852,13 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
             </TableBody>
           </table>
         </div>
-        {assets.length > 10 && !showAll && (
-          <button onClick={() => setShowAll(true)} className="w-full py-2 text-[11px] text-primary hover:bg-primary/5 border-t border-border transition-colors">
-            عرض الكل ({assets.length} أصل) ↓
+        {hasMore && (
+          <button onClick={() => setVisibleCount(prev => Math.min(prev + PAGE_SIZE, assets.length))} className="w-full py-2 text-[11px] text-primary hover:bg-primary/5 border-t border-border transition-colors">
+            عرض المزيد ({assets.length - visibleCount} أصل متبقي) ↓
           </button>
         )}
-        {showAll && assets.length > 10 && (
-          <button onClick={() => setShowAll(false)} className="w-full py-2 text-[11px] text-muted-foreground hover:bg-muted/30 border-t border-border transition-colors">
+        {!hasMore && visibleCount > PAGE_SIZE && (
+          <button onClick={() => setVisibleCount(PAGE_SIZE)} className="w-full py-2 text-[11px] text-muted-foreground hover:bg-muted/30 border-t border-border transition-colors">
             إخفاء ↑
           </button>
         )}
