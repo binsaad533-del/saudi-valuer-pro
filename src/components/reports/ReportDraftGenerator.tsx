@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { analyzeDiscipline, buildAssetContextBlock } from "@/lib/asset-discipline-engine";
+import { analyzeDiscipline } from "@/lib/asset-discipline-engine";
 import {
   Loader2,
   FileText,
