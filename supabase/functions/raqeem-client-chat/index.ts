@@ -116,6 +116,7 @@ serve(async (req) => {
 ## سياق الأصول الحالية
 ${assetContext || "لا يوجد سياق أصول حالياً"}
 ${assetDetailsSection}
+${attachmentsSection}
 ${correctionsSection}
 ${knowledgeSection}
 
