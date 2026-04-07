@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Upload, FileText, Image, File, X, Loader2, CheckCircle, Send,
-  ArrowRight, Building2, Cog, Shield, Table2,
+  ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -27,10 +27,11 @@ interface UploadedFile {
 
 type PageState = "form" | "processing" | "done";
 
-const ASSET_TYPES = [
-  { key: "real_estate", label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
-  { key: "machinery_equipment", label: "آلات ومعدات", icon: Cog, desc: "معدات صناعية، أجهزة، مركبات، أثاث" },
-] as const;
+const ASSET_TYPE_LABELS: Record<string, { label: string; icon: typeof Building2; desc: string }> = {
+  real_estate: { label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
+  machinery_equipment: { label: "آلات ومعدات", icon: Cog, desc: "معدات صناعية، أجهزة، مركبات، أثاث" },
+  both: { label: "عقار + آلات ومعدات", icon: Sparkles, desc: "تقييم مختلط يشمل كلا النوعين" },
+};
 
 export default function SimpleClientRequest() {
   const navigate = useNavigate();
@@ -40,13 +41,18 @@ export default function SimpleClientRequest() {
   const [user, setUser] = useState<any>(null);
   const [state, setState] = useState<PageState>("form");
 
-  // Form fields
-  const [assetType, setAssetType] = useState<string>("");
+  // Form fields — asset type is now AI-detected
   const [notes, setNotes] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // AI detection state
+  const [detectedType, setDetectedType] = useState<string | null>(null);
+  const [detecting, setDetecting] = useState(false);
+  const [detectionConfidence, setDetectionConfidence] = useState<number>(0);
+  const [detectionReason, setDetectionReason] = useState<string>("");
 
   // Processing
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -61,6 +67,70 @@ export default function SimpleClientRequest() {
     };
     checkAuth();
   }, [navigate]);
+
+  // ── AI Asset Type Detection ──
+  const detectAssetType = async (files: UploadedFile[]) => {
+    if (files.length === 0) {
+      setDetectedType(null);
+      return;
+    }
+    setDetecting(true);
+    setDetectedType(null);
+
+    try {
+      // Extract sample data from Excel files for better classification
+      let excelSample = "";
+      const excelFiles = files.filter(f => isExcel(f.type, f.name));
+      if (excelFiles.length > 0) {
+        for (const uf of excelFiles) {
+          if (!uf.rawFile) continue;
+          try {
+            const result = await parseExcelFile(uf.rawFile);
+            for (const sheet of result.sheets) {
+              excelSample += `Headers: ${sheet.headers.join(", ")}\n`;
+              // Include first 3 rows as sample
+              const sampleRows = sheet.rows.slice(0, 3);
+              for (const row of sampleRows) {
+                excelSample += `Row: ${Object.values(row).join(", ")}\n`;
+              }
+            }
+          } catch { /* skip */ }
+        }
+      }
+
+      const { data, error } = await supabase.functions.invoke("classify-asset-type", {
+        body: {
+          files: files.map(f => ({ name: f.name, mimeType: f.type })),
+          excelSample: excelSample || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      setDetectedType(data.asset_type || "real_estate");
+      setDetectionConfidence(data.confidence || 50);
+      setDetectionReason(data.reason_ar || "");
+    } catch (err) {
+      console.error("Asset type detection failed:", err);
+      // Fallback to real_estate
+      setDetectedType("real_estate");
+      setDetectionConfidence(30);
+      setDetectionReason("تعذر التحليل التلقائي — تم الاختيار الافتراضي");
+    } finally {
+      setDetecting(false);
+    }
+  };
+
+  // Trigger detection when files change
+  useEffect(() => {
+    if (uploadedFiles.length > 0) {
+      detectAssetType(uploadedFiles);
+    } else {
+      setDetectedType(null);
+      setDetectionConfidence(0);
+      setDetectionReason("");
+    }
+  }, [uploadedFiles]);
 
   // ── File helpers ──
   const getFileIcon = (type: string) => {
@@ -110,10 +180,11 @@ export default function SimpleClientRequest() {
 
   // ── Submit ──
   const handleSubmit = async () => {
-    if (!assetType) { toast({ title: "يرجى اختيار نوع الأصل", variant: "destructive" }); return; }
     if (uploadedFiles.length === 0) { toast({ title: "يرجى رفع ملف واحد على الأقل", variant: "destructive" }); return; }
+    if (!detectedType) { toast({ title: "جارٍ تحليل نوع الأصل، يرجى الانتظار", variant: "destructive" }); return; }
     if (!user) return;
 
+    const assetType = detectedType;
     setSubmitting(true);
     setState("processing");
     setProcessingProgress(10);
@@ -181,13 +252,18 @@ export default function SimpleClientRequest() {
         inventory: assetInventory.map((a, i) => ({ id: i + 1, ...a })),
         summary: { total: assetInventory.length, by_type: { [assetType]: assetInventory.length } },
         jobId,
+        ai_classification: {
+          detected_type: assetType,
+          confidence: detectionConfidence,
+          reason: detectionReason,
+        },
       };
 
       const { data: reqData, error: reqError } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
-          valuation_type: (assetType === "machinery_equipment" ? "machinery" : assetType) as any,
+          valuation_type: (assetType === "machinery_equipment" ? "machinery" : assetType === "both" ? "mixed" : assetType) as any,
           property_description_ar: notes || null,
           status: "submitted" as any,
           submitted_at: new Date().toISOString(),
@@ -197,6 +273,11 @@ export default function SimpleClientRequest() {
             totalAssets: assetInventory.length,
             simplified: true,
             quick_request: true,
+            ai_asset_type_detection: {
+              type: assetType,
+              confidence: detectionConfidence,
+              reason: detectionReason,
+            },
           },
           asset_data: assetData,
         } as any)
@@ -294,6 +375,10 @@ export default function SimpleClientRequest() {
     );
   }
 
+  // ── Detected type display ──
+  const typeInfo = detectedType ? ASSET_TYPE_LABELS[detectedType] : null;
+  const TypeIcon = typeInfo?.icon;
+
   // ── FORM ──
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -312,47 +397,7 @@ export default function SimpleClientRequest() {
       </header>
 
       <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
-        {/* ── 1. Asset Type ── */}
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-foreground">نوع الأصل <span className="text-destructive">*</span></p>
-          <div className="grid grid-cols-2 gap-3">
-            {ASSET_TYPES.map((t) => {
-              const Icon = t.icon;
-              const selected = assetType === t.key;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  onClick={() => setAssetType(t.key)}
-                  className={`relative text-right border-2 rounded-xl p-4 transition-all ${
-                    selected
-                      ? "border-primary bg-primary/5 shadow-sm"
-                      : "border-border hover:border-primary/30"
-                  }`}
-                >
-                  <div className="flex flex-col items-center text-center gap-2">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                      selected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                    }`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-sm text-foreground">{t.label}</h4>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{t.desc}</p>
-                    </div>
-                  </div>
-                  {selected && (
-                    <div className="absolute top-2 left-2">
-                      <CheckCircle className="w-4 h-4 text-primary" />
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── 2. File Upload ── */}
+        {/* ── 1. File Upload ── */}
         <div className="space-y-2">
           <p className="text-sm font-semibold text-foreground">المستندات <span className="text-destructive">*</span></p>
           <div
@@ -403,6 +448,54 @@ export default function SimpleClientRequest() {
           )}
         </div>
 
+        {/* ── 2. AI Detected Asset Type ── */}
+        {uploadedFiles.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4 text-primary" />
+              نوع الأصل
+              <Badge variant="secondary" className="text-[10px]">تحديد تلقائي</Badge>
+            </p>
+
+            {detecting ? (
+              <div className="border-2 border-dashed border-primary/30 rounded-xl p-4 text-center bg-primary/5">
+                <Loader2 className="w-6 h-6 text-primary animate-spin mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">جارٍ تحليل الملفات لتحديد نوع الأصل...</p>
+              </div>
+            ) : detectedType && typeInfo && TypeIcon ? (
+              <div className="border-2 border-primary rounded-xl p-4 bg-primary/5 transition-all">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shrink-0">
+                    <TypeIcon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-sm text-foreground">{typeInfo.label}</h4>
+                      <Badge variant={detectionConfidence >= 70 ? "default" : "secondary"} className="text-[10px]">
+                        {detectionConfidence}% ثقة
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{typeInfo.desc}</p>
+                    {detectionReason && (
+                      <p className="text-[10px] text-muted-foreground/70 mt-1">{detectionReason}</p>
+                    )}
+                  </div>
+                  <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                </div>
+
+                {detectionConfidence < 60 && (
+                  <div className="mt-3 flex items-start gap-2 p-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-amber-700 dark:text-amber-400">
+                      ثقة التصنيف منخفضة — سيتم التحقق من قبل فريق التقييم بعد الإرسال
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )}
+
         {/* ── 3. Notes (optional) ── */}
         <div className="space-y-2">
           <p className="text-sm font-semibold text-foreground">ملاحظات <Badge variant="secondary" className="text-[10px] mr-1">اختياري</Badge></p>
@@ -419,7 +512,7 @@ export default function SimpleClientRequest() {
           onClick={handleSubmit}
           className="w-full gap-2"
           size="lg"
-          disabled={!assetType || uploadedFiles.length === 0 || uploading || submitting}
+          disabled={uploadedFiles.length === 0 || uploading || submitting || detecting || !detectedType}
         >
           <Send className="w-4 h-4" />
           إرسال الطلب
