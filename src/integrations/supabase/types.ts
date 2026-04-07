@@ -5902,6 +5902,7 @@ export type Database = {
         | "client_review"
         | "draft_approved"
         | "final_payment_confirmed"
+        | "data_collection_open"
       assignment_type: "new" | "revaluation"
       attachment_category:
         | "title_deed"
@@ -6231,6 +6232,7 @@ export const Constants = {
         "client_review",
         "draft_approved",
         "final_payment_confirmed",
+        "data_collection_open",
       ],
       assignment_type: ["new", "revaluation"],
       attachment_category: [
