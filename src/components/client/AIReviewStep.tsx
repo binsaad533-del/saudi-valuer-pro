@@ -487,6 +487,7 @@ function StatusBadge({ status }: { status: ExtractedAsset["license_status"] }) {
 // ══════════════════════════════════════
 export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
   const [sourceDetail, setSourceDetail] = useState<AssetSourceInfo | null>(null);
 
   const { processed, removedCount, duplicateNames } = useMemo(() => {
@@ -708,7 +709,9 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   }, []);
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages, isThinking]);
 
   const resolveAssets = useCallback((ids: number[], status: "permitted" | "not_permitted", reason: string, updates?: Partial<ExtractedAsset>) => {
@@ -868,7 +871,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
             </div>
 
             {/* Messages */}
-            <div className="px-4 py-3 space-y-3 max-h-[50vh] overflow-y-auto">
+            <div ref={chatContainerRef} className="px-4 py-3 space-y-3 max-h-[50vh] overflow-y-auto">
               {messages.map(msg => (
                 <div key={msg.id} className={`flex ${msg.type === "answer" ? "justify-start" : "justify-end"}`}>
                   <div className={`max-w-[92%] rounded-xl px-4 py-3 text-[13px] leading-[1.8] ${
