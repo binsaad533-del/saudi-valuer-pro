@@ -501,6 +501,14 @@ export default function SimpleClientRequest() {
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
+          client_name_ar: clientNameInput || null,
+          client_phone: clientPhone || null,
+          client_email: clientEmail || null,
+          client_id_number: clientIdNumber || null,
+          purpose: purpose || null,
+          purpose_ar: purpose ? PURPOSE_OPTIONS[purpose] || null : null,
+          intended_users_ar: intendedUser ? INTENDED_USERS_OPTIONS[intendedUser] || null : null,
+          valuation_mode: valuationMode || "field",
           valuation_type: (assetType === "machinery_equipment" ? "machinery" : assetType === "both" ? "mixed" : assetType) as any,
           property_description_ar: combinedNotes || null,
           status: "submitted" as any,
