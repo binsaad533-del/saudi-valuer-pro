@@ -802,9 +802,9 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
       {/* ── 2. Compact Assets Table ── */}
       <Card className="overflow-hidden">
-        <div className="overflow-x-auto max-h-[35vh] overflow-y-auto">
-          <Table>
-            <TableHeader className="sticky top-0 z-10">
+        <div className="max-h-[35vh] overflow-y-auto">
+          <Table className="[&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10 [&_thead_th]:bg-background">
+            <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="text-right text-[10px] w-8">#</TableHead>
                 <TableHead className="text-right text-[10px]">الأصل</TableHead>
