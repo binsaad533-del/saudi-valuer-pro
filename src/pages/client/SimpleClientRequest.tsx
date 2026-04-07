@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Upload, FileText, Image, File, X, Loader2, CheckCircle, Send,
+  Upload, FileText, Image, File, X, Loader2, CheckCircle,
   ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
   PenLine, RotateCcw,
 } from "lucide-react";
@@ -27,7 +27,7 @@ interface UploadedFile {
   rawFile?: File;
 }
 
-type PageState = "form" | "analyzing" | "review" | "processing" | "done";
+type PageState = "form" | "analyzing" | "review" | "extraction_failed" | "processing" | "done";
 
 const ASSET_TYPES = [
   { key: "real_estate", label: "عقار", icon: Building2, desc: "أراضٍ، مباني، شقق، فلل" },
@@ -69,6 +69,7 @@ export default function SimpleClientRequest() {
   const [reviewData, setReviewData] = useState<AIReviewData | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisLabel, setAnalysisLabel] = useState("");
+  const [extractionFailureReason, setExtractionFailureReason] = useState("");
 
   // Processing / Done
   const [processingProgress, setProcessingProgress] = useState(0);
@@ -212,13 +213,14 @@ export default function SimpleClientRequest() {
 
   const finalAssetType = confirmedType;
 
-  // ── Start AI Analysis (transition form → analyzing → review) ──
+  // ── Start AI Analysis (transition form → analyzing → review OR extraction_failed) ──
   const handleStartAnalysis = async () => {
     if (!finalAssetType || uploadedFiles.length === 0 || !user) return;
 
     setState("analyzing");
     setAnalysisProgress(10);
     setAnalysisLabel("جارٍ قراءة الملفات...");
+    setExtractionFailureReason("");
 
     try {
       const assetType = finalAssetType;
@@ -226,8 +228,9 @@ export default function SimpleClientRequest() {
       const otherFiles = uploadedFiles.filter(f => !isExcel(f.type, f.name));
       let assetInventory: ExtractedAsset[] = [];
       let idCounter = 1;
+      let aiDiscipline = assetType;
 
-      // Parse Excel files
+      // Parse Excel files locally
       if (excelFiles.length > 0) {
         setAnalysisLabel("جارٍ قراءة ملفات Excel...");
         setAnalysisProgress(20);
@@ -258,55 +261,82 @@ export default function SimpleClientRequest() {
         }
       }
 
-      setAnalysisProgress(50);
-      setAnalysisLabel("جارٍ تحليل المستندات بالذكاء الاصطناعي...");
-
-      // AI orchestrator for non-Excel files
+      // AI Vision extraction for images/PDFs (synchronous — waits for results)
       if (otherFiles.length > 0) {
+        setAnalysisProgress(40);
+        setAnalysisLabel("جارٍ تحليل الصور والمستندات بالذكاء الاصطناعي...");
+
         try {
-          const { data: jobData } = await supabase.functions.invoke("asset-extraction-orchestrator", {
+          const { data: jobData, error: jobError } = await supabase.functions.invoke("asset-extraction-orchestrator", {
             body: {
-              action: "create",
+              action: "create_and_process",
               userId: user.id,
               files: otherFiles.map(f => ({ name: f.name, path: f.path, size: f.size, mimeType: f.type })),
             },
           });
-          // If AI extracted assets from documents, add them
-          if (jobData?.assets && Array.isArray(jobData.assets)) {
+
+          if (jobError) {
+            console.error("Orchestrator error:", jobError);
+          } else if (jobData?.assets && Array.isArray(jobData.assets) && jobData.assets.length > 0) {
             for (const a of jobData.assets) {
               assetInventory.push({
                 id: idCounter++,
                 name: a.name || `أصل ${idCounter}`,
-                type: assetType,
+                type: a.type || assetType,
                 category: a.category || null,
                 quantity: a.quantity || 1,
                 condition: a.condition || "unknown",
                 confidence: a.confidence || 60,
-                source: a.source || "تحليل مستندات",
+                source: a.source || "تحليل بصري",
                 license_status: "permitted",
               });
             }
+            // Use AI-determined discipline if available
+            if (jobData.discipline) {
+              aiDiscipline = jobData.discipline;
+            }
           }
-        } catch { /* AI extraction is optional */ }
+        } catch (err) {
+          console.error("AI extraction failed:", err);
+        }
       }
 
       setAnalysisProgress(80);
       setAnalysisLabel("جارٍ تصنيف الأصول وفحص الترخيص...");
 
-      // If no assets extracted, add a placeholder
+      // ── CRITICAL: No phantom assets — if nothing extracted, show failure ──
       if (assetInventory.length === 0) {
-        assetInventory.push({
-          id: 1,
-          name: "طلب تقييم (بدون جرد تفصيلي)",
-          type: assetType,
-          category: assetType === "real_estate" ? "عقار" : assetType === "machinery_equipment" ? "معدات" : "مختلط",
-          quantity: 1,
-          condition: "unknown",
-          confidence: 100,
-          source: "إدخال يدوي",
-          license_status: "permitted",
+        // Log failure in audit
+        await supabase.from("audit_logs").insert({
+          user_id: user.id,
+          action: "create" as any,
+          table_name: "valuation_requests",
+          description: `فشل استخراج الأصول — ${uploadedFiles.length} ملف — لم يتم التعرف على أي أصول`,
+          new_data: {
+            action_type: "ai_extraction_failed",
+            files_count: uploadedFiles.length,
+            file_names: uploadedFiles.map(f => f.name),
+            confirmed_type: assetType,
+            reason: "zero_assets_extracted",
+          } as any,
+          user_role: "client",
         });
+
+        setExtractionFailureReason(
+          "لم يتمكن النظام من استخراج الأصول من الملفات المرفوعة.\n\nيرجى:\n- رفع صور أوضح\n- أو إضافة مستند يحتوي على تفاصيل الأصول (مثل جدول Excel)"
+        );
+        setState("extraction_failed");
+        return;
       }
+
+      // Reclassify type based on actual extracted content (≥70% rule)
+      const meCount = assetInventory.filter(a => a.type === "machinery_equipment").length;
+      const reCount = assetInventory.filter(a => a.type === "real_estate").length;
+      const total = assetInventory.length;
+      let finalDiscipline = aiDiscipline;
+      if (meCount / total >= 0.7) finalDiscipline = "machinery_equipment";
+      else if (reCount / total >= 0.7) finalDiscipline = "real_estate";
+      else if (meCount > 0 && reCount > 0) finalDiscipline = "both";
 
       // Classify each asset for license compliance
       assetInventory = assetInventory.map(classifyAssetLicense);
@@ -318,8 +348,8 @@ export default function SimpleClientRequest() {
 
       // Build review data
       setReviewData({
-        detectedType: detectedType || assetType,
-        confirmedType: assetType,
+        detectedType: finalDiscipline,
+        confirmedType: finalDiscipline,
         confidence: detectionConfidence,
         assets: assetInventory,
         totalFiles: uploadedFiles.length,
@@ -464,6 +494,58 @@ export default function SimpleClientRequest() {
     setState("form");
     setReviewData(null);
   };
+
+  const handleRetryAnalysis = () => {
+    setExtractionFailureReason("");
+    handleStartAnalysis();
+  };
+
+  const handleModifyFiles = () => {
+    setState("form");
+    setExtractionFailureReason("");
+  };
+
+  // ── EXTRACTION FAILED ──
+  if (state === "extraction_failed") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4" dir="rtl">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center space-y-5">
+            <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto">
+              <AlertTriangle className="w-8 h-8 text-destructive" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-foreground mb-2">تعذر استخراج الأصول</h2>
+              <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
+                {extractionFailureReason || "لم يتمكن النظام من استخراج الأصول من الملفات المرفوعة."}
+              </p>
+            </div>
+
+            <div className="bg-muted/50 rounded-xl p-4 text-right space-y-2">
+              <p className="text-xs font-semibold text-foreground">نصائح لتحسين النتائج:</p>
+              <ul className="text-[11px] text-muted-foreground space-y-1.5 list-disc list-inside">
+                <li>ارفع صور واضحة وعالية الجودة للمعدات أو العقارات</li>
+                <li>أضف ملف Excel يحتوي على قائمة الأصول مع التفاصيل</li>
+                <li>تأكد من أن ملفات PDF ليست مشفرة أو ممسوحة ضوئياً بجودة منخفضة</li>
+                <li>استخدم صور مباشرة وليس لقطات شاشة</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2 pt-1">
+              <Button onClick={handleRetryAnalysis} className="w-full gap-2">
+                <RotateCcw className="w-4 h-4" />
+                إعادة التحليل
+              </Button>
+              <Button onClick={handleModifyFiles} variant="outline" className="w-full gap-2">
+                <Upload className="w-4 h-4" />
+                تعديل الملفات
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // ── DONE ──
   if (state === "done") {
