@@ -354,6 +354,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customValue, setCustomValue] = useState("");
+  const [freeText, setFreeText] = useState("");
 
   
 
