@@ -540,8 +540,8 @@ export default function SimplifiedJourney() {
       // Trigger notification (fire-and-forget)
       supabase.functions.invoke("send-notification", {
         body: {
-          type: "request_submitted",
-          userId: user.id,
+          notification_type: "request_submitted",
+          user_id: user.id,
           data: { requestId: (data as any)?.id, clientName },
         },
       }).catch(() => {});
