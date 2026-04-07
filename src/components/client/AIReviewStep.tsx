@@ -5,9 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import {
-  CheckCircle, XCircle, Building2, Cog, Sparkles,
-  Shield, ArrowRight, Package, FileCheck,
-  MessageCircleQuestion, Send,
+  CheckCircle, Building2, Cog, Sparkles,
+  Shield, ArrowRight, Package, FileCheck, Send,
 } from "lucide-react";
 
 // ── Types ──
