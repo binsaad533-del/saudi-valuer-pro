@@ -5,7 +5,7 @@ interface RaqeemAnimatedLogoProps {
   className?: string;
 }
 
-export default function RaqeemAnimatedLogo({ size = 40, className = "" }: RaqeemAnimatedLogoProps) {
+export default function RaqeemAnimatedLogo({ size = 56, className = "" }: RaqeemAnimatedLogoProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
