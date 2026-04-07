@@ -210,11 +210,12 @@ export default function RequestDetails() {
     return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">الطلب غير موجود</p></div>;
   }
 
-  const needsPayment = ["awaiting_payment", "quotation_approved"].includes(request.status);
+  const needsPayment = ["awaiting_payment", "quotation_approved", "sow_approved"].includes(request.status);
   const needsFinalPayment = ["final_payment_pending", "draft_report_sent"].includes(request.status) && request.payment_structure === "partial";
   const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
   const showDraftReport = ["draft_report_sent", "client_comments", "final_payment_pending"].includes(request.status);
   const showFinalReport = ["final_report_ready", "completed"].includes(request.status);
+  const showSOW = request.status === "sow_sent";
 
   return (
     <div className="bg-background">
