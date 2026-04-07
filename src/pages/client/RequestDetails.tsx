@@ -20,6 +20,8 @@ import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
+import DataPortalUploader from "@/components/client/DataPortalUploader";
+import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
@@ -439,6 +441,17 @@ export default function RequestDetails() {
                 </CardContent>
               </Card>
             )}
+
+            {/* Data Portal - بوابة البيانات */}
+            <DataPortalUploader
+              requestId={id!}
+              inspectionType={deriveInspectionType(
+                request.inspection_type || request.ai_intake_summary?.valuation_mode || "field",
+                (request.inspection_type === "desktop_with_photos") || undefined
+              )}
+              status={request.status}
+              onUploadComplete={loadData}
+            />
 
             {showQuotation && (
               <Card className="shadow-card border-primary/20">
