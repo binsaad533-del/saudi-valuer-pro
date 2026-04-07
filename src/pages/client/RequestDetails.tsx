@@ -232,7 +232,7 @@ export default function RequestDetails() {
       {/* Progress Timeline */}
       <div className="bg-card border-b border-border">
         <div className="max-w-6xl mx-auto px-4 py-4">
-          <EnhancedRequestTracker status={request.status} createdAt={request.created_at} />
+          <EnhancedRequestTracker status={request.status} createdAt={request.created_at} valuationMode={request.ai_intake_summary?.valuation_mode || "field"} />
         </div>
       </div>
 
