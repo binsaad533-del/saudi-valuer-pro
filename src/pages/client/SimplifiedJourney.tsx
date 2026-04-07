@@ -192,6 +192,47 @@ export default function SimplifiedJourney() {
     type.includes("sheet") || type.includes("excel") || type.includes("csv") ||
     /\.(xlsx|xls|csv)$/i.test(name);
 
+  /** Smart asset type inference based on name and category keywords */
+  const inferAssetType = (name: string, category: string | null): { type: string; category: string | null } => {
+    const text = `${name} ${category || ""}`.toLowerCase();
+
+    // Right of use / Lease contracts
+    if (/عقد\s*ايجار|عقد\s*إيجار|right\s*of\s*use|إيجار\s*فرع|ايجار\s*فرع|lease/i.test(text))
+      return { type: "right_of_use", category: "حق استخدام (إيجار)" };
+
+    // Real estate
+    if (/عقار|أرض|ارض|فيلا|شقة|عمارة|مبنى|real.?estate|land|building|villa|apartment/i.test(text))
+      return { type: "real_estate", category: category };
+
+    // Medical equipment
+    if (/طبي|مختبر|جهاز\s*فحص|medical|lab|analyzer|microscop|centrifug|autoclave|incubator|pipette|spectro/i.test(text))
+      return { type: "medical_equipment", category: "أجهزة طبية" };
+
+    // Vehicles
+    if (/سيارة|مركبة|vehicle|car|truck|van|شاحن/i.test(text))
+      return { type: "vehicle", category: "مركبات" };
+
+    // Furniture & fixtures
+    if (/أثاث|اثاث|مكتب|كرسي|طاولة|خزانة|furniture|desk|chair|table|ستائر|ستارة/i.test(text))
+      return { type: "furniture", category: "أثاث ومفروشات" };
+
+    // IT equipment
+    if (/كمبيوتر|حاسب|لابتوب|طابعة|سيرفر|شاشة|computer|laptop|printer|server|monitor|it\s*equip/i.test(text))
+      return { type: "it_equipment", category: "أجهزة تقنية" };
+
+    // Intangible assets
+    if (/برنامج|برمج|تطبيق|نظام|software|program|app|license|ترخيص|intangible|موقع\s*الكتروني|موبايل\s*اب/i.test(text))
+      return { type: "intangible", category: "أصول غير ملموسة" };
+
+    // Leasehold improvements
+    if (/تشطيب|تأسيس\s*فرع|تحسين|ديكور|كلادينج|لوحة|دفاع\s*مدني|leasehold|improvement|تأسيس\s*توسعة/i.test(text))
+      return { type: "leasehold_improvements", category: "تحسينات مستأجرة" };
+
+    // Default: machinery/equipment
+    return { type: "machinery_equipment", category: category };
+  };
+
+
   const parseExcelFilesLocally = async (excelFiles: UploadedFile[]): Promise<ScopeAsset[]> => {
     const allAssets: ScopeAsset[] = [];
     for (const uf of excelFiles) {
