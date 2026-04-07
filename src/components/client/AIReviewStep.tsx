@@ -117,7 +117,7 @@ const FINANCIAL_RULES: { keywords: string[]; tag: string; reason: string; ref: K
 const EXCLUSION_RULES = [...INTANGIBLE_RULES, ...CONTRACTUAL_RULES, ...FINANCIAL_RULES];
 
 // ── Knowledge-Grounded Response Builder ──
-function buildExclusionExplanation(excludedAssets: ProcessedAsset[]): string {
+function buildExclusionExplanation(excludedAssets: ExtractedAsset[]): string {
   const groups = new Map<string, { names: string[]; ref: KnowledgeRef }>();
   
   for (const a of excludedAssets) {
