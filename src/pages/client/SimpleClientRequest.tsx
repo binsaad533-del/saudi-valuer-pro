@@ -119,7 +119,9 @@ export default function SimpleClientRequest() {
   const [clientEmail, setClientEmail] = useState("");
   const [clientIdNumber, setClientIdNumber] = useState("");
   const [purpose, setPurpose] = useState("");
+  const [purposeOther, setPurposeOther] = useState("");
   const [intendedUser, setIntendedUser] = useState("");
+  const [intendedUserOther, setIntendedUserOther] = useState("");
   const [valuationMode, setValuationMode] = useState("field");
 
   // AI detection state
