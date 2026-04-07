@@ -258,7 +258,7 @@ export default function ExecutiveDashboard() {
                           </td>
                           <td className="px-4 py-3">
                             <Badge variant="outline" className="text-[10px]">
-                              {req.ai_intake_summary?.valuation_mode === "desktop" ? "مكتبي" : "ميداني"}
+                              {req.valuation_mode === "desktop" ? "مكتبي" : "ميداني"}
                             </Badge>
                           </td>
                           <td className="px-4 py-3">
