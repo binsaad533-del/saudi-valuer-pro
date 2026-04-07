@@ -665,6 +665,20 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Free-text input bar */}
+            <div className="flex items-center gap-2 px-3 py-2 border-t border-border bg-muted/20">
+              <Input
+                value={freeText}
+                onChange={e => setFreeText(e.target.value)}
+                placeholder="اكتب سؤالك أو ملاحظتك لرقيم..."
+                className="h-8 text-[12px] flex-1 bg-background"
+                onKeyDown={e => { if (e.key === "Enter" && freeText.trim()) handleFreeTextSend(); }}
+              />
+              <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={!freeText.trim()} onClick={handleFreeTextSend}>
+                <Send className="w-3.5 h-3.5" />
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
