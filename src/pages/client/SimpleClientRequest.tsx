@@ -950,7 +950,7 @@ export default function SimpleClientRequest() {
                   <MapPin className="w-4 h-4 text-primary" />
                   مواقع الأصول <span className="text-destructive">*</span>
                 </p>
-                <p className="text-[10px] text-muted-foreground">الصق روابط خرائط قوقل لمواقع الأصول (يمكنك اضافة مواقع متعددة). يمكن أيضاً استخراج المواقع تلقائياً من الملفات المرفوعة بشرط أن تكون مذكورة بشكل واضح.</p>
+                <p className="text-[10px] text-muted-foreground">الصق روابط خرائط قوقل لمواقع الأصول (يمكنك اضافة مواقع متعددة).</p>
                 <AssetLocationPicker
                   locations={assetLocations}
                   onChange={setAssetLocations}
