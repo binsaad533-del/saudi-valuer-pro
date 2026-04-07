@@ -51,6 +51,25 @@ export interface AIReviewData {
   assets: ExtractedAsset[];
   totalFiles: number;
   clientName?: string;
+  requestScope?: {
+    clientName?: string;
+    phone?: string;
+    email?: string;
+    idNumber?: string;
+    purpose?: string;
+    intendedUser?: string;
+    valuationMode?: string;
+    assetType?: string;
+    notes?: string;
+    files?: { name: string; type?: string }[];
+    locations?: {
+      name: string;
+      city?: string;
+      googleMapsUrl?: string;
+      latitude?: number;
+      longitude?: number;
+    }[];
+  };
 }
 
 interface Props {
@@ -554,6 +573,44 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     setPendingAttachments(prev => prev.filter((_, i) => i !== idx));
   }, []);
 
+  const requestScopeSummary = useMemo(() => {
+    const scope = data.requestScope;
+    if (!scope) return null;
+
+    const details = [
+      { label: "اسم العميل", value: scope.clientName || data.clientName || "" },
+      { label: "الجوال", value: scope.phone || "" },
+      { label: "الغرض من التقييم", value: scope.purpose || "" },
+      { label: "المستخدم المستهدف", value: scope.intendedUser || "" },
+      { label: "نوع التقييم", value: scope.valuationMode || "" },
+      { label: "نوع الأصل", value: scope.assetType || "" },
+      { label: "البريد الإلكتروني", value: scope.email || "" },
+      { label: "رقم الهوية / السجل", value: scope.idNumber || "" },
+    ].filter((item): item is { label: string; value: string } => Boolean(item.value && item.value.trim()));
+
+    const files = (scope.files || []).map((file) => file.name).filter(Boolean);
+    const locations = (scope.locations || []).map((location) => ({
+      name: location.name || "موقع",
+      meta: [
+        location.city,
+        location.latitude != null && location.longitude != null
+          ? `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}`
+          : null,
+      ].filter(Boolean).join(" • ") || "تم إرفاق رابط الموقع",
+    }));
+    const notes = scope.notes?.trim() || "";
+
+    const chatText = [
+      "📌 نطاق العمل المرسل من العميل قبل المراجعة:",
+      ...details.map(({ label, value }) => `• ${label}: ${value}`),
+      files.length > 0 ? `• الملفات المرفقة: ${files.join("، ")}` : null,
+      locations.length > 0 ? `• المواقع: ${locations.map((location) => `${location.name} (${location.meta})`).join("، ")}` : null,
+      notes ? `• ملاحظات العميل: ${notes}` : null,
+    ].filter(Boolean).join("\n");
+
+    return { details, files, locations, notes, chatText };
+  }, [data.clientName, data.requestScope]);
+
   // Build asset context string for AI
   const assetContextStr = useMemo(() => {
     return `📊 إحصائيات الأصول:
@@ -562,8 +619,8 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 • الأصول الفريدة بعد الدمج: ${assets.length}
 • ضمن النطاق: ${autoApproved.length} ✅
 • مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫${excluded.length > 0 ? `\n  المستبعدة: ${excluded.map(a => `"${a.name}" — ${a.license_reason || "خارج النطاق"}`).join("، ")}` : ""}
-• بانتظار التوضيح: ${flagged.length} ❓${flagged.length > 0 ? `\n  بانتظار المراجعة: ${flagged.map(a => `"${a.name}" — ${a.license_reason || "بيانات ناقصة"}`).join("، ")}` : ""}`;
-  }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged]);
+• بانتظار التوضيح: ${flagged.length} ❓${flagged.length > 0 ? `\n  بانتظار المراجعة: ${flagged.map(a => `"${a.name}" — ${a.license_reason || "بيانات ناقصة"}`).join("، ")}` : ""}${requestScopeSummary?.chatText ? `\n\n${requestScopeSummary.chatText}` : ""}`;
+  }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged, requestScopeSummary]);
 
   // Build detailed asset list for AI deep context
   const assetDetailsStr = useMemo(() => {
@@ -604,8 +661,24 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       });
     }
 
+    if (requestScopeSummary) {
+      lines.push(`\n### نطاق العمل المرسل من العميل:`);
+      requestScopeSummary.details.forEach((item, i) => {
+        lines.push(`${i + 1}. ${item.label}: ${item.value}`);
+      });
+      if (requestScopeSummary.files.length > 0) {
+        lines.push(`الملفات: ${requestScopeSummary.files.join("، ")}`);
+      }
+      if (requestScopeSummary.locations.length > 0) {
+        lines.push(`المواقع: ${requestScopeSummary.locations.map((location) => `${location.name} (${location.meta})`).join("، ")}`);
+      }
+      if (requestScopeSummary.notes) {
+        lines.push(`ملاحظات العميل: ${requestScopeSummary.notes}`);
+      }
+    }
+
     return lines.join("\n");
-  }, [duplicateNames, removedCount, autoApproved, excluded, flagged]);
+  }, [duplicateNames, removedCount, autoApproved, excluded, flagged, requestScopeSummary]);
 
   // Free-text message from client (with optional attachments)
   const handleFreeTextSend = useCallback(async () => {
@@ -694,10 +767,14 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 راجعت المرفقات وهذا ملخص النتائج:`;
     initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
 
+    if (requestScopeSummary?.chatText) {
+      initial.push({ id: "request-scope", type: "info", text: requestScopeSummary.chatText, timestamp: Date.now() + 1 });
+    }
+
     // CASE 1: Explain excluded items FIRST (priority) — with knowledge references
     if (initialExcluded.length > 0) {
       const explanationText = buildExclusionExplanation(initialExcluded);
-      initial.push({ id: "excluded-explain", type: "info", text: explanationText, timestamp: Date.now() + 1 });
+      initial.push({ id: "excluded-explain", type: "info", text: explanationText, timestamp: Date.now() + 2 });
     }
 
     // CASE 2: Then ask about review items
@@ -705,13 +782,13 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       const reviewIntro = initialExcluded.length > 0
         ? `وأحتاج تأكيد بسيط على ${questions.length} بند آخر`
         : `${questions.length} بند يحتاج تأكيد بسيط`;
-      initial.push({ id: "review-intro", type: "info", text: `❓ ${reviewIntro}`, timestamp: Date.now() + 2 });
-      initial.push({ id: `q-0`, type: "question", text: questions[0].question, questionData: questions[0], timestamp: Date.now() + 3 });
+      initial.push({ id: "review-intro", type: "info", text: `❓ ${reviewIntro}`, timestamp: Date.now() + 3 });
+      initial.push({ id: `q-0`, type: "question", text: questions[0].question, questionData: questions[0], timestamp: Date.now() + 4 });
     }
 
     // CASE 3: Nothing excluded, nothing to review — confirm all clear
     if (initialExcluded.length === 0 && questions.length === 0) {
-      initial.push({ id: "all-clear", type: "info", text: `✅ تم تحليل ${processed.length} بند — جميعها جاهزة للتقييم`, timestamp: Date.now() + 1 });
+      initial.push({ id: "all-clear", type: "info", text: `✅ تم تحليل ${processed.length} بند — جميعها جاهزة للتقييم`, timestamp: Date.now() + 2 });
     }
 
     setMessages(initial);
@@ -791,6 +868,75 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
   return (
     <div className="space-y-4">
+      {requestScopeSummary && (
+        <Card className="border-border/70">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-sm font-semibold text-foreground">نطاق العمل المرفق من العميل</p>
+                <p className="text-[11px] text-muted-foreground mt-1">تم إدراج معلومات الخطوة السابقة هنا لتبقى مرئية ضمن المراجعة نفسها.</p>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant="outline" className="text-[10px]">{requestScopeSummary.files.length} ملف</Badge>
+                <Badge variant="outline" className="text-[10px]">{requestScopeSummary.locations.length} موقع</Badge>
+              </div>
+            </div>
+
+            {requestScopeSummary.details.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2">
+                {requestScopeSummary.details.map((item) => (
+                  <div key={item.label} className="rounded-lg border border-border bg-background px-3 py-2">
+                    <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                    <p className="text-[11px] font-medium text-foreground mt-1 break-words">{item.value}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+              <div className="rounded-lg border border-border bg-background px-3 py-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-foreground">المواقع المرفقة</p>
+                  <Badge variant="secondary" className="text-[9px]">{requestScopeSummary.locations.length}</Badge>
+                </div>
+                {requestScopeSummary.locations.length > 0 ? (
+                  requestScopeSummary.locations.map((location, index) => (
+                    <div key={`${location.name}-${index}`} className="rounded-md border border-border/70 px-2.5 py-2">
+                      <p className="text-[11px] font-medium text-foreground">{location.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">{location.meta}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">لا توجد مواقع مرفقة.</p>
+                )}
+              </div>
+
+              <div className="rounded-lg border border-border bg-background px-3 py-3 space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] font-semibold text-foreground">الملفات والملاحظات</p>
+                  <Badge variant="secondary" className="text-[9px]">{requestScopeSummary.files.length}</Badge>
+                </div>
+                {requestScopeSummary.files.length > 0 ? (
+                  <div className="space-y-1.5">
+                    {requestScopeSummary.files.map((fileName, index) => (
+                      <div key={`${fileName}-${index}`} className="rounded-md border border-border/70 px-2.5 py-2 text-[11px] text-foreground break-words">
+                        {fileName}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground">لا توجد ملفات مرفقة.</p>
+                )}
+                <div className="rounded-md border border-dashed border-border px-2.5 py-2 bg-muted/20">
+                  <p className="text-[10px] text-muted-foreground">ملاحظات العميل</p>
+                  <p className="text-[11px] text-foreground mt-1 whitespace-pre-wrap break-words">{requestScopeSummary.notes || "لا توجد ملاحظات إضافية من العميل."}</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── 1. Summary Stats ── */}
       <div className="grid grid-cols-4 gap-2">
         <SummaryCard icon={<FileText className="w-4 h-4" />} label="ملفات" value={data.totalFiles} color="text-primary" />
