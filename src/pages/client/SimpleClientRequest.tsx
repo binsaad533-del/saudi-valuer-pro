@@ -45,6 +45,7 @@ export default function SimpleClientRequest() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [user, setUser] = useState<any>(null);
+  const [clientName, setClientName] = useState<string>("");
   const [state, setState] = useState<PageState>("form");
 
   // Form fields
