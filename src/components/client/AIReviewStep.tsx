@@ -337,9 +337,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
         {/* ── Smart Question (one at a time) ── */}
         {currentFlagged && currentQuestion && (
           <SmartQuestionCard
-            asset={currentFlagged}
             question={currentQuestion}
-            triggerType={detectTriggerType(currentFlagged)}
             remainingCount={flagged.length}
             onAnswer={(opt) => handleQuestionAnswer(currentFlagged.id, opt)}
             onCustomAnswer={(val) => handleCustomAnswer(currentFlagged.id, detectTriggerType(currentFlagged), val)}
