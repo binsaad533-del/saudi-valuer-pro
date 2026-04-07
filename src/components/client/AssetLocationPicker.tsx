@@ -18,6 +18,8 @@ export interface AssetLocation {
 interface AssetLocationPickerProps {
   locations: AssetLocation[];
   onChange: (locations: AssetLocation[]) => void;
+  maxLocations?: number;
+  compact?: boolean;
 }
 
 type InputMode = "url" | "coords";
