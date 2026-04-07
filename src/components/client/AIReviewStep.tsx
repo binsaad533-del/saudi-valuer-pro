@@ -56,35 +56,51 @@ interface Props {
   onBack: () => void;
 }
 
-// ── Exclusion rules ──
-const EXCLUSION_RULES: { keywords: string[]; reason: string }[] = [
-  { keywords: ["intangible", "أصول غير ملموسة", "غير ملموس"], reason: "أصل غير ملموس — خارج نطاق التقييم" },
-  { keywords: ["goodwill", "شهرة", "شهرة محل"], reason: "شهرة محل — خارج نطاق التقييم" },
-  { keywords: ["trademark", "علامة تجارية", "brand"], reason: "علامة تجارية — خارج نطاق التقييم" },
-  { keywords: ["patent", "براءة اختراع", "براءة"], reason: "براءة اختراع — خارج نطاق التقييم" },
-  { keywords: ["copyright", "حقوق ملكية فكرية", "حقوق نشر"], reason: "حقوق ملكية فكرية — خارج نطاق التقييم" },
-  { keywords: ["software_license", "رخصة برمجية", "license", "ترخيص", "رخصة"], reason: "رخصة / ترخيص — أصل غير ملموس" },
-  { keywords: ["franchise", "امتياز", "حق امتياز"], reason: "حق امتياز — خارج نطاق التقييم" },
-  { keywords: ["financial_instrument", "stock", "bond", "derivative", "أسهم", "سندات", "مشتقات", "أداة مالية"], reason: "أداة مالية — خارج نطاق التقييم" },
-  { keywords: ["cryptocurrency", "عملة رقمية", "بتكوين", "crypto"], reason: "عملة رقمية — خارج نطاق التقييم" },
-  { keywords: ["customer_list", "قائمة عملاء", "customer relationship"], reason: "علاقات عملاء — أصل غير ملموس" },
-  { keywords: ["domain_name", "نطاق", "اسم نطاق"], reason: "اسم نطاق — أصل غير ملموس" },
+// ── LAYER 1: Hard Exclusion — Intangible Assets (NOT_PERMITTED, immutable) ──
+const INTANGIBLE_RULES: { keywords: string[]; tag: string; reason: string }[] = [
+  { keywords: ["intangible", "أصول غير ملموسة", "غير ملموس"], tag: "Intangible", reason: "أصل غير ملموس خارج نطاق التقييم" },
+  { keywords: ["goodwill", "شهرة", "شهرة محل"], tag: "Intangible", reason: "شهرة محل — أصل غير ملموس خارج نطاق التقييم" },
+  { keywords: ["trademark", "علامة تجارية", "brand", "logo", "شعار"], tag: "Intangible", reason: "علامة تجارية — أصل غير ملموس خارج نطاق التقييم" },
+  { keywords: ["patent", "براءة اختراع", "براءة"], tag: "Intangible", reason: "براءة اختراع — أصل غير ملموس خارج نطاق التقييم" },
+  { keywords: ["copyright", "حقوق ملكية فكرية", "حقوق نشر"], tag: "Intangible", reason: "حقوق ملكية فكرية — خارج نطاق التقييم" },
+  { keywords: ["software", "software_license", "رخصة برمجية", "برنامج", "برمجيات"], tag: "Intangible", reason: "برمجيات / رخصة — أصل غير ملموس" },
+  { keywords: ["license", "ترخيص", "رخصة"], tag: "Intangible", reason: "رخصة / ترخيص — أصل غير ملموس" },
+  { keywords: ["customer_list", "قائمة عملاء", "customer relationship"], tag: "Intangible", reason: "علاقات عملاء — أصل غير ملموس" },
+  { keywords: ["domain_name", "نطاق", "اسم نطاق"], tag: "Intangible", reason: "اسم نطاق — أصل غير ملموس" },
 ];
 
-// ── Verification triggers ──
-type TriggerType = "low_confidence" | "unclear_name" | "no_category" | "bad_quantity" | "conflict";
+// ── LAYER 2: Hard Exclusion — Contractual Rights (NOT_PERMITTED, immutable) ──
+const CONTRACTUAL_RULES: { keywords: string[]; tag: string; reason: string }[] = [
+  { keywords: ["contract", "عقد", "اتفاقية", "agreement"], tag: "Contractual", reason: "حق تعاقدي وليس أصل — خارج نطاق التقييم" },
+  { keywords: ["concession", "امتياز حكومي", "حق انتفاع"], tag: "Contractual", reason: "حق امتياز / انتفاع — خارج نطاق التقييم" },
+  { keywords: ["franchise", "امتياز", "حق امتياز"], tag: "Contractual", reason: "حق امتياز تجاري — خارج نطاق التقييم" },
+];
+
+// ── LAYER 3: Hard Exclusion — Financial Instruments (NOT_PERMITTED, immutable) ──
+const FINANCIAL_RULES: { keywords: string[]; tag: string; reason: string }[] = [
+  { keywords: ["financial_instrument", "stock", "bond", "derivative", "أسهم", "سندات", "مشتقات", "أداة مالية"], tag: "Financial", reason: "أداة مالية — خارج نطاق التقييم" },
+  { keywords: ["cryptocurrency", "عملة رقمية", "بتكوين", "crypto"], tag: "Financial", reason: "عملة رقمية — خارج نطاق التقييم" },
+];
+
+// Combined exclusion rules for backward compatibility
+const EXCLUSION_RULES = [...INTANGIBLE_RULES, ...CONTRACTUAL_RULES, ...FINANCIAL_RULES];
+
+// ── LAYER 4: Verification triggers (NEEDS_REVIEW) ──
+type TriggerType = "low_confidence" | "unclear_name" | "no_category" | "bad_quantity" | "conflict" | "mixed";
 
 interface VerificationTrigger {
   check: (a: ExtractedAsset) => boolean;
   reason: string;
   triggerType: TriggerType;
+  tag: string;
 }
 
 const VERIFICATION_TRIGGERS: VerificationTrigger[] = [
-  { check: a => a.confidence < 35, reason: "ثقة منخفضة جداً", triggerType: "low_confidence" },
-  { check: a => !a.name || a.name.trim().length < 3, reason: "اسم غير واضح", triggerType: "unclear_name" },
-  { check: a => !a.category && !a.type, reason: "تصنيف غير محدد", triggerType: "no_category" },
-  { check: a => a.quantity <= 0 || isNaN(a.quantity), reason: "كمية غير صحيحة", triggerType: "bad_quantity" },
+  // Missing data checks
+  { check: a => !a.name || a.name.trim().length < 3, reason: "اسم غير واضح — بيانات ناقصة", triggerType: "unclear_name", tag: "Incomplete" },
+  { check: a => !a.category && !a.type, reason: "تصنيف غير محدد — بيانات ناقصة", triggerType: "no_category", tag: "Incomplete" },
+  { check: a => a.quantity <= 0 || isNaN(a.quantity), reason: "كمية غير صحيحة — بيانات ناقصة", triggerType: "bad_quantity", tag: "Incomplete" },
+  // Conflict check
   {
     check: a => {
       const name = (a.name || "").toLowerCase();
@@ -95,7 +111,22 @@ const VERIFICATION_TRIGGERS: VerificationTrigger[] = [
     },
     reason: "تعارض بين الاسم والتصنيف",
     triggerType: "conflict",
+    tag: "Conflict",
   },
+  // Mixed asset check (name suggests multiple types)
+  {
+    check: a => {
+      const name = (a.name || "").toLowerCase();
+      const propertyKw = ["أرض", "عقار", "مبنى", "land", "building"];
+      const machineKw = ["آلة", "معدة", "machine", "equipment", "generator"];
+      return propertyKw.some(k => name.includes(k)) && machineKw.some(k => name.includes(k));
+    },
+    reason: "يحتوي على أنواع أصول مختلطة",
+    triggerType: "mixed",
+    tag: "Mixed",
+  },
+  // Low confidence (last priority)
+  { check: a => a.confidence < 35, reason: "ثقة منخفضة جداً في الاستخراج", triggerType: "low_confidence", tag: "Incomplete" },
 ];
 
 const TYPE_LABELS: Record<string, string> = {
@@ -113,19 +144,35 @@ const ASSET_TYPE_MAP: Record<string, { label: string; icon: typeof Building2 }> 
   both: { label: "عقار + آلات ومعدات", icon: Sparkles },
 };
 
-// ── Classification ──
+// ── High Risk Detection Engine ──
 export function classifyAssetLicense(asset: ExtractedAsset): ExtractedAsset {
   const combined = `${(asset.category || asset.type || "").toLowerCase()} ${(asset.name || "").toLowerCase()}`;
-  for (const rule of EXCLUSION_RULES) {
+
+  // LAYER 1: Intangible → NOT_PERMITTED (STOP)
+  for (const rule of INTANGIBLE_RULES) {
     if (rule.keywords.some(k => combined.includes(k.toLowerCase()))) {
       return { ...asset, license_status: "not_permitted", license_reason: rule.reason };
     }
   }
+  // LAYER 2: Contractual → NOT_PERMITTED (STOP)
+  for (const rule of CONTRACTUAL_RULES) {
+    if (rule.keywords.some(k => combined.includes(k.toLowerCase()))) {
+      return { ...asset, license_status: "not_permitted", license_reason: rule.reason };
+    }
+  }
+  // LAYER 3: Financial → NOT_PERMITTED (STOP)
+  for (const rule of FINANCIAL_RULES) {
+    if (rule.keywords.some(k => combined.includes(k.toLowerCase()))) {
+      return { ...asset, license_status: "not_permitted", license_reason: rule.reason };
+    }
+  }
+  // LAYER 4: Verification triggers → NEEDS_REVIEW
   for (const trigger of VERIFICATION_TRIGGERS) {
     if (trigger.check(asset)) {
       return { ...asset, license_status: "needs_review", license_reason: trigger.reason };
     }
   }
+  // LAYER 5: All clear → PERMITTED
   return { ...asset, license_status: "permitted", license_reason: "تمت المعالجة تلقائياً" };
 }
 
@@ -244,6 +291,8 @@ function generateSingleQuestion(asset: ExtractedAsset, triggerType: TriggerType)
       return { ...base, question: `"${asset.name}" — الكمية (${asset.quantity}) غير صحيحة. ما العدد؟`, options: [{ label: "1", action: "update", updateField: "quantity", updateValue: "1" }, { label: "استبعاد", action: "exclude" }], allowCustom: true, customPlaceholder: "الكمية..." } as SmartQuestion;
     case "conflict":
       return { ...base, question: `"${asset.name}" مصنف كـ "${asset.category}" — تعارض. صحيح؟`, options: [{ label: "نعم", action: "approve" }, { label: "عقار", action: "update", updateField: "category", updateValue: "real_estate" }, { label: "استبعاد", action: "exclude" }], allowCustom: false } as SmartQuestion;
+    case "mixed":
+      return { ...base, question: `"${asset.name}" يحتوي أنواع مختلطة. ما التصنيف الصحيح؟`, options: [{ label: "عقار", action: "update", updateField: "category", updateValue: "real_estate" }, { label: "آلات ومعدات", action: "update", updateField: "category", updateValue: "machinery_equipment" }, { label: "استبعاد", action: "exclude" }], allowCustom: true, customPlaceholder: "تصنيف آخر..." } as SmartQuestion;
     default:
       return { ...base, question: `"${asset.name}" — ثقة ${asset.confidence}%. تضمينه؟`, options: [{ label: "نعم", action: "approve" }, { label: "لا", action: "exclude" }], allowCustom: false } as SmartQuestion;
   }
