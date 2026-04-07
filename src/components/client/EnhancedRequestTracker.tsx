@@ -1,37 +1,40 @@
 import { Progress } from "@/components/ui/progress";
 
-const STAGES = [
-  { key: "submitted", label: "تم التقديم", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح" },
-  { key: "payment", label: "الدفع", color: "bg-red-50 text-red-500 border-red-200", description: "تأكيد الدفع وعرض السعر" },
-  { key: "assigned", label: "تعيين المقيّم", color: "bg-emerald-50 text-emerald-500 border-emerald-200", description: "تم تعيين مقيّم معتمد" },
-  { key: "inspection", label: "المعاينة", color: "bg-indigo-50 text-indigo-500 border-indigo-200", description: "معاينة العقار ميدانياً" },
-  { key: "drafting", label: "إعداد التقرير", color: "bg-amber-50 text-amber-500 border-amber-200", description: "إعداد ومراجعة التقرير" },
-  { key: "delivered", label: "التسليم", color: "bg-violet-50 text-violet-500 border-violet-200", description: "تقريرك جاهز للتحميل" },
+const ALL_STAGES = [
+  { key: "submitted", label: "تم التقديم", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح", durationDays: 1 },
+  { key: "payment", label: "الدفع", color: "bg-red-50 text-red-500 border-red-200", description: "تأكيد الدفع وعرض السعر", durationDays: 2 },
+  { key: "assigned", label: "تعيين المقيّم", color: "bg-emerald-50 text-emerald-500 border-emerald-200", description: "تم تعيين مقيّم معتمد", durationDays: 1 },
+  { key: "inspection", label: "المعاينة", color: "bg-indigo-50 text-indigo-500 border-indigo-200", description: "معاينة العقار ميدانياً", durationDays: 3, fieldOnly: true },
+  { key: "drafting", label: "إعداد التقرير", color: "bg-amber-50 text-amber-500 border-amber-200", description: "إعداد ومراجعة التقرير", durationDays: 5 },
+  { key: "delivered", label: "التسليم", color: "bg-violet-50 text-violet-500 border-violet-200", description: "تقريرك جاهز للتحميل", durationDays: 1 },
 ];
 
-const STATUS_TO_STAGE: Record<string, number> = {
-  draft: 0, ai_review: 0, submitted: 0, needs_clarification: 0,
-  under_pricing: 1, quotation_sent: 1, quotation_approved: 1, quotation_rejected: 1,
-  awaiting_payment: 1, payment_uploaded: 1, payment_under_review: 1,
-  partially_paid: 1, fully_paid: 2,
-  in_production: 2, inspection_scheduled: 3, inspection_completed: 3,
-  report_drafting: 4, draft_report_sent: 4, client_comments: 4,
-  quality_review: 4, final_review: 4,
-  final_payment_pending: 4, final_payment_uploaded: 4, final_payment_approved: 4,
-  final_report_ready: 5, completed: 5, archived: 5,
-  cancelled: -1,
+const STATUS_TO_STAGE_KEY: Record<string, string> = {
+  draft: "submitted", ai_review: "submitted", submitted: "submitted", needs_clarification: "submitted",
+  under_pricing: "payment", quotation_sent: "payment", quotation_approved: "payment", quotation_rejected: "payment",
+  awaiting_payment: "payment", payment_uploaded: "payment", payment_under_review: "payment",
+  partially_paid: "payment", fully_paid: "assigned",
+  in_production: "assigned", inspection_scheduled: "inspection", inspection_completed: "inspection",
+  report_drafting: "drafting", draft_report_sent: "drafting", client_comments: "drafting",
+  quality_review: "drafting", final_review: "drafting",
+  final_payment_pending: "drafting", final_payment_uploaded: "drafting", final_payment_approved: "drafting",
+  final_report_ready: "delivered", completed: "delivered", archived: "delivered",
+  cancelled: "cancelled",
 };
-
-const STAGE_DURATION_DAYS = [1, 2, 1, 3, 5, 1];
 
 interface EnhancedRequestTrackerProps {
   status: string;
   createdAt?: string;
   compact?: boolean;
+  valuationMode?: "field" | "desktop";
 }
 
-export function EnhancedRequestTracker({ status, createdAt, compact = false }: EnhancedRequestTrackerProps) {
-  const currentStage = STATUS_TO_STAGE[status] ?? 0;
+export function EnhancedRequestTracker({ status, createdAt, compact = false, valuationMode = "field" }: EnhancedRequestTrackerProps) {
+  const isDesktop = valuationMode === "desktop";
+  const stages = isDesktop ? ALL_STAGES.filter(s => !s.fieldOnly) : ALL_STAGES;
+
+  const stageKey = STATUS_TO_STAGE_KEY[status] ?? "submitted";
+  const currentStage = Math.max(0, stages.findIndex(s => s.key === stageKey));
   const isCancelled = status === "cancelled";
 
   if (isCancelled) {
@@ -43,14 +46,14 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
     );
   }
 
-  const totalStages = STAGES.length;
+  const totalStages = stages.length;
   const progressPercent = Math.round(((currentStage + 1) / totalStages) * 100);
 
   const startDate = createdAt ? new Date(createdAt) : null;
-  const stageDates = STAGES.map((_, i) => {
+  const stageDates = stages.map((_, i) => {
     if (!startDate) return null;
     let days = 0;
-    for (let j = 0; j < i; j++) days += STAGE_DURATION_DAYS[j];
+    for (let j = 0; j < i; j++) days += stages[j].durationDays;
     const d = new Date(startDate);
     d.setDate(d.getDate() + days);
     return d;
@@ -59,7 +62,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
   const estimatedEnd = startDate
     ? (() => {
         const d = new Date(startDate);
-        d.setDate(d.getDate() + STAGE_DURATION_DAYS.reduce((a, b) => a + b, 0));
+        d.setDate(d.getDate() + stages.reduce((a, s) => a + s.durationDays, 0));
         return d;
       })()
     : null;
@@ -73,7 +76,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
         </div>
         <Progress value={progressPercent} className="h-2" />
         <div className="flex items-center gap-1.5">
-          {STAGES.map((stage, i) => {
+          {stages.map((stage, i) => {
             const isDone = i < currentStage;
             const isActive = i === currentStage;
             return (
@@ -89,7 +92,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
                 >
                   {isDone ? "✓" : <span dir="ltr" style={{ fontFamily: "system-ui" }}>{i + 1}</span>}
                 </div>
-                {i < STAGES.length - 1 && (
+                {i < stages.length - 1 && (
                   <div className={`h-0.5 flex-1 mx-0.5 rounded-full ${isDone ? "bg-primary" : "bg-border"}`} />
                 )}
               </div>
@@ -109,6 +112,9 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
             <span className="text-primary text-[10px] font-bold">%</span>
           </div>
           <span className="text-sm text-muted-foreground">تقدم الطلب</span>
+          {isDesktop && (
+            <span className="text-[10px] bg-accent text-accent-foreground px-2 py-0.5 rounded-full font-medium">تقييم مكتبي</span>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-lg font-bold text-primary">{progressPercent}%</span>
@@ -123,7 +129,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
 
       {/* Timeline */}
       <div className="relative pr-4">
-        {STAGES.map((stage, i) => {
+        {stages.map((stage, i) => {
           const isDone = i < currentStage;
           const isActive = i === currentStage;
           const isPending = i > currentStage;
@@ -132,14 +138,14 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false }: E
           return (
             <div key={stage.key} className="relative flex gap-3 pb-5 last:pb-0">
               {/* Vertical line */}
-              {i < STAGES.length - 1 && (
+              {i < stages.length - 1 && (
                 <div
                   className={`absolute right-[13px] top-8 w-0.5 h-[calc(100%-12px)] ${
                     isDone ? "bg-primary" : "bg-border"
                   }`}
                 />
               )}
-              {/* Emoji node */}
+              {/* Node */}
               <div
                 className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 z-10 transition-all text-xs font-semibold border ${
                   isDone
