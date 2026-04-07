@@ -296,14 +296,6 @@ export default function SimpleClientRequest() {
     type.includes("sheet") || type.includes("excel") || type.includes("csv") || /\.(xlsx|xls|csv)$/i.test(name);
 
   const finalAssetType = confirmedType;
-  const selectedPurposeLabel = purpose === "other"
-    ? purposeOther.trim() || "—"
-    : PURPOSE_OPTIONS[purpose] || "—";
-  const selectedIntendedUserLabel = intendedUser === "other"
-    ? intendedUserOther.trim() || "—"
-    : INTENDED_USERS_OPTIONS[intendedUser] || "—";
-  const selectedValuationModeLabel = VALUATION_MODE_OPTIONS[valuationMode] || "—";
-  const selectedAssetTypeLabel = finalAssetType ? ASSET_TYPE_MAP[finalAssetType]?.label || "—" : "—";
 
   // ── Start AI Analysis (transition form → analyzing → review OR extraction_failed) ──
   const handleStartAnalysis = async () => {
@@ -450,6 +442,25 @@ export default function SimpleClientRequest() {
         assets: assetInventory,
         totalFiles: uploadedFiles.length,
         clientName: clientName || undefined,
+        requestScope: {
+          clientName: clientNameInput || clientName || undefined,
+          phone: clientPhone || undefined,
+          email: clientEmail || undefined,
+          idNumber: clientIdNumber || undefined,
+          purpose: purpose === "other" ? purposeOther.trim() || undefined : PURPOSE_OPTIONS[purpose] || undefined,
+          intendedUser: intendedUser === "other" ? intendedUserOther.trim() || undefined : INTENDED_USERS_OPTIONS[intendedUser] || undefined,
+          valuationMode: VALUATION_MODE_OPTIONS[valuationMode] || undefined,
+          assetType: finalAssetType ? ASSET_TYPE_MAP[finalAssetType]?.label || undefined : undefined,
+          notes: notes.trim() || undefined,
+          files: uploadedFiles.map((file) => ({ name: file.name, type: file.type })),
+          locations: assetLocations.map((location) => ({
+            name: location.name,
+            city: location.city,
+            googleMapsUrl: location.googleMapsUrl,
+            latitude: location.latitude,
+            longitude: location.longitude,
+          })),
+        },
       });
 
       setState("review");
@@ -751,90 +762,7 @@ export default function SimpleClientRequest() {
           </div>
         </header>
 
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-4">
-          <Card>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">بيانات الطلب ضمن نطاق العمل</h3>
-                  <p className="text-xs text-muted-foreground mt-1">هذه المعلومات أرفقها العميل في الخطوة السابقة ويجب اعتمادها أثناء المراجعة.</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="text-[11px]">{uploadedFiles.length} ملف</Badge>
-                  <Badge variant="outline" className="text-[11px]">{assetLocations.length} موقع</Badge>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {[
-                  { label: "اسم العميل", value: clientNameInput || clientName || "—" },
-                  { label: "الجوال", value: clientPhone || "—" },
-                  { label: "الغرض من التقييم", value: selectedPurposeLabel },
-                  { label: "المستخدم المستهدف", value: selectedIntendedUserLabel },
-                  { label: "نوع التقييم", value: selectedValuationModeLabel },
-                  { label: "نوع الأصل", value: selectedAssetTypeLabel },
-                  { label: "البريد الإلكتروني", value: clientEmail || "—" },
-                  { label: "رقم الهوية / السجل", value: clientIdNumber || "—" },
-                ].map((item) => (
-                  <div key={item.label} className="rounded-xl border border-border bg-background p-3 space-y-1">
-                    <p className="text-[11px] text-muted-foreground">{item.label}</p>
-                    <p className="text-sm font-medium text-foreground break-words">{item.value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className="rounded-xl border border-border bg-background p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-foreground">المواقع المرفقة</p>
-                    <Badge variant="secondary" className="text-[10px]">{assetLocations.length}</Badge>
-                  </div>
-                  {assetLocations.length > 0 ? (
-                    <div className="space-y-2">
-                      {assetLocations.map((location) => (
-                        <div key={location.id} className="rounded-lg border border-border/70 px-3 py-2">
-                          <p className="text-sm font-medium text-foreground">{location.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {[location.city, location.latitude != null && location.longitude != null ? `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}` : null]
-                              .filter(Boolean)
-                              .join(" • ") || "تم إرفاق رابط الموقع"}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">لا توجد مواقع مرفقة.</p>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-border bg-background p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm font-semibold text-foreground">الملفات والملاحظات</p>
-                    <Badge variant="secondary" className="text-[10px]">{uploadedFiles.length}</Badge>
-                  </div>
-
-                  <div className="space-y-2">
-                    {uploadedFiles.length > 0 ? (
-                      uploadedFiles.map((file) => (
-                        <div key={file.id} className="rounded-lg border border-border/70 px-3 py-2">
-                          <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">تم رفعه ضمن مستندات الطلب</p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-xs text-muted-foreground">لا توجد ملفات مرفقة.</p>
-                    )}
-                  </div>
-
-                  <div className="rounded-lg border border-dashed border-border px-3 py-3 bg-muted/20">
-                    <p className="text-[11px] text-muted-foreground mb-1">ملاحظات العميل</p>
-                    <p className="text-sm text-foreground whitespace-pre-wrap break-words">{notes.trim() || "لا توجد ملاحظات إضافية من العميل."}</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <AIReviewStep
             data={reviewData}
             onApprove={handleReviewApprove}
