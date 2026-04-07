@@ -4225,6 +4225,67 @@ export type Database = {
           },
         ]
       }
+      request_audit_log: {
+        Row: {
+          action_type: string
+          assignment_id: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          new_status: string
+          old_status: string
+          reason: string | null
+          request_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type?: string
+          assignment_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_status: string
+          old_status: string
+          reason?: string | null
+          request_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          assignment_id?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          new_status?: string
+          old_status?: string
+          reason?: string | null
+          request_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_audit_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_audit_log_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "request_audit_log_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       request_documents: {
         Row: {
           ai_category: string | null
@@ -5813,6 +5874,17 @@ export type Database = {
           msg_id: number
           read_ct: number
         }[]
+      }
+      update_request_status: {
+        Args: {
+          _action_type?: string
+          _assignment_id: string
+          _bypass_justification?: string
+          _new_status: string
+          _reason?: string
+          _user_id?: string
+        }
+        Returns: Json
       }
       validate_discount_code: {
         Args: {

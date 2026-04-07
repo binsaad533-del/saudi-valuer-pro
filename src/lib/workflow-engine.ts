@@ -552,7 +552,8 @@ export async function checkPaymentGate(
 }
 
 // ══════════════════════════════════════════════════════════════
-// Transition with audit logging + payment gate enforcement
+// Central transition — delegates to DB function update_request_status
+// All validation, payment gates, locks, and audit logging happen server-side
 // ══════════════════════════════════════════════════════════════
 
 export async function transitionStatus(
@@ -560,8 +561,10 @@ export async function transitionStatus(
   fromStatus: string,
   toStatus: string,
   reason?: string,
-  automatedBy?: string
+  automatedBy?: string,
+  options?: { actionType?: "normal" | "simulated" | "bypass" | "auto"; bypassJustification?: string }
 ): Promise<{ success: boolean; error?: string }> {
+  // Client-side pre-check (fast fail before DB call)
   if (!canTransition(fromStatus, toStatus)) {
     return {
       success: false,
@@ -572,39 +575,7 @@ export async function transitionStatus(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
 
-  // ── Payment gate enforcement ──
-  const { data: linkedRequest } = await supabase
-    .from("valuation_requests")
-    .select("id")
-    .eq("assignment_id", assignmentId)
-    .maybeSingle();
-
-  if (linkedRequest?.id) {
-    const paymentCheck = await checkPaymentGate(toStatus, linkedRequest.id);
-    if (paymentCheck.blocked) {
-      return { success: false, error: paymentCheck.reason_ar || "بوابة الدفع تمنع الانتقال" };
-    }
-  }
-
-  // ── Inspection enforcement ──
-  if (toStatus === "data_validated" && fromStatus === "inspection_completed") {
-    const { data: inspections } = await supabase
-      .from("inspections")
-      .select("id, status, completed, submitted_at")
-      .eq("assignment_id", assignmentId)
-      .order("created_at", { ascending: false })
-      .limit(1);
-
-    const insp = inspections?.[0];
-    if (!insp) {
-      return { success: false, error: "لا يمكن الانتقال بدون معاينة ميدانية." };
-    }
-    if (insp.status !== "completed" && !insp.completed && !insp.submitted_at) {
-      return { success: false, error: "المعاينة الميدانية غير مكتملة بعد." };
-    }
-  }
-
-  // ── Issuance gate enforcement ──
+  // Issuance gate (client-side check — also enforced by DB locks)
   if (toStatus === "issued") {
     const { data: roleData } = await supabase
       .from("user_roles")
@@ -620,50 +591,26 @@ export async function transitionStatus(
     }
   }
 
-  // Update assignment status
-  const { error: updateErr } = await supabase
-    .from("valuation_assignments")
-    .update({ status: toStatus as any })
-    .eq("id", assignmentId);
+  const actionType = options?.actionType || (automatedBy ? "auto" : "normal");
+  const transitionReason = automatedBy
+    ? `[تلقائي: ${automatedBy}] ${reason || ""}`
+    : reason || null;
 
-  if (updateErr) return { success: false, error: updateErr.message };
-
-  const userId = user?.id || "system";
-  const transitionRule = getTransitionRule(fromStatus, toStatus);
-  const auditEvent = transitionRule?.audit_event_ar || "";
-  const description = automatedBy
-    ? `[تلقائي: ${automatedBy}] ${auditEvent || `${STATUS_LABELS[fromStatus]?.ar} → ${STATUS_LABELS[toStatus]?.ar}`}`
-    : `${auditEvent || `تغيير الحالة: ${STATUS_LABELS[fromStatus]?.ar} → ${STATUS_LABELS[toStatus]?.ar}`}${reason ? ` | السبب: ${reason}` : ""}`;
-
-  // Log in status_history
-  await supabase.from("status_history").insert({
-    assignment_id: assignmentId,
-    from_status: fromStatus as any,
-    to_status: toStatus as any,
-    changed_by: userId,
-    reason: automatedBy ? `تلقائي: ${automatedBy}` : reason || null,
+  // Call the server-side function — single source of truth
+  const { data, error } = await supabase.rpc("update_request_status", {
+    _assignment_id: assignmentId,
+    _new_status: toStatus,
+    _user_id: user?.id || null,
+    _action_type: actionType,
+    _reason: transitionReason,
+    _bypass_justification: options?.bypassJustification || null,
   });
 
-  // Log in audit_logs
-  await supabase.from("audit_logs").insert({
-    user_id: userId,
-    action: "status_change" as any,
-    table_name: "valuation_assignments",
-    record_id: assignmentId,
-    assignment_id: assignmentId,
-    old_data: { status: fromStatus },
-    new_data: { status: toStatus },
-    description,
-  });
+  if (error) return { success: false, error: error.message };
 
-  // ── Apply lock points ──
-  if (toStatus in LOCK_POINTS) {
-    if (toStatus === "issued" || toStatus === "archived") {
-      await supabase
-        .from("valuation_assignments")
-        .update({ is_locked: true } as any)
-        .eq("id", assignmentId);
-    }
+  const result = data as any;
+  if (result && typeof result === "object" && result.success === false) {
+    return { success: false, error: result.error };
   }
 
   return { success: true };
