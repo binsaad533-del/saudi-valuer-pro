@@ -77,8 +77,16 @@ export default function ClientRequests() {
       .from("valuation_requests" as any)
       .select("*")
       .order("created_at", { ascending: false });
-    setRequests(data || []);
+    const reqs = data || [];
+    setRequests(reqs);
     setLoading(false);
+
+    // Auto-select request from navigation state
+    const stateId = (location.state as any)?.selectedRequestId;
+    if (stateId) {
+      const found = reqs.find((r: any) => r.id === stateId);
+      if (found) setSelectedRequest(found);
+    }
   };
 
   const openPricing = async (req: any) => {
