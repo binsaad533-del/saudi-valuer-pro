@@ -3863,6 +3863,8 @@ export type Database = {
       report_drafts: {
         Row: {
           ai_model: string | null
+          client_approved_at: string | null
+          client_comments: string | null
           created_at: string
           generated_by: string | null
           generation_mode: string | null
@@ -3877,6 +3879,8 @@ export type Database = {
         }
         Insert: {
           ai_model?: string | null
+          client_approved_at?: string | null
+          client_comments?: string | null
           created_at?: string
           generated_by?: string | null
           generation_mode?: string | null
@@ -3891,6 +3895,8 @@ export type Database = {
         }
         Update: {
           ai_model?: string | null
+          client_approved_at?: string | null
+          client_comments?: string | null
           created_at?: string
           generated_by?: string | null
           generation_mode?: string | null
