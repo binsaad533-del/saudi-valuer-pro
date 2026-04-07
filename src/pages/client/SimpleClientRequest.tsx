@@ -727,10 +727,34 @@ export default function SimpleClientRequest() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* ── العمود الأيمن: رفع الملفات + الملاحظات ── */}
-          <div className="lg:col-span-3 space-y-5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* توجيهات */}
+        <div className="bg-primary/5 border border-primary/15 rounded-xl p-4">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 justify-center text-center">
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <FileText className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="text-xs text-foreground">ارفع ملف Excel يحتوي على جرد الأصول أو صكوك العقارات</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Image className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="text-xs text-foreground">أضف صوراً واضحة للمعدات أو العقار من عدة زوايا</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Shield className="w-3.5 h-3.5 text-primary" />
+              </div>
+              <span className="text-xs text-foreground">سيتم التحليل وفق معايير IVS 2025 وهيئة المقيمين</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* ── العمود الرئيسي: رفع الملفات + الملاحظات ── */}
+          <div className="lg:col-span-2 space-y-5">
             <Card>
               <CardContent className="p-5 space-y-3">
                 <p className="text-sm font-semibold text-foreground">المستندات <span className="text-destructive">*</span></p>
