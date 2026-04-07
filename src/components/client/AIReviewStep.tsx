@@ -357,18 +357,50 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
   
 
-  // Initialize chat
+  // Compute initial excluded from processed data
+  const initialExcluded = useMemo(() => processed.filter(a => a.license_status === "not_permitted"), [processed]);
+
+  // Initialize chat — Raqeem ALWAYS activates
   useEffect(() => {
     const initial: ChatMessage[] = [];
-    if (questions.length > 0) {
-      const greeting = data.clientName
-        ? `مرحباً ${data.clientName}، راجعت المرفقات واحتاج تأكيد بسيط لبعض البنود`
-        : "مرحباً، راجعت المرفقات واحتاج تأكيد بسيط لبعض البنود";
-      initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
-      initial.push({ id: `q-0`, type: "question", text: questions[0].question, questionData: questions[0], timestamp: Date.now() + 1 });
-    } else {
-      initial.push({ id: "auto-done", type: "info", text: "✅ جميع البنود واضحة — لا تحتاج توضيح", timestamp: Date.now() });
+    const greeting = data.clientName
+      ? `مرحباً ${data.clientName}، راجعت المرفقات وهذا ملخص النتائج`
+      : "مرحباً، راجعت المرفقات وهذا ملخص النتائج";
+    initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
+
+    // CASE 1: Explain excluded items FIRST (priority)
+    if (initialExcluded.length > 0) {
+      // Group excluded by reason for concise explanation
+      const reasonGroups = new Map<string, string[]>();
+      for (const a of initialExcluded) {
+        const reason = a.license_reason || "خارج نطاق التقييم";
+        const list = reasonGroups.get(reason) || [];
+        list.push(a.name);
+        reasonGroups.set(reason, list);
+      }
+      let explanationText = `🚫 تم استبعاد ${initialExcluded.length} بند تلقائياً:\n`;
+      for (const [reason, names] of reasonGroups) {
+        const preview = names.slice(0, 3).map(n => `"${n}"`).join("، ");
+        const extra = names.length > 3 ? ` و${names.length - 3} آخرين` : "";
+        explanationText += `\n• ${preview}${extra}\n  ← ${reason}`;
+      }
+      initial.push({ id: "excluded-explain", type: "info", text: explanationText, timestamp: Date.now() + 1 });
     }
+
+    // CASE 2: Then ask about review items
+    if (questions.length > 0) {
+      const reviewIntro = initialExcluded.length > 0
+        ? `وأحتاج تأكيد بسيط على ${questions.length} بند آخر`
+        : `${questions.length} بند يحتاج تأكيد بسيط`;
+      initial.push({ id: "review-intro", type: "info", text: `❓ ${reviewIntro}`, timestamp: Date.now() + 2 });
+      initial.push({ id: `q-0`, type: "question", text: questions[0].question, questionData: questions[0], timestamp: Date.now() + 3 });
+    }
+
+    // CASE 3: Nothing excluded, nothing to review — confirm all clear
+    if (initialExcluded.length === 0 && questions.length === 0) {
+      initial.push({ id: "all-clear", type: "info", text: `✅ تم تحليل ${processed.length} بند — جميعها جاهزة للتقييم`, timestamp: Date.now() + 1 });
+    }
+
     setMessages(initial);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
