@@ -674,6 +674,62 @@ export default function ExecutiveDashboard() {
                   <p className="text-sm leading-7 text-foreground">{getRequestNotes(selectedRequest)}</p>
                 </CardContent>
               </Card>
+
+              {/* Chat / Messages Section */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                    المحادثة ({drawerMessages.length})
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {loadingMessages ? (
+                    <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                  ) : drawerMessages.length === 0 ? (
+                    <p className="text-center text-sm text-muted-foreground py-4">لا توجد رسائل بعد</p>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto space-y-2 rounded-lg bg-muted/30 p-3">
+                      {drawerMessages.map((msg: any, i: number) => {
+                        const isClient = msg.sender_type === "client";
+                        const isSystem = msg.sender_type === "system";
+                        const isAdmin = msg.sender_type === "admin";
+                        return (
+                          <div key={msg.id || i} className={`flex gap-2 ${isClient ? "justify-start" : "justify-end"}`}>
+                            {isClient && <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-3.5 h-3.5 text-primary" /></div>}
+                            <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                              isSystem ? "bg-muted text-muted-foreground text-center mx-auto text-xs" :
+                              isClient ? "bg-background border border-border text-foreground" :
+                              "bg-primary text-primary-foreground"
+                            }`}>
+                              <p className="whitespace-pre-wrap">{msg.content}</p>
+                              <p className={`text-[10px] mt-1 ${isAdmin ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                                {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                            {isAdmin && <div className="shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center"><Bot className="w-3.5 h-3.5 text-primary-foreground" /></div>}
+                          </div>
+                        );
+                      })}
+                      <div ref={chatEndRef} />
+                    </div>
+                  )}
+
+                  {/* Reply input */}
+                  <form onSubmit={(e) => { e.preventDefault(); sendOwnerReply(); }} className="flex items-center gap-2 pt-1">
+                    <Input
+                      value={drawerReply}
+                      onChange={(e) => setDrawerReply(e.target.value)}
+                      placeholder="اكتب رداً للعميل..."
+                      className="flex-1 text-sm"
+                      disabled={sendingReply}
+                    />
+                    <Button type="submit" size="icon" disabled={sendingReply || !drawerReply.trim()}>
+                      {sendingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
             </div>
           )}
         </DrawerContent>
