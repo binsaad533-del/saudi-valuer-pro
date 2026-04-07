@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -115,9 +115,6 @@ Deno.serve(async (req) => {
         _phone: fullPhone,
         _name_ar: client_name || null,
       });
-    } else {
-      // Ensure password is in sync (in case it was changed)
-      await supabaseAdmin.auth.admin.updateUser(userId, { password: demoPassword });
     }
 
     /* ---- Log attempt ---- */
