@@ -300,7 +300,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
   const autoApproved = useMemo(() => assets.filter(a => a.license_status === "permitted"), [assets]);
   const excluded = useMemo(() => assets.filter(a => a.license_status === "not_permitted"), [assets]);
-  const flagged = useMemo(() => assets.filter(a => a.license_status === "needs_review"), [assets]);
+  const _flagged = useMemo(() => assets.filter(a => a.license_status === "needs_review"), [assets]);
 
   // Generate all questions upfront from initially-flagged assets
   const [questions] = useState<SmartQuestion[]>(() => generateSmartQuestions(processed.filter(a => a.license_status === "needs_review")));
