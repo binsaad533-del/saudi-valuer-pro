@@ -56,7 +56,32 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
   const [urlError, setUrlError] = useState("");
   const [coordsError, setCoordsError] = useState("");
 
+  const atLimit = locations.length >= maxLocations;
+
+  const handleQuickAdd = () => {
+    const url = quickUrl.trim();
+    if (!url) return;
+    if (!isValidGoogleMapsUrl(url)) {
+      setQuickUrlError("يرجى إدخال رابط خرائط قوقل صالح");
+      return;
+    }
+    if (atLimit) return;
+    const coords = extractCoordsFromUrl(url);
+    const newLocation: AssetLocation = {
+      id: crypto.randomUUID(),
+      name: `موقع ${locations.length + 1}`,
+      city: "",
+      googleMapsUrl: url,
+      latitude: coords.lat,
+      longitude: coords.lng,
+    };
+    onChange([...locations, newLocation]);
+    setQuickUrl("");
+    setQuickUrlError("");
+  };
+
   const handleAddFromUrl = () => {
+    if (atLimit) return;
     if (!form.name.trim() || !form.googleMapsUrl.trim()) return;
 
     if (!isValidGoogleMapsUrl(form.googleMapsUrl.trim())) {
