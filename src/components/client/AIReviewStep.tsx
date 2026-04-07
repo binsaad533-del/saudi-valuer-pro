@@ -869,9 +869,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
           <CardContent className="p-0">
             {/* Chat header */}
             <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-primary/5 rounded-t-lg">
-              <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
-                <Sparkles className="w-3.5 h-3.5" />
-              </div>
+              <RaqeemAnimatedLogo size={28} />
               <span className="text-[11px] font-bold text-foreground">رقيم</span>
               {phase === "questions" && questions.length > 0 && (
                 <span className="text-[9px] text-muted-foreground mr-auto">{currentQIdx + 1}/{questions.length}</span>
