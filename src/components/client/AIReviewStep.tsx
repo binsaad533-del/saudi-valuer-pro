@@ -129,6 +129,30 @@ export function classifyAssetLicense(asset: ExtractedAsset): ExtractedAsset {
   return { ...asset, license_status: "permitted", license_reason: "تمت المعالجة تلقائياً" };
 }
 
+/** Check if asset is hard-excluded by EXCLUSION_RULES (immutable, cannot be overridden) */
+function isHardExcluded(asset: ExtractedAsset): boolean {
+  const combined = `${(asset.category || asset.type || "").toLowerCase()} ${(asset.name || "").toLowerCase()}`;
+  return EXCLUSION_RULES.some(rule => rule.keywords.some(k => combined.includes(k.toLowerCase())));
+}
+
+/** Consistency check: same input → same output (deterministic) */
+function consistencyCheck(assets: ExtractedAsset[]): ExtractedAsset[] {
+  const fingerprints = new Map<string, ExtractedAsset["license_status"]>();
+  return assets.map(a => {
+    const fp = `${(a.name || "").trim().toLowerCase()}|${(a.category || "").toLowerCase()}|${(a.type || "").toLowerCase()}`;
+    const existing = fingerprints.get(fp);
+    if (existing && existing !== a.license_status) {
+      // Force consistency: same data = same result (use the stricter status)
+      const strict = existing === "not_permitted" || a.license_status === "not_permitted" ? "not_permitted"
+        : existing === "needs_review" || a.license_status === "needs_review" ? "needs_review" : "permitted";
+      fingerprints.set(fp, strict);
+      return { ...a, license_status: strict };
+    }
+    fingerprints.set(fp, a.license_status);
+    return a;
+  });
+}
+
 // ── Deduplication ──
 function deduplicateAssets(assets: ExtractedAsset[]) {
   const seen = new Map<string, ExtractedAsset>();
