@@ -26,6 +26,19 @@ function drawDraftWatermark(doc: jsPDF) {
   }
 }
 
+function drawTestWatermark(doc: jsPDF) {
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    // Red watermark for test reports
+    doc.setTextColor(255, 80, 80);
+    doc.setFontSize(40);
+    doc.text("TEST REPORT — NOT FOR OFFICIAL USE", PAGE_WIDTH / 2, PAGE_HEIGHT / 2 - 15, { align: "center", angle: 45 });
+    doc.setFontSize(30);
+    doc.text("تقرير تجريبي غير معتمد للاستخدام الرسمي", PAGE_WIDTH / 2, PAGE_HEIGHT / 2 + 15, { align: "center", angle: 45 });
+  }
+}
+
 function addPageNumbers(doc: jsPDF, startPage = 2) {
   const total = doc.getNumberOfPages();
   for (let i = startPage; i <= total; i++) {
@@ -234,9 +247,10 @@ function drawTableOfContents(doc: jsPDF, report: Report) {
 
 // ─── Main Export Function ───
 
-export async function exportReportToPDF(report: Report): Promise<Blob> {
+export async function exportReportToPDF(report: Report, options?: { isTestMode?: boolean }): Promise<Blob> {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const isDraft = report.status === "draft" || report.status === "review";
+  const isTest = options?.isTestMode ?? false;
 
   // 1. Cover
   drawCover(doc, report);
