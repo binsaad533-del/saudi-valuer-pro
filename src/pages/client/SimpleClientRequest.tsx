@@ -362,6 +362,7 @@ export default function SimpleClientRequest() {
         confidence: detectionConfidence,
         assets: assetInventory,
         totalFiles: uploadedFiles.length,
+        clientName: clientName || undefined,
       });
 
       setState("review");
