@@ -64,6 +64,35 @@ const ASSET_TYPES = [
   { key: "both", label: "عقار + آلات ومعدات", icon: Sparkles, desc: "تقييم مختلط يشمل كلا النوعين" },
 ] as const;
 
+const PURPOSE_OPTIONS: Record<string, string> = {
+  sale_purchase: "بيع / شراء",
+  mortgage: "رهن / تمويل",
+  financial_reporting: "تقارير مالية",
+  insurance: "تأمين",
+  taxation: "زكاة / ضريبة",
+  expropriation: "نزع ملكية",
+  litigation: "نزاع / قضاء",
+  investment: "استثمار",
+  lease_renewal: "تجديد إيجار",
+  internal_decision: "قرار داخلي",
+  regulatory: "تنظيمي",
+  other: "أخرى",
+};
+
+const INTENDED_USERS_OPTIONS: Record<string, string> = {
+  bank: "بنك / مؤسسة مالية",
+  government: "جهة حكومية",
+  court: "محكمة",
+  internal_management: "إدارة داخلية",
+  investor: "مستثمر",
+  other: "أخرى",
+};
+
+const VALUATION_MODE_OPTIONS: Record<string, string> = {
+  field: "ميداني (معاينة ميدانية)",
+  desktop: "مكتبي (بدون معاينة)",
+};
+
 const ASSET_TYPE_MAP: Record<string, typeof ASSET_TYPES[number]> = Object.fromEntries(
   ASSET_TYPES.map(t => [t.key, t])
 );
