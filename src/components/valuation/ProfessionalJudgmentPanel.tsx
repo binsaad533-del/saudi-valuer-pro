@@ -111,9 +111,8 @@ export default function ProfessionalJudgmentPanel({ request, userId, onStatusCha
     );
   };
 
-  const hasModifications = useMemo(() => {
-    return adjustments.some(a => a.appraiserValue !== a.aiSuggested) || overallJustification.trim() !== "";
-  }, [adjustments, overallJustification]);
+
+
 
   const saveJudgment = async () => {
     if (!overallJustification.trim()) {
