@@ -247,7 +247,7 @@ export default function ExecutiveDashboard() {
                         <tr
                           key={req.id}
                           className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/client-requests?id=${req.id}`)}
+                          onClick={() => navigate("/client-requests", { state: { selectedRequestId: req.id } })}
                         >
                           <td className="px-4 py-3 font-medium text-foreground">
                             {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
