@@ -110,11 +110,12 @@ export default function ExecutiveDashboard() {
   /* ── Filtered requests ── */
   const filteredRequests = useMemo(() => {
     return clientRequests.filter(req => {
-      const name = req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "";
+      const clientObj = req.clients;
+      const name = clientObj?.name_ar || req.client_name_ar || "";
       if (searchTerm && !name.includes(searchTerm) && !req.id.includes(searchTerm)) return false;
       if (statusFilter !== "all" && req.status !== statusFilter) return false;
       if (typeFilter !== "all") {
-        const mode = req.ai_intake_summary?.valuation_mode || "";
+        const mode = req.valuation_mode || req.ai_intake_summary?.valuation_mode || "";
         if (typeFilter !== mode) return false;
       }
       return true;
@@ -250,7 +251,8 @@ export default function ExecutiveDashboard() {
                           onClick={() => navigate("/client-requests", { state: { selectedRequestId: req.id } })}
                         >
                           <td className="px-4 py-3 font-medium text-foreground">
-                            {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
+                            {req.clients?.name_ar || req.client_name_ar || "طلب جديد"}
+                          </td>
                           </td>
                           <td className="px-4 py-3 text-muted-foreground">
                             {purposeLabel[req.purpose] || req.purpose || "—"}
