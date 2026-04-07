@@ -20,6 +20,7 @@ import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
 import ClientReportReview from "@/components/reports/ClientReportReview";
+import DraftReportReview from "@/components/client/DraftReportReview";
 import DataPortalUploader from "@/components/client/DataPortalUploader";
 import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
