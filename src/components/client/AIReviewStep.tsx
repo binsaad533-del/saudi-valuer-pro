@@ -283,10 +283,12 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
 
   const { processed, removedCount } = useMemo(() => {
     const { unique, removedCount } = deduplicateAssets(data.assets);
-    const processed = unique.map(a => {
+    const classified = unique.map(a => {
       if (a.license_status === "not_permitted" && a.license_reason) return a;
       return classifyAssetLicense(a);
     });
+    // Consistency check: same fingerprint → same status
+    const processed = consistencyCheck(classified);
     return { processed, removedCount };
   }, [data.assets]);
 
