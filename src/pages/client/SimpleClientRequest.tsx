@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Upload, FileText, Image, File, X, Loader2, CheckCircle, Send,
+  Upload, FileText, Image, File, X, Loader2, CheckCircle,
   ArrowRight, Building2, Cog, Shield, Table2, Sparkles, AlertTriangle,
   PenLine, RotateCcw,
 } from "lucide-react";
