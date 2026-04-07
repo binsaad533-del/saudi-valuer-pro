@@ -38,6 +38,13 @@ const ADMIN_TABS = [
   { value: "final", label: "الإصدار", statuses: ["final_payment_pending", "final_payment_uploaded", "final_payment_approved", "awaiting_final_payment", "final_payment_received", "final_report_ready", "report_issued", "completed", "closed", "archived", "cancelled"] },
 ];
 
+const getTabForStatus = (status: string) => {
+  const matchedTab = ADMIN_TABS.find(tab => tab.statuses.includes(status));
+  return matchedTab?.value || "intake";
+};
+
+const getClientDisplayName = (req: any) => req.clients?.name_ar || req.client_name_ar || req.ai_intake_summary?.clientInfo?.contactName || "طلب تقييم";
+
 export default function ClientRequests() {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -45,6 +52,7 @@ export default function ClientRequests() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("intake");
   const [pricingDialog, setPricingDialog] = useState(false);
   const [paymentReviewDialog, setPaymentReviewDialog] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<any>(null);
@@ -72,6 +80,17 @@ export default function ClientRequests() {
     loadRequests();
   }, []);
 
+  useEffect(() => {
+    const stateId = (location.state as any)?.selectedRequestId;
+    if (!stateId || requests.length === 0) return;
+
+    const found = requests.find((r: any) => r.id === stateId);
+    if (found) {
+      setSelectedRequest(found);
+      setActiveTab(getTabForStatus(found.status));
+    }
+  }, [location.state, requests]);
+
   const loadRequests = async () => {
     const { data } = await supabase
       .from("valuation_requests" as any)
@@ -85,7 +104,10 @@ export default function ClientRequests() {
     const stateId = (location.state as any)?.selectedRequestId;
     if (stateId) {
       const found = reqs.find((r: any) => r.id === stateId);
-      if (found) setSelectedRequest(found);
+      if (found) {
+        setSelectedRequest(found);
+        setActiveTab(getTabForStatus(found.status));
+      }
     }
   };
 
@@ -276,7 +298,50 @@ export default function ClientRequests() {
         <Badge variant="secondary" className="text-sm">{requests.length} طلب</Badge>
       </div>
 
-      <Tabs defaultValue="intake" dir="rtl">
+      {selectedRequest && (
+        <Card className="border-primary shadow-sm">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <CardTitle className="text-base">الطلب المحدد</CardTitle>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {getClientDisplayName(selectedRequest)}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {getStatusBadge(selectedRequest.status)}
+                <Button variant="ghost" size="sm" onClick={() => setSelectedRequest(null)}>
+                  إخفاء
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground mb-1">الغرض</p>
+              <p className="font-medium text-foreground">{STATUS_LABELS[selectedRequest.status]?.label || selectedRequest.purpose || "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">نوع التقييم</p>
+              <p className="font-medium text-foreground">{selectedRequest.valuation_mode === "desktop" ? "مكتبي" : selectedRequest.valuation_mode === "field" ? "ميداني" : "—"}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">تاريخ الإنشاء</p>
+              <p className="font-medium text-foreground">{formatDate(selectedRequest.created_at)}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground mb-1">القيمة التقديرية الحالية</p>
+              <p className="font-medium text-foreground">{selectedRequest.quotation_amount ? `${formatNumber(Number(selectedRequest.quotation_amount))} ر.س` : "—"}</p>
+            </div>
+            <div className="md:col-span-4">
+              <p className="text-muted-foreground mb-1">وصف الطلب</p>
+              <p className="font-medium text-foreground">{selectedRequest.property_description_ar || selectedRequest.scope_of_work_ar || "لا يوجد وصف إضافي"}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
         <TabsList className="grid w-full grid-cols-6 h-auto">
           {ADMIN_TABS.map(tab => {
             const count = requests.filter(r => tab.statuses.includes(r.status)).length;
@@ -297,13 +362,17 @@ export default function ClientRequests() {
               <div className="text-center py-12 text-muted-foreground text-sm">لا توجد طلبات في هذه المرحلة</div>
             ) : (
               requests.filter(r => tab.statuses.includes(r.status)).map(req => (
-                <Card key={req.id} className="shadow-card">
+                <Card
+                  key={req.id}
+                  className={`shadow-card transition-all cursor-pointer ${selectedRequest?.id === req.id ? "border-primary" : "border-border"}`}
+                  onClick={() => setSelectedRequest(req)}
+                >
                   <CardContent className="p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Building2 className="w-4 h-4 text-primary" />
-                          <span className="font-semibold text-sm">{req.clients?.name_ar || req.client_name_ar || "طلب تقييم"}</span>
+                          <span className="font-semibold text-sm">{getClientDisplayName(req)}</span>
                           <span className="text-xs text-muted-foreground">— {req.property_description_ar || ""}</span>
                           {req.reference_number && <span className="text-xs text-muted-foreground font-mono" dir="ltr">{req.reference_number}</span>}
                         </div>
@@ -316,20 +385,24 @@ export default function ClientRequests() {
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(req.status)}
+                        <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); setSelectedRequest(req); }}>
+                          <Eye className="w-3 h-3 ml-1" />عرض الطلب
+                        </Button>
 
                         {/* Action buttons based on status */}
                         {req.status === "submitted" && (
-                          <Button size="sm" onClick={() => { moveToStatus(req.id, "under_pricing"); }}>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "under_pricing"); }}>
                             <SARIcon className="w-3 h-3 ml-1" />تسعير
                           </Button>
                         )}
                         {req.status === "under_pricing" && (
-                          <Button size="sm" onClick={() => openPricing(req)}>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); openPricing(req); }}>
                             <Send className="w-3 h-3 ml-1" />إعداد العرض
                           </Button>
                         )}
                         {(req.status === "payment_uploaded" || req.status === "final_payment_uploaded") && (
-                          <Button size="sm" variant="outline" onClick={async () => {
+                          <Button size="sm" variant="outline" onClick={async (e) => {
+                            e.stopPropagation();
                             setSelectedRequest(req);
                             await loadPayments(req.id);
                             setPaymentReviewDialog(true);
@@ -338,12 +411,13 @@ export default function ClientRequests() {
                           </Button>
                         )}
                         {req.status === "in_production" && (
-                          <Button size="sm" onClick={() => navigate(`/valuation-production/${req.assignment_id || req.id}`)}>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/valuation-production/${req.assignment_id || req.id}`); }}>
                             <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
                         {(req.status === "draft_report_sent" || req.status === "client_comments") && (
-                          <Button size="sm" variant="outline" onClick={async () => {
+                          <Button size="sm" variant="outline" onClick={async (e) => {
+                            e.stopPropagation();
                             // Load report for this assignment
                             const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", req.assignment_id).order("created_at", { ascending: false }).limit(1);
                             const report = (reps as any[])?.[0];
@@ -358,12 +432,12 @@ export default function ClientRequests() {
                           </Button>
                         )}
                         {req.status === "fully_paid" && !req.draft_report_url && (
-                          <Button size="sm" onClick={() => moveToStatus(req.id, "in_production")}>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "in_production"); }}>
                             بدء الإنتاج
                           </Button>
                         )}
                         {req.status === "final_report_ready" && (
-                          <Button size="sm" onClick={() => moveToStatus(req.id, "completed")}>
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "completed"); }}>
                             <CheckCircle className="w-3 h-3 ml-1" />إصدار نهائي
                           </Button>
                         )}
