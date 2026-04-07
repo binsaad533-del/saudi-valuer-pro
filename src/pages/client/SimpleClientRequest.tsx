@@ -937,66 +937,66 @@ export default function SimpleClientRequest() {
             </Button>
 
             {/* نصائح */}
-            <Card className="bg-muted/30 border-dashed">
+            <Card className="bg-muted/30 border-dashed" dir="rtl">
               <CardContent className="p-4 space-y-4">
-                <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
-                  <span>دليل المرفقات لأفضل تقييم</span>
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-primary" />
+                  <span>دليل المرفقات لأفضل تقييم</span>
                 </p>
 
                 <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
-                  <li className="flex items-center justify-end gap-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                     <span>جميع صيغ الملفات مدعومة (Excel, PDF, صور, Word...)</span>
-                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                   </li>
-                  <li className="flex items-center justify-end gap-2">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                     <span>كلما زادت المرفقات، كان التقييم أدق وأقرب للسعر العادل</span>
-                    <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                   </li>
-                  <li className="flex items-center justify-end gap-2">
-                    <span>أرفق الفواتير وبرامج الصيانة وأي وثيقة تخص الأصل</span>
+                  <li className="flex items-center gap-2">
                     <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                    <span>أرفق الفواتير وبرامج الصيانة وأي وثيقة تخص الأصل</span>
                   </li>
                 </ul>
 
                 <div className="border-t border-border/50 pt-4 space-y-2.5">
-                  <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
-                    <span>للمعدات والآلات:</span>
+                  <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Cog className="w-4 h-4 text-primary" />
+                    <span>للمعدات والآلات:</span>
                   </p>
                   <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
-                    <li className="flex items-center justify-end gap-2">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                       <span>صور من كل الجوانب + من الداخل</span>
-                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                     </li>
-                    <li className="flex items-center justify-end gap-2">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                       <span>صور العدادات ولوحة البيانات (Nameplate)</span>
-                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                     </li>
-                    <li className="flex items-center justify-end gap-2">
-                      <span>فواتير الشراء وبرامج الصيانة</span>
+                    <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                      <span>فواتير الشراء وبرامج الصيانة</span>
                     </li>
                   </ul>
                 </div>
 
                 <div className="border-t border-border/50 pt-4 space-y-2.5">
-                  <p className="text-xs font-semibold text-foreground flex items-center justify-end gap-1.5">
-                    <span>للعقارات:</span>
+                  <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                     <Building2 className="w-4 h-4 text-primary" />
+                    <span>للعقارات:</span>
                   </p>
                   <ul className="text-[11px] text-muted-foreground space-y-2 leading-relaxed">
-                    <li className="flex items-center justify-end gap-2">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                       <span>صور الواجهة الخارجية من عدة زوايا</span>
-                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                     </li>
-                    <li className="flex items-center justify-end gap-2">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                       <span>صور داخلية: كل الغرف، الحوش، الممرات، المرافق</span>
-                      <CheckCircle className="w-4 h-4 text-primary shrink-0" />
                     </li>
-                    <li className="flex items-center justify-end gap-2">
-                      <span>صكوك الملكية وعقود الإيجار إن وُجدت</span>
+                    <li className="flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-primary shrink-0" />
+                      <span>صكوك الملكية وعقود الإيجار إن وُجدت</span>
                     </li>
                   </ul>
                 </div>
