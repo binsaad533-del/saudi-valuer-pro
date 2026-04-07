@@ -450,7 +450,7 @@ export default function SimpleClientRequest() {
           purpose: purpose === "other" ? purposeOther.trim() || undefined : PURPOSE_OPTIONS[purpose] || undefined,
           intendedUser: intendedUser === "other" ? intendedUserOther.trim() || undefined : INTENDED_USERS_OPTIONS[intendedUser] || undefined,
           valuationMode: VALUATION_MODE_OPTIONS[valuationMode] || undefined,
-          assetType: finalAssetType ? ASSET_TYPE_MAP[finalAssetType]?.label || undefined : undefined,
+          assetType: ASSET_TYPE_MAP[finalDiscipline]?.label || undefined,
           notes: notes.trim() || undefined,
           files: uploadedFiles.map((file) => ({ name: file.name, type: file.type })),
           locations: assetLocations.map((location) => ({
@@ -473,9 +473,9 @@ export default function SimpleClientRequest() {
 
   // ── Final Submit (after review approval) ──
   const handleReviewApprove = async (approvedAssets: ExtractedAsset[], reviewNotes: string) => {
-    console.log("[SimpleClientRequest] handleReviewApprove called", { approvedAssets: approvedAssets.length, finalAssetType, confirmedType, user: !!user });
-    if (!user || !finalAssetType) {
-      console.error("[SimpleClientRequest] handleReviewApprove BLOCKED", { user: !!user, finalAssetType, confirmedType });
+    const resolvedAssetType = reviewData?.confirmedType || reviewData?.detectedType || finalAssetType;
+
+    if (!user || !resolvedAssetType) {
       return;
     }
 
@@ -485,12 +485,14 @@ export default function SimpleClientRequest() {
     setProcessingLabel("جارٍ إنشاء الطلب...");
 
     try {
-      const assetType = finalAssetType;
-      const wasManuallyOverridden = detectedType !== confirmedType;
+      const assetType = resolvedAssetType;
+      const reviewConfirmedType = reviewData?.confirmedType || confirmedType;
+      const reviewDetectedType = reviewData?.detectedType || detectedType;
+      const wasManuallyOverridden = reviewDetectedType !== reviewConfirmedType;
 
       const aiClassification = {
-        ai_detected_asset_type: detectedType,
-        user_confirmed_asset_type: confirmedType,
+        ai_detected_asset_type: reviewDetectedType,
+        user_confirmed_asset_type: reviewConfirmedType,
         was_manually_overridden: wasManuallyOverridden,
         detection_failed: detectionFailed,
         confidence: detectionConfidence,
@@ -587,7 +589,7 @@ export default function SimpleClientRequest() {
         action: "create" as any,
         table_name: "valuation_requests",
         record_id: newRequestId,
-        description: `طلب تقييم جديد | نوع: ${assetType} | أصول مشمولة: ${supportedAssets.length} | مستبعدة: ${unsupportedAssets.length} | تصنيف AI: ${detectedType || "فشل"} → مؤكد: ${confirmedType}${wasManuallyOverridden ? " (تعديل يدوي)" : ""}`,
+        description: `طلب تقييم جديد | نوع: ${assetType} | أصول مشمولة: ${supportedAssets.length} | مستبعدة: ${unsupportedAssets.length} | تصنيف AI: ${reviewDetectedType || "فشل"} → مؤكد: ${reviewConfirmedType}${wasManuallyOverridden ? " (تعديل يدوي)" : ""}`,
         new_data: {
           ai_classification: aiClassification,
           supported_count: supportedAssets.length,
