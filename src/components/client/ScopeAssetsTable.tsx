@@ -167,10 +167,11 @@ export default function ScopeAssetsTable({ assets, onAssetsChange }: Props) {
                   <TableCell>
                     {editingId === asset.id ? (
                       <Select value={editType} onValueChange={setEditType}>
-                        <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-xs w-36"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="real_estate">عقار</SelectItem>
-                          <SelectItem value="machinery_equipment">معدة / آلة</SelectItem>
+                          {Object.entries(TYPE_LABELS).map(([val, label]) => (
+                            <SelectItem key={val} value={val}>{label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     ) : (
