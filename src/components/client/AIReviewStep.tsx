@@ -804,7 +804,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       <Card className="overflow-hidden">
         <div className="overflow-x-auto max-h-[35vh] overflow-y-auto">
           <Table>
-            <TableHeader>
+            <TableHeader className="sticky top-0 z-10">
               <TableRow className="bg-muted/50">
                 <TableHead className="text-right text-[10px] w-8">#</TableHead>
                 <TableHead className="text-right text-[10px]">الأصل</TableHead>
