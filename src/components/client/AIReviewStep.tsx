@@ -1,5 +1,7 @@
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
+import { parseExcelFile, autoMapColumns, applyMapping } from "@/lib/excel-parser";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +13,7 @@ import {
 import {
   CheckCircle, Cog, Sparkles, Building2,
   Shield, ArrowRight, Package, FileCheck, Send,
-  FileText, AlertCircle, Eye,
+  FileText, AlertCircle, Eye, Paperclip, Image, Loader2, X,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
