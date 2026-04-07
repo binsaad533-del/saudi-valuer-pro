@@ -311,7 +311,7 @@ export default function ExecutiveDashboard() {
                           onClick={() => navigate(`/assignment/${a.id}`)}>
                           <td className="px-4 py-3 font-medium text-foreground">{a.reference_number}</td>
                           <td className="px-4 py-3 text-foreground">{a.client?.name_ar || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{assetTypeLabel[a.asset_type || ""] || a.asset_type || "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{assetTypeLabel[a.property_type || ""] || a.property_type || "—"}</td>
                           <td className="px-4 py-3">
                             <Badge variant={statusVariant(a.status)} className="text-[11px]">
                               {statusLabel[a.status] || a.status}
