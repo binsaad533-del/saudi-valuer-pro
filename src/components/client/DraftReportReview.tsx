@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import {
   Loader2, FileText, CheckCircle, MessageSquareText,
-  ThumbsUp, AlertTriangle, Eye, ChevronDown, ChevronUp,
+  ThumbsUp, AlertTriangle, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 interface Props {
@@ -141,6 +142,9 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
   const sectionEntries = Object.entries(sections).filter(
     ([key, value]) => SECTION_LABELS[key] && value
   );
+  const isMachineryDraft = Boolean(
+    sections.machinery_inventory_ar || sections.machinery_approaches_ar || sections.machinery_calculations_ar
+  );
 
   return (
     <Card className="shadow-card border-primary/20">
@@ -150,27 +154,44 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
             <FileText className="w-4 h-4 text-primary" />
             مسودة التقرير للمراجعة
           </span>
-          <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-200">
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
             الإصدار {draft.version}
           </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {/* DRAFT watermark banner */}
-        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800 text-center">
-          <p className="text-amber-700 dark:text-amber-300 font-bold text-sm opacity-60">DRAFT / مسودة</p>
-          <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-1">
+        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 rounded-full border border-border bg-card/80 p-2">
+              <RaqeemAnimatedLogo size={44} />
+            </div>
+            <div className="space-y-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="text-sm font-bold text-foreground">رقيم يراجع المسودة معك</p>
+                <Badge variant="outline" className="bg-background text-foreground border-border">
+                  {isMachineryDraft ? "مسودة آلات ومعدات" : "مسودة تقييم"}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground leading-6">
+                رقيم حاضر هنا كمراجع مهني؛ يبرز لك الأقسام الأساسية ويتأكد من اتساق نوع الأصل والمنهجية ونطاق العمل قبل الاعتماد النهائي.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-3 bg-primary/10 rounded-lg border border-primary/20 text-center">
+          <p className="text-primary font-bold text-sm opacity-70">DRAFT / مسودة</p>
+          <p className="text-[10px] text-muted-foreground mt-1">
             هذه مسودة للمراجعة فقط — التقرير النهائي سيصدر بعد الاعتماد
           </p>
         </div>
 
-        {/* Sections */}
         <ScrollArea className={expanded ? "max-h-[500px]" : "max-h-48"}>
           <div className="space-y-3">
             {sectionEntries.map(([key, value]) => (
               <div key={key} className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
+                  <CheckCircle className="w-3 h-3 text-primary shrink-0" />
                   <p className="text-xs font-semibold text-foreground">{SECTION_LABELS[key]}</p>
                 </div>
                 <p className="text-xs text-muted-foreground leading-6 bg-muted/30 rounded p-2 whitespace-pre-wrap line-clamp-4">
@@ -189,24 +210,22 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
         <Separator />
 
         {hasResponded ? (
-          <div className="text-center py-3 rounded-md bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-            <CheckCircle className="w-5 h-5 text-green-600 mx-auto mb-1" />
-            <p className="text-xs text-green-700 dark:text-green-300">تم إرسال ردك بنجاح</p>
+          <div className="text-center py-3 rounded-md bg-primary/10 border border-primary/20">
+            <CheckCircle className="w-5 h-5 text-primary mx-auto mb-1" />
+            <p className="text-xs text-primary">تم إرسال ردك بنجاح</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {/* Approve button */}
             <Button
               size="sm"
               onClick={handleApprove}
               disabled={submitting}
-              className="w-full gap-1 bg-green-600 hover:bg-green-700 text-white"
+              className="w-full gap-1"
             >
               {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <ThumbsUp className="w-3 h-3" />}
               اعتماد المسودة والمتابعة
             </Button>
 
-            {/* Comments section */}
             <div className="space-y-2">
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <MessageSquareText className="w-3 h-3" />
