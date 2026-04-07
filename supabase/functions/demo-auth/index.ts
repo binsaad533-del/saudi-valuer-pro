@@ -115,9 +115,6 @@ Deno.serve(async (req) => {
         _phone: fullPhone,
         _name_ar: client_name || null,
       });
-    } else {
-      // Ensure password is in sync (in case it was changed)
-      await supabaseAdmin.auth.admin.updateUser(userId, { password: demoPassword });
     }
 
     /* ---- Log attempt ---- */
