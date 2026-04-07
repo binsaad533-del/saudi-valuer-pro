@@ -184,6 +184,27 @@ export async function runIssuanceGate(
     category: "technical",
   });
 
+  // 9. Final payment confirmed (blocks issuance)
+  const { data: linkedReq } = await supabase
+    .from("valuation_requests")
+    .select("id, payment_structure")
+    .eq("assignment_id", assignmentId)
+    .maybeSingle();
+
+  if (linkedReq?.id) {
+    const { isFinalPaymentConfirmed } = await import("./payment-workflow");
+    const finalPaid = await isFinalPaymentConfirmed(linkedReq.id);
+    checks.push({
+      code: "FINAL_PAYMENT",
+      label_ar: "تأكيد الدفعة النهائية",
+      label_en: "Final payment confirmed",
+      passed: finalPaid,
+      mandatory: true,
+      category: "authorization",
+      details: finalPaid ? undefined : "لم يتم تأكيد الدفعة النهائية بعد",
+    });
+  }
+
   // Calculate results
   const failedMandatory = checks.filter(c => c.mandatory && !c.passed);
   const passedCount = checks.filter(c => c.passed).length;

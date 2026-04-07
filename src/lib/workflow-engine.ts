@@ -96,6 +96,12 @@ export const AUTOMATED_TRANSITIONS: Record<string, { to: string; trigger: string
   approved: { to: "issued", trigger: "auto_issue_report" },
 };
 
+// ── Payment gate: stages that require confirmed payment ──
+export const PAYMENT_GATES: Record<string, { required_stage: "first" | "final"; label_ar: string }> = {
+  processing: { required_stage: "first", label_ar: "يجب تأكيد الدفعة الأولى قبل بدء المعالجة" },
+  issued: { required_stage: "final", label_ar: "يجب تأكيد الدفعة النهائية قبل الإصدار" },
+};
+
 // ── Human checkpoints — only owner ──
 export const HUMAN_CHECKPOINTS: Record<string, { role: string; action: string }> = {
   under_review: { role: "owner", action: "مراجعة واعتماد المالك" },
@@ -104,6 +110,27 @@ export const HUMAN_CHECKPOINTS: Record<string, { role: string; action: string }>
 // ── Core transition function ──
 export function canTransition(from: string, to: string): boolean {
   return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
+}
+
+// ── Check if payment gate blocks a transition ──
+export async function checkPaymentGate(
+  toStatus: string,
+  requestId: string
+): Promise<{ blocked: boolean; reason_ar?: string }> {
+  const gate = PAYMENT_GATES[toStatus];
+  if (!gate) return { blocked: false };
+
+  const { isFirstPaymentConfirmed, isFinalPaymentConfirmed } = await import("./payment-workflow");
+  
+  if (gate.required_stage === "first") {
+    const paid = await isFirstPaymentConfirmed(requestId);
+    if (!paid) return { blocked: true, reason_ar: gate.label_ar };
+  } else if (gate.required_stage === "final") {
+    const paid = await isFinalPaymentConfirmed(requestId);
+    if (!paid) return { blocked: true, reason_ar: gate.label_ar };
+  }
+
+  return { blocked: false };
 }
 
 export function getNextStatuses(current: string): string[] {
@@ -161,6 +188,20 @@ export async function transitionStatus(
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
+
+  // ── Payment gate enforcement ──
+  const { data: linkedRequest } = await supabase
+    .from("valuation_requests")
+    .select("id")
+    .eq("assignment_id", assignmentId)
+    .maybeSingle();
+
+  if (linkedRequest?.id) {
+    const paymentCheck = await checkPaymentGate(toStatus, linkedRequest.id);
+    if (paymentCheck.blocked) {
+      return { success: false, error: paymentCheck.reason_ar || "بوابة الدفع تمنع الانتقال" };
+    }
+  }
 
   // ── Inspection enforcement: block valuation without completed inspection (field mode only) ──
   if (toStatus === "valuation_ready" && fromStatus === "inspection") {
@@ -337,9 +378,25 @@ export async function triggerPostInspectionPipeline(assignmentId: string) {
   }
 }
 
-// ── Deprecated helpers kept for backward compat ──
-export async function autoAdvanceAfterPayment(_assignmentId: string, _paymentStage: "first" | "final") {
-  // Payment no longer blocks workflow — no-op
+// ── Auto-advance after payment confirmation (NOW ACTIVE) ──
+export async function autoAdvanceAfterPayment(assignmentId: string, paymentStage: "first" | "final") {
+  try {
+    const { data } = await supabase
+      .from("valuation_assignments")
+      .select("status")
+      .eq("id", assignmentId)
+      .single();
+
+    const currentStatus = data?.status as string;
+
+    if (paymentStage === "first" && currentStatus === "submitted") {
+      // First payment confirmed → trigger automation pipeline
+      await triggerAutomationPipeline(assignmentId);
+    }
+    // Final payment is enforced at issuance gate level, no auto-advance needed
+  } catch (err) {
+    console.error("Auto-advance after payment error:", err);
+  }
 }
 
 export async function autoAdvanceAfterInspection(assignmentId: string) {

@@ -2145,10 +2145,12 @@ export type Database = {
           due_date: string | null
           id: string
           invoice_number: string | null
+          is_test: boolean
           notes_ar: string | null
           notes_en: string | null
           organization_id: string | null
           paid_at: string | null
+          payment_mode: string
           payment_status: string
           sent_at: string | null
           subtotal: number
@@ -2168,10 +2170,12 @@ export type Database = {
           due_date?: string | null
           id?: string
           invoice_number?: string | null
+          is_test?: boolean
           notes_ar?: string | null
           notes_en?: string | null
           organization_id?: string | null
           paid_at?: string | null
+          payment_mode?: string
           payment_status?: string
           sent_at?: string | null
           subtotal?: number
@@ -2191,10 +2195,12 @@ export type Database = {
           due_date?: string | null
           id?: string
           invoice_number?: string | null
+          is_test?: boolean
           notes_ar?: string | null
           notes_en?: string | null
           organization_id?: string | null
           paid_at?: string | null
+          payment_mode?: string
           payment_status?: string
           sent_at?: string | null
           subtotal?: number
@@ -5374,6 +5380,7 @@ export type Database = {
           issued_at: string | null
           land_area: number | null
           organization_id: string | null
+          payment_mode: string
           payment_status: string | null
           payment_structure: string | null
           portfolio_asset_count: number | null
@@ -5463,6 +5470,7 @@ export type Database = {
           issued_at?: string | null
           land_area?: number | null
           organization_id?: string | null
+          payment_mode?: string
           payment_status?: string | null
           payment_structure?: string | null
           portfolio_asset_count?: number | null
@@ -5552,6 +5560,7 @@ export type Database = {
           issued_at?: string | null
           land_area?: number | null
           organization_id?: string | null
+          payment_mode?: string
           payment_status?: string | null
           payment_structure?: string | null
           portfolio_asset_count?: number | null
