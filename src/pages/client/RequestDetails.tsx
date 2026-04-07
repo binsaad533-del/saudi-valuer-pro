@@ -397,10 +397,21 @@ export default function RequestDetails() {
                   <CardTitle className="text-sm flex items-center gap-2"><SARIcon className="w-4 h-4 text-primary" />عرض السعر</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <div className="text-center p-3 bg-primary/5 rounded-lg">
-                    <p className="text-2xl font-bold text-primary" dir="ltr">{formatNumber(Number(request.quotation_amount))} <SAR /></p>
+                  <div className="p-3 bg-primary/5 rounded-lg space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">المبلغ قبل الضريبة</span>
+                      <span className="font-medium" dir="ltr">{formatNumber(Number(request.quotation_amount))} <SAR /></span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">ضريبة القيمة المضافة (15%)</span>
+                      <span className="font-medium" dir="ltr">{formatNumber(Math.round(Number(request.quotation_amount) * 0.15))} <SAR /></span>
+                    </div>
+                    <div className="border-t border-border pt-2 flex items-center justify-between">
+                      <span className="font-semibold text-sm">الإجمالي شامل الضريبة</span>
+                      <span className="text-lg font-bold text-primary" dir="ltr">{formatNumber(Math.round(Number(request.quotation_amount) * 1.15))} <SAR /></span>
+                    </div>
                     {request.payment_structure === "partial" && (
-                      <div className="mt-2 text-xs text-muted-foreground space-y-1">
+                      <div className="mt-1 text-xs text-muted-foreground space-y-1 border-t border-border pt-2">
                         <p>الدفعة الأولى: {formatNumber(Number(request.first_payment_amount))} <SAR /></p>
                         <p>الدفعة النهائية: {formatNumber(request.total_fees - request.first_payment_amount)} <SAR /></p>
                       </div>
