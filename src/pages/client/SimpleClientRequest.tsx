@@ -819,6 +819,7 @@ export default function SimpleClientRequest() {
                   placeholder="مثال: الأصول في مدينة الرياض — المعدات قيد التشغيل — يوجد عقد إيجار ساري..."
                   rows={3} className="text-sm" />
                 <p className="text-[10px] text-muted-foreground">أضف أي معلومات تساعد فريق التقييم: الموقع، حالة الأصول، الغرض من التقييم، إلخ.</p>
+              </CardContent>
             </Card>
           </div>
 
