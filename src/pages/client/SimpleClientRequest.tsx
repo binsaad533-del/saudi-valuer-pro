@@ -780,7 +780,7 @@ export default function SimpleClientRequest() {
                   <div className="flex flex-wrap justify-center gap-2">
                     <Badge variant="outline" className="text-[10px] gap-1"><Table2 className="w-3 h-3" />جداول الأصول</Badge>
                     <Badge variant="outline" className="text-[10px] gap-1"><FileText className="w-3 h-3" />صكوك وعقود</Badge>
-                    <Badge variant="outline" className="text-[10px] gap-1"><Image className="w-3 h-3" />صور المعدات</Badge>
+                    <Badge variant="outline" className="text-[10px] gap-1"><Image className="w-3 h-3" />صور</Badge>
                   </div>
                   {uploading && (
                     <div className="mt-4 flex items-center justify-center gap-2 text-primary">
