@@ -145,33 +145,38 @@ export default function AssetLocationPicker({ locations, onChange, maxLocations 
   if (compact) {
     return (
       <div className="space-y-3">
-        {/* Quick URL paste */}
-        {!atLimit && (
-          <div className="flex gap-2">
-            <Input
-              value={quickUrl}
-              onChange={e => { setQuickUrl(e.target.value); setQuickUrlError(""); }}
-              placeholder="الصق رابط خرائط قوقل هنا..."
-              className="text-sm font-mono flex-1"
-              dir="ltr"
-              onKeyDown={e => { if (e.key === "Enter") handleQuickAdd(); }}
-            />
-            <Button size="sm" onClick={handleQuickAdd} disabled={!quickUrl.trim()} className="text-xs gap-1 shrink-0">
-              <Plus className="w-3.5 h-3.5" />
-              إضافة
-            </Button>
-          </div>
-        )}
-        {quickUrlError && <p className="text-[11px] text-destructive">{quickUrlError}</p>}
-
         {/* Location chips */}
         {locations.length > 0 && (
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 mb-2">
             {locations.map(loc => (
               <LocationChip key={loc.id} location={loc} onRemove={handleRemove} />
             ))}
           </div>
         )}
+
+        {/* Quick URL paste - always visible unless at limit */}
+        {!atLimit && (
+          <>
+            {locations.length > 0 && (
+              <p className="text-[11px] text-muted-foreground">أضف موقعاً آخر:</p>
+            )}
+            <div className="flex gap-2">
+              <Input
+                value={quickUrl}
+                onChange={e => { setQuickUrl(e.target.value); setQuickUrlError(""); }}
+                placeholder="الصق رابط خرائط قوقل هنا..."
+                className="text-sm font-mono flex-1"
+                dir="ltr"
+                onKeyDown={e => { if (e.key === "Enter") handleQuickAdd(); }}
+              />
+              <Button size="sm" onClick={handleQuickAdd} disabled={!quickUrl.trim()} className="text-xs gap-1 shrink-0">
+                <Plus className="w-3.5 h-3.5" />
+                إضافة
+              </Button>
+            </div>
+          </>
+        )}
+        {quickUrlError && <p className="text-[11px] text-destructive">{quickUrlError}</p>}
 
         <div className="flex items-center justify-between">
           {!atLimit && (
