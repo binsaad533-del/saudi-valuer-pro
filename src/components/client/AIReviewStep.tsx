@@ -504,9 +504,23 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [customValue, setCustomValue] = useState("");
   const [freeText, setFreeText] = useState("");
 
+  // Track if AI is thinking
+  const [isThinking, setIsThinking] = useState(false);
+
+  // Build asset context string for AI
+  const assetContextStr = useMemo(() => {
+    return `📊 إحصائيات الأصول:
+• إجمالي الأصول الأصلية المرفوعة: ${data.assets.length}
+• عناصر مكررة تم إزالتها تلقائياً: ${removedCount}${removedCount > 0 ? ` (أمثلة: ${[...new Set(duplicateNames)].slice(0, 10).join("، ")})` : ""}
+• الأصول الفريدة: ${assets.length}
+• جاهز للتقييم: ${autoApproved.length} ✅
+• مستبعد (خارج نطاق الترخيص): ${excluded.length} 🚫${excluded.length > 0 ? `\n  أمثلة مستبعدة: ${excluded.slice(0, 5).map(a => `"${a.name}" — ${a.license_reason || "خارج النطاق"}`).join("، ")}` : ""}
+• بانتظار التوضيح: ${flagged.length} ❓`;
+  }, [data.assets.length, removedCount, duplicateNames, assets.length, autoApproved.length, excluded, flagged.length]);
+
   // Free-text message from client
-  const handleFreeTextSend = useCallback(() => {
-    if (!freeText.trim()) return;
+  const handleFreeTextSend = useCallback(async () => {
+    if (!freeText.trim() || isThinking) return;
     const text = freeText.trim();
     setFreeText("");
 
@@ -518,181 +532,19 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
       timestamp: Date.now(),
     }]);
 
-    // Raqeem auto-reply — knowledge-grounded, context-aware
-    setTimeout(() => {
-      let reply = "";
-      const lowerText = text.toLowerCase();
-      const t = text; // shorthand
+    // Show thinking indicator
+    setIsThinking(true);
 
-      // ── Topic detection (order matters: most specific first) ──
+    try {
+      const { data: fnData, error } = await supabase.functions.invoke("raqeem-client-chat", {
+        body: {
+          message: text,
+          conversationHistory: messages.filter(m => m.type === "answer" || m.type === "system").slice(-10),
+          assetContext: assetContextStr,
+        },
+      });
 
-      // Duplicates / مكرر
-      const isDuplicateQ = ["مكرر", "مكررة", "تكرار", "duplicate", "متكرر", "حذف المكرر"].some(k => t.includes(k));
-      if (isDuplicateQ) {
-        // Show up to 20 sample duplicate names
-        const uniqueDupNames = [...new Set(duplicateNames)];
-        const sample = uniqueDupNames.slice(0, 20);
-        const sampleList = sample.map((n, i) => `${i + 1}. ${n}`).join("\n");
-        const moreNote = uniqueDupNames.length > 20 ? `\n... و ${uniqueDupNames.length - 20} عنصر آخر` : "";
-
-        reply = `تم فحص جميع العناصر المرفقة تلقائياً بحثاً عن التكرارات.
-
-📊 النتيجة: تم اكتشاف وإزالة ${removedCount} عنصر مكرر من أصل ${data.assets.length} عنصر.
-
-📋 أمثلة على العناصر المكررة التي تم دمجها:
-${sampleList}${moreNote}
-
-🔍 آلية الكشف عن التكرار:
-• مطابقة اسم الأصل والفئة والمصدر
-• مقارنة البيانات بين الملفات المختلفة المرفوعة
-• العناصر المتطابقة يتم دمج كمياتها والاحتفاظ بنسخة واحدة
-
-✅ الأصول المعروضة حالياً (${assets.length}) هي العناصر الفريدة بعد إزالة التكرارات.
-
-هل تود الاطلاع على تفاصيل أخرى؟`;
-
-      // Excluded / مستبعد
-      } else if (["مستبعد", "استبعاد", "ليش", "لماذا استبعد", "خارج", "غير ملموس", "intangible", "ما المانع", "وش السبب"].some(k => t.includes(k)) && excluded.length > 0) {
-        reply = buildExclusionReply(excluded.length);
-
-      // About us / من نحن
-      } else if (["من أنتم", "من انتم", "عن الشركة", "عن جساس", "عن جسّاس", "من نحن", "تعريف", "نبذة", "about"].some(k => lowerText.includes(k))) {
-        reply = `${COMPANY.name_ar} (${COMPANY.name_en})
-${COMPANY.legal_form}
-
-📌 الرؤية: ${COMPANY.vision}
-📌 الرسالة: ${COMPANY.mission}
-
-🏅 الاعتمادات:
-${COMPANY.accreditations.map(a => `• ${a}`).join("\n")}
-
-📊 الإنجازات:
-• تقييم أكثر من ${COMPANY.achievements.total_assets_valued}
-• بقيمة إجمالية تجاوزت ${COMPANY.achievements.total_value}
-
-📖 السجل التجاري: ${COMPANY.cr_number}
-
-هل تود معرفة المزيد عن خدماتنا أو تراخيصنا؟`;
-
-      // Contact
-      } else if (["تواصل", "هاتف", "جوال", "إيميل", "بريد"].some(k => t.includes(k))) {
-        reply = `📞 معلومات التواصل — ${COMPANY.name_ar}:
-
-• الهاتف الموحد: ${COMPANY.phone}
-• الجوال: ${COMPANY.mobile}
-• البريد: ${COMPANY.email}
-• الموقع: ${COMPANY.website}
-• العنوان: ${COMPANY.address}`;
-
-      // Purposes
-      } else if (["أغراض", "غرض", "ليش أقيم", "متى أحتاج", "فايدة التقييم"].some(k => t.includes(k))) {
-        reply = `أغراض التقييم المعتمدة:
-
-${COMPANY.valuation_purposes.map(p => `• ${p}`).join("\n")}
-
-📖 المرجع: IVS 104 — Scope of Work`;
-
-      // Methodology
-      } else if (["منهجية", "طريقة", "أسلوب", "كيف تقيمون", "طريقة التقييم"].some(k => t.includes(k))) {
-        reply = `نعتمد في التقييم على المنهجيات المعتمدة دولياً:
-
-• العقارات: أسلوب المقارنة، أسلوب الدخل، أسلوب التكلفة
-• الآلات والمعدات: أسلوب التكلفة (RCN) كمنهجية أساسية، مع أسلوب المقارنة
-
-📖 المرجع: IVS 105 — Valuation Approaches
-
-يتم تحديد المنهجية المناسبة بعد اكتمال الفحص والتحليل.`;
-
-      // License
-      } else if (["ترخيص", "مرخص", "رخصة", "هيئة", "مؤهل", "شهادة"].some(k => t.includes(k))) {
-        const branchDetails = COMPANY.branches.map(b =>
-          `• ${b.name} (${b.name_en})\n  ترخيص: ${b.license} | زمالة: ${b.fellowship}\n  صالح حتى: ${b.expiry}`
-        ).join("\n");
-        reply = `${COMPANY.name_ar} مرخصة من ${COMPANY.authority}:
-
-${branchDetails}
-
-السجل التجاري: ${COMPANY.cr_number}
-الرقم الضريبي: ${COMPANY.vat_number}
-الرقم الموحد: ${COMPANY.unified_number}
-
-📖 المرجع: ${KB_LICENSE.article}`;
-
-      // Count / stats / كم / عدد
-      } else if (["أصل", "بند", "عدد", "كم", "إجمالي", "ملخص", "عناصر", "عنصر", "إحصائ"].some(k => t.includes(k))) {
-        reply = `📊 ملخص تحليل الأصول:
-
-• إجمالي الأصول الأصلية: ${data.assets.length}
-• تم إزالة ${removedCount} عنصر مكرر تلقائياً
-• الأصول الفريدة: ${assets.length}
-  ├ ✅ جاهز للتقييم: ${autoApproved.length}
-  ├ 🚫 مستبعد (خارج نطاق الترخيص): ${excluded.length}
-  └ ❓ بانتظار التوضيح: ${flagged.length}
-
-هل تود تفاصيل عن أي فئة من هذه الفئات؟`;
-
-      // Services / خدمات
-      } else if (["خدمات", "خدماتكم", "ماذا تقدمون", "وش تسوون", "تخصص"].some(k => t.includes(k))) {
-        reply = `خدمات ${COMPANY.name_ar}:
-
-${COMPANY.services.map(s => `• ${s}`).join("\n")}
-
-نحن متخصصون في هذه الفروع الثلاثة حصراً وفقاً لتراخيصنا من ${COMPANY.authority}.`;
-
-      // Timeline / مدة / وقت
-      } else if (["مدة", "وقت", "متى", "كم يوم", "كم تاخذ", "موعد", "تسليم"].some(k => t.includes(k))) {
-        reply = `تختلف مدة التقييم حسب نوع وعدد الأصول:
-
-• يتم تحديد الجدول الزمني بدقة بعد اعتماد نطاق العمل
-• سيتواصل معك فريقنا لتأكيد الموعد المتوقع للتسليم
-
-📖 المرجع: IVS 104 — Scope of Work
-"يجب تحديد الإطار الزمني المتوقع ضمن نطاق العمل"`;
-
-      // Pricing / سعر / تكلفة
-      } else if (["سعر", "تكلفة", "كم السعر", "أسعار", "تسعير", "رسوم", "فلوس", "دفع"].some(k => t.includes(k))) {
-        reply = `يتم احتساب رسوم التقييم بناءً على:
-
-• نوع الأصول (عقارات / آلات ومعدات)
-• عدد الأصول المطلوب تقييمها
-• غرض التقييم والمنهجية المطلوبة
-
-سيتم إرسال عرض السعر التفصيلي بعد اعتماد نطاق العمل.
-
-للاستفسار المباشر: ${COMPANY.phone}`;
-
-      // Greeting / شكر
-      } else if (["شكرا", "شكراً", "مشكور", "يعطيك العافية", "الله يعافيك", "جزاك", "ممتاز", "رائع", "حلو", "تمام"].some(k => t.includes(k))) {
-        reply = `العفو! يسعدني خدمتك 😊
-
-هل يمكنني مساعدتك بشيء آخر بخصوص طلبك؟`;
-
-      // Greeting / سلام
-      } else if (["سلام", "هلا", "مرحبا", "مرحباً", "أهلا", "أهلاً", "هاي", "hello", "hi"].some(k => lowerText.includes(k))) {
-        reply = `أهلاً بك! كيف أقدر أساعدك؟
-
-يمكنك سؤالي عن:
-• تفاصيل الأصول المستخرجة
-• أسباب الاستبعاد أو التكرار
-• خدماتنا وتراخيصنا
-• منهجيات التقييم المعتمدة`;
-
-      // Default — smart fallback, NOT generic
-      } else {
-        // Try to be helpful instead of generic
-        reply = `سؤال جيد! دعني أوضح لك:
-
-بخصوص "${text.slice(0, 50)}${text.length > 50 ? "..." : ""}" — سأحرص على إيصال استفسارك للمقيّم المعتمد ليتم الرد عليك بدقة.
-
-📌 في هذه الأثناء، يمكنني مساعدتك في:
-• شرح أي بند مستخرج من ملفاتك
-• توضيح أسباب الاستبعاد أو التكرار
-• معلومات عن خدماتنا وتراخيصنا
-• أي استفسار عن إجراءات التقييم
-
-اكتب سؤالك وسأبذل قصارى جهدي لمساعدتك!`;
-        setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
-      }
+      const reply = fnData?.reply || "عذراً، حدث خطأ تقني. سأنقل استفسارك للفريق المختص.";
 
       setMessages(prev => [...prev, {
         id: `raqeem-${Date.now()}`,
@@ -700,8 +552,23 @@ ${COMPANY.services.map(s => `• ${s}`).join("\n")}
         text: reply,
         timestamp: Date.now(),
       }]);
-    }, 400);
-  }, [freeText, excluded, assets, autoApproved, flagged, removedCount, duplicateNames, data.assets.length]);
+
+      // Store as additional note if it seems like client feedback
+      if (!["من أنتم", "ترخيص", "تواصل", "خدمات", "سلام", "هلا", "شكرا"].some(k => text.includes(k))) {
+        setAdditionalNotes(prev => prev ? `${prev}\n${text}` : text);
+      }
+    } catch (err) {
+      console.error("Raqeem chat error:", err);
+      setMessages(prev => [...prev, {
+        id: `raqeem-err-${Date.now()}`,
+        type: "system",
+        text: "عذراً، حدث خطأ تقني. يرجى المحاولة مرة أخرى أو التواصل معنا على 920015029.",
+        timestamp: Date.now(),
+      }]);
+    } finally {
+      setIsThinking(false);
+    }
+  }, [freeText, isThinking, messages, assetContextStr]);
 
 
   // Compute initial excluded from processed data
