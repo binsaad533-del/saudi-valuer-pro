@@ -303,7 +303,8 @@ export default function ClientRequests() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Building2 className="w-4 h-4 text-primary" />
-                          <span className="font-medium text-sm">{req.property_description_ar || "طلب تقييم"}</span>
+                          <span className="font-semibold text-sm">{req.clients?.name_ar || req.client_name_ar || "طلب تقييم"}</span>
+                          <span className="text-xs text-muted-foreground">— {req.property_description_ar || ""}</span>
                           {req.reference_number && <span className="text-xs text-muted-foreground font-mono" dir="ltr">{req.reference_number}</span>}
                         </div>
                         <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mt-1">
