@@ -65,6 +65,19 @@ const statusBadgeVariant = (s: string): "default" | "secondary" | "destructive" 
   return "outline";
 };
 
+type DashboardTab = "requests" | "operations" | "clients" | "analytics" | "audit";
+type StatusGroupFilter = "all" | "new" | "progress" | "approval" | "complete" | "blocked";
+
+const matchesStatusGroup = (status: string, group: StatusGroupFilter) => {
+  if (group === "all") return true;
+  if (group === "new") return STATUS_NEW.includes(status);
+  if (group === "progress") return STATUS_PROGRESS.includes(status);
+  if (group === "approval") return STATUS_APPROVAL.includes(status);
+  if (group === "complete") return STATUS_COMPLETE.includes(status);
+  if (group === "blocked") return STATUS_BLOCKED.includes(status);
+  return true;
+};
+
 /* ── Helper: extract client name from a request ── */
 const getClientName = (req: any): string =>
   req.clients?.name_ar || req.client_name_ar || req.ai_intake_summary?.clientInfo?.contactName || "عميل";
@@ -81,6 +94,8 @@ export default function ExecutiveDashboard() {
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState("");
+  const [activeTab, setActiveTab] = useState<DashboardTab>("requests");
+  const [statusGroupFilter, setStatusGroupFilter] = useState<StatusGroupFilter>("all");
 
   // Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -109,18 +124,26 @@ export default function ExecutiveDashboard() {
   const blockedCount = requests.filter(r => STATUS_BLOCKED.includes(r.status)).length;
 
   const metrics = [
-    { label: "طلبات جديدة", value: newCount, icon: FileText, color: "text-primary", bg: "bg-primary/10" },
-    { label: "قيد التنفيذ", value: progressCount, icon: Clock, color: "text-warning", bg: "bg-warning/10" },
-    { label: "بانتظار الاعتماد", value: approvalCount, icon: ShieldCheck, color: "text-info", bg: "bg-info/10" },
-    { label: "مكتملة", value: completedCount, icon: CheckCircle2, color: "text-success", bg: "bg-success/10" },
-    { label: "متوقفة", value: blockedCount, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+    { label: "طلبات جديدة", value: newCount, icon: FileText, color: "text-primary", bg: "bg-primary/10", group: "new" as const },
+    { label: "قيد التنفيذ", value: progressCount, icon: Clock, color: "text-warning", bg: "bg-warning/10", group: "progress" as const },
+    { label: "بانتظار الاعتماد", value: approvalCount, icon: ShieldCheck, color: "text-info", bg: "bg-info/10", group: "approval" as const },
+    { label: "مكتملة", value: completedCount, icon: CheckCircle2, color: "text-success", bg: "bg-success/10", group: "complete" as const },
+    { label: "متوقفة", value: blockedCount, icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10", group: "blocked" as const },
   ];
+
+  const handleMetricClick = (group: StatusGroupFilter) => {
+    setActiveTab("requests");
+    setStatusGroupFilter(group);
+    setStatusFilter("all");
+    setSearchTerm("");
+  };
 
   /* ── Filtered requests ── */
   const filteredRequests = useMemo(() => {
     return requests.filter(req => {
       const name = getClientName(req);
       if (searchTerm && !name.includes(searchTerm) && !req.id.includes(searchTerm)) return false;
+      if (!matchesStatusGroup(req.status, statusGroupFilter)) return false;
       if (statusFilter !== "all" && req.status !== statusFilter) return false;
       if (typeFilter !== "all") {
         const mode = req.valuation_mode || "";
@@ -220,21 +243,28 @@ export default function ExecutiveDashboard() {
           {metrics.map(m => {
             const Icon = m.icon;
             return (
-              <Card key={m.label} className="shadow-sm">
-                <CardContent className="p-4 flex flex-col items-center text-center gap-2">
-                  <div className={`w-10 h-10 rounded-lg ${m.bg} flex items-center justify-center`}>
-                    <Icon className={`w-5 h-5 ${m.color}`} />
-                  </div>
-                  <span className="text-2xl font-bold text-foreground">{m.value}</span>
-                  <span className="text-xs text-muted-foreground">{m.label}</span>
-                </CardContent>
-              </Card>
+              <button
+                key={m.label}
+                type="button"
+                onClick={() => handleMetricClick(m.group)}
+                className="text-right"
+              >
+                <Card className={`shadow-sm transition-all hover:border-primary/40 hover:shadow-md ${statusGroupFilter === m.group && activeTab === "requests" ? "border-primary" : "border-border"}`}>
+                  <CardContent className="p-4 flex flex-col items-center text-center gap-2">
+                    <div className={`w-10 h-10 rounded-lg ${m.bg} flex items-center justify-center`}>
+                      <Icon className={`w-5 h-5 ${m.color}`} />
+                    </div>
+                    <span className="text-2xl font-bold text-foreground">{m.value}</span>
+                    <span className="text-xs text-muted-foreground">{m.label}</span>
+                  </CardContent>
+                </Card>
+              </button>
             );
           })}
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="requests" dir="rtl" className="space-y-4">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as DashboardTab)} dir="rtl" className="space-y-4">
           <TabsList className="w-full flex-wrap h-auto gap-1 bg-muted/50 p-1.5 rounded-xl">
             <TabsTrigger value="requests" className="flex items-center gap-1.5 text-xs sm:text-sm px-3 py-2">
               <ClipboardCheck className="w-4 h-4" />
