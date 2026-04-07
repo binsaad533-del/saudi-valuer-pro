@@ -189,6 +189,21 @@ export async function transitionStatus(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user && !automatedBy) return { success: false, error: "غير مسجل الدخول" };
 
+  // ── Payment gate enforcement ──
+  // Look up the request_id from the assignment to check payment status
+  const { data: assignmentForPayment } = await supabase
+    .from("valuation_assignments")
+    .select("request_id")
+    .eq("id", assignmentId)
+    .single();
+
+  if (assignmentForPayment?.request_id) {
+    const paymentCheck = await checkPaymentGate(toStatus, assignmentForPayment.request_id);
+    if (paymentCheck.blocked) {
+      return { success: false, error: paymentCheck.reason_ar || "بوابة الدفع تمنع الانتقال" };
+    }
+  }
+
   // ── Inspection enforcement: block valuation without completed inspection (field mode only) ──
   if (toStatus === "valuation_ready" && fromStatus === "inspection") {
     const { data: inspections } = await supabase
