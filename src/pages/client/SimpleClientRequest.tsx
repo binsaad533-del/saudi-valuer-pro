@@ -637,7 +637,7 @@ export default function SimpleClientRequest() {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <header className="bg-card border-b border-border sticky top-0 z-30">
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <img src={logo} alt="جساس" className="w-8 h-8" />
               <div>
@@ -649,7 +649,7 @@ export default function SimpleClientRequest() {
           </div>
         </header>
 
-        <div className="max-w-lg mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <AIReviewStep
             data={reviewData}
             onApprove={handleReviewApprove}
@@ -669,7 +669,7 @@ export default function SimpleClientRequest() {
     <div className="min-h-screen bg-background" dir="rtl">
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img src={logo} alt="جساس" className="w-8 h-8" />
             <div>
@@ -687,7 +687,8 @@ export default function SimpleClientRequest() {
         </div>
       </header>
 
-      <div className="max-w-lg mx-auto px-4 py-6 space-y-5">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* ── 1. File Upload ── */}
         <div className="space-y-2">
           <p className="text-sm font-semibold text-foreground">المستندات <span className="text-destructive">*</span></p>
