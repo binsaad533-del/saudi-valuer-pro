@@ -111,8 +111,15 @@ export function generateSOW(ctx: SOWContext): GeneratedSOW {
     },
   ];
 
+  const disciplineLabel = (() => {
+    const d = ctx.discipline || "";
+    if (d === "machinery_equipment" || d === "machinery") return "آلات ومعدات";
+    if (d === "mixed" || d === "both") return "مختلط (عقاري + آلات ومعدات)";
+    return ctx.propertyType || "أصل";
+  })();
+
   return {
-    title: `نطاق العمل — تقييم ${ctx.propertyType || "أصل"} لغرض ${purposeLabel}`,
+    title: `نطاق العمل — تقييم ${disciplineLabel} لغرض ${purposeLabel}`,
     basisOfValue: basis.ar,
     basisReference: basis.reference,
     generalAssumptions: GENERAL_ASSUMPTIONS,
