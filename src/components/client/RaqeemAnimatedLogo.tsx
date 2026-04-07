@@ -97,8 +97,9 @@ export default function RaqeemAnimatedLogo({ size = 112, className = "" }: Raqee
 
       {/* Central eye */}
       <circle cx={cx} cy={cy} r={pupilR * 1.8} fill="white" />
-      <circle cx={cx} cy={cy} r={pupilR} fill="#1a1a2e" />
-      <circle cx={cx + pupilR * 0.35} cy={cy - pupilR * 0.35} r={pupilR * 0.3} fill="white" />
+      <circle cx={cx} cy={cy} r={pupilR * 1.45} fill="#1a1a2e" />
+      <circle cx={cx - pupilR * 0.4} cy={cy - pupilR * 0.45} r={pupilR * 0.45} fill="white" />
+      <circle cx={cx - pupilR * 0.05} cy={cy + pupilR * 0.35} r={pupilR * 0.2} fill="white" />
 
       <style>{`
         @keyframes raqeem-spin-cw {
