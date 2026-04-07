@@ -26,6 +26,7 @@ serve(async (req) => {
     const { action, jobId, files, userId, requestId } = await req.json();
 
     // ── ACTION: create ──
+    // ── ACTION: create (async, fire-and-forget) ──
     if (action === "create") {
       if (!userId || !files?.length) return err("userId and files required", 400);
 
@@ -71,6 +72,148 @@ serve(async (req) => {
       }).catch(console.error);
 
       return ok({ jobId: job.id, status: "pending" });
+    }
+
+    // ── ACTION: create_and_process (synchronous — waits for results) ──
+    if (action === "create_and_process") {
+      if (!userId || !files?.length) return err("userId and files required", 400);
+
+      const { data: job, error: jobErr } = await supabase
+        .from("processing_jobs")
+        .insert({
+          user_id: userId,
+          request_id: requestId || null,
+          status: "pending",
+          total_files: files.length,
+          processed_files: 0,
+          current_message: "تم استلام الملفات — جارٍ المعالجة المباشرة...",
+          file_manifest: files.map((f: any) => ({
+            name: f.name, path: f.path, size: f.size, mimeType: f.mimeType, status: "pending",
+          })),
+          started_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (jobErr) return err(jobErr.message);
+
+      const classifications = files.map((f: any) => ({
+        job_id: job.id,
+        file_name: f.name,
+        file_path: f.path,
+        file_size: f.size,
+        mime_type: f.mimeType,
+        processing_status: "pending",
+      }));
+      await supabase.from("file_classifications").insert(classifications);
+
+      // Process synchronously by calling extract-documents directly
+      const manifest = files.map((f: any) => ({
+        name: f.name, path: f.path, size: f.size, mimeType: f.mimeType,
+      }));
+
+      await updateJob(supabase, job.id, {
+        status: "extracting",
+        current_message: `جارٍ تحليل ${manifest.length} ملف بالذكاء الاصطناعي...`,
+      });
+
+      let extractedAssets: any[] = [];
+      let discipline = "real_estate";
+      let extractionError: string | null = null;
+
+      try {
+        const extractUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/extract-documents`;
+        const resp = await fetch(extractUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+          },
+          body: JSON.stringify({
+            fileNames: manifest.map((f: any) => f.name),
+            fileDescriptions: manifest.map(() => ""),
+            storagePaths: manifest.map((f: any) => ({
+              path: f.path, name: f.name, mimeType: f.mimeType,
+            })),
+          }),
+        });
+
+        if (!resp.ok) {
+          extractionError = await resp.text();
+          console.error("extract-documents failed:", extractionError);
+        } else {
+          const result = await resp.json();
+          if (result.error) {
+            extractionError = result.error;
+          } else {
+            if (result.inventory?.length) {
+              extractedAssets = result.inventory;
+            }
+            if (result.discipline) {
+              discipline = result.discipline;
+            }
+          }
+        }
+      } catch (e) {
+        extractionError = e instanceof Error ? e.message : String(e);
+        console.error("extract-documents exception:", e);
+      }
+
+      // Reclassify discipline based on actual extracted assets (≥70% rule)
+      if (extractedAssets.length > 0) {
+        const meCount = extractedAssets.filter((a: any) => a.type === "machinery_equipment").length;
+        const reCount = extractedAssets.filter((a: any) => a.type === "real_estate").length;
+        const total = extractedAssets.length;
+        if (meCount / total >= 0.7) discipline = "machinery_equipment";
+        else if (reCount / total >= 0.7) discipline = "real_estate";
+        else if (meCount > 0 && reCount > 0) discipline = "mixed";
+      }
+
+      // Store extracted assets in DB
+      if (extractedAssets.length > 0) {
+        const assetRows = extractedAssets.map((asset: any, idx: number) => ({
+          job_id: job.id,
+          asset_index: idx + 1,
+          name: asset.name || `أصل ${idx + 1}`,
+          asset_type: asset.type || "real_estate",
+          category: asset.category,
+          subcategory: asset.subcategory,
+          description: generateProfessionalDescription(asset),
+          quantity: asset.quantity || 1,
+          condition: asset.condition || "unknown",
+          confidence: Math.min(100, Math.max(0, asset.confidence || 50)),
+          asset_data: { fields: asset.fields || [], original_name: asset.name },
+          source_files: [{ file: asset.source }],
+          source_evidence: asset.source || "تحليل ذكي",
+          review_status: asset.confidence >= 70 ? "approved" : "needs_review",
+          missing_fields: [],
+        }));
+        for (let i = 0; i < assetRows.length; i += 50) {
+          await supabase.from("extracted_assets").insert(assetRows.slice(i, i + 50));
+        }
+      }
+
+      const finalStatus = extractionError && extractedAssets.length === 0 ? "failed" : "ready";
+      await updateJob(supabase, job.id, {
+        status: finalStatus,
+        current_message: extractedAssets.length > 0
+          ? `اكتمل التحليل — ${extractedAssets.length} أصل مستخرج`
+          : extractionError
+            ? `فشل التحليل: ${extractionError.substring(0, 200)}`
+            : "لم يتم استخراج أصول من الملفات",
+        total_assets_found: extractedAssets.length,
+        discipline,
+        completed_at: new Date().toISOString(),
+      });
+
+      return ok({
+        jobId: job.id,
+        status: finalStatus,
+        assets: extractedAssets,
+        totalAssets: extractedAssets.length,
+        discipline,
+        error: extractionError && extractedAssets.length === 0 ? extractionError.substring(0, 300) : null,
+      });
     }
 
     // ── ACTION: process ──
