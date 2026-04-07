@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, FileText, Send, CheckCircle, Shield, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { generateSOW, deriveInspectionType, type InspectionType, type GeneratedSOW } from "@/lib/sow-engine";
+import { analyzeDiscipline } from "@/lib/asset-discipline-engine";
 
 interface SOWGeneratorProps {
   request: any;
@@ -33,34 +34,29 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
   const handleGenerate = () => {
     setGenerating(true);
     try {
-      // Resolve discipline from asset_data or valuation_type
-      const resolvedDiscipline = request.asset_data?.discipline 
-        || request.discipline 
-        || request.valuation_type 
-        || "real_estate";
-
-      const DISCIPLINE_LABELS: Record<string, string> = {
-        machinery_equipment: "آلات ومعدات",
-        machinery: "آلات ومعدات",
-        real_estate: "عقار",
-        mixed: "مختلط (عقاري + آلات ومعدات)",
-        both: "مختلط (عقاري + آلات ومعدات)",
-      };
-
-      const propertyTypeLabel = DISCIPLINE_LABELS[resolvedDiscipline] 
-        || request.property_type 
-        || "غير محدد";
+      // Smart discipline detection from actual inventory
+      const inventory = request.asset_data?.inventory || [];
+      const analysis = analyzeDiscipline(
+        inventory,
+        request.asset_data?.discipline || request.discipline,
+        request.valuation_type
+      );
 
       const result = generateSOW({
         clientName,
         purpose: request.purpose || "other",
         purposeAr,
-        propertyType: propertyTypeLabel,
+        propertyType: analysis.disciplineLabel,
         propertyAddress: request.property_address_ar || "غير محدد",
         propertyCity: request.property_city_ar || "غير محدد",
         inspectionType,
         valuationDate: request.valuation_date || new Date().toISOString().split("T")[0],
-        discipline: resolvedDiscipline,
+        discipline: analysis.discipline,
+        assetDescription: analysis.assetDescription,
+        methodologies: analysis.methodologies,
+        ivsReferences: analysis.ivsReferences,
+        breakdowns: analysis.breakdowns,
+        isPortfolio: analysis.isPortfolio,
       });
       setSOW(result);
     } finally {
