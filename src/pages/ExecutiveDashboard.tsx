@@ -106,6 +106,8 @@ const assetTypeLabels: Record<string, string> = {
   commercial: "تجاري",
   industrial: "صناعي",
   equipment: "معدات",
+  machinery: "آلات ومعدات",
+  business: "منشأة تجارية",
   vehicle: "مركبة",
   residential_land: "أرض سكنية",
   commercial_land: "أرض تجارية",
