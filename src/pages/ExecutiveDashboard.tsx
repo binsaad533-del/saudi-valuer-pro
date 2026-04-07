@@ -78,7 +78,7 @@ export default function ExecutiveDashboard() {
     if (!user) return;
     const load = async () => {
       const [{ data: aData }, { data: pData }, { data: reqData }, { data: cData }] = await Promise.all([
-        supabase.from("valuation_assignments").select("id, reference_number, status, asset_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)").order("created_at", { ascending: false }).limit(500),
+        supabase.from("valuation_assignments").select("id, reference_number, status, property_type, confidence_score, final_value_approved, created_at, client_id, clients(name_ar)").order("created_at", { ascending: false }).limit(500),
         supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
         supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(100),
         supabase.from("clients").select("id, name_ar, email, phone, client_type, client_status, city_ar, created_at").order("created_at", { ascending: false }).limit(200),
@@ -247,7 +247,7 @@ export default function ExecutiveDashboard() {
                         <tr
                           key={req.id}
                           className="border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-                          onClick={() => navigate(`/client-requests?id=${req.id}`)}
+                          onClick={() => navigate("/client-requests", { state: { selectedRequestId: req.id } })}
                         >
                           <td className="px-4 py-3 font-medium text-foreground">
                             {req.ai_intake_summary?.clientInfo?.contactName || req.client_name_ar || "طلب جديد"}
@@ -270,7 +270,7 @@ export default function ExecutiveDashboard() {
                           </td>
                           <td className="px-4 py-3">
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="عرض التفاصيل"
-                              onClick={e => { e.stopPropagation(); navigate(`/client-requests?id=${req.id}`); }}>
+                              onClick={e => { e.stopPropagation(); navigate("/client-requests", { state: { selectedRequestId: req.id } }); }}>
                               <Eye className="w-3.5 h-3.5" />
                             </Button>
                           </td>
@@ -311,7 +311,7 @@ export default function ExecutiveDashboard() {
                           onClick={() => navigate(`/assignment/${a.id}`)}>
                           <td className="px-4 py-3 font-medium text-foreground">{a.reference_number}</td>
                           <td className="px-4 py-3 text-foreground">{a.client?.name_ar || "—"}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{assetTypeLabel[a.asset_type || ""] || a.asset_type || "—"}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{assetTypeLabel[a.property_type || ""] || a.property_type || "—"}</td>
                           <td className="px-4 py-3">
                             <Badge variant={statusVariant(a.status)} className="text-[11px]">
                               {statusLabel[a.status] || a.status}

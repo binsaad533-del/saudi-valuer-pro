@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ const ADMIN_TABS = [
 export default function ClientRequests() {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -76,8 +77,16 @@ export default function ClientRequests() {
       .from("valuation_requests" as any)
       .select("*")
       .order("created_at", { ascending: false });
-    setRequests(data || []);
+    const reqs = data || [];
+    setRequests(reqs);
     setLoading(false);
+
+    // Auto-select request from navigation state
+    const stateId = (location.state as any)?.selectedRequestId;
+    if (stateId) {
+      const found = reqs.find((r: any) => r.id === stateId);
+      if (found) setSelectedRequest(found);
+    }
   };
 
   const openPricing = async (req: any) => {
