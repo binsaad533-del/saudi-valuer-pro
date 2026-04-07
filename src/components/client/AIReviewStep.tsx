@@ -349,18 +349,20 @@ function consistencyCheck(assets: ExtractedAsset[]): ExtractedAsset[] {
 // ── Deduplication ──
 function deduplicateAssets(assets: ExtractedAsset[]) {
   const seen = new Map<string, ExtractedAsset>();
+  const duplicateNames: string[] = [];
   for (const asset of assets) {
     const key = `${(asset.name || "").trim().toLowerCase()}|${(asset.category || "").toLowerCase()}|${(asset.source || "").toLowerCase()}`;
     const existing = seen.get(key);
     if (existing) {
       existing.quantity += asset.quantity;
       if (asset.confidence > existing.confidence) existing.confidence = asset.confidence;
+      duplicateNames.push(asset.name || "بدون اسم");
     } else {
       seen.set(key, { ...asset });
     }
   }
   const unique = Array.from(seen.values());
-  return { unique, removedCount: assets.length - unique.length };
+  return { unique, removedCount: assets.length - unique.length, duplicateNames };
 }
 
 // ── Smart Question generation ──
