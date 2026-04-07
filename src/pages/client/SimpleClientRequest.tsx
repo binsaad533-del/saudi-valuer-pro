@@ -82,6 +82,14 @@ export default function SimpleClientRequest() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
       setUser(user);
+      // Fetch client name for Raqeem greeting
+      const { data: clientRow } = await supabase
+        .from("clients")
+        .select("name_ar")
+        .eq("portal_user_id", user.id)
+        .maybeSingle();
+      if (clientRow?.name_ar) setClientName(clientRow.name_ar);
+      else setClientName(user.user_metadata?.full_name || user.email?.split("@")[0] || "");
     };
     checkAuth();
   }, [navigate]);
