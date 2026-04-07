@@ -24,6 +24,11 @@ import {
   Users,
   AlertTriangle,
   X,
+  Send,
+  MessageSquare,
+  Loader2,
+  User,
+  Bot,
 } from "lucide-react";
 import {
   Drawer,
