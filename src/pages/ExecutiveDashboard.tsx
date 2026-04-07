@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import TopBar from "@/components/layout/TopBar";
 import ReportDraftGenerator from "@/components/reports/ReportDraftGenerator";
+import FinalIssuancePanel from "@/components/reports/FinalIssuancePanel";
 import SOWGenerator from "@/components/reports/SOWGenerator";
 import ProfessionalJudgmentPanel from "@/components/valuation/ProfessionalJudgmentPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -750,6 +751,11 @@ export default function ExecutiveDashboard() {
 
               {/* Report Draft Generator */}
               <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => {
+                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
+              }} />
+
+              {/* Final Issuance & Archive */}
+              <FinalIssuancePanel request={selectedRequest} userId={user!.id} onStatusChange={() => {
                 supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
               }} />
             </div>
