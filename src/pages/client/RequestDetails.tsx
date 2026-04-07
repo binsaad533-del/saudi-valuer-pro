@@ -225,9 +225,10 @@ export default function RequestDetails() {
               {request.reference_number && <p className="text-xs text-muted-foreground font-mono" dir="ltr">{request.reference_number}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Badge className="bg-primary/10 text-primary">{getStatusLabel(request.status)}</Badge>
-            <Button variant="ghost" size="sm" onClick={() => navigate("/client")}><ArrowRight className="w-4 h-4 ml-1" />العودة</Button>
+            <Button variant="ghost" size="sm" onClick={() => navigate("/client/dashboard")}>لوحة التحكم</Button>
+            <Button variant="outline" size="sm" onClick={() => navigate("/client")}><ArrowRight className="w-4 h-4 ml-1" />طلباتي</Button>
           </div>
         </div>
       </header>
