@@ -93,6 +93,8 @@ export default function SimplifiedJourney() {
   const [purposeOther, setPurposeOther] = useState("");
   const [intendedUsers, setIntendedUsers] = useState("");
   const [intendedUsersOther, setIntendedUsersOther] = useState("");
+  const [valuationMode, setValuationMode] = useState<"field" | "desktop">("field");
+  const [desktopDisclaimer, setDesktopDisclaimer] = useState(false);
 
   // Step 2: Files
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
