@@ -731,6 +731,9 @@ export default function ExecutiveDashboard() {
                   </form>
                 </CardContent>
               </Card>
+
+              {/* Report Draft Generator */}
+              <ReportDraftGenerator request={selectedRequest} userId={user!.id} />
             </div>
           )}
         </DrawerContent>
