@@ -71,19 +71,12 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
     const clientInfo = intake.clientInfo || {};
     const inventory = Array.isArray(assetData.inventory) ? assetData.inventory : [];
 
-    const discipline = (() => {
-      const raw = assetData.discipline || request.discipline || request.valuation_type || "";
-      if (raw === "machinery" || raw === "machinery_equipment") return "machinery_equipment";
-      if (raw === "mixed" || raw === "both") return "mixed";
-      return "real_estate";
-    })();
-
-    const disciplineLabel =
-      discipline === "machinery_equipment"
-        ? "آلات ومعدات"
-        : discipline === "mixed"
-        ? "مختلط (عقاري + آلات ومعدات)"
-        : "عقار";
+    // Smart discipline detection from actual assets
+    const analysis = analyzeDiscipline(
+      inventory,
+      assetData.discipline || request.discipline,
+      request.valuation_type
+    );
 
     const machineryInventory = inventory
       .filter((a: any) => a.type !== "real_estate")
@@ -92,6 +85,7 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
         name: a.name,
         type: a.type,
         condition: a.condition || "غير محددة",
+        value: a.value,
       }));
 
     const purposeLabels: Record<string, string> = {
@@ -102,23 +96,20 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
       zakat_tax: "الزكاة والضريبة",
       liquidation: "التصفية",
       merger_acquisition: "الاندماج والاستحواذ",
+      investment: "الاستثمار",
     };
 
-    const derivedAssetDescription =
-      request.property_description_ar
-      || inventory.slice(0, 5).map((a: any) => a.name).filter(Boolean).join("، ")
-      || disciplineLabel;
-
     return {
-      assetType: discipline,
-      discipline,
+      assetType: analysis.discipline,
+      discipline: analysis.discipline,
       purposeOfValuation: purposeLabels[request.purpose] || request.purpose || "تقدير القيمة السوقية",
       clientName: clientInfo.contactName || request.client_name_ar || "غير محدد",
       clientIdNumber: request.client_id_number || "",
-      assetDescription: derivedAssetDescription,
+      assetDescription: analysis.assetDescription || request.property_description_ar || analysis.disciplineLabel,
       assetLocation: request.property_address_ar || "",
       assetCity: request.property_city_ar || "",
-      propertyType: request.property_type || disciplineLabel,
+      propertyType: analysis.disciplineLabel,
+      methodology: analysis.methodologies[0] || "",
       landArea: request.land_area?.toString() || "",
       buildingArea: request.building_area?.toString() || "",
       estimatedValue: request.quotation_amount || 0,
@@ -133,11 +124,14 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
     try {
       const context = buildContext();
       const isMachinery = context.discipline === "machinery_equipment";
+      const isMixed = context.discipline === "mixed";
       const { data, error } = await supabase.functions.invoke("generate-report-content", {
         body: {
           mode: "structured_sections",
           context,
-          sectionKeys: isMachinery
+          sectionKeys: isMixed
+            ? ["purpose", "scope", "property_desc", "market", "hbu", "approaches", "calculations", "machinery_inventory", "machinery_approaches", "machinery_calculations", "unified_summary", "reconciliation", "assumptions", "compliance"]
+            : isMachinery
             ? ["purpose", "scope", "machinery_inventory", "market", "machinery_approaches", "machinery_calculations", "reconciliation", "assumptions", "compliance"]
             : ["purpose", "scope", "property_desc", "market", "hbu", "approaches", "calculations", "reconciliation", "assumptions", "compliance"],
         },
