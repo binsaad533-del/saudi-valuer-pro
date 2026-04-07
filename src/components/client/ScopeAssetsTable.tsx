@@ -124,7 +124,7 @@ export default function ScopeAssetsTable({ assets, onAssetsChange }: Props) {
 
       {/* Table */}
       <div className="border border-border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto max-h-[400px] overflow-y-auto">
+        <div className="overflow-x-auto max-h-[70vh] overflow-y-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/40">
