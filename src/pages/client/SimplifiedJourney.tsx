@@ -192,6 +192,47 @@ export default function SimplifiedJourney() {
     type.includes("sheet") || type.includes("excel") || type.includes("csv") ||
     /\.(xlsx|xls|csv)$/i.test(name);
 
+  /** Smart asset type inference based on name and category keywords */
+  const inferAssetType = (name: string, category: string | null): { type: string; category: string | null } => {
+    const text = `${name} ${category || ""}`.toLowerCase();
+
+    // Right of use / Lease contracts
+    if (/عقد\s*ايجار|عقد\s*إيجار|right\s*of\s*use|إيجار\s*فرع|ايجار\s*فرع|lease/i.test(text))
+      return { type: "right_of_use", category: "حق استخدام (إيجار)" };
+
+    // Real estate
+    if (/عقار|أرض|ارض|فيلا|شقة|عمارة|مبنى|real.?estate|land|building|villa|apartment/i.test(text))
+      return { type: "real_estate", category: category };
+
+    // Medical equipment
+    if (/طبي|مختبر|جهاز\s*فحص|medical|lab|analyzer|microscop|centrifug|autoclave|incubator|pipette|spectro/i.test(text))
+      return { type: "medical_equipment", category: "أجهزة طبية" };
+
+    // Vehicles
+    if (/سيارة|مركبة|vehicle|car|truck|van|شاحن/i.test(text))
+      return { type: "vehicle", category: "مركبات" };
+
+    // Furniture & fixtures
+    if (/أثاث|اثاث|مكتب|كرسي|طاولة|خزانة|furniture|desk|chair|table|ستائر|ستارة/i.test(text))
+      return { type: "furniture", category: "أثاث ومفروشات" };
+
+    // IT equipment
+    if (/كمبيوتر|حاسب|لابتوب|طابعة|سيرفر|شاشة|computer|laptop|printer|server|monitor|it\s*equip/i.test(text))
+      return { type: "it_equipment", category: "أجهزة تقنية" };
+
+    // Intangible assets
+    if (/برنامج|برمج|تطبيق|نظام|software|program|app|license|ترخيص|intangible|موقع\s*الكتروني|موبايل\s*اب/i.test(text))
+      return { type: "intangible", category: "أصول غير ملموسة" };
+
+    // Leasehold improvements
+    if (/تشطيب|تأسيس\s*فرع|تحسين|ديكور|كلادينج|لوحة|دفاع\s*مدني|leasehold|improvement|تأسيس\s*توسعة/i.test(text))
+      return { type: "leasehold_improvements", category: "تحسينات مستأجرة" };
+
+    // Default: machinery/equipment
+    return { type: "machinery_equipment", category: category };
+  };
+
+
   const parseExcelFilesLocally = async (excelFiles: UploadedFile[]): Promise<ScopeAsset[]> => {
     const allAssets: ScopeAsset[] = [];
     for (const uf of excelFiles) {
@@ -210,12 +251,14 @@ export default function SimplifiedJourney() {
               fields.push({ key: k, value: v });
             }
             const confidence = mappings.filter(m => m.autoMapped).length >= 2 ? 80 : mappings.filter(m => m.autoMapped).length === 1 ? 50 : 20;
+            const assetName = String(row.name || "");
+            const detectedType = inferAssetType(assetName, row.type ? String(row.type) : null);
             allAssets.push({
               id: crypto.randomUUID(),
               asset_index: allAssets.length + 1,
-              name: String(row.name || `أصل ${allAssets.length + 1}`),
-              asset_type: String(row.type || "machinery_equipment").includes("عقار") || String(row.type || "").includes("real") ? "real_estate" : "machinery_equipment",
-              category: row.type ? String(row.type) : null,
+              name: assetName || `أصل ${allAssets.length + 1}`,
+              asset_type: detectedType.type,
+              category: detectedType.category || (row.type ? String(row.type) : null),
               subcategory: null,
               quantity: Number(row.quantity) || 1,
               condition: row.condition ? String(row.condition) : "unknown",
@@ -741,19 +784,33 @@ export default function SimplifiedJourney() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Summary row */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
                     <p className="text-xs text-muted-foreground">الأصول المستخرجة</p>
                     <p className="text-2xl font-bold text-foreground">{scopeData.assets?.length || 0}</p>
                   </div>
                   <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
-                    <p className="text-xs text-muted-foreground">المنهج المقترح</p>
-                    <p className="text-xs font-semibold text-foreground mt-1">{scopeData.approach}</p>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
                     <p className="text-xs text-muted-foreground">المستندات</p>
                     <p className="text-2xl font-bold text-foreground">{uploadedFiles.length}</p>
                   </div>
+                  {/* Dynamic type breakdown */}
+                  {(() => {
+                    const typeCounts: Record<string, number> = {};
+                    const TYPE_AR: Record<string, string> = {
+                      real_estate: "عقارات", machinery_equipment: "آلات ومعدات",
+                      right_of_use: "حقوق استخدام", vehicle: "مركبات",
+                      furniture: "أثاث", it_equipment: "أجهزة تقنية",
+                      intangible: "غير ملموسة", leasehold_improvements: "تحسينات",
+                      medical_equipment: "أجهزة طبية",
+                    };
+                    for (const a of (scopeData.assets || [])) typeCounts[a.asset_type] = (typeCounts[a.asset_type] || 0) + 1;
+                    return Object.entries(typeCounts).map(([type, count]) => (
+                      <div key={type} className="bg-muted/50 rounded-lg p-3 border border-border text-center">
+                        <p className="text-xs text-muted-foreground">{TYPE_AR[type] || type}</p>
+                        <p className="text-2xl font-bold text-primary">{count}</p>
+                      </div>
+                    ));
+                  })()}
                 </div>
 
                 {/* Assets detail table */}

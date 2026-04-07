@@ -44,6 +44,13 @@ const CONDITION_LABELS: Record<string, string> = {
 const TYPE_LABELS: Record<string, string> = {
   real_estate: "عقار",
   machinery_equipment: "معدة / آلة",
+  right_of_use: "حق استخدام / إيجار",
+  vehicle: "مركبة",
+  furniture: "أثاث ومفروشات",
+  it_equipment: "أجهزة تقنية",
+  intangible: "أصول غير ملموسة",
+  leasehold_improvements: "تحسينات مستأجرة",
+  medical_equipment: "أجهزة طبية",
 };
 
 function confidenceBadge(conf: number) {
@@ -160,10 +167,11 @@ export default function ScopeAssetsTable({ assets, onAssetsChange }: Props) {
                   <TableCell>
                     {editingId === asset.id ? (
                       <Select value={editType} onValueChange={setEditType}>
-                        <SelectTrigger className="h-7 text-xs w-28"><SelectValue /></SelectTrigger>
+                        <SelectTrigger className="h-7 text-xs w-36"><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="real_estate">عقار</SelectItem>
-                          <SelectItem value="machinery_equipment">معدة / آلة</SelectItem>
+                          {Object.entries(TYPE_LABELS).map(([val, label]) => (
+                            <SelectItem key={val} value={val}>{label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     ) : (
