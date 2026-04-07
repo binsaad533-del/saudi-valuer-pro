@@ -536,7 +536,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
     setIsThinking(true);
 
     try {
-      const { data: fnData, error } = await supabase.functions.invoke("raqeem-client-chat", {
+      const { data: fnData } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
           message: text,
           conversationHistory: messages.filter(m => m.type === "answer" || m.type === "system").slice(-10),
@@ -847,9 +847,9 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                 onChange={e => setFreeText(e.target.value)}
                 placeholder="اكتب سؤالك أو ملاحظتك لرقيم..."
                 className="h-8 text-[12px] flex-1 bg-background"
-                onKeyDown={e => { if (e.key === "Enter" && freeText.trim()) handleFreeTextSend(); }}
+                onKeyDown={e => { if (e.key === "Enter" && freeText.trim() && !isThinking) handleFreeTextSend(); }}
               />
-              <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={!freeText.trim()} onClick={handleFreeTextSend}>
+              <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={!freeText.trim() || isThinking} onClick={handleFreeTextSend}>
                 <Send className="w-3.5 h-3.5" />
               </Button>
             </div>
