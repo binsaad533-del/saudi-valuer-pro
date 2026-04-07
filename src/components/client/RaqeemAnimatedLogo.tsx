@@ -21,14 +21,14 @@ export default function RaqeemAnimatedLogo({ size = 40, className = "" }: Raqeem
   ];
 
   const squares = [
-    { angle: 20, color: "#4A90D9", s: size * 0.06 },
-    { angle: 50, color: "#E74C3C", s: size * 0.055 },
-    { angle: 80, color: "#2ECC71", s: size * 0.05 },
-    { angle: 120, color: "#9B59B6", s: size * 0.05 },
-    { angle: 160, color: "#F39C12", s: size * 0.055 },
-    { angle: 210, color: "#1ABC9C", s: size * 0.05 },
-    { angle: 270, color: "#3498DB", s: size * 0.05 },
-    { angle: 320, color: "#E67E22", s: size * 0.045 },
+    { angle: 20, color: "#4A90D9", s: size * 0.055 },
+    { angle: 40, color: "#E74C3C", s: size * 0.05 },
+    { angle: 55, color: "#2ECC71", s: size * 0.045 },
+    { angle: 70, color: "#9B59B6", s: size * 0.04 },
+    { angle: 85, color: "#F39C12", s: size * 0.05 },
+    { angle: 100, color: "#1ABC9C", s: size * 0.045 },
+    { angle: 340, color: "#3498DB", s: size * 0.04 },
+    { angle: 355, color: "#E67E22", s: size * 0.035 },
   ];
 
   function arcPath(radius: number, startAngle: number, sweep: number) {
