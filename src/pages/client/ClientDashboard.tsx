@@ -139,27 +139,7 @@ export default function ClientDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-background" dir="rtl">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-bold text-foreground">بوابة العملاء</h2>
-            <p className="text-xs text-muted-foreground">جساس للتقييم</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <ClientNotificationsBell userId={userId} />
-            <span className="text-sm text-foreground font-medium hidden sm:block">أهلاً، {userName}</span>
-            <Button variant="ghost" size="icon" onClick={() => navigate("/client/settings")} title="الإعدادات">
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 ml-1" /> خروج
-            </Button>
-          </div>
-        </div>
-      </header>
-
+    <div className="bg-background" dir="rtl">
       <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Welcome */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
