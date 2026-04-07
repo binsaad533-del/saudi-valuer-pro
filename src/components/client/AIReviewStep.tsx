@@ -278,7 +278,6 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   const [customValue, setCustomValue] = useState("");
 
   const typeInfo = ASSET_TYPE_MAP[data.confirmedType];
-  const TypeIcon = typeInfo?.icon || Sparkles;
 
   // Initialize chat
   useEffect(() => {
