@@ -276,8 +276,8 @@ export default function ClientRequests() {
         <Badge variant="secondary" className="text-sm">{requests.length} طلب</Badge>
       </div>
 
-      <Tabs defaultValue="new" dir="rtl">
-        <TabsList className="grid w-full grid-cols-7 h-auto">
+      <Tabs defaultValue="intake" dir="rtl">
+        <TabsList className="grid w-full grid-cols-6 h-auto">
           {ADMIN_TABS.map(tab => {
             const count = requests.filter(r => tab.statuses.includes(r.status)).length;
             return (
