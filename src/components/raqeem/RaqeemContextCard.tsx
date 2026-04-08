@@ -68,7 +68,6 @@ export default function RaqeemContextCard({
   };
 
   const riskCount = insight?.risk_flags?.length || 0;
-  const obsCount = insight?.observations?.length || 0;
 
   return (
     <Card className={`border-primary/20 bg-gradient-to-br from-primary/5 to-background overflow-hidden ${className}`}>
