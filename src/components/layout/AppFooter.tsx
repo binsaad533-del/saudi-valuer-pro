@@ -110,7 +110,7 @@ export default function AppFooter() {
           <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
             <a href="/verify" className="hover:text-primary transition-colors">التحقق من تقرير</a>
             <a href="/login" className="hover:text-primary transition-colors">تسجيل الدخول</a>
-            <a href="/client/register" className="hover:text-primary transition-colors">إنشاء حساب</a>
+            <a href="/client/auth" className="hover:text-primary transition-colors">إنشاء حساب</a>
           </div>
         </div>
       </div>
