@@ -55,11 +55,12 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      // Try to find the latest draft that was sent to client or is in review
       const { data } = await supabase
         .from("report_drafts" as any)
         .select("*")
         .eq("request_id", requestId)
-        .eq("status", "sent_to_client")
+        .in("status", ["sent_to_client", "approved", "client_approved", "client_revision_requested", "draft"])
         .order("version", { ascending: false })
         .limit(1);
       if (data && data.length > 0) setDraft(data[0]);
