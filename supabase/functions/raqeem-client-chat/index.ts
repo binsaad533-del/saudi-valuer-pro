@@ -13,7 +13,13 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversationHistory, assetContext, assetDetails, attachments } = await req.json();
+    const {
+      message,
+      request_id,
+      conversationHistory,
+      requestContext,
+      attachments,
+    } = await req.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: "الرسالة مطلوبة" }), {
@@ -26,157 +32,165 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const db = createClient(supabaseUrl, serviceKey);
 
-    // ── Load company knowledge from DB ──
+    // ── Load company knowledge ──
     const { data: knowledge } = await db
       .from("raqeem_knowledge")
       .select("title_ar, content, category, priority")
       .eq("is_active", true)
-      .order("priority", { ascending: false });
+      .order("priority", { ascending: false })
+      .limit(20);
 
     let knowledgeSection = "";
     if (knowledge && knowledge.length > 0) {
-      knowledgeSection = "\n\n## قاعدة المعرفة المهنية (استخدمها كمرجع أساسي للإجابة)\n";
+      knowledgeSection = "\n\n## قاعدة المعرفة المهنية\n";
       for (const k of knowledge) {
-        const content =
-          k.content && k.content.length > 5000
-            ? k.content.substring(0, 5000) + "..."
-            : k.content || "";
+        const content = k.content?.length > 3000 ? k.content.substring(0, 3000) + "..." : k.content || "";
         knowledgeSection += `\n### ${k.title_ar} [${k.category}]\n${content}\n`;
       }
     }
 
-    // ── Load corrections (highest priority) ──
+    // ── Load corrections ──
     const { data: corrections } = await db
       .from("raqeem_corrections")
-      .select("original_question, corrected_answer, correction_reason")
+      .select("original_question, corrected_answer")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
-      .limit(30);
+      .limit(20);
 
     let correctionsSection = "";
     if (corrections && corrections.length > 0) {
-      correctionsSection =
-        "\n\n## تصحيحات المدير (أعلى أولوية — إذا تطابق السؤال طبّق الإجابة حرفياً)\n";
+      correctionsSection = "\n\n## تصحيحات المدير (أعلى أولوية)\n";
       for (const c of corrections) {
-        correctionsSection += `\nسؤال: ${c.original_question}\nالإجابة الصحيحة: ${c.corrected_answer}\n`;
+        correctionsSection += `سؤال: ${c.original_question}\nالإجابة: ${c.corrected_answer}\n\n`;
       }
     }
 
-    // ── Build detailed asset section ──
-    let assetDetailsSection = "";
-    if (assetDetails && typeof assetDetails === "string" && assetDetails.length > 0) {
-      assetDetailsSection = `\n\n## تفاصيل الأصول المستخرجة من ملفات العميل (هذه البيانات الفعلية — ارجع إليها عند أي سؤال عن الأصول)\n${assetDetails}`;
+    // ── Build request context section ──
+    const ctx = requestContext || {};
+    let requestSection = "\n\n## سياق الطلب الحالي\n";
+    if (ctx.reference_number) requestSection += `- الرقم المرجعي: ${ctx.reference_number}\n`;
+    if (ctx.status) requestSection += `- الحالة الحالية: ${ctx.status}\n`;
+    if (ctx.status_label) requestSection += `- وصف الحالة: ${ctx.status_label}\n`;
+    if (ctx.client_name) requestSection += `- اسم العميل: ${ctx.client_name}\n`;
+    if (ctx.property_type) requestSection += `- نوع الأصل: ${ctx.property_type}\n`;
+    if (ctx.property_city) requestSection += `- المدينة: ${ctx.property_city}\n`;
+    if (ctx.property_description) requestSection += `- الوصف: ${ctx.property_description}\n`;
+    if (ctx.valuation_mode) requestSection += `- نوع التقييم: ${ctx.valuation_mode === "desktop" ? "مكتبي" : ctx.valuation_mode === "field" ? "ميداني" : ctx.valuation_mode}\n`;
+    if (ctx.total_fees) requestSection += `- إجمالي الرسوم: ${ctx.total_fees} ر.س\n`;
+    if (ctx.amount_paid) requestSection += `- المبلغ المدفوع: ${ctx.amount_paid} ر.س\n`;
+    if (ctx.payment_status) requestSection += `- حالة الدفع: ${ctx.payment_status}\n`;
+    if (ctx.asset_count) requestSection += `- عدد الأصول: ${ctx.asset_count}\n`;
+    if (ctx.documents_count) requestSection += `- عدد المستندات المرفوعة: ${ctx.documents_count}\n`;
+    if (ctx.has_photos) requestSection += `- صور مرفقة: نعم\n`;
+    if (ctx.created_at) requestSection += `- تاريخ الإنشاء: ${ctx.created_at}\n`;
+
+    // Status-specific guidance for Raqeem
+    const statusGuidance: Record<string, string> = {
+      submitted: "الطلب مقدم وقيد المراجعة. أخبر العميل أن الفريق يعمل على إعداد نطاق العمل وعرض السعر.",
+      under_pricing: "الطلب بانتظار إعداد التسعير. أخبر العميل أن الفريق يعمل على تحديد التكلفة.",
+      scope_generated: "تم إعداد نطاق العمل وعرض السعر. وجّه العميل لمراجعة النطاق والموافقة عليه من اللوحة الجانبية.",
+      scope_approved: "العميل وافق على النطاق. الخطوة التالية هي سداد الدفعة الأولى.",
+      first_payment_confirmed: "تم تأكيد الدفعة الأولى وبدأ العمل. طمئن العميل أن التقييم جارٍ.",
+      data_collection_open: "مرحلة جمع البيانات مفتوحة. اطلب من العميل رفع أي مستندات إضافية.",
+      data_collection_complete: "تم استكمال البيانات وجارٍ التحقق منها.",
+      inspection_pending: "المعاينة الميدانية مجدولة. أخبر العميل أنه سيتم التنسيق معه.",
+      inspection_completed: "تمت المعاينة بنجاح. جارٍ التحليل والتقييم.",
+      data_validated: "تم التحقق من البيانات. جارٍ تحليل التقييم.",
+      analysis_complete: "اكتمل التحليل. جارٍ المراجعة المهنية.",
+      professional_review: "التقييم قيد المراجعة المهنية من المقيم المعتمد.",
+      draft_report_ready: "مسودة التقرير جاهزة للمراجعة. وجّه العميل لمراجعتها وإبداء ملاحظاته.",
+      client_review: "المسودة بانتظار مراجعة العميل.",
+      draft_approved: "العميل اعتمد المسودة. الخطوة التالية: سداد الدفعة النهائية.",
+      final_payment_confirmed: "تم سداد الدفعة النهائية. جارٍ إصدار التقرير الرسمي.",
+      issued: "التقرير النهائي صدر ومتاح للتحميل.",
+      archived: "الطلب مؤرشف.",
+      cancelled: "الطلب ملغي.",
+    };
+
+    if (ctx.status && statusGuidance[ctx.status]) {
+      requestSection += `\n### توجيه الحالة الحالية:\n${statusGuidance[ctx.status]}\n`;
     }
 
-    // ── Build attachments section ──
+    // Asset details
+    if (ctx.asset_summary) {
+      requestSection += `\n### ملخص الأصول:\n${ctx.asset_summary}\n`;
+    }
+
+    // Attachments in this message
     let attachmentsSection = "";
     if (attachments && Array.isArray(attachments) && attachments.length > 0) {
-      attachmentsSection = `\n\n## مرفقات أرسلها العميل في هذه الرسالة (${attachments.length} ملف)\n`;
+      attachmentsSection = `\n\n## مرفقات جديدة من العميل (${attachments.length} ملف)\n`;
       for (const att of attachments) {
-        const sizeKB = att.size ? `${Math.round(att.size / 1024)} KB` : "غير محدد";
-        attachmentsSection += `• ${att.name} (${att.type || "نوع غير محدد"}, ${sizeKB})\n`;
+        attachmentsSection += `• ${att.name} (${att.type || "غير محدد"})\n`;
       }
-      attachmentsSection += `\nملاحظة: هذه المرفقات تم رفعها بنجاح وسيتم ربطها بملف الطلب. إذا كانت تحتوي على أصول إضافية، أخبر العميل أنها ستُضاف للمراجعة. إذا كانت مستندات داعمة (عقود، صكوك، تقارير سابقة)، أكّد استلامها وأوضح أنها ستُرفق بملف التقييم.`;
+      attachmentsSection += `\nأكّد استلام المرفقات ووضّح الخطوة التالية.`;
     }
 
-    // ── Build system prompt ──
-    const systemPrompt = `أنت "رقيم" — مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation). أنت لست مجرد مساعد عام — أنت خبير في تقييم الأصول (عقارات وآلات ومعدات) وتفهم المعايير المهنية بعمق.
+    // ── System prompt ──
+    const systemPrompt = `أنت "رقيم – مساعدك الذكي"، مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation).
 
-## هويتك المهنية
-- اسمك "رقيم" — مساعد ذكي متخصص في التقييم
-- تتبع لشركة جسّاس للتقييم، مرخصة من الهيئة السعودية للمقيمين المعتمدين (تقييم)
-- تراخيص الشركة: عقارات (1210001217) + آلات ومعدات (4114000015 / عضوية 4210000041)
-- سجل تجاري: 1010625839 | الرقم الضريبي: 310625839900003
+## هويتك
+- اسمك: "رقيم – مساعدك الذكي"
+- شركة جسّاس للتقييم، مرخصة من الهيئة السعودية للمقيمين المعتمدين (تقييم)
+- تراخيص: عقارات (1210001217) + آلات ومعدات (4114000015)
 - التواصل: 920015029 / 0500668089 | care@jsaas-valuation.com
-- الرياض — حي الياسمين — طريق الثمامة
 
-## أسلوبك في التواصل (مهم جداً)
-1. **افهم السياق أولاً**: اقرأ سؤال العميل بدقة. افهم ما يريد معرفته تحديداً قبل أن تجيب.
-2. **أجب على ما سُئلت عنه بالضبط**: لا تُعطِ إجابة عامة أو تكرر معلومات لم يسأل عنها العميل.
-3. **كن طبيعياً ومحترفاً**: تحدث كمقيّم خبير يشرح لعميله — ليس كروبوت يكرر نصوصاً جاهزة.
-4. **استخدم البيانات الفعلية**: عندما يسأل العميل عن أصوله، ارجع لقائمة الأصول الفعلية المرفقة أدناه وأعطه تفاصيل دقيقة (أسماء، أعداد، أسباب).
-5. **لا تخترع أبداً**: إذا لم تجد المعلومة في السياق أدناه، قل: "سأتحقق من الفريق المختص وأعود لك" — لا تفترض ولا تخمّن.
-6. **لا تُعرّف بنفسك**: لقد عرّفت نفسك في البداية. لا تكرر التعريف إلا إذا سألك العميل "من أنت" مباشرة.
-7. **اختصر بذكاء**: الإجابة المثالية 2-5 جمل. لا تُطوّل إلا إذا السؤال يستدعي تفصيلاً.
-8. **افهم اللهجة**: العميل قد يكتب بالعامية السعودية — افهمها وأجب بالفصحى البسيطة.
+## أسلوبك (إلزامي)
+1. **افهم السياق**: اقرأ حالة الطلب ومرحلته قبل الإجابة.
+2. **أجب بدقة**: أجب على السؤال المطروح فقط — لا تكرر معلومات لم تُطلب.
+3. **كن استباقياً**: إذا لاحظت نقصاً في البيانات أو الملفات، اطلبها بذكاء.
+4. **اربط إجابتك بالحالة**: دائماً اشرح للعميل أين وصل طلبه وما المطلوب منه.
+5. **كن مختصراً**: 2-5 جمل كحد أقصى. لا تُطوّل بلا داعٍ.
+6. **لا تخترع**: إذا لم تجد المعلومة، قل "سأتحقق من الفريق وأعود لك".
+7. **لا تكرر التعريف**: عرّفت نفسك أول مرة. لا تعيد التعريف إلا إذا سُئلت.
+8. **افهم العامية السعودية**: "وين وصل طلبي" = أين وصل طلبي؟ "ايش المطلوب" = ما المطلوب؟
+9. **تعامل مع المرفقات**: عند رفع ملفات، أكّد الاستلام ووضّح ماذا سيحدث بها.
+10. **لا ترسل رسائل ترحيبية فارغة**: كل رد يجب أن يحمل قيمة ومعلومة.
 
-## قدراتك الفنية (استخدمها عند الحاجة)
-- تحليل ومناقشة كل أصل مستخرج: اسمه، نوعه، حالته، سبب استبعاده أو قبوله
-- شرح أسباب الاستبعاد بمرجع مهني (IVS / نظام المقيمين)
-- توضيح آلية كشف التكرارات: مطابقة (الاسم + التصنيف + المصدر) وحذف النسخ المتكررة
-- الإجابة عن أسئلة التسعير والمنهجية والمعايير من قاعدة المعرفة
-- مناقشة تفاصيل الآلات والمعدات: حالتها، عمرها، عوامل التقييم
-- **التعامل مع المرفقات**: عندما يرسل العميل مرفقات، أكّد استلامها باسم الملف ونوعه. إذا كانت جداول أو قوائم أصول، أوضح أنها ستُضاف للمراجعة. إذا كانت مستندات داعمة (صكوك، عقود، تقارير)، أكّد أنها ستُرفق بملف التقييم وأوضح فائدتها للعملية.
+## قواعد الاستبعاد المهنية
+- أصول غير ملموسة (شهرة، علامات تجارية، برمجيات) → IVS 210
+- حقوق تعاقدية (عقود، امتيازات) → IVS 105
+- أدوات مالية (أسهم، سندات) → IVS 500
+- أصل ناقص البيانات → يُعلّق حتى اكتمال المعلومات
+${requestSection}${attachmentsSection}${correctionsSection}${knowledgeSection}`;
 
-## قواعد الاستبعاد (ارجع إليها عند السؤال عن "لماذا تم استبعاد...")
-- الأصول غير الملموسة (شهرة، علامات تجارية، براءات، برمجيات) → IVS 210 — تتطلب ترخيص منشآت اقتصادية
-- الحقوق التعاقدية (عقود، امتيازات) → IVS 105 — ليست أصولاً ملموسة
-- الأدوات المالية (أسهم، سندات) → IVS 500 — تتطلب ترخيصاً مستقلاً
-- الأصل الناقص البيانات → يُعلّق للمراجعة حتى اكتمال المعلومات
-
-## سياق الأصول الحالية
-${assetContext || "لا يوجد سياق أصول حالياً"}
-${assetDetailsSection}
-${attachmentsSection}
-${correctionsSection}
-${knowledgeSection}
-
-## أمثلة على الإجابات المتوقعة
-
-سؤال: "ليش استبعدتوا البرنامج المحاسبي؟"
-إجابة: "البرنامج المحاسبي يُصنّف كأصل غير ملموس (برمجيات) وفقاً لمعيار IVS 210. ترخيصنا يغطي تقييم العقارات والآلات والمعدات فقط. تقييم البرمجيات يتطلب ترخيصاً في فرع تقييم المنشآت الاقتصادية."
-
-سؤال: "كم عنصر مكرر حذفتوا؟"
-إجابة: (ارجع للأرقام الفعلية في سياق الأصول وأعطِ العدد الدقيق مع أمثلة)
-
-سؤال: "ممكن أشوف العناصر المكررة؟"
-إجابة: (اعرض الأسماء الفعلية من القائمة)
-
-سؤال: "كم المدة المتوقعة؟"
-إجابة: (ارجع لقاعدة المعرفة إذا وُجدت معلومة، وإلا وضّح أن المدة تعتمد على حجم المشروع ونوعه)`;
-
-    // ── Build messages array ──
+    // ── Build messages ──
     const messages: { role: string; content: string }[] = [
       { role: "system", content: systemPrompt },
     ];
 
-    // Add conversation history (fix role mapping: "answer" = user message, "system" = assistant)
     if (conversationHistory && Array.isArray(conversationHistory)) {
-      for (const msg of conversationHistory.slice(-12)) {
-        messages.push({
-          role: msg.type === "answer" ? "user" : "assistant",
-          content: msg.text,
-        });
+      for (const msg of conversationHistory.slice(-16)) {
+        if (msg.role === "client" || msg.sender_type === "client") {
+          messages.push({ role: "user", content: msg.content });
+        } else if (msg.role === "ai" || msg.sender_type === "ai") {
+          messages.push({ role: "assistant", content: msg.content });
+        }
       }
     }
 
-    // Add current message
     messages.push({ role: "user", content: message });
 
-    // ── Call AI with Pro model for deep reasoning ──
+    // ── Call AI ──
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const aiResponse = await fetch(
-      "https://ai.gateway.lovable.dev/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages,
-          temperature: 0.4,
-        }),
-      }
-    );
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages,
+        temperature: 0.4,
+      }),
+    });
 
     if (!aiResponse.ok) {
       const errText = await aiResponse.text();
       console.error("AI API error:", aiResponse.status, errText);
-      
       if (aiResponse.status === 429) {
         return new Response(
           JSON.stringify({ reply: "عذراً، النظام مشغول حالياً. يرجى المحاولة بعد لحظات." }),
@@ -185,7 +199,7 @@ ${knowledgeSection}
       }
       if (aiResponse.status === 402) {
         return new Response(
-          JSON.stringify({ reply: "عذراً، حدث خطأ تقني مؤقت. يرجى المحاولة لاحقاً أو التواصل معنا على 920015029." }),
+          JSON.stringify({ reply: "عذراً، حدث خطأ تقني مؤقت. يرجى المحاولة لاحقاً." }),
           { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -193,9 +207,17 @@ ${knowledgeSection}
     }
 
     const aiData = await aiResponse.json();
-    const reply =
-      aiData.choices?.[0]?.message?.content ||
-      "عذراً، لم أتمكن من معالجة سؤالك. يرجى إعادة صياغته أو التواصل مع فريقنا على 920015029.";
+    const reply = aiData.choices?.[0]?.message?.content ||
+      "عذراً، لم أتمكن من معالجة سؤالك. يرجى إعادة صياغته أو التواصل معنا على 920015029.";
+
+    // ── Save AI reply to request_messages ──
+    if (request_id) {
+      await db.from("request_messages").insert({
+        request_id,
+        sender_type: "ai",
+        content: reply,
+      });
+    }
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
