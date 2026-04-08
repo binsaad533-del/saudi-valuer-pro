@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Zap, ChevronLeft } from "lucide-react";
-import { normalizeStatus, STATUS_LABELS } from "@/lib/workflow-engine";
 
 interface ActionItem {
   id: string;
@@ -16,18 +15,6 @@ interface Props {
   onOpen: (id: string) => void;
 }
 
-function getActionReason(status: string): string {
-  const map: Record<string, string> = {
-    submitted: "طلب جديد بانتظار المراجعة",
-    scope_generated: "نطاق العمل جاهز للاعتماد",
-    professional_review: "بانتظار الحكم المهني",
-    draft_report_ready: "مسودة التقرير جاهزة",
-    client_review: "العميل أرسل ملاحظاته",
-    draft_approved: "المسودة معتمدة — بانتظار الإصدار",
-    final_payment_confirmed: "الدفعة النهائية مؤكدة — جاهز للإصدار",
-  };
-  return map[normalizeStatus(status)] || "يحتاج مراجعة";
-}
 
 function formatRelativeTime(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
