@@ -445,19 +445,59 @@ ${existingText}
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      const result = await response.json();
+      const resultText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(resultText);
+      } catch {
+        console.error("Failed to parse AI gateway response:", resultText.substring(0, 500));
+        return new Response(JSON.stringify({ error: "خطأ في قراءة استجابة الذكاء الاصطناعي" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       const toolCall = result.choices?.[0]?.message?.tool_calls?.[0];
       if (!toolCall) {
+        // Fallback: check if there's plain content we can use
+        const plainContent = result.choices?.[0]?.message?.content;
+        if (plainContent) {
+          return new Response(JSON.stringify({ structured: false, content: plainContent }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+        console.error("No tool call in response:", JSON.stringify(result).substring(0, 500));
         return new Response(JSON.stringify({ error: "لم يتم توليد البيانات المهيكلة" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      let rawArgs = toolCall.function.arguments || "";
+      // Handle case where arguments is already an object (some models do this)
+      if (typeof rawArgs === "object") {
+        return new Response(JSON.stringify({ structured: true, data: rawArgs }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       let parsed;
       try {
-        parsed = JSON.parse(toolCall.function.arguments);
+        parsed = JSON.parse(rawArgs);
       } catch {
-        return new Response(JSON.stringify({ error: "خطأ في تحليل البيانات المهيكلة" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        // Attempt to repair truncated JSON
+        try {
+          // Strip trailing incomplete strings and close brackets
+          let repaired = rawArgs;
+          // Remove trailing incomplete string value
+          repaired = repaired.replace(/,\s*"[^"]*"?\s*:\s*"[^"]*$/, "");
+          // Close any open braces/brackets
+          const openBraces = (repaired.match(/{/g) || []).length;
+          const closeBraces = (repaired.match(/}/g) || []).length;
+          for (let i = 0; i < openBraces - closeBraces; i++) repaired += "}";
+          // Remove trailing commas before closing braces
+          repaired = repaired.replace(/,\s*}/g, "}");
+          parsed = JSON.parse(repaired);
+        } catch {
+          console.error("JSON repair failed. Raw args length:", rawArgs.length, "Preview:", rawArgs.substring(0, 300));
+          return new Response(JSON.stringify({ error: "خطأ في تحليل البيانات المهيكلة — يرجى المحاولة مرة أخرى" }),
+            { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
       }
 
       return new Response(JSON.stringify({ structured: true, data: parsed }), {
