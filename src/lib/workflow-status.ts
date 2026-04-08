@@ -72,9 +72,10 @@ export async function changeStatusByRequestId(
     .eq("id", requestId)
     .single();
 
-  if (lookupErr || !req?.assignment_id) {
+  const reqData = req as any;
+  if (lookupErr || !reqData?.assignment_id) {
     return { success: false, error: "لم يتم العثور على ملف التقييم المرتبط بالطلب" };
   }
 
-  return changeRequestStatus(req.assignment_id, newStatus, options);
+  return changeRequestStatus(reqData.assignment_id, newStatus, options);
 }
