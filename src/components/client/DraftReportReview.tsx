@@ -285,7 +285,7 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
             <p className="text-base font-bold text-foreground">تم إرسال ردك بنجاح</p>
             <p className="text-sm text-muted-foreground mt-1">سيتم إشعارك بالخطوة التالية</p>
           </div>
-        ) : draft.status === "sent_to_client" ? (
+        ) : ["sent_to_client", "draft", "approved"].includes(draft.status) ? (
           <div className="space-y-4">
             {/* Primary Action */}
             <Button
