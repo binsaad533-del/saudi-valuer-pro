@@ -83,7 +83,7 @@ export default function ValuationReviewStep({
                 return acc;
               }, {} as Record<string, number>)
             ).map(([label, count]) => (
-              <Badge key={label} variant="secondary" className="text-xs">{label}: {count}</Badge>
+              <Badge key={label} variant="secondary" className="text-xs">{label}: {count as number}</Badge>
             ))}
           </div>
         </div>
