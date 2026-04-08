@@ -12,8 +12,8 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowRight, FileText, MessageSquare, Send, Loader2, Bot, User,
   Building2, CheckCircle, XCircle, Upload, Download,
-  Clock, Shield, AlertCircle,
-  Package, Trash2, Edit,
+  Clock, Shield, AlertCircle, Paperclip, Image as ImageIcon,
+  Package, Trash2, Edit, Info,
 } from "lucide-react";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
@@ -26,6 +26,7 @@ import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { STATUS_LABELS as WF_STATUS_LABELS } from "@/lib/workflow-engine";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
+import StatusGuidanceCard from "@/components/client/StatusGuidanceCard";
 
 // Aligned with the 19-status workflow engine
 const STATUS_ORDER = [
@@ -43,6 +44,7 @@ export default function RequestDetails() {
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatFileRef = useRef<HTMLInputElement>(null);
 
   const [request, setRequest] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -111,6 +113,35 @@ export default function RequestDetails() {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleChatFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const filePath = `chat/${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
+      if (uploadErr) throw uploadErr;
+      // Save as document
+      await supabase.from("request_documents" as any).insert({
+        request_id: id!, uploaded_by: user.id, file_name: file.name, file_path: filePath, file_size: file.size, mime_type: file.type,
+      });
+      // Send message with attachment info
+      const icon = file.type.startsWith("image/") ? "🖼️" : file.type.includes("pdf") ? "📄" : "📎";
+      await supabase.from("request_messages" as any).insert({
+        request_id: id!, sender_id: user.id, sender_type: "client" as any,
+        content: `${icon} مرفق: ${file.name}`,
+        metadata: { type: "attachment", file_path: filePath, file_name: file.name, mime_type: file.type },
+      });
+      toast({ title: "تم رفع المرفق بنجاح" });
+      loadData();
+    } catch (err: any) {
+      toast({ title: "خطأ في رفع الملف", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (chatFileRef.current) chatFileRef.current.value = "";
     }
   };
 
@@ -256,6 +287,9 @@ export default function RequestDetails() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
+        {/* ── Status Guidance ── */}
+        <StatusGuidanceCard status={request.status} valuationMode={request.ai_intake_summary?.valuation_mode} />
+
         {/* ── Draft Report — Full-width professional workspace ── */}
         {showDraftReport && (
           <DraftReportReview
@@ -340,11 +374,16 @@ export default function RequestDetails() {
               </div>
               <div className="p-4 border-t border-border">
                 <div className="flex gap-2">
-                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending} dir="rtl" />
+                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending || uploading} dir="rtl" className="flex-1" />
+                  <input ref={chatFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" onChange={handleChatFileUpload} />
+                  <Button variant="outline" size="icon" onClick={() => chatFileRef.current?.click()} disabled={uploading} title="إرفاق ملف">
+                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  </Button>
                   <Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending} size="icon">
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">يمكنك إرفاق صور أو مستندات (PDF, Excel, Word)</p>
               </div>
             </Card>
           </div>
