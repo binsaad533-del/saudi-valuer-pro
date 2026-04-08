@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useState } from "react";
+import { RefObject, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   FolderUp, FileText, FileSpreadsheet, File, X, Loader2, Brain,
@@ -24,7 +24,6 @@ interface ValuationDocUploadProps {
   onRunExtraction: () => void;
   extracting: boolean;
   extractionPhase: string;
-  extracted: any;
 }
 
 function formatFileSize(bytes: number) {
@@ -43,7 +42,7 @@ function getFileIcon(fileName: string) {
 
 export default function ValuationDocUpload({
   uploadedFiles, fileInputRef, onFilesSelected, onRemoveFile,
-  onRunExtraction, extracting, extractionPhase, extracted,
+  onRunExtraction, extracting, extractionPhase,
 }: ValuationDocUploadProps) {
   const [dragOver, setDragOver] = useState(false);
 

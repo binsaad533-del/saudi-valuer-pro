@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, AlertCircle, Tag, Loader2, Send } from "lucide-react";
+import { AlertTriangle, AlertCircle, Tag } from "lucide-react";
 import { formatTime } from "@/lib/utils";
 
 interface ActivityEntry {
@@ -25,15 +25,13 @@ interface ValuationReviewStepProps {
   classifiedCount: number;
   allStepValidations: StepValidation[];
   activityLog: ActivityEntry[];
-  submitting: boolean;
-  onSubmit: () => void;
   docCategories: { value: string; label: string }[];
 }
 
 export default function ValuationReviewStep({
   extracted, clientFields, uploadedFiles, assetDescription,
   purpose, valueBasis, valuationDate, valuationMode, classifiedCount,
-  allStepValidations, activityLog, submitting, onSubmit, docCategories,
+  allStepValidations, activityLog, docCategories,
 }: ValuationReviewStepProps) {
   const reviewItems = [
     { label: "نوع التقييم (ذكاء اصطناعي)", value: extracted?.discipline_label || "-" },
@@ -51,7 +49,7 @@ export default function ValuationReviewStep({
 
   const hasWarnings = allStepValidations.some(sv => sv.validation.warnings.length > 0);
   const hasErrors = allStepValidations.some(sv => sv.validation.errors.length > 0 && sv.step.id < 4);
-  const isValid = !allStepValidations.some(sv => sv.step.id === 4 && !sv.validation.valid);
+  
 
   return (
     <div className="space-y-6">
