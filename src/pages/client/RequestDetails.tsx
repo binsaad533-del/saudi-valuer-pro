@@ -121,7 +121,7 @@ export default function RequestDetails() {
     if (!file || !user) return;
     setUploading(true);
     try {
-      const filePath = `chat/${user.id}/${Date.now()}_${file.name}`;
+      const filePath = `${user.id}/chat/${Date.now()}_${file.name}`;
       const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
       if (uploadErr) throw uploadErr;
       // Save as document
