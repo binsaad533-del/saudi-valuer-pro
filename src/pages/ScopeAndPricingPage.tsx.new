@@ -1,0 +1,310 @@
+import { useState, useEffect } from "react";
+import { formatNumber } from "@/lib/utils";
+import { useLocation, useNavigate } from "react-router-dom";
+import TopBar from "@/components/layout/TopBar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import {
+  Sparkles, FileText, Ruler, ClipboardList, DollarSign, CheckCircle2,
+  AlertTriangle, ArrowRight, Loader2, Building2, MapPin, RefreshCw,
+  Edit3, ChevronDown, ChevronUp, Calculator, Shield, Clock, Star,
+  Wrench, Layers, Home, Target, Landmark, Scale, Gavel,
+  Briefcase, TrendingUp, RotateCcw, HeartPulse, Send, UserCheck, Users,
+  FileSearch, ListChecks, CreditCard, ThumbsUp, Ticket, X,
+} from "lucide-react";
+import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
+
+import type { ScopeData, PricingData } from "./scope-pricing/types";
+import { MOCK_EXTRACTED_DATA, MOCK_SCOPE, MOCK_PRICING } from "./scope-pricing/mock-data";
+import {
+  DisciplineAnalysisCard,
+  PurposeAnalysisCard,
+  BasisOfValueCard,
+  MethodologyAnalysisCard,
+} from "@/components/scope-pricing/AnalysisCards";
+
+export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const extractedData = location.state?.extractedData || MOCK_EXTRACTED_DATA;
+
+  const [loading, setLoading] = useState(false);
+  const [scope, setScope] = useState<ScopeData | null>(MOCK_SCOPE);
+  const [pricing, setPricing] = useState<PricingData | null>(MOCK_PRICING);
+  const [editingScope, setEditingScope] = useState(false);
+  const [editedNotes, setEditedNotes] = useState("");
+  const [showAssumptions, setShowAssumptions] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(true);
+  const [clientApproved, setClientApproved] = useState(false);
+  const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  const [revisionNotes, setRevisionNotes] = useState("");
+  const [sentToManager, setSentToManager] = useState(false);
+  const [managerDecision, setManagerDecision] = useState<"pending" | "accepted" | "adjusting">("pending");
+  const [adjustedPrice, setAdjustedPrice] = useState("");
+  const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountApplied, setDiscountApplied] = useState<{ code: string; percentage: number } | null>(null);
+  const [checkingDiscount, setCheckingDiscount] = useState(false);
+
+  useEffect(() => {
+    if (extractedData) {
+      generateScopeAndPricing();
+    }
+  }, []);
+
+  const generateScopeAndPricing = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-scope-pricing", {
+        body: { extractedData },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      setScope(data.scope);
+      setPricing(data.pricing);
+      toast.success("تم توليد نطاق العمل والتسعير بنجاح");
+    } catch (err: any) {
+      console.error("Scope generation error:", err);
+      if (err.message?.includes("429") || err.message?.includes("حد الطلبات")) {
+        toast.error("تم تجاوز حد الطلبات، يرجى المحاولة بعد قليل");
+      } else if (err.message?.includes("402") || err.message?.includes("رصيد")) {
+        toast.error("رصيد غير كافٍ، يرجى شحن الرصيد");
+      } else {
+        toast.error("حدث خطأ أثناء توليد نطاق العمل");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatCurrency = (amount: number) =>
+    <>{formatNumber(Math.round(amount))} <SAR size={12} /></>;
+
+  const applyDiscountCode = async () => {
+    if (!discountCode.trim()) return;
+    setCheckingDiscount(true);
+    const { data, error } = await supabase
+      .from("discount_codes")
+      .select("*")
+      .eq("code", discountCode.toUpperCase().trim())
+      .eq("is_active", true)
+      .maybeSingle();
+    if (error || !data) {
+      toast.error("كود الخصم غير صالح أو منتهي");
+      setCheckingDiscount(false);
+      return;
+    }
+    if (data.expires_at && new Date(data.expires_at) < new Date()) {
+      toast.error("كود الخصم منتهي الصلاحية");
+      setCheckingDiscount(false);
+      return;
+    }
+    if (data.max_uses && data.current_uses >= data.max_uses) {
+      toast.error("تم استنفاد عدد مرات استخدام هذا الكود");
+      setCheckingDiscount(false);
+      return;
+    }
+    setDiscountApplied({ code: data.code, percentage: Number(data.discount_percentage) });
+    toast.success(`تم تطبيق خصم ${data.discount_percentage}%`);
+    setCheckingDiscount(false);
+  };
+
+  const removeDiscount = () => {
+    setDiscountApplied(null);
+    setDiscountCode("");
+  };
+
+  const getSubtotalNum = () => {
+    if (!pricing) return 0;
+    const s = Number(pricing.subtotal);
+    return isNaN(s) ? Number(pricing.totalPrice) / (1 + (Number(pricing.vatRate) || 15) / 100) : s;
+  };
+
+  const getDiscountAmount = () => {
+    if (!discountApplied || !pricing) return 0;
+    return getSubtotalNum() * (discountApplied.percentage / 100);
+  };
+
+  const getFinalSubtotal = () => getSubtotalNum() - getDiscountAmount();
+  const getFinalVat = () => getFinalSubtotal() * ((Number(pricing?.vatRate) || 15) / 100);
+  const getFinalTotal = () => getFinalSubtotal() + getFinalVat();
+
+  if (!extractedData) {
+    return (
+      <div className={embedded ? "" : "min-h-screen"} dir="rtl">
+        {!embedded && <TopBar />}
+        <div className="flex flex-col items-center justify-center py-20 gap-4">
+          <AlertTriangle className="w-12 h-12 text-yellow-500" />
+          <h2 className="text-lg font-bold text-foreground">لا توجد بيانات مستخرجة</h2>
+          <p className="text-sm text-muted-foreground">يرجى تحليل المستندات أولاً من صفحة معالجة المستندات</p>
+          <Button onClick={() => navigate("/ai-document-processing")} className="gap-2">
+            <ArrowRight className="w-4 h-4" />
+            العودة لمعالجة المستندات
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={embedded ? "" : "min-h-screen"} dir="rtl">
+      {!embedded && <TopBar />}
+      <div className={embedded ? "space-y-5" : "p-4 md:p-6 max-w-5xl mx-auto space-y-5"}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <ClipboardList className="w-5 h-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-foreground">نطاق العمل والتسعير الذكي</h1>
+              <p className="text-xs text-muted-foreground">تم التوليد بواسطة الذكاء الاصطناعي بناءً على المستندات المستخرجة</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs" onClick={generateScopeAndPricing} disabled={loading}>
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            إعادة التوليد
+          </Button>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border p-4 overflow-x-auto">
+          <div className="flex items-center justify-between min-w-[500px]" dir="ltr">
+            {[
+              { label: "استخراج المستندات", icon: FileSearch, done: true },
+              { label: "نطاق العمل", icon: ListChecks, done: !!scope },
+              { label: "التسعير", icon: CreditCard, done: !!pricing },
+              { label: "الموافقة", icon: ThumbsUp, done: clientApproved || managerDecision === "accepted" },
+            ].map((step, i, arr) => (
+              <div key={i} className="flex items-center flex-1 last:flex-none">
+                <div className="flex flex-col items-center gap-1.5">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${
+                    step.done ? "bg-primary border-primary text-primary-foreground" : "bg-card border-border text-muted-foreground"
+                  }`}>
+                    {step.done ? <CheckCircle2 className="w-4.5 h-4.5" /> : <step.icon className="w-4 h-4" />}
+                  </div>
+                  <span className={`text-[10px] font-medium whitespace-nowrap ${step.done ? "text-primary" : "text-muted-foreground"}`}>
+                    {step.label}
+                  </span>
+                </div>
+                {i < arr.length - 1 && (
+                  <div className={`flex-1 h-0.5 mx-2 rounded-full mt-[-18px] ${step.done ? "bg-primary" : "bg-border"}`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-card rounded-xl border border-border p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="w-4 h-4 text-primary" />
+            <h3 className="text-xs font-bold text-foreground">ملخص الأصول</h3>
+            {extractedData.inventory?.length > 0 && (
+              <Badge variant="secondary" className="text-[9px]">{extractedData.inventory.length} أصل</Badge>
+            )}
+          </div>
+          {(() => {
+            const inv = extractedData.inventory || [];
+            const firstItem = inv[0];
+            const getField = (key: string) => firstItem?.fields?.find((f: any) => f.key === key)?.value;
+            const desc = extractedData.description || extractedData.asset?.description || firstItem?.name || "—";
+            const city = getField("city") || extractedData.asset?.city || "—";
+            const area = getField("area_sqm") || (extractedData.asset?.area ? String(extractedData.asset.area) : null);
+            return (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "النوع", value: desc, icon: Building2 },
+                  { label: "المدينة", value: city, icon: MapPin },
+                  { label: "المساحة", value: area ? `${area} م²` : "—", icon: Ruler },
+                  { label: "الغرض", value: extractedData.suggestedPurpose || "—", icon: FileText },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/30 border border-border/50">
+                    <item.icon className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-muted-foreground">{item.label}</p>
+                      <p className="text-xs font-medium text-foreground truncate">{item.value}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
+        {scope && !loading && <DisciplineAnalysisCard scope={scope} />}
+        {scope && !loading && <PurposeAnalysisCard scope={scope} />}
+        {scope && !loading && <BasisOfValueCard scope={scope} />}
+        {scope && !loading && <MethodologyAnalysisCard scope={scope} />}
+
+        {loading && (
+          <div className="bg-card rounded-xl border border-border p-12 flex flex-col items-center gap-4">
+            <div className="relative">
+              <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              <Sparkles className="w-4 h-4 text-yellow-500 absolute -top-1 -left-1 animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">جاري توليد نطاق العمل والتسعير...</p>
+              <p className="text-xs text-muted-foreground mt-1">الذكاء الاصطناعي يحلل البيانات المستخرجة ويحدد المنهجيات والتسعير المناسب</p>
+            </div>
+          </div>
+        )}
+
+        {scope && pricing && !loading && (
+          <div className="space-y-5">
+            <div className="bg-card rounded-xl border border-border p-6">
+              <h3 className="text-sm font-bold mb-4">نطاق العمل المقترح</h3>
+              <div className="prose prose-sm dark:prose-invert max-w-none">
+                {editingScope ? (
+                  <Textarea 
+                    value={editedNotes || scope.notes} 
+                    onChange={(e) => setEditedNotes(e.target.value)}
+                    className="min-h-[200px]"
+                  />
+                ) : (
+                  <p className="text-muted-foreground leading-relaxed">{scope.notes}</p>
+                )}
+              </div>
+              <Button variant="ghost" size="sm" className="mt-4 gap-2" onClick={() => setEditingScope(!editingScope)}>
+                <Edit3 className="w-4 h-4" />
+                {editingScope ? "حفظ التعديلات" : "تعديل النطاق"}
+              </Button>
+            </div>
+
+            <div className="bg-card rounded-xl border border-border p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-sm font-bold">تفاصيل التسعير</h3>
+                <Button variant="outline" size="sm" onClick={() => setShowBreakdown(!showBreakdown)}>
+                  {showBreakdown ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </Button>
+              </div>
+              
+              {showBreakdown && (
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">الإجمالي قبل الضريبة</span>
+                    <span className="font-medium">{formatCurrency(getSubtotalNum())}</span>
+                  </div>
+                  {discountApplied && (
+                    <div className="flex justify-between text-sm text-emerald-600">
+                      <span>الخصم ({discountApplied.percentage}%)</span>
+                      <span>-{formatCurrency(getDiscountAmount())}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">ضريبة القيمة المضافة ({pricing.vatRate}%)</span>
+                    <span className="font-medium">{formatCurrency(getFinalVat())}</span>
+                  </div>
+                  <div className="border-t pt-4 flex justify-between items-center">
+                    <span className="font-bold text-lg">الإجمالي النهائي</span>
+                    <span className="font-bold text-xl text-primary">{formatCurrency(getFinalTotal())}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
