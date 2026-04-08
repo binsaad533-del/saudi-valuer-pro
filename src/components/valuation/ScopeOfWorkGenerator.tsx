@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BidiText from "@/components/ui/bidi-text";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
