@@ -31,13 +31,10 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const [archiving, setArchiving] = useState(false);
 
   const status = request.status;
+  // Show panel after final payment confirmed, or when already issued/archived
   const isVisible = [
-    "final_payment_approved", "final_report_ready",
-    "completed", "report_issued",
-  ].includes(status) || (
-    // Also show if client approved draft and no partial payment needed
-    status === "final_report_ready"
-  );
+    "final_payment_confirmed", "issued", "archived",
+  ].includes(status);
 
   useEffect(() => {
     if (!isVisible) { setLoading(false); return; }
@@ -67,8 +64,8 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
     return null;
   }
 
-  const isIssued = ["report_issued", "completed"].includes(status) || draft?.status === "issued";
-  const isArchived = status === "completed" || draft?.status === "archived";
+  const isIssued = status === "issued" || status === "archived" || draft?.status === "issued";
+  const isArchived = status === "archived" || draft?.status === "archived";
 
   const handleIssue = async () => {
     setIssuing(true);
