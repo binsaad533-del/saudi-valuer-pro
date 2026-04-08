@@ -115,6 +115,35 @@ export default function RequestDetails() {
     }
   };
 
+  const handleChatFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const filePath = `chat/${user.id}/${Date.now()}_${file.name}`;
+      const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
+      if (uploadErr) throw uploadErr;
+      // Save as document
+      await supabase.from("request_documents" as any).insert({
+        request_id: id!, uploaded_by: user.id, file_name: file.name, file_path: filePath, file_size: file.size, mime_type: file.type,
+      });
+      // Send message with attachment info
+      const icon = file.type.startsWith("image/") ? "🖼️" : file.type.includes("pdf") ? "📄" : "📎";
+      await supabase.from("request_messages" as any).insert({
+        request_id: id!, sender_id: user.id, sender_type: "client" as any,
+        content: `${icon} مرفق: ${file.name}`,
+        metadata: { type: "attachment", file_path: filePath, file_name: file.name, mime_type: file.type },
+      });
+      toast({ title: "تم رفع المرفق بنجاح" });
+      loadData();
+    } catch (err: any) {
+      toast({ title: "خطأ في رفع الملف", description: err.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+      if (chatFileRef.current) chatFileRef.current.value = "";
+    }
+  };
+
   const handleQuotationResponse = async (approved: boolean) => {
     setSending(true);
     try {
