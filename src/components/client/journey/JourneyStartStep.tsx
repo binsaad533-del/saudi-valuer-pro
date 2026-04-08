@@ -31,6 +31,8 @@ interface JourneyStartStepProps {
   setValuationMode: (v: "field" | "desktop") => void;
   desktopDisclaimer: boolean;
   setDesktopDisclaimer: (v: boolean) => void;
+  assetLocations: AssetLocation[];
+  setAssetLocations: (v: AssetLocation[]) => void;
   purposeOptions: Record<string, string>;
   usersOptions: Record<string, string>;
   desktopBlockedPurposes: string[];
@@ -44,6 +46,7 @@ export default function JourneyStartStep(props: JourneyStartStepProps) {
     purpose, setPurpose, purposeOther, setPurposeOther,
     intendedUsers, setIntendedUsers, intendedUsersOther, setIntendedUsersOther,
     valuationMode, setValuationMode, desktopDisclaimer, setDesktopDisclaimer,
+    assetLocations, setAssetLocations,
     purposeOptions, usersOptions, desktopBlockedPurposes, onStart, toast,
   } = props;
 
