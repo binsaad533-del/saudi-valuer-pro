@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -7,8 +6,8 @@ import {
   LayoutDashboard, Settings, LogOut, BookOpen, FileText,
   Users, UserCheck, ClipboardList, Archive, BarChart3,
   DollarSign, Shield, Search, Activity, Bell, Briefcase,
-  TrendingUp, MapPin, Scale, Wrench, ChevronDown,
-  Brain, AlertTriangle, Zap, Database,
+  TrendingUp, MapPin, Scale, ChevronDown,
+  Brain, Zap,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
@@ -18,7 +17,6 @@ import {
 import { NavLink } from "@/components/NavLink";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 
 const logo = "/favicon.png";
 
