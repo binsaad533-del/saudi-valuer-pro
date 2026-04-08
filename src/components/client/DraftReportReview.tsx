@@ -55,11 +55,12 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
   useEffect(() => {
     const load = async () => {
       setLoading(true);
+      // Try to find the latest draft that was sent to client or is in review
       const { data } = await supabase
         .from("report_drafts" as any)
         .select("*")
         .eq("request_id", requestId)
-        .eq("status", "sent_to_client")
+        .in("status", ["sent_to_client", "approved", "client_approved", "client_revision_requested", "draft"])
         .order("version", { ascending: false })
         .limit(1);
       if (data && data.length > 0) setDraft(data[0]);
@@ -136,7 +137,17 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
     );
   }
 
-  if (!draft) return null;
+  if (!draft) {
+    return (
+      <div dir="rtl" className="rounded-2xl border border-border bg-card p-8 text-center space-y-3">
+        <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+          <FileText className="w-7 h-7 text-muted-foreground" />
+        </div>
+        <p className="text-sm font-semibold text-foreground">مسودة التقرير قيد الإعداد</p>
+        <p className="text-xs text-muted-foreground">سيتم إشعارك فور جاهزية المسودة للمراجعة</p>
+      </div>
+    );
+  }
 
   const sections = draft.sections || {};
   const sectionEntries = Object.entries(sections).filter(
@@ -250,7 +261,23 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
 
       {/* ═══════════════ ACTIONS FOOTER ═══════════════ */}
       <div className="rounded-b-2xl border border-t-0 border-border bg-card px-6 py-5">
-        {hasResponded ? (
+        {draft.status === "client_approved" ? (
+          <div className="text-center py-6">
+            <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <p className="text-base font-bold text-foreground">تم اعتماد المسودة</p>
+            <p className="text-sm text-muted-foreground mt-1">جاري إعداد التقرير النهائي</p>
+          </div>
+        ) : draft.status === "client_revision_requested" ? (
+          <div className="text-center py-6">
+            <div className="w-14 h-14 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mx-auto mb-3">
+              <RefreshCw className="w-7 h-7 text-amber-600 dark:text-amber-400" />
+            </div>
+            <p className="text-base font-bold text-foreground">تم إرسال ملاحظاتك</p>
+            <p className="text-sm text-muted-foreground mt-1">المقيّم يعمل على تعديل المسودة</p>
+          </div>
+        ) : hasResponded ? (
           <div className="text-center py-6">
             <div className="w-14 h-14 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
               <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
@@ -258,7 +285,7 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
             <p className="text-base font-bold text-foreground">تم إرسال ردك بنجاح</p>
             <p className="text-sm text-muted-foreground mt-1">سيتم إشعارك بالخطوة التالية</p>
           </div>
-        ) : (
+        ) : draft.status === "sent_to_client" ? (
           <div className="space-y-4">
             {/* Primary Action */}
             <Button
@@ -309,6 +336,10 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
                 </Button>
               </div>
             )}
+          </div>
+        ) : (
+          <div className="text-center py-4">
+            <p className="text-sm text-muted-foreground">المسودة قيد المراجعة الداخلية — ستُتاح لك خيارات الاعتماد فور إرسالها رسمياً</p>
           </div>
         )}
       </div>
