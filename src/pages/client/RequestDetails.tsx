@@ -12,8 +12,8 @@ import ReactMarkdown from "react-markdown";
 import {
   ArrowRight, FileText, MessageSquare, Send, Loader2, Bot, User,
   Building2, CheckCircle, XCircle, Upload, Download,
-  Clock, Shield, AlertCircle,
-  Package, Trash2, Edit,
+  Clock, Shield, AlertCircle, Paperclip, Image as ImageIcon,
+  Package, Trash2, Edit, Info,
 } from "lucide-react";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
