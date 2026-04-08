@@ -101,14 +101,67 @@ export default function RequestDetails() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const buildRequestContext = () => {
+    if (!request) return {};
+    const inv = request.asset_data?.inventory as any[] | undefined;
+    const assetCount = inv?.length || 0;
+    const assetSummary = inv ? (() => {
+      const counts: Record<string, number> = {};
+      for (const a of inv) counts[a.type] = (counts[a.type] || 0) + 1;
+      return Object.entries(counts).map(([t, c]) => `${t}: ${c}`).join("، ");
+    })() : "";
+    const imgDocs = documents.filter(d => d.mime_type?.startsWith("image/"));
+    return {
+      reference_number: request.reference_number,
+      status: request.status,
+      status_label: getStatusLabel(request.status),
+      client_name: request.client_name_ar || request.ai_intake_summary?.client_name,
+      property_type: request.property_type_ar || request.ai_intake_summary?.property_type,
+      property_city: request.property_city_ar,
+      property_description: request.property_description_ar,
+      valuation_mode: request.ai_intake_summary?.valuation_mode,
+      total_fees: request.total_fees,
+      amount_paid: request.amount_paid,
+      payment_status: request.payment_status,
+      asset_count: assetCount,
+      asset_summary: assetSummary,
+      documents_count: documents.length,
+      has_photos: imgDocs.length > 0,
+      created_at: request.created_at,
+    };
+  };
+
+  const callRaqeemAI = async (clientMessage: string) => {
+    try {
+      const conversationHistory = messages.slice(-16).map(m => ({
+        content: m.content,
+        sender_type: m.sender_type,
+      }));
+      const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
+        body: {
+          message: clientMessage,
+          request_id: id,
+          conversationHistory,
+          requestContext: buildRequestContext(),
+        },
+      });
+      if (error) console.error("Raqeem AI error:", error);
+    } catch (e) {
+      console.error("Raqeem AI call error:", e);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
+    const msgText = newMessage.trim();
     setSending(true);
     try {
       await supabase.from("request_messages" as any).insert({
-        request_id: id!, sender_id: user.id, sender_type: "client" as any, content: newMessage,
+        request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msgText,
       });
       setNewMessage("");
+      // Call Raqeem AI in the background — response saved via edge function
+      callRaqeemAI(msgText);
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -386,7 +439,8 @@ export default function RequestDetails() {
             <Card className="shadow-sm h-[calc(100vh-300px)] flex flex-col">
               <CardHeader className="pb-3 border-b border-border">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-primary" />المحادثة والملاحظات
+                  <Bot className="w-4 h-4 text-primary" />
+                  <span>رقيم – مساعدك الذكي</span>
                 </CardTitle>
               </CardHeader>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -397,8 +451,7 @@ export default function RequestDetails() {
                   </div>
                   <div className="max-w-[85%] rounded-xl px-4 py-3 text-sm bg-card border border-primary/20 text-foreground shadow-sm">
                     <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-xs font-bold text-primary">رقيم</span>
-                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5">مساعدك الذكي</Badge>
+                      <span className="text-xs font-bold text-primary">رقيم – مساعدك الذكي</span>
                     </div>
                     <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right' }}>
                       <ReactMarkdown>{getRaqeemWelcome(request.status, request)}</ReactMarkdown>
@@ -427,7 +480,7 @@ export default function RequestDetails() {
                       <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${isClient ? "bg-primary text-primary-foreground" : isAI ? "bg-card border border-primary/20 text-foreground" : "bg-muted text-foreground"}`}>
                         {isAI && (
                           <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[10px] font-bold text-primary">رقيم</span>
+                            <span className="text-[10px] font-bold text-primary">رقيم – مساعدك الذكي</span>
                           </div>
                         )}
                         {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
