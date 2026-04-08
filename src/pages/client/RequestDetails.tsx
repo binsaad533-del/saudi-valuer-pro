@@ -286,6 +286,9 @@ export default function RequestDetails() {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
+        {/* ── Status Guidance ── */}
+        <StatusGuidanceCard status={request.status} valuationMode={request.ai_intake_summary?.valuation_mode} />
+
         {/* ── Draft Report — Full-width professional workspace ── */}
         {showDraftReport && (
           <DraftReportReview
