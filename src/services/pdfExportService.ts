@@ -217,15 +217,17 @@ function drawTableOfContents(doc: jsPDF, report: Report) {
 
   const tocItems = [
     "1. بيانات التكليف والعميل",
-    "2. وصف الأصل",
-    "3. منهجية التقييم",
-    "4. تحليل السوق",
-    "5. المقارنات السوقية",
-    "6. القيمة التقديرية النهائية",
+    "2. نطاق العمل والافتراضات",
+    "3. وصف الأصل",
+    "4. منهجية التقييم",
+    "5. تحليل السوق",
+    "6. المقارنات السوقية",
+    "7. التسوية والقيمة النهائية",
   ];
 
-  if (report.notes) tocItems.push("7. ملاحظات");
+  if (report.notes) tocItems.push(`${tocItems.length + 1}. ملاحظات`);
   tocItems.push(`${tocItems.length + 1}. التوقيع والاعتماد`);
+  tocItems.push(`${tocItems.length + 1}. إخلاء المسؤولية والقيود`);
 
   tocItems.forEach((item, i) => {
     doc.setTextColor(...DARK);
@@ -268,27 +270,46 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
   y = drawKeyValue(doc, "الهاتف", report.clientPhone, y);
   y += 5;
 
-  y = drawSectionTitle(doc, "2. وصف الأصل", y);
+  // ── Section 2: Scope of Work & Assumptions (IVS 101/105) ──
+  y = drawSectionTitle(doc, "2. نطاق العمل والافتراضات", y);
+  y = drawKeyValue(doc, "أساس القيمة", "القيمة السوقية وفقاً لمعيار IVS 104", y);
+  y = drawKeyValue(doc, "الغرض من التقييم", report.notes ? "بيع / شراء" : "أغراض عامة", y);
+
+  // Valuation path assumption
+  const assetLabel = report.assetType === "real_estate" ? "عقار" : report.assetType === "equipment" ? "معدات" : "مركبة";
+  y = drawKeyValue(doc, "الافتراضات العامة",
+    "يُفترض أن جميع المعلومات المقدمة من العميل صحيحة ودقيقة. " +
+    "يُفترض عدم وجود عيوب خفية لا تظهر بالمعاينة البصرية. " +
+    "يُفترض أن الأصل لا يخضع لأي نزاعات قانونية ما لم يُذكر خلاف ذلك.", y);
+  y = drawKeyValue(doc, "القيود",
+    "هذا التقرير مُعد للغرض المذكور أعلاه فقط ولا يجوز استخدامه لأي غرض آخر. " +
+    "القيمة المقدرة صالحة في تاريخ التقييم فقط وقد تتغير مع تغير ظروف السوق.", y);
+  y += 5;
+
+  y = drawSectionTitle(doc, "3. وصف الأصل", y);
+  y = drawKeyValue(doc, "نوع الأصل", assetLabel, y);
   y = drawKeyValue(doc, "الوصف", report.assetDescription, y);
   y = drawKeyValue(doc, "الموقع", report.assetLocation, y);
   y += 5;
 
-  y = drawSectionTitle(doc, "3. منهجية التقييم", y);
+  y = drawSectionTitle(doc, "4. منهجية التقييم", y);
   const methodMap: Record<string, string> = {
-    market_comparison: "أسلوب المقارنة بالسوق",
-    income: "أسلوب الدخل",
-    cost: "أسلوب التكلفة",
+    market_comparison: "أسلوب المقارنة بالسوق (IVS 105.20)",
+    income: "أسلوب الدخل (IVS 105.40)",
+    cost: "أسلوب التكلفة (IVS 105.60)",
     combined: "أسلوب مشترك",
   };
   y = drawKeyValue(doc, "الأسلوب المستخدم", methodMap[report.methodology] || report.methodology, y);
+  y = drawKeyValue(doc, "مبررات اختيار المنهجية",
+    "تم اختيار هذه المنهجية بناءً على طبيعة الأصل، وتوفر بيانات السوق المقارنة، وامتثالاً لمعايير التقييم الدولية IVS 2025.", y);
   y += 5;
 
-  y = drawSectionTitle(doc, "4. تحليل السوق", y);
+  y = drawSectionTitle(doc, "5. تحليل السوق", y);
   y = drawKeyValue(doc, "التحليل", report.marketAnalysis, y);
   y += 5;
 
   // Comparables Table
-  y = drawSectionTitle(doc, "5. المقارنات السوقية", y);
+  y = drawSectionTitle(doc, "6. المقارنات السوقية", y);
   const colWidths = [15, 55, 35, 40, 25];
   y = drawTableRow(doc, ["#", "الوصف", "القيمة (ر.س)", "المصدر", "التاريخ"], y, true, colWidths);
 
@@ -309,10 +330,16 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
   });
   y += 8;
 
-  // Final Value - prominent box
-  y = checkPageBreak(doc, y, 50);
-  y = drawSectionTitle(doc, "6. القيمة التقديرية النهائية", y);
+  // ── Section 7: Reconciliation & Final Value (IVS 105.10) ──
+  y = checkPageBreak(doc, y, 70);
+  y = drawSectionTitle(doc, "7. التسوية والقيمة النهائية", y);
+  y = drawKeyValue(doc, "التسوية (Reconciliation)",
+    "بعد تطبيق المنهجية المعتمدة وإجراء التسويات اللازمة على المقارنات السوقية، " +
+    "ومراعاة عوامل الموقع والحالة والمساحة، وبعد تطبيق الحكم المهني للمقيّم المعتمد " +
+    "وفقاً لمتطلبات معيار IVS 105 (فقرات 209، 219، 351)، تم التوصل إلى القيمة النهائية التالية:", y);
+  y += 3;
 
+  // Final Value - prominent box
   doc.setFillColor(...LIGHT_BG);
   doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 35, 3, 3, "F");
   doc.setDrawColor(...PRIMARY_COLOR);
@@ -335,7 +362,7 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
 
   // Notes
   if (report.notes) {
-    y = drawSectionTitle(doc, "7. ملاحظات", y);
+    y = drawSectionTitle(doc, "8. ملاحظات", y);
     y = drawKeyValue(doc, "", report.notes, y);
     y += 5;
   }
