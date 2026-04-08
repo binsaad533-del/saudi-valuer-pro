@@ -544,6 +544,14 @@ export default function ExecutiveDashboard() {
             </div>
           </Card>
         </div>
+        {/* ═══ KANBAN BOARD ═══ */}
+        <KanbanBoard />
+
+        {/* ═══ WORKFLOW PIPELINE + ACTIVITY ═══ */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <WorkflowPipeline />
+          <LiveActivityTimeline />
+        </div>
       </div>
     </div>
   );
