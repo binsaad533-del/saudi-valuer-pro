@@ -10,6 +10,7 @@ import {
   ArrowLeft, User as UserIcon, CheckCircle, Eye, Monitor,
   Shield, Zap, BadgeCheck,
 } from "lucide-react";
+import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
 
 interface JourneyStartStepProps {
   clientName: string;
