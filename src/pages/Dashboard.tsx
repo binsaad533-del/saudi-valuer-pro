@@ -10,6 +10,7 @@ import StatCard from "@/components/dashboard/StatCard";
 import QuickActions from "@/components/dashboard/QuickActions";
 import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
 import WorkflowPipeline from "@/components/dashboard/WorkflowPipeline";
+import KanbanBoard from "@/components/dashboard/KanbanBoard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -101,7 +102,10 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <QuickActions />
 
-        {/* Workflow Pipeline */}
+        {/* Kanban Workflow Board */}
+        <KanbanBoard />
+
+        {/* Workflow Pipeline Summary */}
         <WorkflowPipeline />
 
         {/* Recent Requests from DB */}
