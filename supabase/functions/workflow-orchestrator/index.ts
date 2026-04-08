@@ -9,15 +9,44 @@ const corsHeaders = {
 /**
  * Workflow Orchestrator
  * 
- * Fully automated AI-driven valuation pipeline:
- * 1. AI Review (extract-documents / ai-intake)
- * 2. Auto-assign inspector (smart-inspector-assignment)
- * 3. [WAIT: Inspector completes field work]
- * 4. AI Valuation + Report Generation (triggered after inspection)
- * 5. [HUMAN: Admin approves draft]
- * 6. [HUMAN: Super Admin final approval]
- * 7. Auto-issue + Auto-archive
+ * ALL status changes go through update_request_status RPC.
+ * Uses the unified 19-status matrix defined in workflow-engine.ts:
+ *   draft → submitted → scope_generated → scope_approved →
+ *   first_payment_confirmed → data_collection_open → data_collection_complete →
+ *   inspection_pending → inspection_completed → data_validated →
+ *   analysis_complete → professional_review → draft_report_ready →
+ *   client_review → draft_approved → final_payment_confirmed →
+ *   issued → archived → cancelled
  */
+
+async function changeStatus(
+  supabase: any,
+  assignmentId: string,
+  newStatus: string,
+  reason: string,
+) {
+  const { data, error } = await supabase.rpc("update_request_status", {
+    _assignment_id: assignmentId,
+    _new_status: newStatus,
+    _user_id: "system",
+    _action_type: "auto",
+    _reason: reason,
+    _bypass_justification: null,
+  });
+
+  if (error) {
+    console.error(`[Orchestrator] Status change failed: ${newStatus}`, error.message);
+    return { success: false, error: error.message };
+  }
+
+  const result = data as any;
+  if (!result?.success) {
+    console.warn(`[Orchestrator] Status change rejected: ${newStatus}`, result?.error);
+    return { success: false, error: result?.error };
+  }
+
+  return { success: true, old_status: result.old_status, new_status: result.new_status };
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -56,12 +85,9 @@ Deno.serve(async (req) => {
 
       let assignmentId = existingAssignment?.id;
 
-      // If no assignment, the system will create one when it processes the request
-      // For now, log that the pipeline has been triggered
       if (!assignmentId) {
         await log("انتظار إنشاء ملف التقييم", "سيتم إنشاء الملف عند معالجة الطلب");
         
-        // Try to invoke ai-intake to process the request
         try {
           const { data: intakeResult } = await supabase.functions.invoke("ai-intake", {
             body: { request_id },
@@ -71,7 +97,6 @@ Deno.serve(async (req) => {
           await log("خطأ في التحليل الذكي", String(e));
         }
 
-        // Re-check for assignment after AI intake
         const { data: newAssignment } = await supabase
           .from("valuation_assignments")
           .select("id, status")
@@ -91,7 +116,7 @@ Deno.serve(async (req) => {
         }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // 2. Auto-assign inspector
+      // 2. Auto-assign inspector → move to inspection_pending
       try {
         const { data: subjects } = await supabase
           .from("subjects")
@@ -114,19 +139,9 @@ Deno.serve(async (req) => {
         if (inspectorResult?.assigned) {
           await log("تم تعيين المعاين تلقائياً", inspectorResult.inspector_name || "");
 
-          // Update status to inspection_assigned
-          await supabase
-            .from("valuation_assignments")
-            .update({ status: "inspection_assigned" as any })
-            .eq("id", assignmentId);
-
-          await supabase.from("status_history").insert({
-            assignment_id: assignmentId,
-            from_status: "inspection_required" as any,
-            to_status: "inspection_assigned" as any,
-            changed_by: "system",
-            reason: "تعيين معاين تلقائي بالذكاء الاصطناعي",
-          });
+          // Use RPC to move to inspection_pending (unified status)
+          await changeStatus(supabase, assignmentId, "inspection_pending",
+            "تعيين معاين تلقائي بالذكاء الاصطناعي");
         } else {
           await log("لم يتم العثور على معاين متاح", "بانتظار التعيين اليدوي");
         }
@@ -155,11 +170,9 @@ Deno.serve(async (req) => {
         }).catch(() => {});
       };
 
-      // 1. Update status to valuation_in_progress
-      await supabase
-        .from("valuation_assignments")
-        .update({ status: "valuation_in_progress" as any })
-        .eq("id", assignment_id);
+      // 1. Move to inspection_completed → data_validated → analysis_complete
+      await changeStatus(supabase, assignment_id, "inspection_completed",
+        "اكتمال المعاينة الميدانية");
 
       await log("بدء التقييم الآلي");
 
@@ -173,6 +186,10 @@ Deno.serve(async (req) => {
         await log(`خطأ في تحليل المعاينة: ${e}`);
       }
 
+      // Move to data_validated
+      await changeStatus(supabase, assignment_id, "data_validated",
+        "تم التحقق من البيانات بعد التحليل");
+
       // 3. Run valuation engine
       try {
         await supabase.functions.invoke("valuation-engine", {
@@ -182,6 +199,10 @@ Deno.serve(async (req) => {
       } catch (e) {
         await log(`خطأ في محرك التقييم: ${e}`);
       }
+
+      // Move to analysis_complete
+      await changeStatus(supabase, assignment_id, "analysis_complete",
+        "اكتمال التحليل والتقييم");
 
       // 4. Generate report
       try {
@@ -193,90 +214,63 @@ Deno.serve(async (req) => {
         await log(`خطأ في إنشاء التقرير: ${e}`);
       }
 
-      // 5. Move to draft_report_ready → under_client_review (admin review)
-      await supabase
-        .from("valuation_assignments")
-        .update({ status: "under_client_review" as any })
-        .eq("id", assignment_id);
+      // 5. Move to professional_review → draft_report_ready
+      await changeStatus(supabase, assignment_id, "professional_review",
+        "مسودة تقرير مُنشأة — بانتظار المراجعة المهنية");
 
-      await supabase.from("status_history").insert([
-        {
-          assignment_id,
-          from_status: "valuation_in_progress" as any,
-          to_status: "draft_report_ready" as any,
-          changed_by: "system",
-          reason: "مسودة تقرير مُنشأة بالذكاء الاصطناعي",
-        },
-        {
-          assignment_id,
-          from_status: "draft_report_ready" as any,
-          to_status: "under_client_review" as any,
-          changed_by: "system",
-          reason: "إرسال تلقائي للإداري للاعتماد",
-        },
-      ]);
-
-      await log("تم إرسال المسودة للإداري للاعتماد");
+      await log("تم إرسال المسودة للمراجعة المهنية");
 
       return new Response(JSON.stringify({
         success: true,
         message: "Post-inspection pipeline completed",
         assignment_id,
-        current_status: "under_client_review",
-        next_step: "admin_approval_required",
+        current_status: "professional_review",
+        next_step: "owner_professional_review",
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ── Admin approval trigger ──
+    // ── Admin approval trigger (owner approves draft) ──
     if (trigger === "admin_approved" && assignment_id) {
-      await supabase
-        .from("valuation_assignments")
-        .update({ status: "awaiting_final_payment" as any })
-        .eq("id", assignment_id);
-
-      await supabase.from("status_history").insert({
-        assignment_id,
-        from_status: "under_client_review" as any,
-        to_status: "awaiting_final_payment" as any,
-        changed_by: "system",
-        reason: "اعتماد الإداري — بانتظار اعتماد المشرف العام",
-      });
+      // Move from draft_report_ready → client_review
+      const result = await changeStatus(supabase, assignment_id, "client_review",
+        "اعتماد المقيّم — إرسال المسودة للعميل");
 
       return new Response(JSON.stringify({
         success: true,
-        message: "Sent to super admin for final approval",
-        current_status: "awaiting_final_payment",
+        message: "Draft sent to client for review",
+        current_status: "client_review",
+        transition: result,
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // ── Super Admin final approval trigger ──
-    if (trigger === "super_admin_approved" && assignment_id) {
-      // Approved → Issued → Archived (all automatic)
-      const transitions = [
-        { from: "awaiting_final_payment", to: "final_payment_received", reason: "اعتماد المشرف العام النهائي" },
-        { from: "final_payment_received", to: "report_issued", reason: "إصدار تلقائي للتقرير" },
-        { from: "report_issued", to: "closed", reason: "أرشفة تلقائية" },
-      ];
+    // ── Client approved draft → final payment or issuance ──
+    if (trigger === "client_approved" && assignment_id) {
+      const result = await changeStatus(supabase, assignment_id, "draft_approved",
+        "اعتماد العميل للمسودة");
 
-      for (const t of transitions) {
-        await supabase
-          .from("valuation_assignments")
-          .update({ status: t.to as any })
-          .eq("id", assignment_id);
+      return new Response(JSON.stringify({
+        success: true,
+        message: "Client approved draft",
+        current_status: "draft_approved",
+        transition: result,
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
-        await supabase.from("status_history").insert({
-          assignment_id,
-          from_status: t.from as any,
-          to_status: t.to as any,
-          changed_by: "system",
-          reason: t.reason,
-        });
-      }
+    // ── Final payment confirmed → issue report ──
+    if (trigger === "final_payment_confirmed" && assignment_id) {
+      // Issue the report
+      const issueResult = await changeStatus(supabase, assignment_id, "issued",
+        "إصدار التقرير النهائي بعد اكتمال السداد");
+
+      // Archive
+      const archiveResult = await changeStatus(supabase, assignment_id, "archived",
+        "أرشفة تلقائية بعد الإصدار");
 
       return new Response(JSON.stringify({
         success: true,
         message: "Report issued and archived",
-        current_status: "closed",
+        current_status: "archived",
+        transitions: { issue: issueResult, archive: archiveResult },
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
