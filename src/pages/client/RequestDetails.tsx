@@ -23,6 +23,7 @@ import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
 import BidiText from "@/components/ui/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 
 const STATUS_ORDER = [
   "draft", "ai_review", "submitted", "needs_clarification",
