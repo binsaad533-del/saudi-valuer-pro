@@ -1,3 +1,7 @@
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
 @import '@fontsource/cairo/400.css';
 @import '@fontsource/cairo/500.css';
 @import '@fontsource/cairo/600.css';
@@ -15,13 +19,13 @@
   :root {
     /* White-first identity with soft blue gradients */
     --background: 210 33% 98%;
-    --foreground: 215 30% 18%;
+    --foreground: 215 30% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 30% 18%;
+    --card-foreground: 215 30% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 30% 18%;
+    --popover-foreground: 215 30% 14%;
 
     /* Primary - Soft elegant blue */
     --primary: 212 60% 50%;
@@ -34,7 +38,7 @@
     --secondary-foreground: 212 50% 35%;
 
     --muted: 210 20% 96%;
-    --muted-foreground: 215 15% 52%;
+    --muted-foreground: 215 15% 42%;
 
     /* Accent - Lighter blue */
     --accent: 212 55% 92%;
@@ -56,8 +60,8 @@
     --ai-foreground: 0 0% 100%;
     --ai-light: 38 90% 95%;
 
-    --border: 214 25% 92%;
-    --input: 214 22% 91%;
+    --border: 214 25% 90%;
+    --input: 214 22% 89%;
     --ring: 212 60% 50%;
 
     --radius: 0.625rem;
@@ -132,20 +136,75 @@
 
   html {
     direction: rtl;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
-    font-family: 'Cairo', sans-serif;
+    @apply bg-background text-foreground;
+    font-family: 'IBM Plex Sans Arabic', 'Cairo', sans-serif;
+    line-height: 1.75;
+    letter-spacing: 0.01em;
   }
 
   [dir="ltr"] {
     direction: ltr;
   }
 
-  /* Global BiDi text rendering for Arabic content */
-  p, li, td, th, label, h1, h2, h3, h4, h5, h6 {
+  /* ─── Typography hierarchy ─── */
+  h1 {
+    @apply text-2xl font-bold leading-relaxed;
     text-align: right;
+  }
+  h2 {
+    @apply text-xl font-bold leading-relaxed;
+    text-align: right;
+  }
+  h3 {
+    @apply text-lg font-semibold leading-relaxed;
+    text-align: right;
+  }
+  h4 {
+    @apply text-base font-semibold leading-relaxed;
+    text-align: right;
+  }
+  h5, h6 {
+    @apply text-sm font-semibold leading-relaxed;
+    text-align: right;
+  }
+
+  /* Body text */
+  p {
+    text-align: right;
+    line-height: 1.85;
+    overflow-wrap: break-word;
+  }
+
+  li {
+    text-align: right;
+    line-height: 1.8;
+  }
+
+  td, th {
+    text-align: right;
+  }
+
+  label {
+    text-align: right;
+    @apply font-medium;
+  }
+
+  /* ─── Card typography improvements ─── */
+  .card, [class*="Card"] {
+    @apply p-5;
+  }
+
+  /* ─── Paragraph spacing inside content areas ─── */
+  .prose-content p + p,
+  .bidi-content p + p {
+    margin-top: 0.75em;
   }
 
   /* Dynamic content blocks: ensure proper bidi rendering */
@@ -167,6 +226,11 @@
   .prose p, .prose li, .prose td {
     unicode-bidi: plaintext;
     overflow-wrap: break-word;
+  }
+
+  /* ─── Max-width for long text readability ─── */
+  .readable-width {
+    max-width: 72ch;
   }
 
   /* LTR exceptions */
