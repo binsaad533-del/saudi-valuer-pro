@@ -5,10 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   PIPELINE_PHASES,
-  STATUS_LABELS,
-  STATUS_COLORS,
 } from "@/lib/workflow-engine";
-import { Loader2, AlertTriangle, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, TrendingUp, Clock, CheckCircle2 } from "lucide-react";
 import { SAR } from "@/components/ui/saudi-riyal";
 import { formatNumber } from "@/lib/utils";
 
@@ -34,7 +32,7 @@ export default function OwnerInsightsPanel() {
       .select("status, created_at, updated_at");
 
     const c: PipelineCounts = {};
-    const now = Date.now();
+    const _now = Date.now();
     let totalDays = 0;
     let completedCount = 0;
     let issuedThisMonth = 0;

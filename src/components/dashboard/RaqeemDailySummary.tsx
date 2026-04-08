@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, RefreshCw } from "lucide-react";
-import { normalizeStatus, STATUS_LABELS } from "@/lib/workflow-engine";
+import { STATUS_LABELS } from "@/lib/workflow-engine";
 
 interface DailySummary {
   urgentCount: number;
@@ -15,7 +15,7 @@ interface DailySummary {
 }
 
 export default function RaqeemDailySummary() {
-  const { user } = useAuth();
+  const _auth = useAuth();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);

@@ -6,7 +6,7 @@ import {
   CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
 import {
-  FileText, Users, Settings, Search, BarChart3,
+  FileText, Users, Settings, BarChart3,
   Scale, Archive, Shield, MapPin, Bell, BookOpen,
   DollarSign, ClipboardList, UserCheck, Activity,
 } from "lucide-react";
