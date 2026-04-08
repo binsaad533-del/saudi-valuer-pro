@@ -80,10 +80,6 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
       const statusResult = await changeStatusByRequestId(request.id, "issued", { userId, reason: "إصدار التقرير النهائي" });
       if (!statusResult.success) throw new Error(statusResult.error);
 
-      const reportNumber = `RPT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, "0")}`;
-      const verificationCode = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-        .map(b => b.toString(16).padStart(2, "0")).join("");
-
       await Promise.all([
         draft && supabase.from("report_drafts" as any)
           .update({
