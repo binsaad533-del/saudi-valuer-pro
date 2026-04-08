@@ -67,6 +67,15 @@ export const TRANSITION_RULES: Record<string, TransitionRule[]> = {
     audit_event_ar: "العميل أرسل الطلب",
     payment_mode: "both",
     bypassable: false,
+  }, {
+    to: "cancelled",
+    type: "manual",
+    allowed_roles: ["client", "owner"],
+    condition_ar: "إلغاء الطلب",
+    blocker_ar: "—",
+    audit_event_ar: "تم إلغاء الطلب",
+    payment_mode: "both",
+    bypassable: false,
   }],
 
   submitted: [{
@@ -79,6 +88,15 @@ export const TRANSITION_RULES: Record<string, TransitionRule[]> = {
     payment_mode: "both",
     bypassable: true,
     bypass_info: { role: "owner", requires_reason: true },
+  }, {
+    to: "cancelled",
+    type: "manual",
+    allowed_roles: ["client", "owner"],
+    condition_ar: "إلغاء الطلب",
+    blocker_ar: "—",
+    audit_event_ar: "تم إلغاء الطلب",
+    payment_mode: "both",
+    bypassable: false,
   }],
 
   scope_generated: [{
@@ -88,6 +106,15 @@ export const TRANSITION_RULES: Record<string, TransitionRule[]> = {
     condition_ar: "موافقة العميل على نطاق العمل والسعر",
     blocker_ar: "لم يوافق العميل بعد",
     audit_event_ar: "العميل وافق على نطاق العمل",
+    payment_mode: "both",
+    bypassable: false,
+  }, {
+    to: "cancelled",
+    type: "manual",
+    allowed_roles: ["client", "owner"],
+    condition_ar: "إلغاء الطلب",
+    blocker_ar: "—",
+    audit_event_ar: "تم إلغاء الطلب قبل الموافقة",
     payment_mode: "both",
     bypassable: false,
   }],
