@@ -137,7 +137,7 @@ export default function RequestDetails() {
         content: m.content,
         sender_type: m.sender_type,
       }));
-      const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
+      const { data: functionData, error } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
           message: clientMessage,
           request_id: id,
@@ -145,9 +145,35 @@ export default function RequestDetails() {
           requestContext: buildRequestContext(),
         },
       });
-      if (error) console.error("Raqeem AI error:", error);
+
+      if (error) {
+        console.error("Raqeem AI error:", error);
+        toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء التواصل مع رقيم.", variant: "destructive" });
+        return;
+      }
+
+      const reply = functionData?.reply?.trim();
+      if (!reply) {
+        console.warn("Raqeem returned empty reply", functionData);
+        return;
+      }
+
+      setMessages(prev => {
+        const alreadyExists = prev.some(m => m.sender_type === "ai" && m.content === reply);
+        if (alreadyExists) return prev;
+        return [
+          ...prev,
+          {
+            id: `local-ai-${Date.now()}`,
+            sender_type: "ai",
+            content: reply,
+            created_at: new Date().toISOString(),
+          },
+        ];
+      });
     } catch (e) {
       console.error("Raqeem AI call error:", e);
+      toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء تشغيل رقيم.", variant: "destructive" });
     }
   };
 

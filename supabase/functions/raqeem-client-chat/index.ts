@@ -212,11 +212,17 @@ ${requestSection}${attachmentsSection}${correctionsSection}${knowledgeSection}`;
 
     // ── Save AI reply to request_messages ──
     if (request_id) {
-      await db.from("request_messages").insert({
+      const insertResult = await db.from("request_messages").insert({
         request_id,
         sender_type: "ai",
         content: reply,
       });
+
+      if (insertResult.error) {
+        console.error("Failed to save AI reply:", insertResult.error);
+      } else {
+        console.log("AI reply saved successfully for request:", request_id);
+      }
     }
 
     return new Response(JSON.stringify({ reply }), {
