@@ -102,9 +102,6 @@ export default function Dashboard() {
         {/* Quick Actions */}
         <QuickActions />
 
-        {/* Kanban Workflow Board */}
-        <KanbanBoard />
-
         {/* Workflow Pipeline Summary */}
         <WorkflowPipeline />
 
