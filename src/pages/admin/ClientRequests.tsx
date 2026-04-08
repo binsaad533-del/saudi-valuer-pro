@@ -93,9 +93,16 @@ export default function ClientRequests() {
   const loadRequests = async () => {
     const { data } = await supabase
       .from("valuation_requests" as any)
-      .select("*, clients:client_id(id, name_ar, phone, email)")
+      .select("*, clients:client_id(id, name_ar, phone, email), assignment:assignment_id(id, status, reference_number)")
       .order("created_at", { ascending: false });
-    const reqs: any[] = (data as any[]) || [];
+    // Normalize: use assignment status as the canonical status for workflow
+    const reqs: any[] = ((data as any[]) || []).map(r => ({
+      ...r,
+      // Use the assignment's workflow status if available, else fall back to request status
+      status: r.assignment?.status || r.status,
+      assignment_id: r.assignment?.id || r.assignment_id,
+      reference_number: r.assignment?.reference_number || r.reference_number,
+    }));
     setRequests(reqs);
     setLoading(false);
 
