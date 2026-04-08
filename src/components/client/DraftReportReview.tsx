@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
+import { updateReportDraftStatus } from "@/lib/report-draft-status";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -77,10 +78,9 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
       const nextStatus = needsFinalPayment ? "draft_approved" : "draft_approved";
       const statusResult = await changeStatusByRequestId(requestId, nextStatus, { reason: "اعتماد المسودة من العميل" });
       if (!statusResult.success) throw new Error(statusResult.error);
+      const draftResult = await updateReportDraftStatus(draft.id, "client_approved", { client_approved_at: new Date().toISOString() });
+      if (!draftResult.success) throw new Error(draftResult.error);
       await Promise.all([
-        supabase.from("report_drafts" as any)
-          .update({ status: "client_approved", client_approved_at: new Date().toISOString() } as any)
-          .eq("id", draft.id),
         supabase.from("request_messages" as any).insert({
           request_id: requestId, sender_type: "system" as any,
           content: needsFinalPayment
@@ -107,10 +107,9 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
     try {
       const statusResult = await changeStatusByRequestId(requestId, "client_review", { reason: "ملاحظات العميل على المسودة" });
       if (!statusResult.success) console.warn("Status change warning:", statusResult.error);
+      const draftRevResult = await updateReportDraftStatus(draft.id, "client_revision_requested", { client_comments: comments });
+      if (!draftRevResult.success) console.warn("Draft status warning:", draftRevResult.error);
       await Promise.all([
-        supabase.from("report_drafts" as any)
-          .update({ status: "client_revision_requested", client_comments: comments } as any)
-          .eq("id", draft.id),
         supabase.from("request_messages" as any).insert({
           request_id: requestId, sender_type: "client" as any,
           sender_id: userId,
