@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BidiText from "@/components/ui/bidi-text";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -288,9 +289,9 @@ export default function ScopeOfWorkGenerator({
                       <span className="text-[11px] font-semibold text-foreground">{section.title}</span>
                     </div>
                     <div className="px-3 py-2">
-                      <p className="text-[11px] text-foreground/90 leading-relaxed whitespace-pre-line">
+                      <BidiText className="text-[11px] text-foreground/90" preserveNewlines>
                         {section.content}
-                      </p>
+                      </BidiText>
                     </div>
                   </div>
                 );

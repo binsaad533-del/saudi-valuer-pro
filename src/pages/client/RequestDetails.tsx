@@ -24,7 +24,7 @@ import DraftReportReview from "@/components/client/DraftReportReview";
 import DataPortalUploader from "@/components/client/DataPortalUploader";
 import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
-import { isolateBidiText } from "@/lib/bidi-text";
+import BidiText from "@/components/ui/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 
 
@@ -407,12 +407,12 @@ export default function RequestDetails() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="p-3 bg-primary/5 rounded-lg space-y-3 max-h-64 overflow-y-auto">
-                    <p dir="rtl" className="text-xs text-foreground whitespace-pre-line leading-7 text-right" style={{ unicodeBidi: 'plaintext' }}>{isolateBidiText(request.scope_of_work_ar)}</p>
+                    <BidiText className="text-xs text-foreground" preserveNewlines>{request.scope_of_work_ar}</BidiText>
                   </div>
                   {request.sow_special_assumptions_ar && (
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                       <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-1">الافتراضات الخاصة:</p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 whitespace-pre-line leading-5">{request.sow_special_assumptions_ar}</p>
+                      <BidiText className="text-xs text-amber-700 dark:text-amber-300" preserveNewlines>{request.sow_special_assumptions_ar}</BidiText>
                     </div>
                   )}
                   <div className="border-t border-border pt-3 space-y-2">
@@ -488,7 +488,7 @@ export default function RequestDetails() {
                     </div>
                   )}
                   {request.scope_of_work_ar && (
-                    <div><p className="text-xs text-muted-foreground mb-1">نطاق العمل:</p><p dir="rtl" className="text-xs bg-muted/50 p-2 rounded text-right leading-7" style={{ unicodeBidi: 'plaintext' }}>{isolateBidiText(request.scope_of_work_ar)}</p></div>
+                    <div><p className="text-xs text-muted-foreground mb-1">نطاق العمل:</p><BidiText className="text-xs bg-muted/50 p-2 rounded">{request.scope_of_work_ar}</BidiText></div>
                   )}
                   {request.terms_ar && (
                     <div><p className="text-xs text-muted-foreground mb-1">الشروط:</p><p className="text-xs bg-muted/50 p-2 rounded">{request.terms_ar}</p></div>

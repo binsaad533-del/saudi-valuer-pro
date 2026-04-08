@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BidiText from "@/components/ui/bidi-text";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -359,7 +360,7 @@ export function InspectionAnalysisView({ inspectionId, isAdmin = false }: Props)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{analysis.ai_reasoning_ar}</p>
+            <BidiText className="text-sm" preserveNewlines>{analysis.ai_reasoning_ar}</BidiText>
           </CardContent>
         </Card>
       )}

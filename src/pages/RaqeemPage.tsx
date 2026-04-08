@@ -413,11 +413,11 @@ export default function RaqeemPage() {
                         </div>
                       )}
                       {msg.role === "assistant" ? (
-                        <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right' }}>
+                        <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right', unicodeBidi: 'plaintext' as any }}>
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         </div>
                       ) : (
-                        <span className="whitespace-pre-wrap" dir="rtl" style={{ textAlign: 'right' }}>{msg.content}</span>
+                        <span className="whitespace-pre-wrap leading-[1.9]" dir="rtl" style={{ textAlign: 'right', unicodeBidi: 'plaintext' }}>{msg.content}</span>
                       )}
                       {msg.role === "assistant" && i === messages.length - 1 && isLoading && (
                         <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse mr-1 rounded-sm" />

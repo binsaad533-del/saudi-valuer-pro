@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import BidiText from "@/components/ui/bidi-text";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -286,9 +287,9 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
                         <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
                         <p className="text-xs font-semibold text-foreground">{label}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground leading-6 bg-muted/30 rounded p-2 whitespace-pre-wrap line-clamp-3">
+                      <BidiText className="text-xs text-muted-foreground bg-muted/30 rounded p-2" lineClamp={3} preserveNewlines>
                         {String(value)}
-                      </p>
+                      </BidiText>
                     </div>
                   );
                 })}
