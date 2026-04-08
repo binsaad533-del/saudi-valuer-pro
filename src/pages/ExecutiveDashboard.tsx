@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import BidiText from "@/components/ui/bidi-text";
+import KanbanBoard from "@/components/dashboard/KanbanBoard";
+import WorkflowPipeline from "@/components/dashboard/WorkflowPipeline";
+import LiveActivityTimeline from "@/components/dashboard/LiveActivityTimeline";
+import SmartAlertsBanner from "@/components/dashboard/SmartAlertsBanner";
 import {
   CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
   Search, ShieldCheck, AlertTriangle, X, Send,
