@@ -12,6 +12,7 @@ import {
   Image as ImageIcon, FileText, Table2, File as FileIcon,
 } from "lucide-react";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
+import type { AssetLocation } from "@/components/client/AssetLocationPicker";
 import JourneyHeader from "@/components/client/journey/JourneyHeader";
 import JourneyStartStep from "@/components/client/journey/JourneyStartStep";
 import JourneyUploadStep from "@/components/client/journey/JourneyUploadStep";
@@ -74,6 +75,7 @@ export default function SimplifiedJourney() {
   const [intendedUsersOther, setIntendedUsersOther] = useState("");
   const [valuationMode, setValuationMode] = useState<"field" | "desktop">("field");
   const [desktopDisclaimer, setDesktopDisclaimer] = useState(false);
+  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
   // Step 2: Files
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
@@ -185,6 +187,9 @@ export default function SimplifiedJourney() {
     }
     if (valuationMode === "desktop" && !desktopDisclaimer) {
       toast({ title: "يرجى الموافقة على إقرار التقييم المكتبي", variant: "destructive" }); return;
+    }
+    if (assetLocations.length === 0) {
+      toast({ title: "يرجى إضافة موقع واحد على الأقل", description: "الصق رابط خرائط قوقل لموقع الأصل", variant: "destructive" }); return;
     }
     setStep("upload");
   };
@@ -550,6 +555,10 @@ export default function SimplifiedJourney() {
             jobId,
             files: uploadedFiles,
             clientInfo: { contactName: clientName, contactPhone: clientPhone, contactEmail: clientEmail },
+            locations: assetLocations.map(l => ({
+              name: l.name, city: l.city, googleMapsUrl: l.googleMapsUrl,
+              latitude: l.latitude, longitude: l.longitude,
+            })),
             totalAssets: scopeData.totalAssets,
             simplified: true,
             valuation_mode: valuationMode,
@@ -628,6 +637,7 @@ export default function SimplifiedJourney() {
             intendedUsersOther={intendedUsersOther} setIntendedUsersOther={setIntendedUsersOther}
             valuationMode={valuationMode} setValuationMode={setValuationMode}
             desktopDisclaimer={desktopDisclaimer} setDesktopDisclaimer={setDesktopDisclaimer}
+            assetLocations={assetLocations} setAssetLocations={setAssetLocations}
             purposeOptions={PURPOSE_OPTIONS}
             usersOptions={USERS_OPTIONS}
             desktopBlockedPurposes={DESKTOP_BLOCKED_PURPOSES}

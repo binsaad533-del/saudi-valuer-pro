@@ -10,6 +10,7 @@ import {
   ArrowLeft, User as UserIcon, CheckCircle, Eye, Monitor,
   Shield, Zap, BadgeCheck,
 } from "lucide-react";
+import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
 
 interface JourneyStartStepProps {
   clientName: string;
@@ -30,6 +31,8 @@ interface JourneyStartStepProps {
   setValuationMode: (v: "field" | "desktop") => void;
   desktopDisclaimer: boolean;
   setDesktopDisclaimer: (v: boolean) => void;
+  assetLocations: AssetLocation[];
+  setAssetLocations: (v: AssetLocation[]) => void;
   purposeOptions: Record<string, string>;
   usersOptions: Record<string, string>;
   desktopBlockedPurposes: string[];
@@ -43,6 +46,7 @@ export default function JourneyStartStep(props: JourneyStartStepProps) {
     purpose, setPurpose, purposeOther, setPurposeOther,
     intendedUsers, setIntendedUsers, intendedUsersOther, setIntendedUsersOther,
     valuationMode, setValuationMode, desktopDisclaimer, setDesktopDisclaimer,
+    assetLocations, setAssetLocations,
     purposeOptions, usersOptions, desktopBlockedPurposes, onStart, toast,
   } = props;
 
@@ -188,6 +192,17 @@ export default function JourneyStartStep(props: JourneyStartStepProps) {
               </div>
             </div>
           )}
+        </div>
+
+        {/* Asset Locations */}
+        <div className="space-y-1.5 pt-2">
+          <Label className="text-sm font-semibold">موقع الأصل <span className="text-destructive">*</span></Label>
+          <p className="text-xs text-muted-foreground">الصق روابط خرائط قوقل لمواقع الأصول (يمكنك إضافة مواقع متعددة)</p>
+          <AssetLocationPicker
+            locations={assetLocations}
+            onChange={setAssetLocations}
+            compact
+          />
         </div>
 
         <Button onClick={onStart} className="w-full gap-2 mt-2" size="lg">
