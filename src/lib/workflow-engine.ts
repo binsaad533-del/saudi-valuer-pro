@@ -26,6 +26,7 @@ export const WORKFLOW_STATUSES = [
   "final_payment_confirmed",
   "issued",
   "archived",
+  "cancelled",
 ] as const;
 
 export type WorkflowStatus = (typeof WORKFLOW_STATUSES)[number];
@@ -338,6 +339,7 @@ export const STATUS_LABELS: Record<string, {
   final_payment_confirmed:  { ar: "الدفعة النهائية مؤكدة", en: "Final Payment Confirmed", icon: "💰", phase: "finalization", client_ar: "جاري الإصدار", owner_ar: "جاهز للإصدار النهائي", inspector_ar: "—", finance_ar: "مدفوع بالكامل ✓" },
   issued:                   { ar: "صادر", en: "Issued", icon: "📜", phase: "finalization", client_ar: "التقرير جاهز", owner_ar: "صادر ✓", inspector_ar: "—", finance_ar: "صادر ✓" },
   archived:                 { ar: "مؤرشف", en: "Archived", icon: "🗄️", phase: "finalization", client_ar: "مكتمل", owner_ar: "مؤرشف", inspector_ar: "—", finance_ar: "مؤرشف" },
+  cancelled:                { ar: "ملغي", en: "Cancelled", icon: "🚫", phase: "finalization", client_ar: "ملغي", owner_ar: "ملغي", inspector_ar: "—", finance_ar: "ملغي" },
 };
 
 // ── Client-facing simplified labels ──
@@ -371,6 +373,7 @@ export const STATUS_COLORS: Record<string, string> = {
   final_payment_confirmed: "bg-success/10 text-success",
   issued: "bg-success/10 text-success",
   archived: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
 // ── Phase grouping for pipeline view ──
