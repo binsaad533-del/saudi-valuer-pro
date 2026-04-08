@@ -10,38 +10,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import BidiText from "@/components/ui/bidi-text";
 import {
-  BarChart3,
-  Calendar,
-  CheckCircle2,
-  ClipboardCheck,
-  Clock,
-  Eye,
-  FileText,
-  FolderOpen,
-  Search,
-  Shield,
-  ShieldCheck,
-  Users,
-  AlertTriangle,
-  X,
-  Send,
-  MessageSquare,
-  Loader2,
-  User,
-  Bot,
+  BarChart3, Calendar, CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
+  FolderOpen, Search, Shield, ShieldCheck, Users, AlertTriangle, X, Send,
+  MessageSquare, Loader2, User, Bot, ArrowLeft, Building2, TrendingUp,
+  Zap, LayoutDashboard, BookOpen, Settings,
 } from "lucide-react";
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 
+/* ══════════════════════════════════════════════
+   Status Groups
+   ══════════════════════════════════════════════ */
 const STATUS_NEW = ["draft", "ai_review", "submitted", "client_submitted", "under_ai_review", "awaiting_client_info", "needs_clarification"];
 const STATUS_SOW = ["sow_generated", "sow_sent", "sow_approved"];
 const STATUS_PROGRESS = ["under_pricing", "quotation_sent", "quotation_approved", "awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid", "in_production", "inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted", "valuation_in_progress", "draft_report_ready", "draft_report_sent", "under_client_review", "client_comments", "revision_in_progress", "priced", "awaiting_payment_initial", "payment_received_initial"];
@@ -50,95 +32,39 @@ const STATUS_COMPLETE = ["completed", "report_issued", "closed", "archived"];
 const STATUS_BLOCKED = ["cancelled", "quotation_rejected"];
 
 const statusLabels: Record<string, string> = {
-  draft: "مسودة",
-  ai_review: "مراجعة ذكية",
-  submitted: "مقدم",
-  client_submitted: "مقدم من العميل",
-  under_ai_review: "مراجعة ذكية",
-  awaiting_client_info: "بانتظار معلومات",
-  needs_clarification: "يحتاج توضيح",
-  sow_generated: "نطاق العمل جاهز",
-  sow_sent: "نطاق العمل مُرسل",
-  sow_approved: "نطاق العمل مُعتمد",
-  under_pricing: "قيد التسعير",
-  priced: "تم التسعير",
-  quotation_sent: "عرض مرسل",
-  quotation_approved: "عرض مقبول",
-  quotation_rejected: "عرض مرفوض",
-  awaiting_payment: "بانتظار الدفع",
-  awaiting_payment_initial: "بانتظار الدفعة الأولى",
-  payment_uploaded: "إيصال مرفوع",
-  payment_under_review: "مراجعة الدفع",
-  payment_received_initial: "دفعة أولى مستلمة",
-  partially_paid: "مدفوع جزئياً",
-  fully_paid: "مدفوع بالكامل",
-  in_production: "قيد التنفيذ",
-  inspection_required: "تحتاج معاينة",
-  inspection_assigned: "معاينة مسندة",
-  inspection_in_progress: "معاينة جارية",
-  inspection_submitted: "معاينة مقدمة",
-  valuation_in_progress: "تقييم جاري",
-  draft_report_ready: "مسودة جاهزة",
-  draft_report_sent: "مسودة مرسلة",
-  under_client_review: "مراجعة العميل",
-  client_comments: "ملاحظات العميل",
-  revision_in_progress: "تعديل جاري",
-  final_payment_pending: "بانتظار الدفعة النهائية",
-  final_payment_uploaded: "إيصال نهائي مرفوع",
-  final_payment_approved: "دفعة نهائية معتمدة",
-  final_report_ready: "التقرير النهائي جاهز",
-  awaiting_final_payment: "بانتظار الدفعة النهائية",
-  final_payment_received: "دفعة نهائية مستلمة",
-  report_issued: "تم الإصدار",
-  completed: "مكتمل",
-  closed: "مغلق",
-  archived: "مؤرشف",
-  cancelled: "ملغي",
+  draft: "مسودة", ai_review: "مراجعة ذكية", submitted: "مقدم", client_submitted: "مقدم من العميل",
+  under_ai_review: "مراجعة ذكية", awaiting_client_info: "بانتظار معلومات", needs_clarification: "يحتاج توضيح",
+  sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل", sow_approved: "نطاق العمل مُعتمد",
+  under_pricing: "قيد التسعير", priced: "تم التسعير", quotation_sent: "عرض مرسل",
+  quotation_approved: "عرض مقبول", quotation_rejected: "عرض مرفوض",
+  awaiting_payment: "بانتظار الدفع", awaiting_payment_initial: "بانتظار الدفعة الأولى",
+  payment_uploaded: "إيصال مرفوع", payment_under_review: "مراجعة الدفع",
+  payment_received_initial: "دفعة أولى مستلمة", partially_paid: "مدفوع جزئياً", fully_paid: "مدفوع بالكامل",
+  in_production: "قيد التنفيذ", inspection_required: "تحتاج معاينة", inspection_assigned: "معاينة مسندة",
+  inspection_in_progress: "معاينة جارية", inspection_submitted: "معاينة مقدمة", valuation_in_progress: "تقييم جاري",
+  draft_report_ready: "مسودة جاهزة", draft_report_sent: "مسودة مرسلة", under_client_review: "مراجعة العميل",
+  client_comments: "ملاحظات العميل", revision_in_progress: "تعديل جاري",
+  final_payment_pending: "بانتظار الدفعة النهائية", final_payment_uploaded: "إيصال نهائي مرفوع",
+  final_payment_approved: "دفعة نهائية معتمدة", final_report_ready: "التقرير النهائي جاهز",
+  awaiting_final_payment: "بانتظار الدفعة النهائية", final_payment_received: "دفعة نهائية مستلمة",
+  report_issued: "تم الإصدار", completed: "مكتمل", closed: "مغلق", archived: "مؤرشف", cancelled: "ملغي",
 };
 
 const purposeLabels: Record<string, string> = {
-  sale_purchase: "بيع / شراء",
-  mortgage: "تمويل / رهن",
-  financial_reporting: "تقارير مالية",
-  insurance: "تأمين",
-  taxation: "زكاة / ضريبة",
-  expropriation: "نزع ملكية",
-  litigation: "نزاع / قضاء",
-  investment: "استثمار",
-  lease_renewal: "تجديد إيجار",
-  internal_decision: "قرار داخلي",
-  regulatory: "تنظيمي",
-  other: "أخرى",
+  sale_purchase: "بيع / شراء", mortgage: "تمويل / رهن", financial_reporting: "تقارير مالية",
+  insurance: "تأمين", taxation: "زكاة / ضريبة", expropriation: "نزع ملكية",
+  litigation: "نزاع / قضاء", investment: "استثمار", lease_renewal: "تجديد إيجار",
+  internal_decision: "قرار داخلي", regulatory: "تنظيمي", other: "أخرى",
 };
 
 const assetTypeLabels: Record<string, string> = {
-  real_estate: "عقار",
-  land: "أرض",
-  apartment: "شقة",
-  villa: "فيلا",
-  commercial: "تجاري",
-  industrial: "صناعي",
-  equipment: "معدات",
-  machinery: "آلات ومعدات",
-  business: "منشأة تجارية",
-  vehicle: "مركبة",
-  residential_land: "أرض سكنية",
-  commercial_land: "أرض تجارية",
-  building: "مبنى",
+  real_estate: "عقار", land: "أرض", apartment: "شقة", villa: "فيلا", commercial: "تجاري",
+  industrial: "صناعي", equipment: "معدات", machinery: "آلات ومعدات", business: "منشأة تجارية",
+  vehicle: "مركبة", residential_land: "أرض سكنية", commercial_land: "أرض تجارية", building: "مبنى",
 };
 
-type DashboardTab = "overview" | "requests" | "operations" | "clients" | "analytics" | "audit";
-type StatusGroupFilter = "all" | "new" | "progress" | "approval" | "complete" | "blocked";
-
-const matchesStatusGroup = (status: string, group: StatusGroupFilter) => {
-  if (group === "all") return true;
-  if (group === "new") return STATUS_NEW.includes(status);
-  if (group === "progress") return STATUS_PROGRESS.includes(status);
-  if (group === "approval") return STATUS_APPROVAL.includes(status);
-  if (group === "complete") return STATUS_COMPLETE.includes(status);
-  if (group === "blocked") return STATUS_BLOCKED.includes(status);
-  return true;
-};
+type ViewMode = "dashboard" | "workspace";
+type StatusGroupFilter = "all" | "new" | "sow" | "progress" | "approval" | "complete" | "blocked";
 
 const getClientName = (req: any) => req.client_name_ar || req.ai_intake_summary?.clientInfo?.contactName || "عميل غير محدد";
 const getClientPhone = (req: any) => req.client_phone || req.ai_intake_summary?.clientInfo?.contactPhone || "";
@@ -146,26 +72,41 @@ const getClientEmail = (req: any) => req.client_email || req.ai_intake_summary?.
 const getPurpose = (req: any) => purposeLabels[req.purpose] || req.purpose_ar || req.purpose_other || req.purpose || "غير محدد";
 const getAssetType = (req: any) => assetTypeLabels[req.property_type] || assetTypeLabels[req.valuation_type] || req.property_type || req.valuation_type || "غير محدد";
 const getStatus = (req: any) => statusLabels[req.status] || "غير محدد";
-const getRequestNotes = (req: any) => req.notes || req.property_description_ar || req.asset_data?.description || req.ai_intake_summary?.description || "لا توجد ملاحظات";
-const getMode = (req: any) => req.valuation_mode === "desktop" ? "مكتبي" : req.valuation_mode === "field" ? "ميداني" : "غير محدد";
+const getMode = (req: any) => req.valuation_mode === "desktop" ? "مكتبي" : req.valuation_mode === "field" ? "ميداني" : "—";
 
-const statusBadgeVariant = (status: string): "default" | "secondary" | "destructive" | "outline" => {
-  if (STATUS_COMPLETE.includes(status)) return "default";
-  if (STATUS_APPROVAL.includes(status)) return "secondary";
-  if (STATUS_BLOCKED.includes(status)) return "destructive";
-  return "outline";
+const matchesStatusGroup = (status: string, group: StatusGroupFilter) => {
+  if (group === "all") return true;
+  if (group === "new") return STATUS_NEW.includes(status);
+  if (group === "sow") return STATUS_SOW.includes(status);
+  if (group === "progress") return STATUS_PROGRESS.includes(status);
+  if (group === "approval") return STATUS_APPROVAL.includes(status);
+  if (group === "complete") return STATUS_COMPLETE.includes(status);
+  if (group === "blocked") return STATUS_BLOCKED.includes(status);
+  return true;
 };
 
+const statusColor = (status: string) => {
+  if (STATUS_COMPLETE.includes(status)) return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
+  if (STATUS_APPROVAL.includes(status)) return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+  if (STATUS_BLOCKED.includes(status)) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+  if (STATUS_NEW.includes(status)) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+  return "bg-muted text-muted-foreground";
+};
+
+/* ══════════════════════════════════════════════
+   Main Component
+   ══════════════════════════════════════════════ */
 export default function ExecutiveDashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [profileName, setProfileName] = useState("");
   const [requests, setRequests] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState<DashboardTab>("overview");
+  const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [statusGroupFilter, setStatusGroupFilter] = useState<StatusGroupFilter>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
+
+  // Workspace state
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [drawerMessages, setDrawerMessages] = useState<any[]>([]);
   const [drawerReply, setDrawerReply] = useState("");
@@ -173,200 +114,310 @@ export default function ExecutiveDashboard() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  // Load messages when a request is selected
+  /* ── Load data ── */
+  useEffect(() => {
+    if (!user) return;
+    const loadDashboard = async () => {
+      setLoading(true);
+      const [{ data: profile }, { data: requestRows }] = await Promise.all([
+        supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
+        supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500),
+      ]);
+      setProfileName(profile?.full_name_ar || "");
+      setRequests((requestRows as any[]) || []);
+      setLoading(false);
+    };
+    loadDashboard();
+  }, [user]);
+
+  const refreshRequests = useCallback(async () => {
+    const { data } = await supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500);
+    if (data) setRequests(data as any[]);
+  }, []);
+
+  /* ── Messages ── */
   useEffect(() => {
     if (!selectedRequest) { setDrawerMessages([]); return; }
     let cancelled = false;
     const loadMsgs = async () => {
       setLoadingMessages(true);
-      const { data } = await supabase
-        .from("request_messages" as any)
-        .select("*")
-        .eq("request_id", selectedRequest.id)
-        .order("created_at");
+      const { data } = await supabase.from("request_messages" as any).select("*").eq("request_id", selectedRequest.id).order("created_at");
       if (!cancelled) setDrawerMessages(data || []);
       setLoadingMessages(false);
     };
     loadMsgs();
-
-    const channel = supabase
-      .channel(`owner-msg-${selectedRequest.id}`)
+    const channel = supabase.channel(`owner-msg-${selectedRequest.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "request_messages", filter: `request_id=eq.${selectedRequest.id}` },
         (payload) => setDrawerMessages(prev => [...prev, payload.new]))
       .subscribe();
-
     return () => { cancelled = true; supabase.removeChannel(channel); };
   }, [selectedRequest?.id]);
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [drawerMessages]);
+  useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [drawerMessages]);
 
   const sendOwnerReply = useCallback(async () => {
     if (!drawerReply.trim() || !selectedRequest || !user) return;
     setSendingReply(true);
     try {
       await supabase.from("request_messages" as any).insert({
-        request_id: selectedRequest.id,
-        sender_id: user.id,
-        sender_type: "admin" as any,
-        content: drawerReply.trim(),
+        request_id: selectedRequest.id, sender_id: user.id, sender_type: "admin" as any, content: drawerReply.trim(),
       });
       setDrawerReply("");
-    } catch { /* toast handled by realtime */ }
+    } catch {}
     setSendingReply(false);
   }, [drawerReply, selectedRequest, user]);
 
-  useEffect(() => {
-    if (!user) return;
-
-    const loadDashboard = async () => {
-      setLoading(true);
-      const [{ data: profile }, { data: requestRows }] = await Promise.all([
-        supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
-        supabase
-          .from("valuation_requests" as any)
-          .select("*")
-          .order("created_at", { ascending: false })
-          .limit(500),
-      ]);
-
-      setProfileName(profile?.full_name_ar || "");
-      setRequests((requestRows as any[]) || []);
-      setLoading(false);
-    };
-
-    loadDashboard();
-  }, [user]);
-
+  /* ── Computed ── */
   const counts = useMemo(() => ({
     total: requests.length,
-    new: requests.filter((req) => STATUS_NEW.includes(req.status)).length,
-    progress: requests.filter((req) => STATUS_PROGRESS.includes(req.status)).length,
-    approval: requests.filter((req) => STATUS_APPROVAL.includes(req.status)).length,
-    complete: requests.filter((req) => STATUS_COMPLETE.includes(req.status)).length,
-    blocked: requests.filter((req) => STATUS_BLOCKED.includes(req.status)).length,
+    new: requests.filter(r => STATUS_NEW.includes(r.status)).length,
+    sow: requests.filter(r => STATUS_SOW.includes(r.status)).length,
+    progress: requests.filter(r => STATUS_PROGRESS.includes(r.status)).length,
+    approval: requests.filter(r => STATUS_APPROVAL.includes(r.status)).length,
+    complete: requests.filter(r => STATUS_COMPLETE.includes(r.status)).length,
+    blocked: requests.filter(r => STATUS_BLOCKED.includes(r.status)).length,
   }), [requests]);
 
-  const metrics = [
-    { label: "إجمالي الطلبات", value: counts.total, group: "all" as const, icon: FileText },
-    { label: "طلبات جديدة", value: counts.new, group: "new" as const, icon: ClipboardCheck },
-    { label: "قيد التنفيذ", value: counts.progress, group: "progress" as const, icon: Clock },
-    { label: "بانتظار الاعتماد", value: counts.approval, group: "approval" as const, icon: ShieldCheck },
-    { label: "مكتملة", value: counts.complete, group: "complete" as const, icon: CheckCircle2 },
-    { label: "متوقفة", value: counts.blocked, group: "blocked" as const, icon: AlertTriangle },
-  ];
-
   const filteredRequests = useMemo(() => {
-    return requests.filter((req) => {
+    return requests.filter(req => {
       const clientName = getClientName(req);
       const matchesSearch = !searchTerm.trim() || clientName.includes(searchTerm) || String(req.id).includes(searchTerm);
       const matchesGroup = matchesStatusGroup(req.status, statusGroupFilter);
       const matchesStatus = statusFilter === "all" || req.status === statusFilter;
-      const matchesType = typeFilter === "all" || req.valuation_mode === typeFilter;
-      return matchesSearch && matchesGroup && matchesStatus && matchesType;
+      return matchesSearch && matchesGroup && matchesStatus;
     });
-  }, [requests, searchTerm, statusGroupFilter, statusFilter, typeFilter]);
+  }, [requests, searchTerm, statusGroupFilter, statusFilter]);
 
-  const operationsRequests = useMemo(() => requests.filter((req) => !STATUS_NEW.includes(req.status)), [requests]);
+  const actionItems = useMemo(() => requests.filter(r =>
+    ["submitted", "client_submitted", "payment_uploaded", "final_payment_uploaded", "draft_report_ready", "client_comments"].includes(r.status)
+  ), [requests]);
 
-  const derivedClients = useMemo(() => {
-    const map = new Map<string, { name: string; phone: string; email: string; count: number; latestRequestDate: string }>();
-    for (const req of requests) {
-      const key = `${getClientName(req)}__${getClientPhone(req)}`;
-      if (map.has(key)) {
-        map.get(key)!.count += 1;
-      } else {
-        map.set(key, {
-          name: getClientName(req),
-          phone: getClientPhone(req),
-          email: getClientEmail(req),
-          count: 1,
-          latestRequestDate: req.created_at,
-        });
-      }
-    }
-
-    return Array.from(map.values()).sort((a, b) => new Date(b.latestRequestDate).getTime() - new Date(a.latestRequestDate).getTime());
-  }, [requests]);
-
-  const analyticsData = useMemo(() => {
-    const byStatus: Record<string, number> = {};
-    const byPurpose: Record<string, number> = {};
-    const byAssetType: Record<string, number> = {};
-
-    for (const req of requests) {
-      const status = getStatus(req);
-      const purpose = getPurpose(req);
-      const assetType = getAssetType(req);
-
-      byStatus[status] = (byStatus[status] || 0) + 1;
-      byPurpose[purpose] = (byPurpose[purpose] || 0) + 1;
-      byAssetType[assetType] = (byAssetType[assetType] || 0) + 1;
-    }
-
-    return { byStatus, byPurpose, byAssetType };
-  }, [requests]);
-
-  const auditEntries = useMemo(() => {
-    return requests.slice(0, 50).map((req) => ({
-      id: req.id,
-      title: `تحديث طلب ${getStatus(req)}`,
-      clientName: getClientName(req),
-      requestDate: new Date(req.created_at).toLocaleDateString("ar-SA"),
-      requestTime: new Date(req.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" }),
-      status: req.status,
-    }));
-  }, [requests]);
-
-  const handleMetricClick = (group: StatusGroupFilter) => {
-    setActiveTab("requests");
-    setStatusGroupFilter(group);
-    setStatusFilter("all");
-    setTypeFilter("all");
-    setSearchTerm("");
+  const openWorkspace = (req: any) => {
+    setSelectedRequest(req);
+    setViewMode("workspace");
   };
 
-  const openRequestDetails = (request: any) => {
-    setSelectedRequest(request);
+  const closeWorkspace = () => {
+    setSelectedRequest(null);
+    setViewMode("dashboard");
+    refreshRequests();
   };
 
+  /* ── Loading ── */
   if (loading) {
     return (
       <div className="min-h-screen" dir="rtl">
         <TopBar />
-        <div className="space-y-6 p-6">
+        <div className="space-y-6 p-6 max-w-[1400px] mx-auto">
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-28 rounded-xl" />)}
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
           </div>
-          <Skeleton className="h-[420px] rounded-xl" />
+          <Skeleton className="h-[500px] rounded-xl" />
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen" dir="rtl">
-      <TopBar />
-      <div className="space-y-6 p-6">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-bold text-foreground">لوحة المالك</h1>
-          <p className="text-sm text-muted-foreground">مرحباً {profileName || "المالك"} — عرض تنفيذي موحد من الطلبات فقط</p>
+  /* ══════════════════════════════════════════════
+     WORKSPACE VIEW — Full-page review for a request
+     ══════════════════════════════════════════════ */
+  if (viewMode === "workspace" && selectedRequest) {
+    return (
+      <div className="min-h-screen bg-background" dir="rtl">
+        <TopBar />
+
+        {/* Workspace Header */}
+        <div className="border-b border-border bg-card sticky top-0 z-20">
+          <div className="max-w-[1400px] mx-auto px-6 py-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <Button variant="ghost" size="sm" onClick={closeWorkspace} className="gap-2 shrink-0">
+                  <ArrowLeft className="w-4 h-4" />
+                  العودة
+                </Button>
+                <Separator orientation="vertical" className="h-8" />
+                <div className="min-w-0">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h1 className="text-lg font-bold text-foreground truncate">{getClientName(selectedRequest)}</h1>
+                    <Badge className={`${statusColor(selectedRequest.status)} border-0 text-xs font-semibold`}>
+                      {getStatus(selectedRequest)}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5 text-xs text-muted-foreground">
+                    <span>{getAssetType(selectedRequest)}</span>
+                    <span>•</span>
+                    <span>{getPurpose(selectedRequest)}</span>
+                    <span>•</span>
+                    <span>{getMode(selectedRequest)}</span>
+                    <span>•</span>
+                    <span>{new Date(selectedRequest.created_at).toLocaleDateString("ar-SA")}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-          {metrics.map((metric) => {
-            const Icon = metric.icon;
-            const isActive = activeTab === "requests" && statusGroupFilter === metric.group;
-            return (
-              <button key={metric.label} type="button" onClick={() => handleMetricClick(metric.group)} className="text-right">
-                <Card className={`h-full transition-all ${isActive ? "border-primary" : "border-border hover:border-primary/40"}`}>
-                  <CardContent className="flex h-full flex-col gap-3 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-lg bg-muted p-2 text-foreground"><Icon className="h-4 w-4" /></span>
-                      <span className="text-2xl font-bold text-foreground">{metric.value}</span>
+        {/* Workspace Body */}
+        <div className="max-w-[1400px] mx-auto px-6 py-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+
+            {/* Main Column: Workflow Panels */}
+            <div className="space-y-6 min-w-0">
+              {/* SOW */}
+              <SOWGenerator request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
+
+              {/* Professional Judgment */}
+              <ProfessionalJudgmentPanel request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
+
+              {/* Report Draft */}
+              <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
+
+              {/* Final Issuance */}
+              <FinalIssuancePanel request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
+            </div>
+
+            {/* Sidebar: Info + Chat */}
+            <div className="space-y-4">
+              {/* Request Info Card */}
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <Building2 className="w-4 h-4 text-primary" />
+                    بيانات الطلب
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 text-sm">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div><p className="text-xs text-muted-foreground">الغرض</p><p className="font-medium text-foreground mt-0.5">{getPurpose(selectedRequest)}</p></div>
+                    <div><p className="text-xs text-muted-foreground">نوع الأصل</p><p className="font-medium text-foreground mt-0.5">{getAssetType(selectedRequest)}</p></div>
+                    <div><p className="text-xs text-muted-foreground">نمط التقييم</p><p className="font-medium text-foreground mt-0.5">{getMode(selectedRequest)}</p></div>
+                    <div><p className="text-xs text-muted-foreground">التاريخ</p><p className="font-medium text-foreground mt-0.5">{new Date(selectedRequest.created_at).toLocaleDateString("ar-SA")}</p></div>
+                  </div>
+                  {getClientPhone(selectedRequest) && (
+                    <div><p className="text-xs text-muted-foreground">الجوال</p><p className="font-medium text-foreground mt-0.5" dir="ltr">{getClientPhone(selectedRequest)}</p></div>
+                  )}
+                  {getClientEmail(selectedRequest) && (
+                    <div><p className="text-xs text-muted-foreground">البريد</p><p className="font-medium text-foreground mt-0.5 text-xs" dir="ltr">{getClientEmail(selectedRequest)}</p></div>
+                  )}
+                  {selectedRequest.property_description_ar && (
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">الوصف</p>
+                      <BidiText className="text-xs text-foreground/80 leading-[1.8]">{selectedRequest.property_description_ar}</BidiText>
                     </div>
-                    <p className="text-sm font-medium text-foreground">{metric.label}</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Chat Card */}
+              <Card className="border-border">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-primary" />
+                    المحادثة
+                    {drawerMessages.length > 0 && <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{drawerMessages.length}</Badge>}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-[400px] overflow-y-auto space-y-2 rounded-lg bg-muted/20 p-3 mb-3">
+                    {loadingMessages ? (
+                      <div className="flex justify-center py-8"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
+                    ) : drawerMessages.length === 0 ? (
+                      <p className="text-center text-xs text-muted-foreground py-6">لا توجد رسائل</p>
+                    ) : (
+                      drawerMessages.map((msg: any, i: number) => {
+                        const isClient = msg.sender_type === "client";
+                        const isSystem = msg.sender_type === "system";
+                        const isAdmin = msg.sender_type === "admin";
+                        return (
+                          <div key={msg.id || i} className={`flex gap-2 ${isClient ? "justify-start" : "justify-end"}`}>
+                            {isClient && <div className="shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-3 h-3 text-primary" /></div>}
+                            <div className={`max-w-[80%] rounded-lg px-3 py-2 text-xs ${
+                              isSystem ? "bg-muted text-muted-foreground text-center mx-auto" :
+                              isClient ? "bg-background border border-border text-foreground" :
+                              "bg-primary text-primary-foreground"
+                            }`}>
+                              <p className="whitespace-pre-wrap leading-relaxed">{msg.content}</p>
+                              <p className={`text-[9px] mt-1 ${isAdmin ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                                {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                              </p>
+                            </div>
+                            {isAdmin && <div className="shrink-0 w-6 h-6 rounded-full bg-primary flex items-center justify-center"><Bot className="w-3 h-3 text-primary-foreground" /></div>}
+                          </div>
+                        );
+                      })
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+                  <form onSubmit={e => { e.preventDefault(); sendOwnerReply(); }} className="flex items-center gap-2">
+                    <Input value={drawerReply} onChange={e => setDrawerReply(e.target.value)} placeholder="اكتب رداً..." className="flex-1 text-xs h-9" disabled={sendingReply} />
+                    <Button type="submit" size="icon" className="h-9 w-9" disabled={sendingReply || !drawerReply.trim()}>
+                      {sendingReply ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ══════════════════════════════════════════════
+     DASHBOARD VIEW — Command Center
+     ══════════════════════════════════════════════ */
+
+  const kpiCards: { label: string; value: number; group: StatusGroupFilter; icon: React.ElementType; accent: string }[] = [
+    { label: "إجمالي الطلبات", value: counts.total, group: "all", icon: FileText, accent: "text-foreground" },
+    { label: "طلبات جديدة", value: counts.new, group: "new", icon: ClipboardCheck, accent: "text-amber-600 dark:text-amber-400" },
+    { label: "قيد التنفيذ", value: counts.progress, group: "progress", icon: Clock, accent: "text-blue-600 dark:text-blue-400" },
+    { label: "بانتظار الاعتماد", value: counts.approval, group: "approval", icon: ShieldCheck, accent: "text-indigo-600 dark:text-indigo-400" },
+    { label: "مكتملة", value: counts.complete, group: "complete", icon: CheckCircle2, accent: "text-emerald-600 dark:text-emerald-400" },
+    { label: "متوقفة", value: counts.blocked, group: "blocked", icon: AlertTriangle, accent: "text-red-600 dark:text-red-400" },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background" dir="rtl">
+      <TopBar />
+
+      <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+
+        {/* ═══ HEADER ═══ */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">مركز التحكم</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">مرحباً {profileName || "المالك"}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="text-xs gap-1.5 px-3 py-1">
+              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              متصل
+            </Badge>
+          </div>
+        </div>
+
+        {/* ═══ KPI CARDS ═══ */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+          {kpiCards.map(kpi => {
+            const Icon = kpi.icon;
+            const isActive = statusGroupFilter === kpi.group && statusGroupFilter !== "all";
+            return (
+              <button
+                key={kpi.label}
+                type="button"
+                onClick={() => setStatusGroupFilter(prev => prev === kpi.group ? "all" : kpi.group)}
+                className="text-right"
+              >
+                <Card className={`h-full transition-all hover:shadow-md ${isActive ? "border-primary ring-1 ring-primary/20 shadow-md" : "border-border hover:border-primary/30"}`}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isActive ? "bg-primary/10" : "bg-muted"}`}>
+                        <Icon className={`w-4 h-4 ${isActive ? "text-primary" : kpi.accent}`} />
+                      </div>
+                      <span className={`text-2xl font-bold ${kpi.accent}`}>{kpi.value}</span>
+                    </div>
+                    <p className="text-xs font-medium text-muted-foreground">{kpi.label}</p>
                   </CardContent>
                 </Card>
               </button>
@@ -374,394 +425,115 @@ export default function ExecutiveDashboard() {
           })}
         </div>
 
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as DashboardTab)} dir="rtl" className="space-y-4">
-          <TabsList className="h-auto w-full flex-wrap gap-1 rounded-xl bg-muted/50 p-1.5">
-            <TabsTrigger value="overview" className="px-3 py-2 text-sm">نظرة عامة</TabsTrigger>
-            <TabsTrigger value="requests" className="px-3 py-2 text-sm">الطلبات</TabsTrigger>
-            <TabsTrigger value="operations" className="px-3 py-2 text-sm">العمليات</TabsTrigger>
-            <TabsTrigger value="clients" className="px-3 py-2 text-sm">العملاء</TabsTrigger>
-            <TabsTrigger value="analytics" className="px-3 py-2 text-sm">التحليلات</TabsTrigger>
-            <TabsTrigger value="audit" className="px-3 py-2 text-sm">سجل المراجعة</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">ملخص الطلبات</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                    <div className="rounded-lg border border-border bg-card p-3"><p className="text-xs text-muted-foreground">إجمالي الطلبات</p><p className="mt-1 text-xl font-bold text-foreground">{counts.total}</p></div>
-                    <div className="rounded-lg border border-border bg-card p-3"><p className="text-xs text-muted-foreground">العملاء</p><p className="mt-1 text-xl font-bold text-foreground">{derivedClients.length}</p></div>
-                    <div className="rounded-lg border border-border bg-card p-3"><p className="text-xs text-muted-foreground">العمليات الجارية</p><p className="mt-1 text-xl font-bold text-foreground">{operationsRequests.length}</p></div>
-                  </div>
-
-                  <div className="space-y-2">
-                    {requests.slice(0, 5).map((req) => (
-                      <button key={req.id} type="button" onClick={() => openRequestDetails(req)} className="flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-right transition-colors hover:bg-muted/40">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-foreground">{getClientName(req)}</p>
-                          <p className="text-xs text-muted-foreground">{getPurpose(req)} · {new Date(req.created_at).toLocaleDateString("ar-SA")}</p>
-                        </div>
-                        <Badge variant={statusBadgeVariant(req.status)} className="text-[10px]">{getStatus(req)}</Badge>
-                      </button>
-                    ))}
-                    {requests.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">لا توجد طلبات حالياً</p>}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">نقاط المتابعة</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-                    <span className="text-muted-foreground">طلبات جديدة</span>
-                    <span className="font-semibold text-foreground">{counts.new}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-                    <span className="text-muted-foreground">بانتظار الاعتماد</span>
-                    <span className="font-semibold text-foreground">{counts.approval}</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3">
-                    <span className="text-muted-foreground">طلبات متوقفة</span>
-                    <span className="font-semibold text-foreground">{counts.blocked}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="requests" className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative min-w-[220px] flex-1">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="بحث باسم العميل أو رقم الطلب" className="pr-9" />
+        {/* ═══ ACTION ITEMS ALERT ═══ */}
+        {actionItems.length > 0 && (
+          <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-foreground">إجراء مطلوب</p>
+                  <p className="text-xs text-muted-foreground">{actionItems.length} طلب بحاجة إلى تدخلك</p>
+                </div>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[170px]"><SelectValue placeholder="الحالة" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل الحالات</SelectItem>
-                  {Array.from(new Set(requests.map((req) => req.status).filter(Boolean))).map((status) => (
-                    <SelectItem key={status} value={status}>{statusLabels[status] || status}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-[170px]"><SelectValue placeholder="نوع المعاينة" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل الأنواع</SelectItem>
-                  <SelectItem value="desktop">مكتبي</SelectItem>
-                  <SelectItem value="field">ميداني</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <Card>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">العميل</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الغرض</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">نوع الأصل</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">التاريخ</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">التفاصيل</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredRequests.length === 0 ? (
-                        <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">لا توجد طلبات مطابقة</td></tr>
-                      ) : filteredRequests.map((req) => (
-                        <tr key={req.id} className="border-b border-border/50 transition-colors hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium text-foreground">{getClientName(req)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{getPurpose(req)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{getAssetType(req)}</td>
-                          <td className="px-4 py-3"><Badge variant={statusBadgeVariant(req.status)} className="text-[10px]">{getStatus(req)}</Badge></td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ar-SA")}</td>
-                          <td className="px-4 py-3">
-                            <Button type="button" variant="ghost" size="sm" className="gap-1" onClick={() => openRequestDetails(req)}>
-                              <Eye className="h-4 w-4" />
-                              عرض
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="operations" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">العمليات المشتقة من الطلبات</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">العميل</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">نوع الأصل</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">نمط التنفيذ</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الإجراء</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {operationsRequests.length === 0 ? (
-                        <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">لا توجد عمليات حالياً</td></tr>
-                      ) : operationsRequests.map((req) => (
-                        <tr key={req.id} className="border-b border-border/50 transition-colors hover:bg-muted/30">
-                          <td className="px-4 py-3 font-medium text-foreground">{getClientName(req)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{getAssetType(req)}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{getMode(req)}</td>
-                          <td className="px-4 py-3"><Badge variant={statusBadgeVariant(req.status)} className="text-[10px]">{getStatus(req)}</Badge></td>
-                          <td className="px-4 py-3">
-                            <Button type="button" variant="ghost" size="sm" className="gap-1" onClick={() => openRequestDetails(req)}>
-                              <Eye className="h-4 w-4" />
-                              عرض
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="clients" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">العملاء المستخرجون من الطلبات</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الاسم</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الجوال</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">البريد</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">عدد الطلبات</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {derivedClients.length === 0 ? (
-                        <tr><td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">لا يوجد عملاء</td></tr>
-                      ) : derivedClients.map((client, index) => (
-                        <tr key={`${client.name}-${index}`} className="border-b border-border/50">
-                          <td className="px-4 py-3 font-medium text-foreground">{client.name}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground" dir="ltr">{client.phone || "—"}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{client.email || "—"}</td>
-                          <td className="px-4 py-3"><Badge variant="secondary" className="text-[10px]">{client.count}</Badge></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-3">
-              <Card>
-                <CardHeader><CardTitle className="text-base">حسب الحالة</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  {Object.entries(analyticsData.byStatus).map(([label, count]) => (
-                    <div key={label} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                      <span className="text-muted-foreground">{label}</span>
-                      <Badge variant="outline" className="text-[10px]">{count}</Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-base">حسب الغرض</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  {Object.entries(analyticsData.byPurpose).map(([label, count]) => (
-                    <div key={label} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                      <span className="text-muted-foreground">{label}</span>
-                      <Badge variant="outline" className="text-[10px]">{count}</Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader><CardTitle className="text-base">حسب نوع الأصل</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                  {Object.entries(analyticsData.byAssetType).map(([label, count]) => (
-                    <div key={label} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm">
-                      <span className="text-muted-foreground">{label}</span>
-                      <Badge variant="outline" className="text-[10px]">{count}</Badge>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="audit" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">سجل نشاط الطلبات</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-border bg-muted/40">
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">النشاط</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">العميل</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">التاريخ</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الوقت</th>
-                        <th className="px-4 py-3 text-right font-medium text-muted-foreground">الحالة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {auditEntries.length === 0 ? (
-                        <tr><td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">لا توجد نشاطات</td></tr>
-                      ) : auditEntries.map((entry) => (
-                        <tr key={entry.id} className="border-b border-border/50">
-                          <td className="px-4 py-3 text-foreground">{entry.title}</td>
-                          <td className="px-4 py-3 font-medium text-foreground">{entry.clientName}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{entry.requestDate}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{entry.requestTime}</td>
-                          <td className="px-4 py-3"><Badge variant={statusBadgeVariant(entry.status)} className="text-[10px]">{statusLabels[entry.status] || entry.status}</Badge></td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-
-      <Drawer open={Boolean(selectedRequest)} onOpenChange={(open) => !open && setSelectedRequest(null)}>
-        <DrawerContent className="max-h-[85vh]" dir="rtl">
-          <DrawerHeader className="border-b border-border">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1 text-right">
-                <DrawerTitle>تفاصيل الطلب</DrawerTitle>
-                <DrawerDescription>عرض داخلي آمن بدون انتقالات خارجية</DrawerDescription>
+              <div className="flex flex-wrap gap-2">
+                {actionItems.slice(0, 5).map(req => (
+                  <button
+                    key={req.id}
+                    onClick={() => openWorkspace(req)}
+                    className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-background px-3 py-2 text-xs hover:bg-muted/50 transition-colors"
+                  >
+                    <span className="font-medium text-foreground truncate max-w-[140px]">{getClientName(req)}</span>
+                    <Badge className={`${statusColor(req.status)} border-0 text-[10px]`}>{getStatus(req)}</Badge>
+                  </button>
+                ))}
+                {actionItems.length > 5 && (
+                  <span className="text-xs text-muted-foreground self-center">+{actionItems.length - 5} أخرى</span>
+                )}
               </div>
-              <Button type="button" variant="ghost" size="icon" onClick={() => setSelectedRequest(null)}>
-                <X className="h-4 w-4" />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* ═══ REQUESTS LIST ═══ */}
+        <div className="space-y-4">
+          {/* Filters Row */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative min-w-[240px] flex-1 max-w-md">
+              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="بحث بالاسم أو رقم الطلب..." className="pr-9 h-10" />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[180px] h-10"><SelectValue placeholder="كل الحالات" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">كل الحالات</SelectItem>
+                {Array.from(new Set(requests.map(r => r.status).filter(Boolean))).map(status => (
+                  <SelectItem key={status} value={status}>{statusLabels[status] || status}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {statusGroupFilter !== "all" && (
+              <Button variant="ghost" size="sm" onClick={() => setStatusGroupFilter("all")} className="gap-1 text-xs text-muted-foreground">
+                <X className="w-3 h-3" />
+                إزالة الفلتر
               </Button>
+            )}
+            <div className="mr-auto">
+              <Badge variant="outline" className="text-xs">{filteredRequests.length} طلب</Badge>
             </div>
-          </DrawerHeader>
+          </div>
 
-          {selectedRequest && (
-            <div className="space-y-4 overflow-y-auto p-4">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">اسم العميل</p><p className="mt-1 text-sm font-semibold text-foreground">{getClientName(selectedRequest)}</p></CardContent></Card>
-                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">الغرض</p><p className="mt-1 text-sm font-semibold text-foreground">{getPurpose(selectedRequest)}</p></CardContent></Card>
-                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">نوع الأصل</p><p className="mt-1 text-sm font-semibold text-foreground">{getAssetType(selectedRequest)}</p></CardContent></Card>
-                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">الحالة</p><div className="mt-1"><Badge variant={statusBadgeVariant(selectedRequest.status)}>{getStatus(selectedRequest)}</Badge></div></CardContent></Card>
-                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">تاريخ الطلب</p><p className="mt-1 text-sm font-semibold text-foreground">{new Date(selectedRequest.created_at).toLocaleDateString("ar-SA")}</p></CardContent></Card>
-                <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">رقم الجوال</p><p className="mt-1 text-sm font-semibold text-foreground" dir="ltr">{getClientPhone(selectedRequest) || "—"}</p></CardContent></Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">الملاحظات</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm leading-7 text-foreground">{getRequestNotes(selectedRequest)}</p>
-                </CardContent>
-              </Card>
-
-              {/* Chat / Messages Section */}
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-primary" />
-                    المحادثة ({drawerMessages.length})
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {loadingMessages ? (
-                    <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>
-                  ) : drawerMessages.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-4">لا توجد رسائل بعد</p>
-                  ) : (
-                    <div className="max-h-64 overflow-y-auto space-y-2 rounded-lg bg-muted/30 p-3">
-                      {drawerMessages.map((msg: any, i: number) => {
-                        const isClient = msg.sender_type === "client";
-                        const isSystem = msg.sender_type === "system";
-                        const isAdmin = msg.sender_type === "admin";
-                        return (
-                          <div key={msg.id || i} className={`flex gap-2 ${isClient ? "justify-start" : "justify-end"}`}>
-                            {isClient && <div className="shrink-0 w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-3.5 h-3.5 text-primary" /></div>}
-                            <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                              isSystem ? "bg-muted text-muted-foreground text-center mx-auto text-xs" :
-                              isClient ? "bg-background border border-border text-foreground" :
-                              "bg-primary text-primary-foreground"
-                            }`}>
-                              <p className="whitespace-pre-wrap">{msg.content}</p>
-                              <p className={`text-[10px] mt-1 ${isAdmin ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                                {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
-                              </p>
-                            </div>
-                            {isAdmin && <div className="shrink-0 w-7 h-7 rounded-full bg-primary flex items-center justify-center"><Bot className="w-3.5 h-3.5 text-primary-foreground" /></div>}
-                          </div>
-                        );
-                      })}
-                      <div ref={chatEndRef} />
-                    </div>
-                  )}
-
-                  {/* Reply input */}
-                  <form onSubmit={(e) => { e.preventDefault(); sendOwnerReply(); }} className="flex items-center gap-2 pt-1">
-                    <Input
-                      value={drawerReply}
-                      onChange={(e) => setDrawerReply(e.target.value)}
-                      placeholder="اكتب رداً للعميل..."
-                      className="flex-1 text-sm"
-                      disabled={sendingReply}
-                    />
-                    <Button type="submit" size="icon" disabled={sendingReply || !drawerReply.trim()}>
-                      {sendingReply ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              {/* SOW Generator */}
-              <SOWGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => {
-                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
-              }} />
-
-              {/* Professional Judgment Panel */}
-              <ProfessionalJudgmentPanel request={selectedRequest} userId={user!.id} onStatusChange={() => {
-                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
-              }} />
-
-              {/* Report Draft Generator */}
-              <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={() => {
-                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
-              }} />
-
-              {/* Final Issuance & Archive */}
-              <FinalIssuancePanel request={selectedRequest} userId={user!.id} onStatusChange={() => {
-                supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500).then(({ data }) => { if (data) setRequests(data as any[]); });
-              }} />
+          {/* Table */}
+          <Card className="border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">العميل</th>
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">الغرض</th>
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">نوع الأصل</th>
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">النمط</th>
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">الحالة</th>
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">التاريخ</th>
+                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground w-20"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRequests.length === 0 ? (
+                    <tr><td colSpan={7} className="px-4 py-16 text-center text-muted-foreground text-sm">لا توجد طلبات مطابقة</td></tr>
+                  ) : filteredRequests.map(req => (
+                    <tr
+                      key={req.id}
+                      className="border-b border-border/40 transition-colors hover:bg-muted/20 cursor-pointer"
+                      onClick={() => openWorkspace(req)}
+                    >
+                      <td className="px-4 py-3.5">
+                        <p className="font-semibold text-foreground text-sm">{getClientName(req)}</p>
+                        {req.reference_number && <p className="text-[10px] text-muted-foreground font-mono mt-0.5" dir="ltr">{req.reference_number}</p>}
+                      </td>
+                      <td className="px-4 py-3.5 text-muted-foreground text-xs">{getPurpose(req)}</td>
+                      <td className="px-4 py-3.5 text-muted-foreground text-xs">{getAssetType(req)}</td>
+                      <td className="px-4 py-3.5 text-muted-foreground text-xs">{getMode(req)}</td>
+                      <td className="px-4 py-3.5">
+                        <Badge className={`${statusColor(req.status)} border-0 text-[10px] font-medium`}>{getStatus(req)}</Badge>
+                      </td>
+                      <td className="px-4 py-3.5 text-xs text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ar-SA")}</td>
+                      <td className="px-4 py-3.5">
+                        <Button variant="ghost" size="sm" className="gap-1 text-xs h-8">
+                          <Eye className="w-3.5 h-3.5" />
+                          فتح
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          )}
-        </DrawerContent>
-      </Drawer>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }
