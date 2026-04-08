@@ -142,8 +142,8 @@ export default function RequestDetails() {
         file_path: filePath, amount, payment_type: paymentType, status: "pending",
       });
       const isFirst = paymentType === "first";
+      // Update payment_status only (status transition handled by payment processing)
       await supabase.from("valuation_requests" as any).update({
-        status: (isFirst ? "payment_uploaded" : "final_payment_uploaded") as any,
         payment_status: "payment_uploaded",
       } as any).eq("id", id!);
       await supabase.from("request_messages" as any).insert({

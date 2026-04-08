@@ -1,6 +1,7 @@
 import { useState } from "react";
 import BidiText from "@/components/ui/bidi-text";
 import { supabase } from "@/integrations/supabase/client";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -75,9 +76,8 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
     if (!sow) return;
     setSending(true);
     try {
-      // Save SOW to request and update status
+      // Save SOW data fields (no direct status change)
       await supabase.from("valuation_requests" as any).update({
-        status: "sow_sent" as any,
         scope_of_work_ar: sow.sections.map(s => `${s.heading}\n${s.content}`).join("\n\n"),
         sow_assumptions_ar: sow.generalAssumptions,
         sow_special_assumptions_ar: sow.specialAssumptions,
@@ -85,6 +85,12 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
         conflict_of_interest_checked: true,
         conflict_of_interest_result: "لا يوجد تعارض مصالح",
       } as any).eq("id", request.id);
+
+      // Advance status via RPC
+      const statusResult = await changeStatusByRequestId(request.id, "scope_generated", {
+        reason: "توليد وإرسال نطاق العمل للعميل",
+      });
+      if (!statusResult.success) throw new Error(statusResult.error);
 
       // Notify client via chat
       await supabase.from("request_messages" as any).insert({
