@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Badge } from "@/components/ui/badge";
-import { Shield, AlertTriangle, Clock, Brain, CheckCircle2 } from "lucide-react";
+import { Shield, AlertTriangle, Clock, Brain } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface StatusData {

@@ -104,14 +104,6 @@ const clientNavGroups: NavGroup[] = [
   ]},
 ];
 
-const roleKeyMap: Record<string, string> = {
-  owner: "المالك",
-  financial_manager: "المدير المالي",
-  admin_coordinator: "المنسق",
-  inspector: "المعاين",
-  client: "العميل",
-};
-
 function getNavGroupsForRole(role: string | null): NavGroup[] {
   switch (role) {
     case "inspector": return inspectorNavGroups;
@@ -123,7 +115,7 @@ function getNavGroupsForRole(role: string | null): NavGroup[] {
 
 export default function AppSidebar() {
   const location = useLocation();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
 

@@ -24,7 +24,7 @@ import { SAR } from "@/components/ui/saudi-riyal";
 import { formatNumber } from "@/lib/utils";
 import { motion } from "framer-motion";
 import {
-  Eye, ArrowLeft, Send, MessageSquare, Loader2,
+  ArrowLeft, Send, MessageSquare, Loader2,
   User, Bot, Building2, TrendingUp,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import { Progress } from "@/components/ui/progress";
 
 /* ═══ Status utilities ═══ */
 const STATUS_NEW = ["draft", "submitted"];
-const STATUS_PROGRESS = ["scope_generated", "scope_approved", "first_payment_confirmed", "data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated", "analysis_complete", "professional_review", "draft_report_ready", "client_review"];
+
 const STATUS_COMPLETE = ["issued", "archived"];
 const STATUS_BLOCKED = ["cancelled"];
 
