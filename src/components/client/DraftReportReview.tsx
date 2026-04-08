@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -73,14 +74,13 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
     setSubmitting(true);
     try {
       const needsFinalPayment = paymentStructure === "partial";
-      const nextStatus = needsFinalPayment ? "final_payment_pending" : "final_report_ready";
+      const nextStatus = needsFinalPayment ? "draft_approved" : "draft_approved";
+      const statusResult = await changeStatusByRequestId(requestId, nextStatus, { reason: "اعتماد المسودة من العميل" });
+      if (!statusResult.success) throw new Error(statusResult.error);
       await Promise.all([
         supabase.from("report_drafts" as any)
           .update({ status: "client_approved", client_approved_at: new Date().toISOString() } as any)
           .eq("id", draft.id),
-        supabase.from("valuation_requests" as any)
-          .update({ status: nextStatus, updated_at: new Date().toISOString() } as any)
-          .eq("id", requestId),
         supabase.from("request_messages" as any).insert({
           request_id: requestId, sender_type: "system" as any,
           content: needsFinalPayment
@@ -105,13 +105,12 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
     }
     setSubmitting(true);
     try {
+      const statusResult = await changeStatusByRequestId(requestId, "client_review", { reason: "ملاحظات العميل على المسودة" });
+      if (!statusResult.success) console.warn("Status change warning:", statusResult.error);
       await Promise.all([
         supabase.from("report_drafts" as any)
           .update({ status: "client_revision_requested", client_comments: comments } as any)
           .eq("id", draft.id),
-        supabase.from("valuation_requests" as any)
-          .update({ status: "client_comments", updated_at: new Date().toISOString() } as any)
-          .eq("id", requestId),
         supabase.from("request_messages" as any).insert({
           request_id: requestId, sender_type: "client" as any,
           sender_id: userId,

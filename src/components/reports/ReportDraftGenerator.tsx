@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import BidiText from "@/components/ui/bidi-text";
 import { supabase } from "@/integrations/supabase/client";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -142,7 +143,8 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
     setApproving(true);
     try {
       await supabase.from("report_drafts" as any).update({ status: "approved" } as any).eq("id", draft.id);
-      await supabase.from("valuation_requests" as any).update({ status: "draft_report_ready", updated_at: new Date().toISOString() } as any).eq("id", request.id);
+      const statusResult = await changeStatusByRequestId(request.id, "draft_report_ready", { reason: "اعتماد المسودة من المقيّم" });
+      if (!statusResult.success) throw new Error(statusResult.error);
       setDraft({ ...draft, status: "approved" });
       toast({ title: "تم اعتماد المسودة ✅", description: "المسودة جاهزة للإرسال للعميل" });
       onStatusChange?.();
@@ -154,7 +156,8 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
   const handleSendToClient = async () => {
     setSendingToClient(true);
     try {
-      await supabase.from("valuation_requests" as any).update({ status: "draft_report_sent", updated_at: new Date().toISOString() } as any).eq("id", request.id);
+      const statusResult = await changeStatusByRequestId(request.id, "client_review", { reason: "إرسال المسودة للعميل" });
+      if (!statusResult.success) throw new Error(statusResult.error);
       await supabase.from("report_drafts" as any).update({ status: "sent_to_client" } as any).eq("id", draft.id);
       await supabase.from("request_messages").insert({
         request_id: request.id, sender_type: "admin" as const, sender_id: userId,
