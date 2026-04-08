@@ -164,7 +164,14 @@ export default function SimplifiedJourney() {
           originalFilename: file.name,
         });
 
-        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
+        // Apply watermark to client-provided images (IVS/Taqeem requirement)
+        let fileToUpload: File | Blob = file;
+        if (file.type.startsWith("image/")) {
+          const { applyClientWatermark } = await import("@/lib/image-watermark");
+          fileToUpload = await applyClientWatermark(file);
+        }
+
+        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, fileToUpload);
         if (error) {
           toast({ title: `تعذر رفع الملف ${originalFilename}`, description: getUploadErrorMessage(error), variant: "destructive" });
           continue;

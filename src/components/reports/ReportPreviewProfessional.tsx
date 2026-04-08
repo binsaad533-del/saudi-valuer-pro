@@ -24,9 +24,22 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
   return (
     <div className="relative bg-white text-black print:shadow-none" dir="rtl">
       {isDraft && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-10">
-          <span className="text-[120px] font-bold text-destructive rotate-[-30deg] select-none">مسودة</span>
-        </div>
+        <>
+          {/* Watermark overlay */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 opacity-10">
+            <span className="text-[120px] font-bold text-destructive rotate-[-30deg] select-none">مسودة</span>
+          </div>
+          {/* Mandatory draft disclaimer banner (IVS 106 / معيار 30) */}
+          <div className="relative z-20 bg-amber-50 border-b-2 border-amber-400 px-8 py-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5 shrink-0" />
+              <div className="text-sm text-amber-900 space-y-1">
+                <p className="font-bold">مسودة مبدئية للاستخدام الداخلي فقط — DRAFT FOR INTERNAL USE ONLY</p>
+                <p className="text-xs">هذا الرأي مؤقت، مخصص لأغراض المراجعة الداخلية للعميل، ولا يجوز نشره أو الاعتماد عليه قانونياً.</p>
+              </div>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Header */}
