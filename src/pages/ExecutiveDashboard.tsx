@@ -545,14 +545,17 @@ export default function ExecutiveDashboard() {
             </div>
           </Card>
         </div>
-        {/* ═══ KANBAN BOARD ═══ */}
-        <KanbanBoard />
+        {/* ═══ RAQEEM DAILY SUMMARY ═══ */}
+        <RaqeemDailySummary />
 
-        {/* ═══ WORKFLOW PIPELINE + ACTIVITY ═══ */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <WorkflowPipeline />
-          <LiveActivityTimeline />
-        </div>
+        {/* ═══ INSIGHTS: FINANCIAL + PERFORMANCE + PIPELINE ═══ */}
+        <OwnerInsightsPanel />
+
+        {/* ═══ ACTIVITY TIMELINE ═══ */}
+        <LiveActivityTimeline />
+
+        {/* ═══ COMMAND PALETTE (global) ═══ */}
+        <CommandPalette />
       </div>
     </div>
   );
