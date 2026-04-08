@@ -7,7 +7,7 @@ import FinalIssuancePanel from "@/components/reports/FinalIssuancePanel";
 import SOWGenerator from "@/components/reports/SOWGenerator";
 import ProfessionalJudgmentPanel from "@/components/valuation/ProfessionalJudgmentPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
@@ -19,7 +19,7 @@ import { formatNumber } from "@/lib/utils";
 import {
   ArrowLeft, Send, MessageSquare, Loader2,
   User, Bot, Building2, Brain, Shield,
-  AlertTriangle, Clock, ChevronLeft, RefreshCw,
+  AlertTriangle, Clock, ChevronLeft,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 

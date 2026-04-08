@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Settings, LogOut, BookOpen, FileText,
   Users, UserCheck, ClipboardList, Archive, BarChart3,
   DollarSign, Shield, Search, Activity, Bell, Briefcase,
-  TrendingUp, MapPin, Scale, ChevronLeft,
+  TrendingUp, MapPin, Scale,
   Brain, Zap,
 } from "lucide-react";
 import {
