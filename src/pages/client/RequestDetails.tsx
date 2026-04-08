@@ -6,38 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import {
   ArrowRight, FileText, MessageSquare, Send, Loader2, Bot, User,
-  CreditCard, Building2, CheckCircle, XCircle, Upload, Download,
-  Clock, DollarSign, Shield, AlertCircle, MessageSquareText,
+  Building2, CheckCircle, XCircle, Upload, Download,
+  Clock, Shield, AlertCircle,
   Package, Trash2, Edit,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import PaymentHistory from "@/components/payments/PaymentHistory";
-import ClientReportReview from "@/components/reports/ClientReportReview";
 import DraftReportReview from "@/components/client/DraftReportReview";
 import DataPortalUploader from "@/components/client/DataPortalUploader";
 import { deriveInspectionType } from "@/lib/sow-engine";
 import { formatDate, formatNumber } from "@/lib/utils";
 import BidiText from "@/components/ui/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
-
-
-const STATUS_TIMELINE = [
-  { key: "submitted", label: "تم الإرسال" },
-  { key: "sow_sent", label: "نطاق العمل" },
-  { key: "sow_approved", label: "الموافقة" },
-  { key: "awaiting_payment", label: "الدفعة الأولى" },
-  { key: "in_production", label: "التنفيذ" },
-  { key: "draft_report_sent", label: "المسودة" },
-  { key: "final_report_ready", label: "التقرير النهائي" },
-  { key: "completed", label: "مكتمل" },
-];
 
 const STATUS_ORDER = [
   "draft", "ai_review", "submitted", "needs_clarification",
@@ -66,7 +51,6 @@ export default function RequestDetails() {
   const [sending, setSending] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
-  const [paymentAmount, setPaymentAmount] = useState("");
   const [paymentType, setPaymentType] = useState("first");
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
@@ -74,26 +58,21 @@ export default function RequestDetails() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { navigate("/login"); return; }
     setUser(user);
-
     const [reqRes, msgRes, docRes, payRes] = await Promise.all([
       supabase.from("valuation_requests" as any).select("*").eq("id", id!).single(),
       supabase.from("request_messages" as any).select("*").eq("request_id", id!).order("created_at"),
       supabase.from("request_documents" as any).select("*").eq("request_id", id!).order("created_at"),
       supabase.from("payment_receipts" as any).select("*").eq("request_id", id!).order("created_at"),
     ]);
-
     setRequest(reqRes.data);
     setMessages(msgRes.data || []);
     setDocuments(docRes.data || []);
     setPayments(payRes.data || []);
-
-    // Load reports if assignment exists
     const reqData = reqRes.data as any;
     if (reqData?.assignment_id) {
       const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", reqData.assignment_id).order("created_at", { ascending: false });
       setReports((reps as any[]) || []);
     }
-
     setLoading(false);
   };
 
@@ -135,12 +114,10 @@ export default function RequestDetails() {
         quotation_response_at: new Date().toISOString(),
         ...(approved ? { quotation_approved_at: new Date().toISOString() } : {}),
       } as any).eq("id", id!);
-
       await supabase.from("request_messages" as any).insert({
         request_id: id!, sender_type: "system" as any,
         content: approved ? "✅ تم قبول عرض السعر من قبل العميل" : "❌ تم رفض عرض السعر من قبل العميل",
       });
-
       toast({ title: approved ? "تم قبول العرض" : "تم رفض العرض" });
       loadData();
     } catch (err: any) {
@@ -158,27 +135,20 @@ export default function RequestDetails() {
       const filePath = `receipts/${user.id}/${Date.now()}_${file.name}`;
       const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
       if (uploadErr) throw uploadErr;
-
-      const amount = paymentAmount ? parseFloat(paymentAmount) : (
-        paymentType === "first" ? request.first_payment_amount : (request.total_fees - (request.amount_paid || 0))
-      );
-
+      const amount = parseFloat(String(paymentType === "first" ? request.first_payment_amount : (request.total_fees - (request.amount_paid || 0))));
       await supabase.from("payment_receipts" as any).insert({
         request_id: id!, uploaded_by: user.id, file_name: file.name,
         file_path: filePath, amount, payment_type: paymentType, status: "pending",
       });
-
       const isFirst = paymentType === "first";
       await supabase.from("valuation_requests" as any).update({
         status: (isFirst ? "payment_uploaded" : "final_payment_uploaded") as any,
         payment_status: "payment_uploaded",
       } as any).eq("id", id!);
-
       await supabase.from("request_messages" as any).insert({
         request_id: id!, sender_type: "system" as any,
         content: `📎 تم رفع إيصال دفع بمبلغ ${formatNumber(amount)} ر.س - ${isFirst ? "الدفعة الأولى" : "الدفعة النهائية"}`,
       });
-
       toast({ title: "تم رفع الإيصال بنجاح" });
       loadData();
     } catch (err: any) {
@@ -204,8 +174,6 @@ export default function RequestDetails() {
     return map[status] || status;
   };
 
-  const currentStepIndex = STATUS_ORDER.indexOf(request?.status || "draft");
-
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
   }
@@ -218,37 +186,101 @@ export default function RequestDetails() {
   const needsFinalPayment = ["final_payment_pending"].includes(request.status) && request.payment_structure === "partial";
   const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
   const showDraftReport = ["draft_report_sent", "client_comments"].includes(request.status);
-  const showFinalPaymentSection = needsFinalPayment;
   const showFinalReport = ["final_report_ready", "report_issued", "completed"].includes(request.status);
   const showSOW = request.status === "sow_sent";
 
   return (
-    <div className="bg-background">
-      {/* Page sub-header */}
+    <div className="bg-background min-h-screen" dir="rtl">
+      {/* ── Top Header ── */}
       <div className="bg-card border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div>
-              <h2 className="text-sm font-bold text-foreground">تفاصيل الطلب</h2>
-              {request.reference_number && <p className="text-xs text-muted-foreground font-mono" dir="ltr">{request.reference_number}</p>}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FileText className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground">تفاصيل الطلب</h1>
+                <div className="flex items-center gap-3 mt-0.5">
+                  {request.reference_number && (
+                    <span className="text-xs text-muted-foreground font-mono" dir="ltr">{request.reference_number}</span>
+                  )}
+                  {request.property_city_ar && (
+                    <span className="text-xs text-muted-foreground">• {request.property_city_ar}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className="bg-primary/10 text-primary border-primary/20 text-xs px-3 py-1">
+                {getStatusLabel(request.status)}
+              </Badge>
+              {request.ai_intake_summary?.valuation_mode && (
+                <Badge variant="outline" className="text-xs">
+                  {request.ai_intake_summary.valuation_mode === "desktop" ? "تقييم مكتبي" : "تقييم ميداني"}
+                </Badge>
+              )}
             </div>
           </div>
-          <Badge className="bg-primary/10 text-primary">{getStatusLabel(request.status)}</Badge>
         </div>
       </div>
 
-      {/* Progress Timeline */}
+      {/* ── Progress Timeline ── */}
       <div className="bg-card border-b border-border">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <EnhancedRequestTracker status={request.status} createdAt={request.created_at} valuationMode={request.ai_intake_summary?.valuation_mode || "field"} />
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+        {/* ── Draft Report — Full-width professional workspace ── */}
+        {showDraftReport && (
+          <DraftReportReview
+            requestId={id!}
+            userId={user.id}
+            paymentStructure={request.payment_structure}
+            onStatusChange={loadData}
+          />
+        )}
+
+        {/* ── Final Report — Full-width ── */}
+        {showFinalReport && (
+          <div className="rounded-xl border border-border bg-card p-6 space-y-4" dir="rtl">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+                <Shield className="w-5 h-5 text-emerald-600" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">التقرير النهائي</h2>
+                <p className="text-xs text-muted-foreground">موقّع ومعتمد رسمياً</p>
+              </div>
+            </div>
+            <div className="p-5 bg-emerald-50 dark:bg-emerald-900/10 rounded-xl text-center border border-emerald-100 dark:border-emerald-900/30">
+              <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
+              <p className="font-bold text-foreground text-sm">التقرير النهائي جاهز للتحميل</p>
+              {request.report_number && (
+                <p className="text-xs font-mono text-primary mt-2" dir="ltr">رقم التقرير: {request.report_number}</p>
+              )}
+            </div>
+            {request.verification_code && (
+              <div className="p-3 bg-muted/30 rounded-lg text-center">
+                <p className="text-[10px] text-muted-foreground mb-1">رمز التحقق</p>
+                <p className="text-xs font-mono text-foreground select-all" dir="ltr">{request.verification_code}</p>
+                <a href={`/verify/${request.verification_code}`} target="_blank" rel="noopener" className="text-[10px] text-primary hover:underline mt-1 inline-block">
+                  التحقق من صحة التقرير ←
+                </a>
+              </div>
+            )}
+            <Button className="w-full" size="lg"><Download className="w-4 h-4 ml-2" />تحميل التقرير النهائي</Button>
+          </div>
+        )}
+
+        {/* ── Main 3-column grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Chat */}
+          {/* ── Chat (2 cols) ── */}
           <div className="lg:col-span-2">
-            <Card className="shadow-card h-[calc(100vh-240px)] flex flex-col">
+            <Card className="shadow-sm h-[calc(100vh-300px)] flex flex-col">
               <CardHeader className="pb-3 border-b border-border">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <MessageSquare className="w-4 h-4 text-primary" />المحادثة والملاحظات
@@ -270,15 +302,11 @@ export default function RequestDetails() {
                   }
                   return (
                     <div key={msg.id} className={`flex gap-2 ${isClient ? "flex-row-reverse" : ""}`}>
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${
-                        isAI ? "gradient-primary" : isClient ? "bg-muted" : "bg-accent"
-                      }`}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isAI ? "gradient-primary" : isClient ? "bg-muted" : "bg-accent"}`}>
                         {isAI ? <Bot className="w-3.5 h-3.5 text-primary-foreground" /> : <User className="w-3.5 h-3.5 text-muted-foreground" />}
                       </div>
-                      <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${
-                        isClient ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"
-                      }`}>
-                        {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
+                      <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${isClient ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                        {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
                         <p className={`text-[10px] mt-1 ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                           {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
                         </p>
@@ -290,7 +318,7 @@ export default function RequestDetails() {
               </div>
               <div className="p-4 border-t border-border">
                 <div className="flex gap-2">
-                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending} />
+                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending} dir="rtl" />
                   <Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending} size="icon">
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
@@ -299,39 +327,57 @@ export default function RequestDetails() {
             </Card>
           </div>
 
-          {/* Sidebar */}
+          {/* ── Sidebar ── */}
           <div className="space-y-4">
             {/* Request Info */}
-            <Card className="shadow-card">
+            <Card className="shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2"><Building2 className="w-4 h-4 text-primary" />معلومات الطلب</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
+                  <span>معلومات الطلب</span>
+                  <Building2 className="w-4 h-4 text-primary" />
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                {request.property_description_ar && <div><span className="text-muted-foreground text-xs">الوصف:</span><p className="text-foreground">{request.property_description_ar}</p></div>}
-                {request.property_city_ar && <div className="flex justify-between"><span className="text-muted-foreground text-xs">المدينة:</span><span>{request.property_city_ar}</span></div>}
-                {request.land_area && <div className="flex justify-between"><span className="text-muted-foreground text-xs">مساحة الأرض:</span><span dir="ltr">{request.land_area} م²</span></div>}
-                <div className="flex justify-between"><span className="text-muted-foreground text-xs">تاريخ الطلب:</span><span>{formatDate(request.created_at)}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground text-xs">التسليم المتوقع:</span><span>{(() => { const d = new Date(request.created_at); d.setDate(d.getDate() + (request.ai_intake_summary?.valuation_mode === "desktop" ? 5 : 10)); return formatDate(d.toISOString()); })()}</span></div>
+              <CardContent className="space-y-2.5 text-sm">
+                {request.property_description_ar && (
+                  <div>
+                    <span className="text-muted-foreground text-xs">الوصف:</span>
+                    <BidiText className="text-foreground text-xs mt-0.5">{request.property_description_ar}</BidiText>
+                  </div>
+                )}
+                {request.property_city_ar && (
+                  <div className="flex justify-between"><span className="text-muted-foreground text-xs">المدينة:</span><span className="text-xs">{request.property_city_ar}</span></div>
+                )}
+                {request.land_area && (
+                  <div className="flex justify-between"><span className="text-muted-foreground text-xs">مساحة الأرض:</span><span dir="ltr" className="text-xs">{request.land_area} م²</span></div>
+                )}
+                <div className="flex justify-between"><span className="text-muted-foreground text-xs">تاريخ الطلب:</span><span className="text-xs">{formatDate(request.created_at)}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground text-xs">التسليم المتوقع:</span>
+                  <span className="text-xs">{(() => { const d = new Date(request.created_at); d.setDate(d.getDate() + (request.ai_intake_summary?.valuation_mode === "desktop" ? 5 : 10)); return formatDate(d.toISOString()); })()}</span>
+                </div>
               </CardContent>
             </Card>
 
             {/* Asset Summary */}
             {request.asset_data?.inventory && (
-              <Card className="shadow-card">
+              <Card className="shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><Package className="w-4 h-4 text-primary" />ملخص الأصول</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
+                    <span>ملخص الأصول</span>
+                    <Package className="w-4 h-4 text-primary" />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   {(() => {
                     const TYPE_INFO: Record<string, { label: string; desc: string }> = {
-                      real_estate: { label: "عقارات", desc: "أراضي، مباني، فلل، شقق، عمائر" },
-                      machinery_equipment: { label: "آلات ومعدات", desc: "معدات تشغيلية وصناعية وإنتاجية" },
-                      furniture_fixtures: { label: "أثاث ومفروشات", desc: "أثاث مكتبي وتجهيزات داخلية" },
-                      vehicles: { label: "مركبات", desc: "تقييم قيمة المركبة كأصل ثابت" },
-                      technology_equipment: { label: "أجهزة تقنية", desc: "حاسبات، طابعات، شاشات، سيرفرات" },
-                      medical_equipment: { label: "أجهزة طبية", desc: "أجهزة تحليل ومختبرات ومعدات طبية" },
-                      leasehold_improvements: { label: "تحسينات مستأجرة", desc: "تشطيبات، ديكورات، لوحات" },
-                      right_of_use: { label: "مصالح مستأجرة", desc: "حقوق منفعة عقارية أو حق استخدام آلة" },
+                      real_estate: { label: "عقارات", desc: "أراضي، مباني، فلل، شقق" },
+                      machinery_equipment: { label: "آلات ومعدات", desc: "معدات تشغيلية وصناعية" },
+                      furniture_fixtures: { label: "أثاث ومفروشات", desc: "أثاث مكتبي وتجهيزات" },
+                      vehicles: { label: "مركبات", desc: "مركبات كأصل ثابت" },
+                      technology_equipment: { label: "أجهزة تقنية", desc: "حاسبات وسيرفرات" },
+                      medical_equipment: { label: "أجهزة طبية", desc: "معدات طبية ومختبرات" },
+                      leasehold_improvements: { label: "تحسينات مستأجرة", desc: "تشطيبات وديكورات" },
+                      right_of_use: { label: "مصالح مستأجرة", desc: "حقوق منفعة عقارية" },
                     };
                     const NON_PERMITTED = ["intangible_assets", "financial_instruments", "biological_assets", "inventory_stock"];
                     const inventory = request.asset_data.inventory as any[];
@@ -344,7 +390,7 @@ export default function RequestDetails() {
                     return (
                       <>
                         <div className="flex justify-between items-center text-xs border-b border-border pb-2 mb-1">
-                          <span className="text-foreground font-bold">إجمالي الأصول المعتمدة</span>
+                          <span className="text-foreground font-bold">إجمالي الأصول</span>
                           <Badge className="text-[11px]">{total}</Badge>
                         </div>
                         {Object.entries(counts).map(([type, count]) => {
@@ -368,9 +414,12 @@ export default function RequestDetails() {
 
             {/* Client Actions */}
             {["submitted", "under_pricing", "needs_clarification", "quotation_sent"].includes(request.status) && (
-              <Card className="shadow-card">
+              <Card className="shadow-sm">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><AlertCircle className="w-4 h-4 text-primary" />إجراءات</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
+                    <span>إجراءات</span>
+                    <AlertCircle className="w-4 h-4 text-primary" />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <Button variant="outline" size="sm" className="w-full text-xs justify-start gap-2" onClick={() => navigate(`/client/new-request?edit=${id}`)}>
@@ -381,17 +430,12 @@ export default function RequestDetails() {
                     setSending(true);
                     try {
                       await supabase.from("valuation_requests" as any).update({ status: "cancelled" as any } as any).eq("id", id!);
-                      await supabase.from("request_messages" as any).insert({
-                        request_id: id!, sender_type: "system" as any,
-                        content: "❌ تم إلغاء الطلب من قبل العميل",
-                      });
+                      await supabase.from("request_messages" as any).insert({ request_id: id!, sender_type: "system" as any, content: "❌ تم إلغاء الطلب من قبل العميل" });
                       toast({ title: "تم إلغاء الطلب" });
                       navigate("/client");
                     } catch (err: any) {
                       toast({ title: "خطأ", description: err.message, variant: "destructive" });
-                    } finally {
-                      setSending(false);
-                    }
+                    } finally { setSending(false); }
                   }}>
                     <Trash2 className="w-3.5 h-3.5" />إلغاء الطلب
                   </Button>
@@ -401,9 +445,12 @@ export default function RequestDetails() {
 
             {/* SOW Approval */}
             {showSOW && (
-              <Card className="shadow-card border-primary/20">
+              <Card className="shadow-sm border-primary/20">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><FileText className="w-4 h-4 text-primary" />نطاق العمل</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
+                    <span>نطاق العمل</span>
+                    <FileText className="w-4 h-4 text-primary" />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="p-3 bg-primary/5 rounded-lg space-y-3 max-h-64 overflow-y-auto">
@@ -417,35 +464,25 @@ export default function RequestDetails() {
                   )}
                   <div className="border-t border-border pt-3 space-y-2">
                     <p className="text-xs text-muted-foreground">بالموافقة على نطاق العمل، أقر بأنني اطلعت على الافتراضات والمحددات وأوافق عليها.</p>
-                    <div className="flex gap-2">
-                      <Button className="flex-1" size="sm" onClick={async () => {
-                        setSending(true);
-                        try {
-                          await supabase.from("valuation_requests" as any).update({
-                            status: "sow_approved" as any,
-                            sow_signed_at: new Date().toISOString(),
-                          } as any).eq("id", id!);
-                          await supabase.from("request_messages" as any).insert({
-                            request_id: id!, sender_type: "system" as any,
-                            content: "✅ تم اعتماد نطاق العمل والتوقيع الإلكتروني من قبل العميل",
-                          });
-                          toast({ title: "تم اعتماد نطاق العمل بنجاح" });
-                          loadData();
-                        } catch (err: any) {
-                          toast({ title: "خطأ", description: err.message, variant: "destructive" });
-                        } finally {
-                          setSending(false);
-                        }
-                      }} disabled={sending}>
-                        <CheckCircle className="w-3 h-3 ml-1" />موافقة وتوقيع إلكتروني
-                      </Button>
-                    </div>
+                    <Button className="w-full" size="sm" onClick={async () => {
+                      setSending(true);
+                      try {
+                        await supabase.from("valuation_requests" as any).update({ status: "sow_approved" as any, sow_signed_at: new Date().toISOString() } as any).eq("id", id!);
+                        await supabase.from("request_messages" as any).insert({ request_id: id!, sender_type: "system" as any, content: "✅ تم اعتماد نطاق العمل والتوقيع الإلكتروني من قبل العميل" });
+                        toast({ title: "تم اعتماد نطاق العمل بنجاح" });
+                        loadData();
+                      } catch (err: any) {
+                        toast({ title: "خطأ", description: err.message, variant: "destructive" });
+                      } finally { setSending(false); }
+                    }} disabled={sending}>
+                      <CheckCircle className="w-3 h-3 ml-1" />موافقة وتوقيع إلكتروني
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Data Portal - بوابة البيانات */}
+            {/* Data Portal */}
             <DataPortalUploader
               requestId={id!}
               inspectionType={deriveInspectionType(
@@ -456,10 +493,14 @@ export default function RequestDetails() {
               onUploadComplete={loadData}
             />
 
+            {/* Quotation */}
             {showQuotation && (
-              <Card className="shadow-card border-primary/20">
+              <Card className="shadow-sm border-primary/20">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2"><SARIcon className="w-4 h-4 text-primary" />عرض السعر</CardTitle>
+                  <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
+                    <span>عرض السعر</span>
+                    <SARIcon className="w-4 h-4 text-primary" />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="p-3 bg-primary/5 rounded-lg space-y-2">
@@ -483,9 +524,7 @@ export default function RequestDetails() {
                     )}
                   </div>
                   {request.ai_suggested_turnaround && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="w-3 h-3" /><span>المدة: {request.ai_suggested_turnaround}</span>
-                    </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground"><Clock className="w-3 h-3" /><span>المدة: {request.ai_suggested_turnaround}</span></div>
                   )}
                   {request.scope_of_work_ar && (
                     <div><p className="text-xs text-muted-foreground mb-1">نطاق العمل:</p><BidiText className="text-xs bg-muted/50 p-2 rounded">{request.scope_of_work_ar}</BidiText></div>
@@ -495,12 +534,8 @@ export default function RequestDetails() {
                   )}
                   {request.status === "quotation_sent" && (
                     <div className="flex gap-2 pt-2">
-                      <Button className="flex-1" size="sm" onClick={() => handleQuotationResponse(true)} disabled={sending}>
-                        <CheckCircle className="w-3 h-3 ml-1" />قبول العرض
-                      </Button>
-                      <Button variant="outline" className="flex-1" size="sm" onClick={() => handleQuotationResponse(false)} disabled={sending}>
-                        <XCircle className="w-3 h-3 ml-1" />رفض
-                      </Button>
+                      <Button className="flex-1" size="sm" onClick={() => handleQuotationResponse(true)} disabled={sending}><CheckCircle className="w-3 h-3 ml-1" />قبول العرض</Button>
+                      <Button variant="outline" className="flex-1" size="sm" onClick={() => handleQuotationResponse(false)} disabled={sending}><XCircle className="w-3 h-3 ml-1" />رفض</Button>
                     </div>
                   )}
                 </CardContent>
@@ -516,68 +551,14 @@ export default function RequestDetails() {
               />
             )}
 
-            {/* Manual Receipt Upload (backup) */}
+            {/* Manual Receipt Upload */}
             {(needsPayment || needsFinalPayment) && (
-              <Card className="shadow-card border-border">
+              <Card className="shadow-sm border-border">
                 <CardContent className="p-4 space-y-2">
                   <p className="text-xs text-muted-foreground text-center">أو رفع إيصال يدوياً (حالات استثنائية)</p>
                   <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleUploadReceipt} className="hidden" />
-                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => {
-                    setPaymentType(needsFinalPayment ? "final" : "first");
-                    fileInputRef.current?.click();
-                  }} disabled={uploading}>
-                    {uploading ? <Loader2 className="w-3 h-3 animate-spin ml-1" /> : <Upload className="w-3 h-3 ml-1" />}
-                    رفع إيصال يدوي
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Draft Report Review */}
-            {showDraftReport && (
-              <DraftReportReview
-                requestId={id!}
-                userId={user.id}
-                paymentStructure={request.payment_structure}
-                onStatusChange={loadData}
-              />
-            )}
-
-            {/* Final Report */}
-            {showFinalReport && (
-              <Card className="shadow-card border-green-200 dark:border-green-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-green-600" />التقرير النهائي
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                    <CheckCircle className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                    <p className="font-bold text-foreground">التقرير النهائي جاهز</p>
-                    <p className="text-xs text-muted-foreground">موقّع ومعتمد رسمياً</p>
-                    {request.report_number && (
-                      <p className="text-xs font-mono text-primary mt-2" dir="ltr">
-                        رقم التقرير: {request.report_number}
-                      </p>
-                    )}
-                  </div>
-                  {request.verification_code && (
-                    <div className="p-3 bg-muted/30 rounded-lg text-center">
-                      <p className="text-[10px] text-muted-foreground mb-1">رمز التحقق</p>
-                      <p className="text-xs font-mono text-foreground select-all" dir="ltr">{request.verification_code}</p>
-                      <a
-                        href={`/verify/${request.verification_code}`}
-                        target="_blank"
-                        rel="noopener"
-                        className="text-[10px] text-primary hover:underline mt-1 inline-block"
-                      >
-                        التحقق من صحة التقرير ←
-                      </a>
-                    </div>
-                  )}
-                  <Button className="w-full" size="sm">
-                    <Download className="w-4 h-4 ml-1" />تحميل التقرير النهائي
+                  <Button variant="ghost" size="sm" className="w-full text-xs" onClick={() => { setPaymentType(needsFinalPayment ? "final" : "first"); fileInputRef.current?.click(); }} disabled={uploading}>
+                    {uploading ? <Loader2 className="w-3 h-3 animate-spin ml-1" /> : <Upload className="w-3 h-3 ml-1" />}رفع إيصال يدوي
                   </Button>
                 </CardContent>
               </Card>
@@ -587,9 +568,12 @@ export default function RequestDetails() {
             <PaymentHistory requestId={id!} refreshKey={paymentRefreshKey} />
 
             {/* Documents */}
-            <Card className="shadow-card">
+            <Card className="shadow-sm">
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm flex items-center gap-2"><FileText className="w-4 h-4 text-primary" />المستندات ({documents.length})</CardTitle>
+                <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
+                  <span>المستندات ({documents.length})</span>
+                  <FileText className="w-4 h-4 text-primary" />
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {documents.length === 0 ? (
