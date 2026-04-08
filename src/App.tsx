@@ -51,16 +51,12 @@ import AuditLogPage from "@/pages/AuditLogPage";
 import CommercialDashboardPage from "@/pages/CommercialDashboardPage";
 import SystemMonitoringPage from "@/pages/SystemMonitoringPage";
 
-// Client Portal
-import ClientRegister from "@/pages/client/ClientRegister";
 import ClientAuth from "@/pages/client/ClientAuth";
 import ForgotPassword from "@/pages/client/ForgotPassword";
 import RecoveryCallback from "@/pages/client/RecoveryCallback";
 import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
-import NewRequest from "@/pages/client/NewRequest";
 import SimplifiedJourney from "@/pages/client/SimplifiedJourney";
-import SimpleClientRequest from "@/pages/client/SimpleClientRequest";
 import RequestDetails from "@/pages/client/RequestDetails";
 import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 
@@ -161,9 +157,9 @@ const App = () => (
           } />
 
           {/* Client Portal */}
-          <Route path="/client/register" element={<ClientAuth />} />
-          <Route path="/client/register-advanced" element={<ClientRegister />} />
           <Route path="/client/auth" element={<ClientAuth />} />
+          <Route path="/client/register" element={<Navigate to="/client/auth" replace />} />
+          <Route path="/client/register-advanced" element={<Navigate to="/client/auth" replace />} />
           <Route path="/client/forgot-password" element={<ForgotPassword />} />
           <Route path="/auth/recovery" element={<RecoveryCallback />} />
           <Route path="/reset-password" element={<ResetPassword />} />
@@ -175,11 +171,12 @@ const App = () => (
             <Route path="/client" element={<ClientDashboard />} />
             <Route path="/client/dashboard" element={<ClientDashboard />} />
             <Route path="/client/requests" element={<ClientRequestsPage />} />
-            <Route path="/client/new-request" element={<SimpleClientRequest />} />
-            <Route path="/client/new-request-full" element={<SimplifiedJourney />} />
-            <Route path="/client/new-request-advanced" element={<NewRequest />} />
+            <Route path="/client/new-request" element={<SimplifiedJourney />} />
+            <Route path="/client/new-request-full" element={<Navigate to="/client/new-request" replace />} />
+            <Route path="/client/new-request-advanced" element={<Navigate to="/client/new-request" replace />} />
             <Route path="/client/request/:id" element={<RequestDetails />} />
             <Route path="/client/settings" element={<UserSettingsPage />} />
+
             <Route path="/client/notifications" element={<NotificationsPage />} />
             <Route path="/client/notification-settings" element={<NotificationSettingsPage />} />
           </Route>

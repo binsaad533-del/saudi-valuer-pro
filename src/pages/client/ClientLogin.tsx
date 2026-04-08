@@ -205,10 +205,10 @@ export default function ClientLogin() {
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             ليس لديك حساب؟{" "}
-            <Link to="/client/register" className="text-primary font-medium hover:underline">إنشاء حساب جديد</Link>
+            <Link to="/client/auth" className="text-primary font-medium hover:underline">إنشاء حساب جديد</Link>
           </div>
           <div className="mt-2 text-center">
-            <Link to="/client/register" className="text-xs text-muted-foreground hover:text-primary">
+            <Link to="/client/auth" className="text-xs text-muted-foreground hover:text-primary">
               دخول سريع برقم الجوال (بدون كلمة مرور)
             </Link>
           </div>
