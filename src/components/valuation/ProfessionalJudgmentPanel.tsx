@@ -5,6 +5,7 @@
  */
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -102,8 +103,8 @@ export default function ProfessionalJudgmentPanel({ request, userId, onStatusCha
     return adjustments.some(a => a.appraiserValue !== a.aiSuggested) || overallJustification.trim() !== "";
   }, [adjustments, overallJustification]);
 
-  // Only show for requests in appropriate statuses
-  const showPanel = ["in_production", "fully_paid", "partially_paid", "valuation_in_progress", "inspection_submitted"].includes(request.status);
+  // Show panel only when assignment is in professional_review status
+  const showPanel = ["professional_review", "analysis_complete"].includes(request.status);
   if (!showPanel) return null;
 
   const updateAdjustment = (id: string, field: keyof AdjustmentEntry, value: any) => {
@@ -141,8 +142,20 @@ export default function ProfessionalJudgmentPanel({ request, userId, onStatusCha
           appraiser_id: userId,
           judgment_date: new Date().toISOString(),
         },
-        status: "draft_report_ready" as any,
       } as any).eq("id", request.id);
+
+      // Advance status via centralized RPC: professional_review → draft_report_ready
+      const result = await changeStatusByRequestId(
+        request.id,
+        "draft_report_ready",
+        userId,
+        "normal",
+        "تم اعتماد الحكم المهني من المقيّم المعتمد"
+      );
+      if (!result.success) {
+        toast.error(result.error || "فشل تقديم الحكم المهني");
+        return;
+      }
 
       // Log system message
       await supabase.from("request_messages" as any).insert({
