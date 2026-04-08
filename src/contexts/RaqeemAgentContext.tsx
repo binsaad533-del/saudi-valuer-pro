@@ -3,7 +3,7 @@
  * Maintains persistent context per assignment, streams chat, and delivers proactive insights.
  */
 import { createContext, useContext, useState, useCallback, useRef, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+
 
 interface RaqeemInsight {
   summary: string;

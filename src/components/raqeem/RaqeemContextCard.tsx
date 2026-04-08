@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import ReactMarkdown from "react-markdown";
 import {
   AlertTriangle, CheckCircle2, Info, Send, ChevronDown, ChevronUp,
-  Loader2, Sparkles, MessageSquare, X,
+  Loader2, Sparkles, MessageSquare,
 } from "lucide-react";
 
 interface RaqeemContextCardProps {
