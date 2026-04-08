@@ -16,6 +16,12 @@ import {
   FileSearch, ListChecks, CreditCard, ThumbsUp, Ticket, X,
 } from "lucide-react";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
+import {
+  DisciplineAnalysisCard,
+  PurposeAnalysisCard,
+  BasisOfValueCard,
+  MethodologyAnalysisCard,
+} from "@/components/scope-pricing/AnalysisCards";
 
 import type { ScopeData, PricingData } from "./scope-pricing/types";
 import { MOCK_EXTRACTED_DATA, MOCK_SCOPE, MOCK_PRICING } from "./scope-pricing/mock-data";
