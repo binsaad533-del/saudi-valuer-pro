@@ -29,12 +29,13 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.f
   Object.entries(WF_STATUS_LABELS).map(([k, v]) => [k, { label: v.ar, color: STATUS_COLORS[k] || "bg-muted text-muted-foreground" }])
 );
 
+// Tabs aligned with the 19-status assignment workflow
 const ADMIN_TABS = [
-  { value: "intake", label: "الاستقبال", statuses: ["draft", "ai_review", "submitted", "client_submitted", "under_ai_review", "awaiting_client_info", "needs_clarification"] },
-  { value: "pricing", label: "التسعير", statuses: ["under_pricing", "priced", "quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment_initial", "payment_received_initial"] },
-  { value: "payment", label: "الدفع", statuses: ["awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid"] },
-  { value: "production", label: "الإنتاج", statuses: ["in_production", "inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted", "valuation_in_progress", "draft_report_ready", "draft_report_sent", "under_client_review", "client_comments", "revision_in_progress"] },
-  { value: "final", label: "الإصدار", statuses: ["final_payment_pending", "final_payment_uploaded", "final_payment_approved", "awaiting_final_payment", "final_payment_received", "final_report_ready", "report_issued", "completed", "closed", "archived", "cancelled"] },
+  { value: "intake", label: "الاستقبال", statuses: ["draft", "submitted"] },
+  { value: "pricing", label: "التسعير والنطاق", statuses: ["scope_generated", "scope_approved"] },
+  { value: "payment", label: "الدفع والإنتاج", statuses: ["first_payment_confirmed", "data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated"] },
+  { value: "production", label: "التقييم والمراجعة", statuses: ["analysis_complete", "professional_review", "draft_report_ready", "client_review", "draft_approved"] },
+  { value: "final", label: "الإصدار", statuses: ["final_payment_confirmed", "issued", "archived", "cancelled"] },
 ];
 
 const getTabForStatus = (status: string) => {
@@ -92,9 +93,16 @@ export default function ClientRequests() {
   const loadRequests = async () => {
     const { data } = await supabase
       .from("valuation_requests" as any)
-      .select("*, clients:client_id(id, name_ar, phone, email)")
+      .select("*, clients:client_id(id, name_ar, phone, email), assignment:assignment_id(id, status, reference_number)")
       .order("created_at", { ascending: false });
-    const reqs: any[] = (data as any[]) || [];
+    // Normalize: use assignment status as the canonical status for workflow
+    const reqs: any[] = ((data as any[]) || []).map(r => ({
+      ...r,
+      // Use the assignment's workflow status if available, else fall back to request status
+      status: r.assignment?.status || r.status,
+      assignment_id: r.assignment?.id || r.assignment_id,
+      reference_number: r.assignment?.reference_number || r.reference_number,
+    }));
     setRequests(reqs);
     setLoading(false);
 
@@ -401,55 +409,43 @@ export default function ClientRequests() {
                           <Eye className="w-3 h-3 ml-1" />عرض الطلب
                         </Button>
 
-                        {/* Action buttons based on status */}
+                        {/* Action buttons based on assignment workflow status */}
                         {req.status === "submitted" && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "under_pricing"); }}>
-                            <SARIcon className="w-3 h-3 ml-1" />تسعير
-                          </Button>
-                        )}
-                        {req.status === "under_pricing" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); openPricing(req); }}>
-                            <Send className="w-3 h-3 ml-1" />إعداد العرض
+                            <SARIcon className="w-3 h-3 ml-1" />إعداد التسعير
                           </Button>
                         )}
-                        {(req.status === "payment_uploaded" || req.status === "final_payment_uploaded") && (
-                          <Button size="sm" variant="outline" onClick={async (e) => {
-                            e.stopPropagation();
-                            setSelectedRequest(req);
-                            await loadPayments(req.id);
-                            setPaymentReviewDialog(true);
-                          }}>
-                            <Eye className="w-3 h-3 ml-1" />مراجعة الإيصال
+                        {req.status === "scope_generated" && (
+                          <span className="text-xs text-muted-foreground">بانتظار اعتماد العميل</span>
+                        )}
+                        {req.status === "scope_approved" && (
+                          <span className="text-xs text-muted-foreground">بانتظار الدفعة الأولى</span>
+                        )}
+                        {req.status === "first_payment_confirmed" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "data_collection_open"); }}>
+                            بدء جمع البيانات
                           </Button>
                         )}
-                        {req.status === "in_production" && (
+                        {req.status === "data_validated" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "analysis_complete"); }}>
+                            <Brain className="w-3 h-3 ml-1" />بدء التحليل
+                          </Button>
+                        )}
+                        {req.status === "professional_review" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/valuation-production/${req.assignment_id || req.id}`); }}>
                             <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
-                        {(req.status === "draft_report_sent" || req.status === "client_comments") && (
-                          <Button size="sm" variant="outline" onClick={async (e) => {
-                            e.stopPropagation();
-                            // Load report for this assignment
-                            const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", req.assignment_id).order("created_at", { ascending: false }).limit(1);
-                            const report = (reps as any[])?.[0];
-                            if (report) {
-                              setSelectedReportId(report.id);
-                              setSelectedAssignmentId(req.assignment_id);
-                              setSelectedRequestId(req.id);
-                              setRevisionDialog(true);
-                            }
-                          }}>
-                            <MessageSquareText className="w-3 h-3 ml-1" />المراجعات
+                        {req.status === "draft_report_ready" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "client_review"); }}>
+                            <Send className="w-3 h-3 ml-1" />إرسال للعميل
                           </Button>
                         )}
-                        {req.status === "fully_paid" && !req.draft_report_url && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "in_production"); }}>
-                            بدء الإنتاج
-                          </Button>
+                        {req.status === "draft_approved" && (
+                          <span className="text-xs text-muted-foreground">بانتظار الدفعة النهائية</span>
                         )}
-                        {req.status === "final_report_ready" && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "completed"); }}>
+                        {req.status === "final_payment_confirmed" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "issued"); }}>
                             <CheckCircle className="w-3 h-3 ml-1" />إصدار نهائي
                           </Button>
                         )}
