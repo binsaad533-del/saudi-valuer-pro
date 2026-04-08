@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import {
   CheckCircle, Edit3, AlertTriangle, Shield, Loader2,
+  Image as ImageIcon, FileText, Table2, File as FileIcon,
 } from "lucide-react";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
 import JourneyHeader from "@/components/client/journey/JourneyHeader";
