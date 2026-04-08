@@ -637,6 +637,7 @@ export default function SimplifiedJourney() {
             intendedUsersOther={intendedUsersOther} setIntendedUsersOther={setIntendedUsersOther}
             valuationMode={valuationMode} setValuationMode={setValuationMode}
             desktopDisclaimer={desktopDisclaimer} setDesktopDisclaimer={setDesktopDisclaimer}
+            assetLocations={assetLocations} setAssetLocations={setAssetLocations}
             purposeOptions={PURPOSE_OPTIONS}
             usersOptions={USERS_OPTIONS}
             desktopBlockedPurposes={DESKTOP_BLOCKED_PURPOSES}
