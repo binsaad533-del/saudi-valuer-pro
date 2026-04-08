@@ -390,37 +390,29 @@ export default function ExecutiveDashboard() {
     <div className="min-h-screen bg-background" dir="rtl">
       <TopBar />
 
-      <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
+      <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-5">
 
-        {/* ═══ SMART ALERTS ═══ */}
-        <SmartAlertsBanner />
-
-        {/* ═══ HEADER ═══ */}
+        {/* ═══ ROW 1: HEADER + ALERTS (urgent, top priority) ═══ */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-foreground">مركز التحكم</h1>
             <p className="text-sm text-muted-foreground mt-0.5">مرحباً {profileName || "المالك"}</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="text-xs gap-1.5 px-3 py-1">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              متصل
-            </Badge>
-          </div>
+          <Badge variant="outline" className="text-xs gap-1.5 px-3 py-1">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            متصل
+          </Badge>
         </div>
 
-        {/* ═══ KPI CARDS ═══ */}
+        <SmartAlertsBanner />
+
+        {/* ═══ ROW 2: KPI CARDS (quick status snapshot) ═══ */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
           {kpiCards.map(kpi => {
             const Icon = kpi.icon;
             const isActive = statusGroupFilter === kpi.group && statusGroupFilter !== "all";
             return (
-              <button
-                key={kpi.label}
-                type="button"
-                onClick={() => setStatusGroupFilter(prev => prev === kpi.group ? "all" : kpi.group)}
-                className="text-right"
-              >
+              <button key={kpi.label} type="button" onClick={() => setStatusGroupFilter(prev => prev === kpi.group ? "all" : kpi.group)} className="text-right">
                 <Card className={`h-full transition-all hover:shadow-md ${isActive ? "border-primary ring-1 ring-primary/20 shadow-md" : "border-border hover:border-primary/30"}`}>
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-3">
@@ -437,7 +429,7 @@ export default function ExecutiveDashboard() {
           })}
         </div>
 
-        {/* ═══ ACTION ITEMS ALERT ═══ */}
+        {/* ═══ ROW 3: ACTION ITEMS (urgent tasks needing owner intervention) ═══ */}
         {actionItems.length > 0 && (
           <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10">
             <CardContent className="p-4">
@@ -452,109 +444,108 @@ export default function ExecutiveDashboard() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {actionItems.slice(0, 5).map(req => (
-                  <button
-                    key={req.id}
-                    onClick={() => openWorkspace(req)}
-                    className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-background px-3 py-2 text-xs hover:bg-muted/50 transition-colors"
-                  >
+                  <button key={req.id} onClick={() => openWorkspace(req)} className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-background px-3 py-2 text-xs hover:bg-muted/50 transition-colors">
                     <span className="font-medium text-foreground truncate max-w-[140px]">{getClientName(req)}</span>
                     <Badge className={`${statusColor(req.status)} border-0 text-[10px]`}>{getStatus(req)}</Badge>
                   </button>
                 ))}
-                {actionItems.length > 5 && (
-                  <span className="text-xs text-muted-foreground self-center">+{actionItems.length - 5} أخرى</span>
-                )}
+                {actionItems.length > 5 && <span className="text-xs text-muted-foreground self-center">+{actionItems.length - 5} أخرى</span>}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* ═══ REQUESTS LIST ═══ */}
-        <div className="space-y-4">
-          {/* Filters Row */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <div className="relative min-w-[240px] flex-1 max-w-md">
-              <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="بحث بالاسم أو رقم الطلب..." className="pr-9 h-10" />
+        {/* ═══ ROW 4: MAIN CONTENT — Two-column layout ═══ */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5">
+
+          {/* ── Main Column: Requests Table (primary workspace) ── */}
+          <div className="space-y-4 min-w-0">
+            {/* Filters */}
+            <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative min-w-[220px] flex-1 max-w-md">
+                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="بحث بالاسم أو رقم الطلب..." className="pr-9 h-10" />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px] h-10"><SelectValue placeholder="كل الحالات" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">كل الحالات</SelectItem>
+                  {Array.from(new Set(requests.map(r => r.status).filter(Boolean))).map(status => (
+                    <SelectItem key={status} value={status}>{statusLabels[status] || status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {statusGroupFilter !== "all" && (
+                <Button variant="ghost" size="sm" onClick={() => setStatusGroupFilter("all")} className="gap-1 text-xs text-muted-foreground">
+                  <X className="w-3 h-3" /> إزالة الفلتر
+                </Button>
+              )}
+              <div className="mr-auto">
+                <Badge variant="outline" className="text-xs">{filteredRequests.length} طلب</Badge>
+              </div>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px] h-10"><SelectValue placeholder="كل الحالات" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">كل الحالات</SelectItem>
-                {Array.from(new Set(requests.map(r => r.status).filter(Boolean))).map(status => (
-                  <SelectItem key={status} value={status}>{statusLabels[status] || status}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {statusGroupFilter !== "all" && (
-              <Button variant="ghost" size="sm" onClick={() => setStatusGroupFilter("all")} className="gap-1 text-xs text-muted-foreground">
-                <X className="w-3 h-3" />
-                إزالة الفلتر
-              </Button>
-            )}
-            <div className="mr-auto">
-              <Badge variant="outline" className="text-xs">{filteredRequests.length} طلب</Badge>
-            </div>
+
+            {/* Table */}
+            <Card className="border-border overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">العميل</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">الغرض</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">نوع الأصل</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">الحالة</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">التاريخ</th>
+                      <th className="px-4 py-3 w-16"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredRequests.length === 0 ? (
+                      <tr><td colSpan={6} className="px-4 py-16 text-center text-muted-foreground text-sm">لا توجد طلبات مطابقة</td></tr>
+                    ) : filteredRequests.slice(0, 15).map(req => (
+                      <tr key={req.id} className="border-b border-border/40 transition-colors hover:bg-muted/20 cursor-pointer" onClick={() => openWorkspace(req)}>
+                        <td className="px-4 py-3">
+                          <p className="font-semibold text-foreground text-sm">{getClientName(req)}</p>
+                          {req.reference_number && <p className="text-[10px] text-muted-foreground font-mono mt-0.5" dir="ltr">{req.reference_number}</p>}
+                        </td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{getPurpose(req)}</td>
+                        <td className="px-4 py-3 text-muted-foreground text-xs">{getAssetType(req)}</td>
+                        <td className="px-4 py-3">
+                          <Badge className={`${statusColor(req.status)} border-0 text-[10px] font-medium`}>{getStatus(req)}</Badge>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ar-SA")}</td>
+                        <td className="px-4 py-3">
+                          <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2">
+                            <Eye className="w-3 h-3" /> فتح
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {filteredRequests.length > 15 && (
+                <div className="px-4 py-2.5 border-t border-border bg-muted/20 text-center">
+                  <span className="text-xs text-muted-foreground">يعرض 15 من {filteredRequests.length} — استخدم الفلترة لتضييق النتائج</span>
+                </div>
+              )}
+            </Card>
           </div>
 
-          {/* Table */}
-          <Card className="border-border overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/30">
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">العميل</th>
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">الغرض</th>
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">نوع الأصل</th>
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">النمط</th>
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">الحالة</th>
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground">التاريخ</th>
-                    <th className="px-4 py-3.5 text-right text-xs font-semibold text-muted-foreground w-20"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredRequests.length === 0 ? (
-                    <tr><td colSpan={7} className="px-4 py-16 text-center text-muted-foreground text-sm">لا توجد طلبات مطابقة</td></tr>
-                  ) : filteredRequests.map(req => (
-                    <tr
-                      key={req.id}
-                      className="border-b border-border/40 transition-colors hover:bg-muted/20 cursor-pointer"
-                      onClick={() => openWorkspace(req)}
-                    >
-                      <td className="px-4 py-3.5">
-                        <p className="font-semibold text-foreground text-sm">{getClientName(req)}</p>
-                        {req.reference_number && <p className="text-[10px] text-muted-foreground font-mono mt-0.5" dir="ltr">{req.reference_number}</p>}
-                      </td>
-                      <td className="px-4 py-3.5 text-muted-foreground text-xs">{getPurpose(req)}</td>
-                      <td className="px-4 py-3.5 text-muted-foreground text-xs">{getAssetType(req)}</td>
-                      <td className="px-4 py-3.5 text-muted-foreground text-xs">{getMode(req)}</td>
-                      <td className="px-4 py-3.5">
-                        <Badge className={`${statusColor(req.status)} border-0 text-[10px] font-medium`}>{getStatus(req)}</Badge>
-                      </td>
-                      <td className="px-4 py-3.5 text-xs text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ar-SA")}</td>
-                      <td className="px-4 py-3.5">
-                        <Button variant="ghost" size="sm" className="gap-1 text-xs h-8">
-                          <Eye className="w-3.5 h-3.5" />
-                          فتح
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </Card>
+          {/* ── Side Column: Intelligence & Insights ── */}
+          <div className="space-y-4">
+            {/* Raqeem Daily Summary */}
+            <RaqeemDailySummary />
+
+            {/* Financial + Performance (stacked compactly) */}
+            <OwnerInsightsPanel />
+
+            {/* Activity Timeline */}
+            <LiveActivityTimeline />
+          </div>
         </div>
-        {/* ═══ RAQEEM DAILY SUMMARY ═══ */}
-        <RaqeemDailySummary />
 
-        {/* ═══ INSIGHTS: FINANCIAL + PERFORMANCE + PIPELINE ═══ */}
-        <OwnerInsightsPanel />
-
-        {/* ═══ ACTIVITY TIMELINE ═══ */}
-        <LiveActivityTimeline />
-
-        {/* ═══ COMMAND PALETTE (global) ═══ */}
+        {/* ═══ COMMAND PALETTE (global, hidden) ═══ */}
         <CommandPalette />
       </div>
     </div>
