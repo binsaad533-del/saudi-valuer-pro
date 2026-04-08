@@ -364,6 +364,14 @@ export default function ValuationDetailPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Raqeem Agent */}
+        <RaqeemContextCard
+          assignmentId={d.id}
+          stage="valuation_detail"
+          pageContext="صفحة تفاصيل التقييم - Valuation Detail"
+          className="mt-4"
+        />
       </div>
     </div>
   );
