@@ -24,6 +24,7 @@ import { formatDate, formatNumber } from "@/lib/utils";
 import BidiText from "@/components/ui/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
+import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
 
 const STATUS_ORDER = [
   "draft", "ai_review", "submitted", "needs_clarification",
@@ -86,6 +87,12 @@ export default function RequestDetails() {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id, navigate]);
+
+  // Real-time assignment status updates
+  useRealtimeAssignment(request?.assignment_id, (newStatus, oldStatus) => {
+    toast({ title: "تحديث حالة الطلب", description: `تم تغيير الحالة من ${oldStatus} إلى ${newStatus}` });
+    loadData();
+  });
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
