@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -75,8 +76,15 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
       const verificationCode = Array.from(crypto.getRandomValues(new Uint8Array(16)))
         .map(b => b.toString(16).padStart(2, "0")).join("");
 
+      // Issue via RPC
+      const statusResult = await changeStatusByRequestId(request.id, "issued", { userId, reason: "إصدار التقرير النهائي" });
+      if (!statusResult.success) throw new Error(statusResult.error);
+
+      const reportNumber = `RPT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, "0")}`;
+      const verificationCode = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map(b => b.toString(16).padStart(2, "0")).join("");
+
       await Promise.all([
-        // Update draft status to issued
         draft && supabase.from("report_drafts" as any)
           .update({
             status: "issued",
@@ -85,23 +93,11 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
             verification_code: verificationCode,
           } as any)
           .eq("id", draft.id),
-        // Update request status
-        supabase.from("valuation_requests" as any)
-          .update({
-            status: "report_issued",
-            report_number: reportNumber,
-            verification_code: verificationCode,
-            issued_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq("id", request.id),
-        // System message
         supabase.from("request_messages" as any).insert({
           request_id: request.id,
           sender_type: "system" as any,
           content: `🔒 تم إصدار التقرير النهائي رقم ${reportNumber} — التقرير محمي ولا يمكن تعديله.`,
         }),
-        // Audit log
         supabase.from("audit_logs").insert({
           user_id: userId,
           action: "create" as any,
@@ -125,14 +121,10 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const handleDeliver = async () => {
     setDelivering(true);
     try {
+      const statusResult = await changeStatusByRequestId(request.id, "archived", { userId, reason: "أرشفة وتسليم التقرير" });
+      if (!statusResult.success) throw new Error(statusResult.error);
+
       await Promise.all([
-        supabase.from("valuation_requests" as any)
-          .update({
-            status: "completed",
-            delivered_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          } as any)
-          .eq("id", request.id),
         supabase.from("request_messages" as any).insert({
           request_id: request.id,
           sender_type: "system" as any,
