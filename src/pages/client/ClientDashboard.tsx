@@ -2,23 +2,23 @@ import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import {
-  Plus, FileText, Clock, CheckCircle, AlertCircle,
-  Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
-  Phone, Mail, MessageCircle, FileCheck, Search, BarChart3, ClipboardCheck,
+  Plus, FileText, Loader2, Building2, Upload, Download, Eye, X, File,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/utils";
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
-
+import { DashboardStats } from "@/components/client/dashboard/DashboardStats";
+import { DashboardTabs, type TabKey } from "@/components/client/dashboard/DashboardTabs";
+import { ContactSupportCard } from "@/components/client/dashboard/ContactSupportCard";
+import { ValuationGuideCard } from "@/components/client/dashboard/ValuationGuideCard";
+import { ClientArchivedReports } from "@/components/client/dashboard/ClientArchivedReports";
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function ClientDashboard() {
   const [userId, setUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
-  const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
+  const [activeTab, setActiveTab] = useState<TabKey>("requests");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // New request dialog
@@ -62,11 +62,6 @@ export default function ClientDashboard() {
     init();
   }, [navigate]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.replace("/login");
-  };
-
   const handleFileUpload = () => {
     toast.success("تم رفع المستند بنجاح (تجريبي)");
   };
@@ -87,12 +82,10 @@ export default function ClientDashboard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("يرجى تسجيل الدخول أولاً");
 
-      const uploadedPaths: string[] = [];
       for (const file of newReqFiles) {
         const { storageKey } = buildSafeStorageObject({ userId: user.id, originalFilename: file.name });
         const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
         if (error) throw error;
-        uploadedPaths.push(storageKey);
       }
 
       toast.success("تم إرسال طلب التقييم بنجاح");
@@ -113,7 +106,6 @@ export default function ClientDashboard() {
     completed: requests.filter(r => r.status === "completed").length,
   };
 
-  // Mock ready reports
   const readyReports = requests
     .filter(r => r.status === "completed")
     .map((r, i) => ({
@@ -123,17 +115,10 @@ export default function ClientDashboard() {
       ref: r.reference_number || `RPT-${String(i + 1).padStart(4, "0")}`,
     }));
 
-  // Mock uploaded docs
   const mockDocs = [
     { id: "1", name: "صك الملكية.pdf", date: "2026-03-20", size: "2.4 MB" },
     { id: "2", name: "رخصة البناء.pdf", date: "2026-03-18", size: "1.1 MB" },
     { id: "3", name: "مخطط الموقع.jpg", date: "2026-03-15", size: "3.8 MB" },
-  ];
-
-  const TABS = [
-    { key: "requests" as const, label: "طلباتي", icon: FileText, count: stats.total },
-    { key: "reports" as const, label: "التقارير الجاهزة", icon: CheckCircle, count: stats.completed },
-    { key: "documents" as const, label: "المستندات", icon: FolderOpen, count: mockDocs.length },
   ];
 
   return (
@@ -150,48 +135,13 @@ export default function ClientDashboard() {
           </Button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          {[
-            { label: "إجمالي الطلبات", value: stats.total, icon: FileText },
-            { label: "نشطة", value: stats.active, icon: Clock },
-            { label: "تحتاج إجراءك", value: stats.awaitingAction, icon: AlertCircle },
-            { label: "مكتملة", value: stats.completed, icon: CheckCircle },
-          ].map((s) => (
-            <Card key={s.label}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <s.icon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{s.value}</p>
-                  <p className="text-xs text-muted-foreground">{s.label}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+        <DashboardStats stats={stats} />
 
-        {/* Tab navigation */}
-        <div className="flex gap-1 rounded-lg bg-muted p-1">
-          {TABS.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex-1 flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
-                activeTab === tab.key
-                  ? "bg-card text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <tab.icon className="w-4 h-4" />
-              {tab.label}
-              {tab.count > 0 && (
-                <Badge variant="secondary" className="text-xs px-1.5 py-0">{tab.count}</Badge>
-              )}
-            </button>
-          ))}
-        </div>
+        <DashboardTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          counts={{ requests: stats.total, reports: stats.completed, documents: mockDocs.length }}
+        />
 
         {/* Tab content */}
         {activeTab === "requests" && (
@@ -212,20 +162,14 @@ export default function ClientDashboard() {
               ) : (
                 <div className="divide-y divide-border">
                   {requests.map((req) => (
-                    <Link
-                      key={req.id}
-                      to={`/client/request/${req.id}`}
-                      className="block p-4 hover:bg-muted/50 transition-colors"
-                    >
+                    <Link key={req.id} to={`/client/request/${req.id}`} className="block p-4 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center justify-between gap-3 mb-3">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">
                             {req.property_description_ar || "طلب تقييم"}
                           </p>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                            {req.reference_number && (
-                              <span className="font-mono" dir="ltr">{req.reference_number}</span>
-                            )}
+                            {req.reference_number && <span className="font-mono" dir="ltr">{req.reference_number}</span>}
                             {req.property_city_ar && <span>{req.property_city_ar}</span>}
                             <span>{formatDate(req.created_at)}</span>
                           </div>
@@ -259,18 +203,12 @@ export default function ClientDashboard() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-foreground truncate">{rpt.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {rpt.ref} · {rpt.date}
-                            </p>
+                            <p className="text-xs text-muted-foreground">{rpt.ref} · {rpt.date}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Download className="w-4 h-4" />
-                          </Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8"><Download className="w-4 h-4" /></Button>
                         </div>
                       </div>
                     ))}
@@ -278,34 +216,21 @@ export default function ClientDashboard() {
                 )}
               </CardContent>
             </Card>
-            {/* Archived Reports from admin */}
             <ClientArchivedReports userId={userId} />
           </div>
         )}
 
         {activeTab === "documents" && (
           <div className="space-y-4">
-            {/* Upload area */}
-            <Card
-              className="border-dashed border-2 cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
+            <Card className="border-dashed border-2 cursor-pointer hover:border-primary/50 transition-colors" onClick={() => fileInputRef.current?.click()}>
               <CardContent className="flex flex-col items-center justify-center py-10 gap-2">
                 <Upload className="w-8 h-8 text-muted-foreground" />
                 <p className="text-sm font-medium text-foreground">اضغط لرفع مستند جديد</p>
                 <p className="text-xs text-muted-foreground">PDF • صور • Excel (XLSX, CSV) — حتى 20 ميجا</p>
                 <p className="text-[11px] text-primary/70 mt-1">رفع Excel يسرّع إدخال الأصول تلقائياً</p>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
+                <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" className="hidden" onChange={handleFileUpload} />
               </CardContent>
             </Card>
-
-            {/* Docs list */}
             <Card>
               <CardContent className="p-0 divide-y divide-border">
                 {mockDocs.map((doc) => (
@@ -319,9 +244,7 @@ export default function ClientDashboard() {
                         <p className="text-xs text-muted-foreground">{doc.date} · {doc.size}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Download className="w-4 h-4" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8"><Download className="w-4 h-4" /></Button>
                   </div>
                 ))}
               </CardContent>
@@ -329,135 +252,9 @@ export default function ClientDashboard() {
           </div>
         )}
 
-
-        {/* ───── أقسام إضافية ───── */}
         <Separator className="my-2" />
-
-        {/* منهجية طلب التقييم الذكية */}
-        <Card className="overflow-hidden">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <ClipboardCheck className="w-4 h-4 text-primary" />
-              </div>
-              كيف تطلب تقييم بالطريقة الصحيحة؟
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">اتبع هذه الخطوات لضمان تقييم دقيق وسريع</p>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid gap-3">
-              {[
-                {
-                  step: 1,
-                  icon: <FileCheck className="w-5 h-5 text-primary" />,
-                  title: "جهّز المستندات الأساسية",
-                  desc: "صك الملكية أو عقد الإيجار، رخصة البناء، الكروكي، فواتير الشراء للمعدات والآلات. كلما كانت المستندات أكثر اكتمالاً، كان التقييم أدق وأسرع.",
-                },
-                {
-                  step: 2,
-                  icon: <Search className="w-5 h-5 text-primary" />,
-                  title: "حدّد غرض التقييم بدقة",
-                  desc: "هل التقييم لغرض البيع/الشراء، التمويل البنكي، التأمين، التصفية، الاندماج والاستحواذ، أو لأغراض محاسبية؟ تحديد الغرض يؤثر على أساس القيمة والمنهجية المستخدمة.",
-                },
-                {
-                  step: 3,
-                  icon: <BarChart3 className="w-5 h-5 text-primary" />,
-                  title: "نحن نتولى الباقي",
-                  desc: "يقوم فريقنا بتحديد منهجية التقييم الأنسب (سوقية، دخل، تكلفة) وفقاً لمعايير IVS الدولية ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم)، مع معاينة ميدانية شاملة.",
-                },
-              ].map((item) => (
-                <div key={item.step} className="flex gap-3 items-start bg-muted/40 rounded-xl p-3.5 border border-border/50">
-                  <div className="flex flex-col items-center gap-1 shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-bold text-primary">
-                      {item.step}
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {item.icon}
-                      <h4 className="text-sm font-semibold text-foreground">{item.title}</h4>
-                    </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                <span className="font-semibold text-foreground">💡 نصيحة:</span>{" "}
-                إرفاق جميع المستندات والصور من البداية يقلل مدة التقييم بنسبة تصل إلى 40% ويضمن دقة أعلى في النتائج.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* بيانات التواصل والدعم */}
-        <Card className="bg-gradient-to-l from-primary/5 to-transparent">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Phone className="w-4 h-4 text-primary" />
-              </div>
-              تواصل معنا
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid sm:grid-cols-3 gap-3">
-              <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
-                <Phone className="w-5 h-5 text-primary shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">الهاتف</p>
-                  <p className="text-sm font-medium text-foreground" dir="ltr">0500668089</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
-                <Mail className="w-5 h-5 text-primary shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">البريد الإلكتروني</p>
-                  <p className="text-sm font-medium text-foreground">care@jsaas-valuation.com</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 bg-card rounded-lg p-3 border border-border">
-                <Clock className="w-5 h-5 text-primary shrink-0" />
-                <div>
-                  <p className="text-xs text-muted-foreground">ساعات العمل</p>
-                  <p className="text-sm font-medium text-foreground">السبت - الخميس، 8ص - 5م</p>
-                </div>
-              </div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <a
-                href="https://wa.me/966500668089"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2.5 text-sm font-medium transition-colors"
-              >
-                <MessageCircle className="w-4 h-4" />
-                تواصل عبر واتساب
-              </a>
-              <a
-                href="/Profile_Jsaas_Valuation.pdf"
-                download="بروفايل_جساس_للتقييم.pdf"
-                className="inline-flex items-center gap-2 border border-border hover:bg-muted rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-foreground"
-              >
-                <Download className="w-4 h-4" />
-                تحميل بروفايل الشركة
-              </a>
-              <a
-                href="https://www.jsaas-valuation.com/ar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 border border-border hover:bg-muted rounded-lg px-4 py-2.5 text-sm font-medium transition-colors text-foreground"
-              >
-                الموقع الرسمي
-              </a>
-            </div>
-            <p className="text-[11px] text-muted-foreground/70 mt-3">
-              الرياض - حي الياسمين - طريق الثمامة | سجل تجاري: 1010625839 | الرقم الضريبي: 310625839900003 | ترخيص آلات ومعدات: 4114000015 | ترخيص عقار: 1210001217
-            </p>
-          </CardContent>
-        </Card>
-
+        <ValuationGuideCard />
+        <ContactSupportCard />
       </main>
 
       {/* New Request Dialog */}
@@ -468,19 +265,12 @@ export default function ClientDashboard() {
             <DialogDescription>ارفع المستندات المتعلقة بالأصل المراد تقييمه وسنتولى الباقي</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 mt-2">
-            {/* Upload area */}
-            <div
-              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={() => newReqFileRef.current?.click()}
-            >
+            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors" onClick={() => newReqFileRef.current?.click()}>
               <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
               <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، فواتير شراء — PDF • صور • Excel (XLSX, CSV)</p>
-              <p className="text-[11px] text-primary/70 mt-1">يمكنك رفع قائمة الأصول بصيغة Excel</p>
               <input ref={newReqFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" multiple className="hidden" onChange={handleNewReqFileAdd} />
             </div>
-
-            {/* Selected files */}
             {newReqFiles.length > 0 && (
               <div className="space-y-2">
                 {newReqFiles.map((f, i) => (
@@ -490,29 +280,17 @@ export default function ClientDashboard() {
                       <span className="text-sm text-foreground truncate">{f.name}</span>
                       <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
                     </div>
-                    <button
-                      onClick={() => setNewReqFiles(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-destructive shrink-0"
-                    >
+                    <button onClick={() => setNewReqFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive shrink-0">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ))}
               </div>
             )}
-
-            {/* Notes */}
             <div className="space-y-2">
               <Label htmlFor="req-notes">ملاحظات (اختياري)</Label>
-              <Textarea
-                id="req-notes"
-                placeholder="أي تفاصيل إضافية عن الأصل المراد تقييمه..."
-                value={newReqNotes}
-                onChange={(e) => setNewReqNotes(e.target.value)}
-                rows={3}
-              />
+              <Textarea id="req-notes" placeholder="أي تفاصيل إضافية عن الأصل المراد تقييمه..." value={newReqNotes} onChange={(e) => setNewReqNotes(e.target.value)} rows={3} />
             </div>
-
             <Button onClick={handleSubmitNewRequest} className="w-full gap-2" disabled={submitting || newReqFiles.length === 0}>
               {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               إرسال الطلب
@@ -521,85 +299,5 @@ export default function ClientDashboard() {
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-// Archived reports component for client
-function ClientArchivedReports({ userId }: { userId: string }) {
-  const [archives, setArchives] = useState<any[]>([]);
-  const [loadingArchives, setLoadingArchives] = useState(true);
-
-  useEffect(() => {
-    if (!userId) return;
-    const load = async () => {
-      // First try to find client record linked to this portal user
-      const { data: clientRecord } = await supabase
-        .from("clients")
-        .select("id")
-        .eq("portal_user_id", userId)
-        .maybeSingle();
-
-      let query = supabase
-        .from("archived_reports")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (clientRecord) {
-        // Show all reports linked to the client record
-        query = query.eq("client_id", clientRecord.id);
-      } else {
-        // Fallback: no linked client record, show nothing meaningful
-        query = query.eq("uploaded_by", userId);
-      }
-
-      const { data } = await query;
-      setArchives(data || []);
-      setLoadingArchives(false);
-    };
-    load();
-  }, [userId]);
-
-  const handleDownload = async (report: any) => {
-    const { data } = await supabase.storage
-      .from("archived-reports")
-      .createSignedUrl(report.file_path, 60);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else toast.error("فشل التحميل");
-  };
-
-  if (loadingArchives) return <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-muted-foreground" /></div>;
-  if (archives.length === 0) return null;
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base flex items-center gap-2">
-          <FolderOpen className="w-4 h-4 text-primary" />
-          تقارير سابقة مؤرشفة
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-border">
-          {archives.map((r: any) => (
-            <div key={r.id} className="flex items-center justify-between gap-3 p-4">
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground truncate">{r.report_title_ar || r.file_name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {r.report_number ? `${r.report_number} · ` : ""}{r.property_city_ar || ""} {r.report_date ? `· ${r.report_date}` : ""}
-                  </p>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDownload(r)}>
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
   );
 }
