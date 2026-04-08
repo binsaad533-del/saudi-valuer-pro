@@ -32,6 +32,12 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
   const purposeAr = request.purpose_ar || request.purpose || "غير محدد";
   const clientName = request.client_name_ar || request.ai_intake_summary?.clientInfo?.contactName || "عميل";
 
+  // Extract address/city from ai_intake_summary.locations fallback
+  const intakeLocations = request.ai_intake_summary?.locations || [];
+  const firstLocation = intakeLocations[0] || {};
+  const resolvedAddress = request.property_address_ar || firstLocation.name || firstLocation.googleMapsUrl || "";
+  const resolvedCity = request.property_city_ar || firstLocation.city || "";
+
   const handleGenerate = () => {
     setGenerating(true);
     try {
@@ -48,8 +54,8 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
         purpose: request.purpose || "other",
         purposeAr,
         propertyType: analysis.disciplineLabel,
-        propertyAddress: request.property_address_ar || "غير محدد",
-        propertyCity: request.property_city_ar || "غير محدد",
+        propertyAddress: resolvedAddress || "غير محدد",
+        propertyCity: resolvedCity || "غير محدد",
         inspectionType,
         valuationDate: request.valuation_date || new Date().toISOString().split("T")[0],
         discipline: analysis.discipline,
