@@ -194,6 +194,17 @@ export default function JourneyStartStep(props: JourneyStartStepProps) {
           )}
         </div>
 
+        {/* Asset Locations */}
+        <div className="space-y-1.5 pt-2">
+          <Label className="text-sm font-semibold">موقع الأصل <span className="text-destructive">*</span></Label>
+          <p className="text-xs text-muted-foreground">الصق روابط خرائط قوقل لمواقع الأصول (يمكنك إضافة مواقع متعددة)</p>
+          <AssetLocationPicker
+            locations={assetLocations}
+            onChange={setAssetLocations}
+            compact
+          />
+        </div>
+
         <Button onClick={onStart} className="w-full gap-2 mt-2" size="lg">
           <ArrowLeft className="w-4 h-4" />
           ابدأ التقييم
