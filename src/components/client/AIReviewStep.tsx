@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import {
-  CheckCircle, Cog, Sparkles, Building2, Shield, ArrowRight,
+  CheckCircle, Cog, Shield, ArrowRight,
   Package, FileCheck, Send, FileText, AlertCircle, Eye,
   Paperclip, Loader2, X,
 } from "lucide-react";
