@@ -26,6 +26,7 @@ import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { STATUS_LABELS as WF_STATUS_LABELS } from "@/lib/workflow-engine";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
+import StatusGuidanceCard from "@/components/client/StatusGuidanceCard";
 
 // Aligned with the 19-status workflow engine
 const STATUS_ORDER = [
