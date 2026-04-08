@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import {
   Gavel, AlertTriangle, CheckCircle2, ShieldAlert, Brain,
   Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown,
-  Info, Scale,
+  Scale,
 } from "lucide-react";
 import type { InspectionType } from "@/lib/sow-engine";
 

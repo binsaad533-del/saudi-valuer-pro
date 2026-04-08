@@ -454,6 +454,11 @@ export default function ClientRequests() {
                             <Brain className="w-3 h-3 ml-1" />بدء التحليل
                           </Button>
                         )}
+                        {req.status === "analysis_complete" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "professional_review"); }}>
+                            <Brain className="w-3 h-3 ml-1" />إحالة للحكم المهني
+                          </Button>
+                        )}
                         {req.status === "professional_review" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/valuation-production/${req.assignment_id || req.id}`); }}>
                             <Brain className="w-3 h-3 ml-1" />محرك التقييم
