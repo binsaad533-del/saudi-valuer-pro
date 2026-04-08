@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
+import { updateReportDraftStatus } from "@/lib/report-draft-status";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,15 +81,15 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
       const statusResult = await changeStatusByRequestId(request.id, "issued", { userId, reason: "إصدار التقرير النهائي" });
       if (!statusResult.success) throw new Error(statusResult.error);
 
+      if (draft) {
+        const draftResult = await updateReportDraftStatus(draft.id, "issued", {
+          issued_at: new Date().toISOString(),
+          report_number: reportNumber,
+          verification_code: verificationCode,
+        });
+        if (!draftResult.success) throw new Error(draftResult.error);
+      }
       await Promise.all([
-        draft && supabase.from("report_drafts" as any)
-          .update({
-            status: "issued",
-            issued_at: new Date().toISOString(),
-            report_number: reportNumber,
-            verification_code: verificationCode,
-          } as any)
-          .eq("id", draft.id),
         supabase.from("request_messages" as any).insert({
           request_id: request.id,
           sender_type: "system" as any,
@@ -151,14 +152,14 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
       const retentionDate = new Date(archiveDate);
       retentionDate.setFullYear(retentionDate.getFullYear() + 10);
 
+      if (draft) {
+        const archiveResult = await updateReportDraftStatus(draft.id, "archived", {
+          archived_at: new Date().toISOString(),
+          retention_until: retentionDate.toISOString(),
+        });
+        if (!archiveResult.success) throw new Error(archiveResult.error);
+      }
       await Promise.all([
-        draft && supabase.from("report_drafts" as any)
-          .update({
-            status: "archived",
-            archived_at: new Date().toISOString(),
-            retention_until: retentionDate.toISOString(),
-          } as any)
-          .eq("id", draft.id),
         supabase.from("audit_logs").insert({
           user_id: userId,
           action: "create" as any,

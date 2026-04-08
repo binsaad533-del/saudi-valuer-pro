@@ -1,47 +1,21 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { parseExcelFile, autoMapColumns, applyMapping } from "@/lib/excel-parser";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Upload,
-  FileText,
-  Image,
-  File,
-  X,
-  Loader2,
-  CheckCircle,
-  ArrowRight,
-  ArrowLeft,
-  User as UserIcon,
-  Send,
-  Home,
-  Edit3,
-  Clock,
-  Shield,
-  AlertTriangle,
-  Table2,
-  Monitor,
-  Eye,
-  Zap,
-  BadgeCheck,
+  CheckCircle, Edit3, AlertTriangle, Shield, Loader2,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
+import JourneyHeader from "@/components/client/journey/JourneyHeader";
+import JourneyStartStep from "@/components/client/journey/JourneyStartStep";
+import JourneyUploadStep from "@/components/client/journey/JourneyUploadStep";
+import JourneyProcessingStep from "@/components/client/journey/JourneyProcessingStep";
+import JourneyCompleteStep from "@/components/client/journey/JourneyCompleteStep";
 
 // ── Types ──
 interface UploadedFile {
@@ -633,357 +607,67 @@ export default function SimplifiedJourney() {
   // ── RENDER ──
   return (
     <div className="min-h-screen bg-background" dir="rtl">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-30">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="جساس" className="w-8 h-8" />
-            <h2 className="text-sm font-bold text-foreground">طلب تقييم</h2>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/client")}>
-            <ArrowRight className="w-4 h-4 ml-1" />
-            العودة
-          </Button>
-        </div>
-      </header>
-
-      {/* Progress bar */}
-      {step !== "complete" && (
-        <div className="max-w-2xl mx-auto px-4 pt-5 pb-2">
-          <div className="flex items-center justify-between mb-3">
-            {stepMeta.map((s, i) => {
-              const done = i < currentIdx;
-              const active = i === currentIdx;
-              return (
-                <div key={s.key} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      done ? "bg-success text-success-foreground" :
-                      active ? "bg-primary text-primary-foreground shadow-md" :
-                      "bg-muted text-muted-foreground"
-                    }`}>
-                      {done ? <CheckCircle className="w-4 h-4" /> : i + 1}
-                    </div>
-                    <span className={`text-[10px] font-medium ${active ? "text-primary" : done ? "text-success" : "text-muted-foreground"}`}>
-                      {s.label}
-                    </span>
-                  </div>
-                  {i < stepMeta.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-2 mt-[-14px] rounded ${done ? "bg-success" : "bg-border"}`} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      <JourneyHeader
+        step={step}
+        stepMeta={stepMeta}
+        currentIdx={currentIdx}
+        onBack={() => navigate("/client")}
+      />
 
       <div className={`mx-auto px-4 pb-10 ${step === "scope" ? "max-w-5xl" : "max-w-2xl"}`}>
 
-        {/* ═══════ STEP 1: START ═══════ */}
         {step === "start" && (
-          <Card className="shadow-card mt-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <UserIcon className="w-5 h-5 text-primary" />
-                بيانات الطلب
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">أدخل البيانات الأساسية لبدء التقييم</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label className="text-sm">اسم العميل <span className="text-destructive">*</span></Label>
-                <Input value={clientName} onChange={e => setClientName(e.target.value)} placeholder="الاسم الكامل أو اسم الجهة" />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-sm">رقم الجوال <span className="text-destructive">*</span></Label>
-                  <Input value={clientPhone} onChange={e => setClientPhone(e.target.value)} placeholder="05XXXXXXXX" dir="ltr" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-sm">البريد الإلكتروني</Label>
-                  <Input value={clientEmail} onChange={e => setClientEmail(e.target.value)} placeholder="example@email.com" dir="ltr" />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-sm">الغرض من التقييم <span className="text-destructive">*</span></Label>
-                <Select value={purpose} onValueChange={(val) => { setPurpose(val); if (val !== "other") setPurposeOther(""); if (DESKTOP_BLOCKED_PURPOSES.includes(val) && valuationMode === "desktop") { setValuationMode("field"); setDesktopDisclaimer(false); } }}>
-                  <SelectTrigger><SelectValue placeholder="اختر الغرض" /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(PURPOSE_OPTIONS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {purpose === "other" && (
-                  <Input value={purposeOther} onChange={e => setPurposeOther(e.target.value)} placeholder="حدد الغرض" className="mt-2" />
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label className="text-sm">مستخدمو التقرير <span className="text-destructive">*</span></Label>
-                <Select value={intendedUsers} onValueChange={(val) => { setIntendedUsers(val); if (val !== "other") setIntendedUsersOther(""); }}>
-                  <SelectTrigger><SelectValue placeholder="اختر مستخدمي التقرير" /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(USERS_OPTIONS).map(([k, v]) => (
-                      <SelectItem key={k} value={k}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {intendedUsers === "other" && (
-                  <Input value={intendedUsersOther} onChange={e => setIntendedUsersOther(e.target.value)} placeholder="حدد المستخدمين" className="mt-2" />
-                )}
-              </div>
-
-              {/* ── Valuation Mode ── */}
-              <div className="space-y-3 pt-2">
-                <Label className="text-sm font-semibold">نوع التقييم <span className="text-destructive">*</span></Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Field Inspection */}
-                  <button
-                    type="button"
-                    onClick={() => { setValuationMode("field"); setDesktopDisclaimer(false); }}
-                    className={`relative text-right border-2 rounded-xl p-4 transition-all ${
-                      valuationMode === "field"
-                        ? "border-primary bg-primary/5 shadow-sm"
-                        : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                        valuationMode === "field" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>
-                        <Eye className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-sm text-foreground">تقييم ميداني</h4>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          يشمل معاينة فعلية للعقار أو الأصل من قبل مقيّم معتمد — مطلوب للتمويل والرهن العقاري
-                        </p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="text-[10px]">الأكثر شمولاً</Badge>
-                        </div>
-                      </div>
-                    </div>
-                    {valuationMode === "field" && (
-                      <div className="absolute top-2 left-2">
-                        <CheckCircle className="w-5 h-5 text-primary" />
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Desktop */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (DESKTOP_BLOCKED_PURPOSES.includes(purpose)) {
-                        toast({ title: "التقييم المكتبي غير متاح لهذا الغرض", description: "التمويل ونزع الملكية يتطلبان تقييماً ميدانياً.", variant: "destructive" });
-                        return;
-                      }
-                      setValuationMode("desktop");
-                    }}
-                    className={`relative text-right border-2 rounded-xl p-4 transition-all ${
-                      DESKTOP_BLOCKED_PURPOSES.includes(purpose)
-                        ? "border-border opacity-50 cursor-not-allowed"
-                        : valuationMode === "desktop"
-                          ? "border-primary bg-primary/5 shadow-sm"
-                          : "border-border hover:border-primary/30"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
-                        valuationMode === "desktop" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                      }`}>
-                        <Monitor className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-bold text-sm text-foreground">تقييم مكتبي</h4>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          بدون معاينة ميدانية — أسرع وأقل تكلفة — معتمد وفق معايير IVS وتقييم
-                        </p>
-                        <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <Badge variant="secondary" className="text-[10px] gap-1">
-                            <Zap className="w-3 h-3" /> أسرع
-                          </Badge>
-                          <Badge variant="secondary" className="text-[10px] gap-1">
-                            <BadgeCheck className="w-3 h-3" /> معتمد
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    {valuationMode === "desktop" && (
-                      <div className="absolute top-2 left-2">
-                        <CheckCircle className="w-5 h-5 text-primary" />
-                      </div>
-                    )}
-                  </button>
-                </div>
-
-                {/* Desktop disclaimer */}
-                {valuationMode === "desktop" && (
-                  <div className="bg-accent/50 border border-accent rounded-lg p-3 space-y-3">
-                    <div className="flex items-start gap-2">
-                      <Shield className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                      <div>
-                        <p className="text-xs font-semibold text-foreground">ما هو التقييم المكتبي؟</p>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          تقييم احترافي معتمد يتم دون معاينة مادية للأصل، بالاعتماد على المستندات والصور المقدمة.
-                          يتوافق مع معايير التقييم الدولية (IVS) ومتطلبات الهيئة السعودية للمقيّمين المعتمدين (تقييم).
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-2 border-t border-border pt-2">
-                      <input
-                        type="checkbox"
-                        id="desktop-disclaimer"
-                        checked={desktopDisclaimer}
-                        onChange={e => setDesktopDisclaimer(e.target.checked)}
-                        className="mt-0.5 accent-primary"
-                      />
-                      <label htmlFor="desktop-disclaimer" className="text-xs text-foreground leading-relaxed cursor-pointer">
-                        أقر بأن التقييم سيتم <strong>بدون معاينة ميدانية</strong>، وأتحمل مسؤولية دقة المستندات والصور المقدمة،
-                        وأوافق على أن التقرير سيتضمن إفصاحاً بذلك.
-                      </label>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <Button onClick={handleStartRequest} className="w-full gap-2 mt-2" size="lg">
-                <ArrowLeft className="w-4 h-4" />
-                ابدأ التقييم
-              </Button>
-            </CardContent>
-          </Card>
+          <JourneyStartStep
+            clientName={clientName} setClientName={setClientName}
+            clientPhone={clientPhone} setClientPhone={setClientPhone}
+            clientEmail={clientEmail} setClientEmail={setClientEmail}
+            purpose={purpose} setPurpose={setPurpose}
+            purposeOther={purposeOther} setPurposeOther={setPurposeOther}
+            intendedUsers={intendedUsers} setIntendedUsers={setIntendedUsers}
+            intendedUsersOther={intendedUsersOther} setIntendedUsersOther={setIntendedUsersOther}
+            valuationMode={valuationMode} setValuationMode={setValuationMode}
+            desktopDisclaimer={desktopDisclaimer} setDesktopDisclaimer={setDesktopDisclaimer}
+            purposeOptions={PURPOSE_OPTIONS}
+            usersOptions={USERS_OPTIONS}
+            desktopBlockedPurposes={DESKTOP_BLOCKED_PURPOSES}
+            onStart={handleStartRequest}
+            toast={toast}
+          />
         )}
 
-        {/* ═══════ STEP 2: UPLOAD ═══════ */}
         {step === "upload" && (
-          <div className="space-y-4 mt-4">
-            <Card className="shadow-card">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Upload className="w-5 h-5 text-primary" />
-                  ارفع المستندات
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  ارفع الصكوك، المخططات، جداول البيانات، أو أي وثائق متعلقة بالتقييم
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div
-                  className={`border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
-                    dragOver ? "border-primary bg-primary/5 scale-[1.01]" : "border-border hover:border-primary/40 hover:bg-muted/30"
-                  }`}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                  onDragLeave={() => setDragOver(false)}
-                  onDrop={handleDrop}
-                >
-                  <Upload className={`w-10 h-10 mx-auto mb-3 ${dragOver ? "text-primary" : "text-muted-foreground/40"}`} />
-                  <p className="text-sm font-medium text-foreground mb-1">
-                    {dragOver ? "أفلت الملفات هنا" : "اسحب الملفات أو اضغط للاختيار"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    PDF • صور • Excel (XLSX, CSV) • Word
-                  </p>
-                  <p className="text-[11px] text-primary/70 mt-1">رفع Excel يسرّع إدخال الأصول تلقائياً</p>
-                  {uploading && (
-                    <div className="mt-3 flex items-center justify-center gap-2 text-primary">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span className="text-sm">جارٍ الرفع...</span>
-                    </div>
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={e => e.target.files && handleFileUpload(e.target.files)}
-                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.txt,.tif,.tiff,.zip,.webp"
-                />
-
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-1.5">
-                    <p className="text-xs font-semibold text-muted-foreground">
-                      الملفات ({uploadedFiles.length})
-                    </p>
-                    <div className="max-h-[220px] overflow-y-auto space-y-1">
-                      {uploadedFiles.map(file => (
-                        <div key={file.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/50 border border-border/50">
-                          {getFileIcon(file.type)}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-foreground truncate">{file.name}</p>
-                            <p className="text-[11px] text-muted-foreground">{formatFileSize(file.size)}</p>
-                          </div>
-                          <button onClick={() => removeFile(file.id)} className="text-muted-foreground hover:text-destructive p-1">
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep("start")} className="gap-1.5">
-                <ArrowRight className="w-4 h-4" />
-                رجوع
-              </Button>
-              <Button
-                onClick={handleUploadDone}
-                className="flex-1 gap-2"
-                size="lg"
-                disabled={uploadedFiles.length === 0 || uploading}
-              >
-                <Send className="w-4 h-4" />
-                تحليل ومعالجة ({uploadedFiles.length} ملف)
-              </Button>
-            </div>
-          </div>
+          <JourneyUploadStep
+            uploadedFiles={uploadedFiles}
+            uploading={uploading}
+            dragOver={dragOver}
+            setDragOver={setDragOver}
+            fileInputRef={fileInputRef as any}
+            onFileUpload={handleFileUpload}
+            onRemoveFile={removeFile}
+            onBack={() => setStep("start")}
+            onUploadDone={handleUploadDone}
+          />
         )}
 
-        {/* ═══════ STEP 3: PROCESSING (HIDDEN/AUTO) ═══════ */}
         {step === "processing" && (
-          <div className="mt-8 flex flex-col items-center justify-center py-16">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-              <Loader2 className="w-8 h-8 text-primary animate-spin" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">جارٍ تجهيز طلبك</h3>
-            <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">
-              {processingStatus}
-            </p>
-            <div className="w-full max-w-xs">
-              <Progress value={processingProgress} className="h-2 mb-2" />
-              <p className="text-xs text-muted-foreground text-center">{processingProgress}%</p>
-            </div>
-            <div className="mt-8 flex items-center gap-2 text-xs text-muted-foreground">
-              <Shield className="w-3.5 h-3.5" />
-              <span>يتم التحليل وفقاً للمعايير المهنية المعتمدة</span>
-            </div>
-          </div>
+          <JourneyProcessingStep
+            processingStatus={processingStatus}
+            processingProgress={processingProgress}
+          />
         )}
 
-        {/* ═══════ STEP 4: SCOPE CONFIRMATION ═══════ */}
         {step === "scope" && scopeData && (
           <div className="space-y-4 mt-4">
             <Card className="shadow-card border-2 border-primary/20">
-              <CardHeader className="pb-3">
+              <CardContent className="space-y-4 pt-6">
                 <div className="flex items-center gap-2 mb-1">
                   <CheckCircle className="w-5 h-5 text-success" />
-                  <CardTitle className="text-lg">نطاق العمل جاهز</CardTitle>
+                  <h3 className="text-lg font-bold text-foreground">نطاق العمل جاهز</h3>
                 </div>
                 <p className="text-sm text-muted-foreground">
                   تم تحليل المستندات وإعداد نطاق العمل تلقائياً — راجع الأصول المستخرجة وأكد
                 </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Summary row */}
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div className="bg-muted/50 rounded-lg p-3 border border-border text-center">
                     <p className="text-xs text-muted-foreground">الأصول المستخرجة</p>
@@ -993,7 +677,6 @@ export default function SimplifiedJourney() {
                     <p className="text-xs text-muted-foreground">المستندات</p>
                     <p className="text-2xl font-bold text-foreground">{uploadedFiles.length}</p>
                   </div>
-                  {/* Dynamic type breakdown */}
                   {(() => {
                     const typeCounts: Record<string, number> = {};
                     const TYPE_AR: Record<string, string> = {
@@ -1025,9 +708,7 @@ export default function SimplifiedJourney() {
                   const warnings = (scopeData.assets || []).filter((a: any) => ASSET_COMPLIANCE[a.asset_type]?.note && ASSET_COMPLIANCE[a.asset_type]?.permitted);
                   const restrictedTypes = Array.from(new Set(restricted.map((a: any) => String(a.asset_type))));
                   const warningTypes = Array.from(new Set(warnings.map((a: any) => String(a.asset_type))));
-
                   if (restrictedTypes.length === 0 && warningTypes.length === 0) return null;
-
                   return (
                     <div className="space-y-2">
                       {restrictedTypes.length > 0 && (
@@ -1037,7 +718,7 @@ export default function SimplifiedJourney() {
                             <span>أصول خارج نطاق الترخيص ({restricted.length} أصل)</span>
                           </div>
                           <p className="text-xs text-destructive/80">
-                            الأصول التالية تتطلب ترخيص «تقييم المنشآت الاقتصادية» ولا يمكن تقييمها ضمن هذا الطلب وسيتم استبعادها تلقائياً:
+                            سيتم استبعادها تلقائياً — تتطلب ترخيص «تقييم المنشآت الاقتصادية»
                           </p>
                           <ul className="text-xs text-destructive/70 space-y-1 pr-4">
                             {restrictedTypes.map((type: string) => (
@@ -1065,97 +746,37 @@ export default function SimplifiedJourney() {
                     </div>
                   );
                 })()}
+
                 <ScopeAssetsTable
                   assets={(scopeData.assets || []).map((a: any) => ({
                     id: a.id || crypto.randomUUID(),
                     asset_index: a.asset_index || 0,
                     name: a.name || "أصل",
                     asset_type: a.asset_type || "machinery_equipment",
-                    category: a.category,
-                    subcategory: a.subcategory,
-                    quantity: a.quantity || 1,
-                    condition: a.condition || "unknown",
-                    confidence: a.confidence || 50,
-                    review_status: a.review_status,
-                    source_evidence: a.source_evidence,
-                    asset_data: a.asset_data || {},
+                    category: a.category, subcategory: a.subcategory,
+                    quantity: a.quantity || 1, condition: a.condition || "unknown",
+                    confidence: a.confidence || 50, review_status: a.review_status,
+                    source_evidence: a.source_evidence, asset_data: a.asset_data || {},
                   } as ScopeAsset))}
                   onAssetsChange={(updated) => {
                     setScopeData((prev: any) => ({
-                      ...prev,
-                      assets: updated,
-                      totalAssets: updated.length,
+                      ...prev, assets: updated, totalAssets: updated.length,
                       realEstate: updated.filter((a: any) => a.asset_type === "real_estate").length,
                       machinery: updated.filter((a: any) => a.asset_type === "machinery_equipment").length,
                     }));
                   }}
                 />
 
-                {/* Meta info */}
-                <div className="bg-muted/30 rounded-lg p-3 space-y-2">
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">الغرض</span>
-                    <span className="font-medium text-foreground">{purpose === "other" ? purposeOther : PURPOSE_OPTIONS[purpose]}</span>
-                  </div>
-                  <div className="flex justify-between text-xs">
-                    <span className="text-muted-foreground">مستخدمو التقرير</span>
-                    <span className="font-medium text-foreground">{intendedUsers === "other" ? intendedUsersOther : USERS_OPTIONS[intendedUsers]}</span>
-                  </div>
-                  {(() => {
-                    const TYPE_INFO: Record<string, { label: string; desc: string }> = {
-                      real_estate: { label: "عقارات", desc: "أراضي، مباني، فلل، شقق، عمائر تجارية وصناعية" },
-                      machinery_equipment: { label: "آلات ومعدات", desc: "معدات تشغيلية وصناعية وإنتاجية" },
-                      medical_equipment: { label: "أجهزة طبية", desc: "أجهزة تحليل ومختبرات ومعدات طبية" },
-                      vehicle: { label: "مركبات", desc: "تقييم قيمة المركبة كأصل ثابت" },
-                      furniture: { label: "أثاث ومفروشات", desc: "أثاث مكتبي وتجهيزات داخلية" },
-                      it_equipment: { label: "أجهزة تقنية", desc: "حاسبات، طابعات، شاشات، سيرفرات" },
-                      leasehold_improvements: { label: "تحسينات مستأجرة", desc: "تشطيبات، ديكورات، لوحات، أنظمة سلامة" },
-                      right_of_use: { label: "مصالح مستأجرة", desc: "حقوق منفعة عقارية أو حق استخدام آلة" },
-                    };
-                    const counts: Record<string, number> = {};
-                    for (const a of (scopeData.assets || [])) {
-                      if (ASSET_COMPLIANCE[a.asset_type] && !ASSET_COMPLIANCE[a.asset_type].permitted) continue;
-                      counts[a.asset_type] = (counts[a.asset_type] || 0) + 1;
-                    }
-                    const total = Object.values(counts).reduce((s, c) => s + c, 0);
-                    return (
-                      <>
-                        <div className="flex justify-between items-center text-xs border-b border-border pb-2 mb-1">
-                          <span className="text-foreground font-bold">إجمالي الأصول المعتمدة للتقييم</span>
-                          <Badge className="text-[11px]">{total}</Badge>
-                        </div>
-                        {Object.entries(counts).map(([type, count]) => (
-                          <div key={type} className="flex justify-between items-start text-xs gap-2">
-                            <div className="min-w-0">
-                              <span className="text-foreground font-medium">{TYPE_INFO[type]?.label || type}</span>
-                              {TYPE_INFO[type]?.desc && (
-                                <p className="text-[10px] text-muted-foreground mt-0.5">{TYPE_INFO[type].desc}</p>
-                              )}
-                            </div>
-                            <Badge variant="secondary" className="text-[10px] shrink-0">{count}</Badge>
-                          </div>
-                        ))}
-                      </>
-                    );
-                  })()}
-                </div>
-
                 <div className="flex gap-3">
                   <Button
                     onClick={handleConfirmScope}
-                    className="flex-1 gap-2"
-                    size="lg"
+                    className="flex-1 gap-2" size="lg"
                     disabled={loading || scopeConfirmed || (scopeData.assets?.length || 0) === 0}
                   >
                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                     اعتماد وإرسال ({scopeData.assets?.length || 0} أصل)
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={() => navigate("/client/new-request")}
-                    className="gap-1.5"
-                  >
+                  <Button variant="outline" size="lg" onClick={() => navigate("/client/new-request")} className="gap-1.5">
                     <Edit3 className="w-4 h-4" />
                     تعديل مفصّل
                   </Button>
@@ -1165,34 +786,8 @@ export default function SimplifiedJourney() {
           </div>
         )}
 
-        {/* ═══════ STEP 5: COMPLETE ═══════ */}
         {step === "complete" && (
-          <div className="flex flex-col items-center justify-center py-16">
-            <div className="w-20 h-20 rounded-full bg-success/10 flex items-center justify-center mb-6">
-              <CheckCircle className="w-10 h-10 text-success" />
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">تم إرسال طلبك بنجاح!</h2>
-            <p className="text-sm text-muted-foreground text-center max-w-sm mb-2">
-              سيتم مراجعة طلبك وإعداد التقرير وفقاً للمعايير المهنية المعتمدة.
-              ستصلك إشعارات عند كل تحديث.
-            </p>
-            <div className="flex items-center gap-2 mt-2 mb-8">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">الوقت المتوقع: ٣-٥ أيام عمل</span>
-            </div>
-            <div className="w-full max-w-sm space-y-2">
-              <Button onClick={() => navigate("/client")} className="w-full gap-2">
-                <Home className="w-4 h-4" />
-                العودة للوحة التحكم
-              </Button>
-              {requestId && (
-                <Button onClick={() => navigate(`/client/request/${requestId}`)} variant="outline" className="w-full gap-2">
-                  <FileText className="w-4 h-4" />
-                  تتبع الطلب
-                </Button>
-              )}
-            </div>
-          </div>
+          <JourneyCompleteStep requestId={requestId} />
         )}
       </div>
     </div>
