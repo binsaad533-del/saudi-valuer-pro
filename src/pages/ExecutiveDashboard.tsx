@@ -7,15 +7,12 @@ import FinalIssuancePanel from "@/components/reports/FinalIssuancePanel";
 import SOWGenerator from "@/components/reports/SOWGenerator";
 import ProfessionalJudgmentPanel from "@/components/valuation/ProfessionalJudgmentPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import BidiText from "@/components/ui/bidi-text";
 import CommandPalette from "@/components/dashboard/CommandPalette";
 import { normalizeStatus, STATUS_LABELS, PIPELINE_PHASES } from "@/lib/workflow-engine";
-import { SAR } from "@/components/ui/saudi-riyal";
-import { formatNumber } from "@/lib/utils";
 import {
   ArrowLeft, Send, MessageSquare, Loader2,
   User, Bot, Building2, Brain, Shield,
@@ -24,7 +21,6 @@ import {
 import { Input } from "@/components/ui/input";
 
 /* ═══ Status utilities ═══ */
-const STATUS_NEW = ["draft", "submitted"];
 const STATUS_COMPLETE = ["issued", "archived"];
 const STATUS_BLOCKED = ["cancelled"];
 
@@ -64,16 +60,18 @@ const statusColor = (status: string) => {
   const n = normalizeStatus(status);
   if (STATUS_COMPLETE.includes(n)) return "text-emerald-600 dark:text-emerald-400";
   if (STATUS_BLOCKED.includes(n)) return "text-red-500";
-  if (STATUS_NEW.includes(n)) return "text-amber-600 dark:text-amber-400";
   return "text-muted-foreground";
 };
 
 function getActionReason(status: string): string {
   const map: Record<string, string> = {
-    submitted: "مراجعة طلب جديد", scope_generated: "اعتماد نطاق العمل",
-    professional_review: "الحكم المهني مطلوب", draft_report_ready: "اعتماد المسودة",
-    client_review: "ملاحظات العميل وردت", draft_approved: "جاهز للإصدار",
-    final_payment_confirmed: "الدفعة مؤكدة — إصدار",
+    submitted: "طلب جديد — مراجعة واعتماد النطاق",
+    scope_generated: "نطاق العمل جاهز — يحتاج اعتمادك",
+    professional_review: "الحكم المهني مطلوب",
+    draft_report_ready: "المسودة جاهزة — تحتاج اعتمادك",
+    client_review: "العميل أرسل ملاحظات",
+    draft_approved: "المسودة مُعتمدة — جاهز للإصدار",
+    final_payment_confirmed: "الدفعة مؤكدة — جاهز للإصدار النهائي",
   };
   return map[status] || "يحتاج مراجعة";
 }
@@ -85,8 +83,7 @@ function relativeTime(dateStr: string): string {
   if (m < 60) return `${m}د`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}س`;
-  const d = Math.floor(h / 24);
-  return `${d}ي`;
+  return `${Math.floor(h / 24)}ي`;
 }
 
 type ViewMode = "dashboard" | "workspace";
@@ -102,8 +99,6 @@ export default function ExecutiveDashboard() {
   const [sendingReply, setSendingReply] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [financials, setFinancials] = useState({ revenue: 0, pending: 0 });
-  const [auditEntries, setAuditEntries] = useState<any[]>([]);
   const [systemAlerts, setSystemAlerts] = useState({ stale: 0, pendingPay: 0 });
 
   useEffect(() => {
@@ -111,18 +106,12 @@ export default function ExecutiveDashboard() {
     const load = async () => {
       setLoading(true);
       const threeDaysAgo = new Date(Date.now() - 3 * 86400000).toISOString();
-      const [{ data: reqs }, { data: payments }, { data: audit }, { count: stale }, { count: pendPay }] = await Promise.all([
+      const [{ data: reqs }, { count: stale }, { count: pendPay }] = await Promise.all([
         supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500),
-        supabase.from("payments").select("amount, payment_status"),
-        supabase.from("audit_logs").select("id, action, description, created_at, table_name").order("created_at", { ascending: false }).limit(6),
         supabase.from("valuation_assignments").select("id", { count: "exact", head: true }).lt("updated_at", threeDaysAgo).not("status", "in", "(issued,archived,cancelled,draft)"),
         supabase.from("payments").select("id", { count: "exact", head: true }).eq("payment_status", "pending").eq("payment_type", "bank_transfer"),
       ]);
       setRequests((reqs as any[]) || []);
-      let rev = 0, pend = 0;
-      (payments || []).forEach((p: any) => { if (p.payment_status === "paid") rev += (p.amount || 0); else if (p.payment_status === "pending") pend += (p.amount || 0); });
-      setFinancials({ revenue: rev, pending: pend });
-      setAuditEntries(audit || []);
       setSystemAlerts({ stale: stale || 0, pendingPay: pendPay || 0 });
       setLoading(false);
     };
@@ -167,28 +156,30 @@ export default function ExecutiveDashboard() {
   /* ═══ Computed ═══ */
   const threeDaysAgo = Date.now() - 3 * 86400000;
 
+  // LAYER 2: Command priority — max 5
   const actionQueue = useMemo(() =>
     requests
       .filter(r => ACTION_STATUSES.includes(normalizeStatus(r.status)))
       .sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime())
-      .slice(0, 8)
+      .slice(0, 5)
       .map(r => ({ id: r.id, client: getClientName(r), action: getActionReason(normalizeStatus(r.status)), status: r.status, time: relativeTime(r.updated_at) }))
   , [requests]);
 
+  // LAYER 3: Platform state — 6 distinct non-duplicated counts
   const stateMap = useMemo(() => {
-    const m = { active: 0, new: 0, awaitApproval: 0, stale: 0, completed: 0, blocked: 0 };
+    const m = { active: 0, awaitApproval: 0, stale: 0, completed: 0, blocked: 0 };
     requests.forEach(r => {
       const n = normalizeStatus(r.status);
       if (STATUS_COMPLETE.includes(n)) { m.completed++; return; }
       if (STATUS_BLOCKED.includes(n)) { m.blocked++; return; }
-      if (STATUS_NEW.includes(n)) { m.new++; }
+      m.active++;
       if (["professional_review", "draft_report_ready", "draft_approved", "final_payment_confirmed"].includes(n)) m.awaitApproval++;
       if (!["draft"].includes(n) && new Date(r.updated_at).getTime() < threeDaysAgo) m.stale++;
-      m.active++;
     });
     return m;
   }, [requests]);
 
+  // LAYER 4: Workflow pressure
   const pressureMap = useMemo(() => {
     const statusCounts: Record<string, number> = {};
     requests.forEach(r => {
@@ -197,7 +188,7 @@ export default function ExecutiveDashboard() {
     });
     const phases = PIPELINE_PHASES.filter(p => p.key !== "finalization");
     return phases.map(p => ({
-      label: p.label.replace("و", "·"),
+      label: p.label,
       count: p.statuses.reduce((sum, s) => sum + (statusCounts[s] || 0), 0),
       congested: p.statuses.some(s => (statusCounts[s] || 0) >= 3),
     }));
@@ -205,20 +196,6 @@ export default function ExecutiveDashboard() {
 
   const totalActive = pressureMap.reduce((s, p) => s + p.count, 0);
   const maxPressure = Math.max(...pressureMap.map(p => p.count), 1);
-
-  const raqeemInsights = useMemo(() => {
-    const insights: string[] = [];
-    if (stateMap.stale > 0) insights.push(`${stateMap.stale} ملف متوقف أكثر من 3 أيام`);
-    const congested = pressureMap.filter(p => p.congested);
-    if (congested.length > 0) insights.push(`تكدس في: ${congested.map(c => c.label).join("، ")}`);
-    if (stateMap.awaitApproval > 0) insights.push(`${stateMap.awaitApproval} ملف بانتظار حكمك المهني أو اعتمادك`);
-    const scopeReady = requests.filter(r => normalizeStatus(r.status) === "scope_generated").length;
-    if (scopeReady > 0) insights.push(`${scopeReady} نطاق عمل جاهز للاعتماد`);
-    if (insights.length === 0) insights.push("لا مخاطر حالية — النظام يعمل بانتظام");
-    return insights;
-  }, [stateMap, pressureMap, requests]);
-
-  const collectionRate = financials.revenue + financials.pending > 0 ? Math.round((financials.revenue / (financials.revenue + financials.pending)) * 100) : 0;
 
   const openWorkspace = (reqOrId: any) => {
     const req = typeof reqOrId === "string" ? requests.find(r => r.id === reqOrId) : reqOrId;
@@ -234,9 +211,11 @@ export default function ExecutiveDashboard() {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <TopBar />
-        <div className="max-w-[1400px] mx-auto px-5 py-4 space-y-3">
-          <Skeleton className="h-8 rounded" />
-          <Skeleton className="h-[500px] rounded-lg" />
+        <div className="max-w-[1400px] mx-auto px-5 py-6 space-y-4">
+          <Skeleton className="h-6 w-full rounded" />
+          <Skeleton className="h-48 rounded-lg" />
+          <Skeleton className="h-24 rounded-lg" />
+          <Skeleton className="h-32 rounded-lg" />
         </div>
       </div>
     );
@@ -332,7 +311,7 @@ export default function ExecutiveDashboard() {
   }
 
   /* ══════════════════════════════════════════════════════════════
-     COMMAND CENTER — 5 Layers
+     COMMAND CENTER — Phase 1: 4 Areas Only
      ══════════════════════════════════════════════════════════════ */
   const criticalCount = systemAlerts.stale + systemAlerts.pendingPay;
   const now = new Date().toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
@@ -341,191 +320,163 @@ export default function ExecutiveDashboard() {
     <div className="min-h-screen bg-background" dir="rtl">
       <TopBar />
 
-      <div className="max-w-[1440px] mx-auto px-5 py-4 space-y-0">
+      <div className="max-w-[1400px] mx-auto px-5 pt-3 pb-8">
 
-        {/* ═══════════════════════════════════════════════
-            LAYER 1: Operational Status Strip
-            ═══════════════════════════════════════════════ */}
-        <div className="flex items-center justify-between py-2 border-b border-border/40 mb-4">
-          <div className="flex items-center gap-5 text-[10px]">
+        {/* ═══════════════════════════════════════════════════════════
+            AREA 1 — Top Status Strip
+            ═══════════════════════════════════════════════════════════ */}
+        <div className="flex items-center justify-between h-8 mb-5">
+          <div className="flex items-center gap-6">
+            {/* System health */}
             <div className="flex items-center gap-1.5">
-              <div className={`w-1.5 h-1.5 rounded-full ${criticalCount === 0 ? "bg-emerald-500" : "bg-red-500"}`} />
-              <span className="text-muted-foreground font-medium">النظام</span>
+              <div className={`w-[5px] h-[5px] rounded-full ${criticalCount === 0 ? "bg-emerald-500" : "bg-red-500"}`} />
+              <span className="text-[10px] text-muted-foreground">النظام</span>
             </div>
+            {/* Critical alerts */}
             {criticalCount > 0 && (
               <div className="flex items-center gap-1">
                 <AlertTriangle className="w-3 h-3 text-red-500" />
-                <span className="font-semibold text-red-600 dark:text-red-400">{criticalCount}</span>
+                <span className="text-[10px] font-bold text-red-600 dark:text-red-400 tabular-nums">{criticalCount} حرج</span>
               </div>
             )}
+            {/* Raqeem */}
             <div className="flex items-center gap-1">
-              <Brain className="w-3 h-3 text-primary/70" />
-              <span className="text-muted-foreground">رقيم</span>
+              <Brain className="w-3 h-3 text-primary/60" />
+              <span className="text-[10px] text-muted-foreground">رقيم نشط</span>
             </div>
+            {/* Compliance */}
             <div className="flex items-center gap-1">
-              <Shield className="w-3 h-3 text-emerald-500/70" />
-              <span className="text-muted-foreground">الامتثال</span>
+              <Shield className="w-3 h-3 text-emerald-500/60" />
+              <span className="text-[10px] text-muted-foreground">الامتثال</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
-            <Clock className="w-2.5 h-2.5" />
-            <span className="tabular-nums">{now}</span>
-          </div>
+          <span className="text-[9px] text-muted-foreground/50 tabular-nums">{now}</span>
         </div>
 
-        {/* ═══════════════════════════════════════════════
-            MAIN GRID: Priority Queue + Intelligence
-            ═══════════════════════════════════════════════ */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-5">
-
-          {/* ──────── LEFT COLUMN ──────── */}
-          <div className="space-y-5 min-w-0">
-
-            {/* ═══ LAYER 2: Command Priority Queue ═══ */}
+        {/* ═══════════════════════════════════════════════════════════
+            AREA 2 — Command Priority Panel (strongest block)
+            ═══════════════════════════════════════════════════════════ */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-[3px] h-5 rounded-full bg-amber-500" />
+            <h2 className="text-xs font-bold text-foreground">الإجراء المطلوب</h2>
             {actionQueue.length > 0 && (
-              <section>
-                <div className="flex items-center gap-2 mb-2.5">
-                  <div className="w-1 h-4 rounded-full bg-amber-500" />
-                  <h2 className="text-[11px] font-bold text-foreground tracking-wide">الإجراء المطلوب</h2>
-                  <span className="text-[10px] text-muted-foreground tabular-nums">{actionQueue.length}</span>
-                </div>
-                <div className="space-y-1">
-                  {actionQueue.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => openWorkspace(item.id)}
-                      className="w-full flex items-center gap-3 py-2.5 px-3 rounded-md border border-transparent hover:border-border hover:bg-muted/20 transition-all text-right group"
-                    >
-                      <div className="w-1 h-8 rounded-full bg-amber-400/60 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[11px] font-semibold text-foreground truncate">{item.client}</span>
-                          <span className={`text-[9px] font-medium ${statusColor(item.status)}`}>{statusLabels[normalizeStatus(item.status)] || "—"}</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{item.action}</p>
-                      </div>
-                      <span className="text-[9px] text-muted-foreground/50 tabular-nums shrink-0">{item.time}</span>
-                      <ChevronLeft className="w-3 h-3 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </section>
+              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold tabular-nums">{actionQueue.length}</span>
             )}
-
-            {/* ═══ LAYER 3: Platform State Map ═══ */}
-            <section>
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-1 h-4 rounded-full bg-foreground/20" />
-                <h2 className="text-[11px] font-bold text-foreground tracking-wide">حالة المنصة</h2>
-              </div>
-              <div className="grid grid-cols-3 gap-px bg-border/30 rounded-lg overflow-hidden lg:grid-cols-6">
-                {([
-                  { label: "نشط", value: stateMap.active, warn: false },
-                  { label: "جديد", value: stateMap.new, warn: false },
-                  { label: "بانتظارك", value: stateMap.awaitApproval, warn: stateMap.awaitApproval > 0 },
-                  { label: "متأخر", value: stateMap.stale, warn: stateMap.stale > 0 },
-                  { label: "مكتمل", value: stateMap.completed, warn: false },
-                  { label: "ملغي", value: stateMap.blocked, warn: stateMap.blocked > 0 },
-                ] as const).map((s) => (
-                  <div key={s.label} className="bg-card py-3 px-3 text-center">
-                    <p className={`text-lg font-bold tabular-nums ${s.warn ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>{s.value}</p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">{s.label}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* ═══ LAYER 4: Workflow Pressure Map ═══ */}
-            <section>
-              <div className="flex items-center justify-between mb-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-4 rounded-full bg-foreground/20" />
-                  <h2 className="text-[11px] font-bold text-foreground tracking-wide">خريطة الضغط</h2>
-                </div>
-                <span className="text-[9px] text-muted-foreground tabular-nums">{totalActive} نشط</span>
-              </div>
-              <div className="space-y-1.5">
-                {pressureMap.map((phase) => {
-                  const pct = Math.max((phase.count / maxPressure) * 100, phase.count > 0 ? 6 : 0);
-                  return (
-                    <div key={phase.label} className="flex items-center gap-2">
-                      <span className="text-[9px] text-muted-foreground w-28 shrink-0 truncate text-right">{phase.label}</span>
-                      <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all duration-700 ${phase.congested ? "bg-red-400 dark:bg-red-500" : "bg-foreground/15"}`}
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <div className="flex items-center gap-0.5 w-8 justify-end">
-                        {phase.congested && <AlertTriangle className="w-2.5 h-2.5 text-red-500" />}
-                        <span className={`text-[9px] font-medium tabular-nums ${phase.congested ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>{phase.count}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
           </div>
 
-          {/* ──────── RIGHT COLUMN: Intelligence ──────── */}
-          <div className="space-y-5">
-
-            {/* ═══ LAYER 5: Live Intelligence Feed ═══ */}
-            {/* Raqeem Executive */}
-            <section>
-              <div className="flex items-center gap-2 mb-2">
-                <Brain className="w-3 h-3 text-primary/70" />
-                <h2 className="text-[11px] font-bold text-foreground">رقيم</h2>
-              </div>
-              <div className="space-y-1.5">
-                {raqeemInsights.map((insight, i) => (
-                  <div key={i} className={`border-r-2 pr-2.5 py-1 ${i === 0 && stateMap.stale > 0 ? "border-r-red-400" : i < raqeemInsights.length - 1 ? "border-r-amber-400/60" : "border-r-emerald-400/60"}`}>
-                    <p className="text-[10px] text-foreground/80 leading-relaxed">{insight}</p>
+          {actionQueue.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border/50 py-6 text-center">
+              <p className="text-[11px] text-muted-foreground/60">لا إجراءات معلّقة حالياً</p>
+            </div>
+          ) : (
+            <div className="rounded-lg border border-border/40 divide-y divide-border/30 bg-card/50">
+              {actionQueue.map((item, i) => (
+                <button
+                  key={item.id}
+                  onClick={() => openWorkspace(item.id)}
+                  className="w-full flex items-center gap-4 py-3 px-4 text-right hover:bg-muted/30 transition-colors group"
+                >
+                  {/* Priority indicator */}
+                  <span className="text-[9px] font-bold text-muted-foreground/40 tabular-nums w-4 shrink-0">{i + 1}</span>
+                  {/* Urgency bar */}
+                  <div className={`w-[3px] h-9 rounded-full shrink-0 ${i === 0 ? "bg-red-400" : i < 3 ? "bg-amber-400" : "bg-muted-foreground/20"}`} />
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-[11px] font-semibold text-foreground">{item.client}</span>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{item.action}</p>
                   </div>
-                ))}
-              </div>
-            </section>
+                  {/* Time */}
+                  <span className="text-[9px] text-muted-foreground/40 tabular-nums shrink-0">{item.time}</span>
+                  <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/60 transition-colors shrink-0" />
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
 
-            {/* Financial snapshot */}
-            <section className="border-t border-border/30 pt-3">
-              <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-[11px] font-bold text-foreground">المالية</h2>
-              </div>
-              <div className="space-y-1.5 text-[10px]">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">المحصّل</span>
-                  <span className="font-bold text-foreground tabular-nums">{formatNumber(financials.revenue)} <SAR /></span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">معلّق</span>
-                  <span className="font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatNumber(financials.pending)} <SAR /></span>
-                </div>
-                {collectionRate > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">تحصيل</span>
-                    <span className="font-medium text-foreground tabular-nums">{collectionRate}%</span>
-                  </div>
-                )}
-              </div>
-            </section>
-
-            {/* Live events */}
-            <section className="border-t border-border/30 pt-3">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                <h2 className="text-[11px] font-bold text-foreground">أحداث</h2>
-              </div>
-              <div className="space-y-1">
-                {auditEntries.map((entry) => (
-                  <div key={entry.id} className="flex items-start gap-2 py-1">
-                    <span className="text-[8px] text-muted-foreground/50 tabular-nums shrink-0 mt-0.5 w-6">{relativeTime(entry.created_at)}</span>
-                    <p className="text-[10px] text-foreground/70 leading-snug truncate">{entry.description || `${entry.action} · ${entry.table_name}`}</p>
-                  </div>
-                ))}
-              </div>
-            </section>
+        {/* ═══════════════════════════════════════════════════════════
+            AREA 3 — Platform State Summary (no duplication)
+            ═══════════════════════════════════════════════════════════ */}
+        <section className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="w-[3px] h-5 rounded-full bg-foreground/15" />
+            <h2 className="text-xs font-bold text-foreground">حالة المنصة</h2>
           </div>
-        </div>
+          <div className="grid grid-cols-5 rounded-lg border border-border/30 overflow-hidden">
+            {([
+              { label: "نشط", value: stateMap.active, critical: false },
+              { label: "بانتظارك", value: stateMap.awaitApproval, critical: stateMap.awaitApproval > 0 },
+              { label: "متأخر +3 أيام", value: stateMap.stale, critical: stateMap.stale > 0 },
+              { label: "مكتمل", value: stateMap.completed, critical: false },
+              { label: "ملغي", value: stateMap.blocked, critical: false },
+            ]).map((s, i) => (
+              <div
+                key={s.label}
+                className={`py-4 text-center ${i < 4 ? "border-l border-border/20" : ""} ${s.critical ? "bg-red-50/50 dark:bg-red-950/10" : "bg-card/40"}`}
+              >
+                <p className={`text-xl font-bold tabular-nums ${s.critical ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>
+                  {s.value}
+                </p>
+                <p className="text-[9px] text-muted-foreground mt-1">{s.label}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══════════════════════════════════════════════════════════
+            AREA 4 — Workflow Pressure Visualization
+            ═══════════════════════════════════════════════════════════ */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-[3px] h-5 rounded-full bg-foreground/15" />
+              <h2 className="text-xs font-bold text-foreground">ضغط سير العمل</h2>
+            </div>
+            <span className="text-[9px] text-muted-foreground tabular-nums">{totalActive} ملف نشط</span>
+          </div>
+
+          <div className="rounded-lg border border-border/30 bg-card/40 p-4">
+            <div className="flex items-end gap-[2px] h-24 justify-between">
+              {pressureMap.map((phase) => {
+                const heightPct = maxPressure > 0 ? Math.max((phase.count / maxPressure) * 100, phase.count > 0 ? 8 : 2) : 2;
+                return (
+                  <div key={phase.label} className="flex-1 flex flex-col items-center gap-1">
+                    {/* Count on top */}
+                    {phase.count > 0 && (
+                      <span className={`text-[9px] font-bold tabular-nums ${phase.congested ? "text-red-600 dark:text-red-400" : "text-muted-foreground"}`}>
+                        {phase.count}
+                      </span>
+                    )}
+                    {/* Bar */}
+                    <div
+                      className={`w-full max-w-[56px] rounded-sm transition-all duration-500 ${
+                        phase.congested
+                          ? "bg-red-400/80 dark:bg-red-500/70"
+                          : phase.count > 0
+                            ? "bg-foreground/10"
+                            : "bg-muted/20"
+                      }`}
+                      style={{ height: `${heightPct}%` }}
+                    />
+                    {/* Congestion indicator */}
+                    {phase.congested && <AlertTriangle className="w-2.5 h-2.5 text-red-500" />}
+                  </div>
+                );
+              })}
+            </div>
+            {/* Phase labels */}
+            <div className="flex gap-[2px] mt-2 border-t border-border/20 pt-2">
+              {pressureMap.map((phase) => (
+                <div key={phase.label} className="flex-1 text-center">
+                  <p className={`text-[8px] leading-tight ${phase.congested ? "text-red-600 dark:text-red-400 font-bold" : "text-muted-foreground/60"}`}>
+                    {phase.label.split("و")[0].trim()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
 
         <CommandPalette />
       </div>
