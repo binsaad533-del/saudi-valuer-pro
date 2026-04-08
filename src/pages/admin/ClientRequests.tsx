@@ -18,6 +18,7 @@ import {
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 import { formatDate, formatNumber } from "@/lib/utils";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import {
   STATUS_LABELS as WF_STATUS_LABELS,
   STATUS_COLORS,
@@ -167,8 +168,8 @@ export default function ClientRequests() {
         ? totalFees * (parseFloat(pricingForm.firstPaymentPercentage) / 100)
         : totalFees;
 
+      // Save pricing data (no direct status change)
       await supabase.from("valuation_requests" as any).update({
-        status: "quotation_sent" as any,
         quotation_amount: totalFees,
         total_fees: totalFees,
         payment_structure: pricingForm.paymentStructure,
@@ -187,6 +188,12 @@ export default function ClientRequests() {
           final_payment: pricingForm.paymentStructure === "partial" ? totalFees - firstPaymentAmount : 0,
         },
       } as any).eq("id", selectedRequest.id);
+
+      // Advance status via RPC
+      const statusResult = await changeStatusByRequestId(selectedRequest.id, "scope_generated", {
+        reason: "إرسال عرض السعر ونطاق العمل للعميل",
+      });
+      if (!statusResult.success) throw new Error(statusResult.error);
 
       // Send system message to client
       await supabase.from("request_messages" as any).insert({
@@ -208,11 +215,23 @@ export default function ClientRequests() {
   const moveToStatus = async (reqId: string, newStatus: string) => {
     setSaving(true);
     try {
-      const updateData: any = { status: newStatus as any };
-      if (newStatus === "in_production") updateData.production_started_at = new Date().toISOString();
-      if (newStatus === "completed") updateData.completed_at = new Date().toISOString();
+      // Save timestamp fields separately
+      if (newStatus === "data_collection_open") {
+        await supabase.from("valuation_requests" as any).update({
+          production_started_at: new Date().toISOString(),
+        } as any).eq("id", reqId);
+      } else if (newStatus === "issued") {
+        await supabase.from("valuation_requests" as any).update({
+          completed_at: new Date().toISOString(),
+        } as any).eq("id", reqId);
+      }
 
-      await supabase.from("valuation_requests" as any).update(updateData).eq("id", reqId);
+      // Advance status via RPC
+      const statusResult = await changeStatusByRequestId(reqId, newStatus, {
+        reason: `تحديث الحالة يدوياً إلى ${newStatus}`,
+      });
+      if (!statusResult.success) throw new Error(statusResult.error);
+
       toast({ title: "تم تحديث الحالة" });
       loadRequests();
     } catch (err: any) {
@@ -238,27 +257,23 @@ export default function ClientRequests() {
         const isFullyPaid = totalPaid >= (req.total_fees || 0);
         const isFirstPayment = req.payment_status === "unpaid" || req.payment_status === "awaiting_payment";
 
-        let newStatus = req.status;
-        let paymentStatus = "partially_paid";
-
-        if (isFullyPaid) {
-          paymentStatus = "fully_paid";
-          if (req.status === "final_payment_pending" || req.status === "final_payment_uploaded") {
-            newStatus = "final_report_ready";
-          } else {
-            newStatus = "fully_paid";
-          }
-        } else if (isFirstPayment) {
-          newStatus = "in_production";
-          paymentStatus = "partially_paid";
-        }
-
+        // Update payment data fields (no direct status change)
+        const paymentStatus = isFullyPaid ? "fully_paid" : "partially_paid";
         await supabase.from("valuation_requests" as any).update({
-          status: newStatus as any,
           amount_paid: totalPaid,
           payment_status: paymentStatus,
-          ...(newStatus === "in_production" ? { production_started_at: new Date().toISOString() } : {}),
+          ...(isFirstPayment ? { production_started_at: new Date().toISOString() } : {}),
         } as any).eq("id", req.id);
+
+        // Advance status via RPC
+        const targetStatus = isFirstPayment ? "first_payment_confirmed" : "final_payment_confirmed";
+        const statusResult = await changeStatusByRequestId(req.id, targetStatus, {
+          actionType: "normal",
+          reason: `اعتماد إيصال الدفع - ${isFirstPayment ? "الدفعة الأولى" : "الدفعة النهائية"}`,
+        });
+        if (!statusResult.success) {
+          console.warn("Status transition failed:", statusResult.error);
+        }
       }
 
       toast({ title: approved ? "تم اعتماد الإيصال" : "تم رفض الإيصال" });
