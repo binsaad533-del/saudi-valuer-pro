@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { formatNumber } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -13,62 +12,18 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog";
-import {
   Search, UserCog, Eye, Ban, CheckCircle, Loader2, Users,
-  ShieldCheck, RefreshCw, Crown, TrendingUp, Star, Clock,
-  ArrowUpDown, DollarSign, BarChart3,
+  RefreshCw, Crown, TrendingUp, ArrowUpDown, BarChart3,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
-import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
-
-// ── Types ──
-interface UserRow {
-  id: string;
-  user_id: string;
-  full_name_ar: string;
-  email: string | null;
-  phone: string | null;
-  created_at: string;
-  account_status: string;
-  client_category: string;
-  client_category_manual: boolean;
-  client_value_score: number;
-  role?: string;
-  // Computed metrics
-  totalRevenue: number;
-  projectCount: number;
-  avgProjectValue: number;
-  lastActivity: string | null;
-}
-
-// ── Constants ──
-const ROLE_LABELS: Record<string, string> = {
-  client: "عميل", inspector: "معاين ميداني",
-  owner: "مالك المنصة", financial_manager: "مدير مالي",
-  admin_coordinator: "منسق إداري",
-};
-const ROLE_COLORS: Record<string, string> = {
-  client: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-  inspector: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  owner: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
-  financial_manager: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
-  admin_coordinator: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
-};
-const ASSIGNABLE_ROLES = ["client", "inspector", "financial_manager", "admin_coordinator"] as const;
-
-const CATEGORY_CONFIG: Record<string, { label: string; color: string; icon: React.ElementType }> = {
-  vip: { label: "VIP", color: "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-700", icon: Crown },
-  high_value: { label: "عميل مميز", color: "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-200 dark:border-emerald-700", icon: TrendingUp },
-  regular: { label: "عميل عادي", color: "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-200 dark:border-blue-700", icon: Star },
-  low_activity: { label: "نشاط منخفض", color: "bg-muted text-muted-foreground border-border", icon: Clock },
-};
-
-const CATEGORY_OPTIONS = ["vip", "high_value", "regular", "low_activity"] as const;
+import { SARIcon } from "@/components/ui/saudi-riyal";
+import {
+  type UserRow, ROLE_LABELS, ROLE_COLORS,
+  CategoryBadge, formatCurrencyJSX,
+  RoleChangeDialog, CategoryOverrideDialog, ProfileDialog,
+} from "./ClientDialogs";
 
 // ── Classification Logic ──
-// Thresholds (configurable)
 const VIP_REVENUE = 50000;
 const VIP_PROJECTS = 5;
 const HIGH_VALUE_REVENUE = 20000;
@@ -103,14 +58,8 @@ export default function ClientsManagement() {
   // Dialogs
   const [roleDialog, setRoleDialog] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
-  const [newRole, setNewRole] = useState("");
-  const [changing, setChanging] = useState(false);
-
   const [categoryDialog, setCategoryDialog] = useState(false);
   const [categoryUser, setCategoryUser] = useState<UserRow | null>(null);
-  const [newCategory, setNewCategory] = useState("");
-  const [categoryChanging, setCategoryChanging] = useState(false);
-
   const [profileDialog, setProfileDialog] = useState(false);
   const [profileUser, setProfileUser] = useState<UserRow | null>(null);
 
@@ -124,8 +73,6 @@ export default function ClientsManagement() {
       if (error) throw error;
 
       const userIds = (profiles || []).map((p) => p.user_id);
-
-      // Fetch roles, requests and payments in parallel
       const [rolesRes, requestsRes, paymentsRes] = await Promise.all([
         supabase.from("user_roles").select("user_id, role").in("user_id", userIds),
         supabase.from("valuation_requests").select("id, client_user_id, created_at, total_fees").in("client_user_id", userIds),
@@ -135,14 +82,12 @@ export default function ClientsManagement() {
       const roleMap: Record<string, string> = {};
       (rolesRes.data || []).forEach((r) => { roleMap[r.user_id] = r.role; });
 
-      // Build per-user metrics
       const requestsByUser: Record<string, any[]> = {};
       (requestsRes.data || []).forEach((r) => {
         if (!requestsByUser[r.client_user_id]) requestsByUser[r.client_user_id] = [];
         requestsByUser[r.client_user_id].push(r);
       });
 
-      // Sum paid amounts per request
       const paidByRequest: Record<string, number> = {};
       (paymentsRes.data || []).forEach((p) => {
         if (p.payment_status === "paid") {
@@ -153,43 +98,23 @@ export default function ClientsManagement() {
       const combined: UserRow[] = (profiles || []).map((p) => {
         const userRequests = requestsByUser[p.user_id] || [];
         const projectCount = userRequests.length;
-
         let totalRevenue = 0;
-        userRequests.forEach((req: any) => {
-          totalRevenue += paidByRequest[req.id] || 0;
-        });
+        userRequests.forEach((req: any) => { totalRevenue += paidByRequest[req.id] || 0; });
         const avgProjectValue = projectCount > 0 ? totalRevenue / projectCount : 0;
-
         const lastReq = userRequests.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0];
         const lastActivity = lastReq?.created_at || null;
-
         const autoCategory = classifyClient(totalRevenue, projectCount, avgProjectValue, lastActivity);
         const effectiveCategory = p.client_category_manual ? (p.client_category || "regular") : autoCategory;
-
-        return {
-          ...p,
-          role: roleMap[p.user_id] || "client",
-          totalRevenue,
-          projectCount,
-          avgProjectValue,
-          lastActivity,
-          client_category: effectiveCategory,
-          client_category_manual: p.client_category_manual ?? false,
-          client_value_score: p.client_value_score ?? 0,
-        };
+        return { ...p, role: roleMap[p.user_id] || "client", totalRevenue, projectCount, avgProjectValue, lastActivity, client_category: effectiveCategory, client_category_manual: p.client_category_manual ?? false, client_value_score: p.client_value_score ?? 0 };
       });
-
       setUsers(combined);
     } catch (err: any) {
       toast({ title: "خطأ في تحميل المستخدمين", description: err.message, variant: "destructive" });
-    } finally {
-      setLoading(false);
-    }
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { fetchUsers(); }, []);
 
-  // ── Filtering & Sorting ──
   const filtered = useMemo(() => {
     let result = users.filter((u) => {
       const matchSearch = !search || u.full_name_ar.includes(search) || (u.email || "").includes(search) || (u.phone || "").includes(search);
@@ -197,7 +122,6 @@ export default function ClientsManagement() {
       const matchCategory = categoryFilter === "all" || u.client_category === categoryFilter;
       return matchSearch && matchRole && matchCategory;
     });
-
     result.sort((a, b) => {
       let cmp = 0;
       switch (sortField) {
@@ -209,75 +133,16 @@ export default function ClientsManagement() {
       }
       return sortAsc ? cmp : -cmp;
     });
-
     return result;
   }, [users, search, roleFilter, categoryFilter, sortField, sortAsc]);
 
-  // ── Stats ──
-  const stats = useMemo(() => {
-    const _clients = users.filter((u) => u.role === "client" || !u.role);
-    return {
-      total: users.length,
-      vip: users.filter((u) => u.client_category === "vip").length,
-      highValue: users.filter((u) => u.client_category === "high_value").length,
-      totalRevenue: users.reduce((s, u) => s + u.totalRevenue, 0),
-      top5: [...users].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5),
-    };
-  }, [users]);
-
-  // ── Handlers ──
-  const handleChangeRole = async () => {
-    if (!selectedUser || !newRole) return;
-    setChanging(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("غير مصرح");
-      const oldRole = selectedUser.role || "client";
-      const { data: existingRole } = await supabase.from("user_roles").select("id").eq("user_id", selectedUser.user_id).single();
-      if (existingRole) {
-        const { error } = await supabase.from("user_roles").update({ role: newRole as any }).eq("user_id", selectedUser.user_id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("user_roles").insert({ user_id: selectedUser.user_id, role: newRole as any });
-        if (error) throw error;
-      }
-      await supabase.from("role_change_log").insert({ user_id: selectedUser.user_id, old_role: oldRole, new_role: newRole, changed_by: user.id });
-      toast({ title: "تم تغيير الدور بنجاح" });
-      setRoleDialog(false);
-      fetchUsers();
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
-    } finally { setChanging(false); }
-  };
-
-  const handleChangeCategory = async () => {
-    if (!categoryUser || !newCategory) return;
-    setCategoryChanging(true);
-    try {
-      const { error } = await supabase.from("profiles").update({
-        client_category: newCategory,
-        client_category_manual: true,
-      }).eq("user_id", categoryUser.user_id);
-      if (error) throw error;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("role_change_log").insert({
-          user_id: categoryUser.user_id,
-          old_role: `category:${categoryUser.client_category}`,
-          new_role: `category:${newCategory}`,
-          changed_by: user.id,
-          reason: "manual_category_override",
-        });
-      }
-
-      toast({ title: "تم تغيير تصنيف العميل" });
-      setCategoryDialog(false);
-      fetchUsers();
-    } catch (err: any) {
-      toast({ title: "خطأ", description: err.message, variant: "destructive" });
-    } finally { setCategoryChanging(false); }
-  };
+  const stats = useMemo(() => ({
+    total: users.length,
+    vip: users.filter((u) => u.client_category === "vip").length,
+    highValue: users.filter((u) => u.client_category === "high_value").length,
+    totalRevenue: users.reduce((s, u) => s + u.totalRevenue, 0),
+    top5: [...users].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5),
+  }), [users]);
 
   const handleToggleStatus = async (user: UserRow) => {
     const newStatus = user.account_status === "active" ? "suspended" : "active";
@@ -296,79 +161,37 @@ export default function ClientsManagement() {
     else { setSortField(field); setSortAsc(false); }
   };
 
-  const formatCurrencyJSX = (v: number) => <span className="inline-flex items-center gap-1">{formatNumber(v)} <SAR size={12} /></span>;
-
-  const CategoryBadge = ({ category, manual }: { category: string; manual?: boolean }) => {
-    const cfg = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.regular;
-    const Icon = cfg.icon;
-    return (
-      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.color}`}>
-        <Icon className="w-3 h-3" />
-        {cfg.label}
-        {manual && <span className="text-[10px] opacity-60">(يدوي)</span>}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       {/* ── Insights Panel ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Users className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{stats.total}</p>
-            <p className="text-xs text-muted-foreground">إجمالي المستخدمين</p>
-          </div>
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><Users className="w-5 h-5 text-primary" /></div>
+          <div><p className="text-2xl font-bold text-foreground">{stats.total}</p><p className="text-xs text-muted-foreground">إجمالي المستخدمين</p></div>
         </div>
         <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-            <Crown className="w-5 h-5 text-amber-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{stats.vip}</p>
-            <p className="text-xs text-muted-foreground">عملاء VIP</p>
-          </div>
+          <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center"><Crown className="w-5 h-5 text-amber-600" /></div>
+          <div><p className="text-2xl font-bold text-foreground">{stats.vip}</p><p className="text-xs text-muted-foreground">عملاء VIP</p></div>
         </div>
         <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-emerald-600" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-foreground">{stats.highValue}</p>
-            <p className="text-xs text-muted-foreground">عملاء مميزون</p>
-          </div>
+          <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center"><TrendingUp className="w-5 h-5 text-emerald-600" /></div>
+          <div><p className="text-2xl font-bold text-foreground">{stats.highValue}</p><p className="text-xs text-muted-foreground">عملاء مميزون</p></div>
         </div>
         <div className="bg-card rounded-xl border border-border p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-            <SARIcon className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-lg font-bold text-foreground">{formatCurrencyJSX(stats.totalRevenue)}</p>
-            <p className="text-xs text-muted-foreground">إجمالي الإيرادات</p>
-          </div>
+          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center"><SARIcon className="w-5 h-5 text-primary" /></div>
+          <div><p className="text-lg font-bold text-foreground">{formatCurrencyJSX(stats.totalRevenue)}</p><p className="text-xs text-muted-foreground">إجمالي الإيرادات</p></div>
         </div>
       </div>
 
-      {/* Top 5 Clients */}
+      {/* Top 5 */}
       {stats.top5.length > 0 && stats.top5[0].totalRevenue > 0 && (
         <div className="bg-card rounded-xl border border-border p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="w-4 h-4 text-primary" />
-            <h3 className="text-sm font-semibold text-foreground">أعلى 5 عملاء بالإيرادات</h3>
-          </div>
+          <div className="flex items-center gap-2 mb-3"><BarChart3 className="w-4 h-4 text-primary" /><h3 className="text-sm font-semibold text-foreground">أعلى 5 عملاء بالإيرادات</h3></div>
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
             {stats.top5.filter(u => u.totalRevenue > 0).map((u, i) => (
               <div key={u.id} className="flex items-center gap-2 bg-muted/50 rounded-lg p-2.5">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-500 text-white" : "bg-muted-foreground/20 text-muted-foreground"}`}>
-                  {i + 1}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium truncate">{u.full_name_ar}</p>
-                  <p className="text-[10px] text-muted-foreground">{formatCurrencyJSX(u.totalRevenue)}</p>
-                </div>
+                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? "bg-amber-500 text-white" : "bg-muted-foreground/20 text-muted-foreground"}`}>{i + 1}</span>
+                <div className="flex-1 min-w-0"><p className="text-xs font-medium truncate">{u.full_name_ar}</p><p className="text-[10px] text-muted-foreground">{formatCurrencyJSX(u.totalRevenue)}</p></div>
               </div>
             ))}
           </div>
@@ -382,9 +205,7 @@ export default function ClientsManagement() {
           <Input placeholder="بحث بالاسم، البريد أو الجوال..." value={search} onChange={(e) => setSearch(e.target.value)} className="pr-10" />
         </div>
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="التصنيف" />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder="التصنيف" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">جميع التصنيفات</SelectItem>
             <SelectItem value="vip">VIP</SelectItem>
@@ -394,9 +215,7 @@ export default function ClientsManagement() {
           </SelectContent>
         </Select>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-full sm:w-[150px]">
-            <SelectValue placeholder="الدور" />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[150px]"><SelectValue placeholder="الدور" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">جميع الأدوار</SelectItem>
             <SelectItem value="client">عميل</SelectItem>
@@ -406,9 +225,7 @@ export default function ClientsManagement() {
           </SelectContent>
         </Select>
         <Select value={sortField} onValueChange={(v) => { setSortField(v as SortField); setSortAsc(false); }}>
-          <SelectTrigger className="w-full sm:w-[160px]">
-            <SelectValue placeholder="ترتيب" />
-          </SelectTrigger>
+          <SelectTrigger className="w-full sm:w-[160px]"><SelectValue placeholder="ترتيب" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="date">تاريخ التسجيل</SelectItem>
             <SelectItem value="revenue">الإيرادات</SelectItem>
@@ -417,20 +234,14 @@ export default function ClientsManagement() {
             <SelectItem value="name">الاسم</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="outline" size="icon" onClick={() => setSortAsc(!sortAsc)} title={sortAsc ? "تصاعدي" : "تنازلي"}>
-          <ArrowUpDown className="w-4 h-4" />
-        </Button>
-        <Button variant="outline" size="icon" onClick={fetchUsers} disabled={loading}>
-          <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-        </Button>
+        <Button variant="outline" size="icon" onClick={() => setSortAsc(!sortAsc)} title={sortAsc ? "تصاعدي" : "تنازلي"}><ArrowUpDown className="w-4 h-4" /></Button>
+        <Button variant="outline" size="icon" onClick={fetchUsers} disabled={loading}><RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /></Button>
       </div>
 
       {/* ── Table ── */}
       <div className="bg-card rounded-xl border border-border overflow-hidden">
         {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="w-6 h-6 animate-spin text-primary" />
-          </div>
+          <div className="flex items-center justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">لا توجد نتائج</div>
         ) : (
@@ -460,13 +271,9 @@ export default function ClientsManagement() {
                     <TableCell className="font-medium">{user.full_name_ar}</TableCell>
                     <TableCell dir="ltr" className="text-left text-sm">{user.phone || "—"}</TableCell>
                     <TableCell dir="ltr" className="text-left text-sm">{user.email || "—"}</TableCell>
-                    <TableCell className="text-sm font-medium">
-                      {user.totalRevenue > 0 ? formatCurrencyJSX(user.totalRevenue) : "—"}
-                    </TableCell>
+                    <TableCell className="text-sm font-medium">{user.totalRevenue > 0 ? formatCurrencyJSX(user.totalRevenue) : "—"}</TableCell>
                     <TableCell className="text-sm">{user.projectCount || "—"}</TableCell>
-                    <TableCell>
-                      <CategoryBadge category={user.client_category} manual={user.client_category_manual} />
-                    </TableCell>
+                    <TableCell><CategoryBadge category={user.client_category} manual={user.client_category_manual} /></TableCell>
                     <TableCell>
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[user.role || "client"]}`}>
                         {ROLE_LABELS[user.role || "client"]}
@@ -477,27 +284,19 @@ export default function ClientsManagement() {
                         {user.account_status === "active" ? "نشط" : "موقوف"}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {user.lastActivity ? format(new Date(user.lastActivity), "yyyy/MM/dd") : "—"}
-                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">{user.lastActivity ? format(new Date(user.lastActivity), "yyyy/MM/dd") : "—"}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-0.5">
                         {isSuperAdmin && (
                           <>
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="تغيير الدور"
-                              onClick={() => { setSelectedUser(user); setNewRole(user.role || "client"); setRoleDialog(true); }}>
-                              <UserCog className="w-3.5 h-3.5" />
-                            </Button>
+                              onClick={() => { setSelectedUser(user); setRoleDialog(true); }}><UserCog className="w-3.5 h-3.5" /></Button>
                             <Button variant="ghost" size="icon" className="h-7 w-7" title="تغيير التصنيف"
-                              onClick={() => { setCategoryUser(user); setNewCategory(user.client_category); setCategoryDialog(true); }}>
-                              <Crown className="w-3.5 h-3.5" />
-                            </Button>
+                              onClick={() => { setCategoryUser(user); setCategoryDialog(true); }}><Crown className="w-3.5 h-3.5" /></Button>
                           </>
                         )}
                         <Button variant="ghost" size="icon" className="h-7 w-7" title="عرض الملف"
-                          onClick={() => { setProfileUser(user); setProfileDialog(true); }}>
-                          <Eye className="w-3.5 h-3.5" />
-                        </Button>
+                          onClick={() => { setProfileUser(user); setProfileDialog(true); }}><Eye className="w-3.5 h-3.5" /></Button>
                         {isSuperAdmin && (
                           <Button variant="ghost" size="icon" className="h-7 w-7" title={user.account_status === "active" ? "إيقاف" : "تفعيل"}
                             onClick={() => handleToggleStatus(user)}>
@@ -514,147 +313,10 @@ export default function ClientsManagement() {
         )}
       </div>
 
-      {/* ── Role Change Dialog ── */}
-      <Dialog open={roleDialog} onOpenChange={setRoleDialog}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-primary" />
-              تغيير دور المستخدم
-            </DialogTitle>
-          </DialogHeader>
-          {selectedUser && (
-            <div className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-3">
-                <p className="font-medium">{selectedUser.full_name_ar}</p>
-                <p className="text-sm text-muted-foreground">{selectedUser.email}</p>
-              </div>
-              <Select value={newRole} onValueChange={setNewRole}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {ASSIGNABLE_ROLES.map((r) => <SelectItem key={r} value={r}>{ROLE_LABELS[r]}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRoleDialog(false)}>إلغاء</Button>
-            <Button onClick={handleChangeRole} disabled={changing || newRole === selectedUser?.role}>
-              {changing && <Loader2 className="w-4 h-4 animate-spin ml-2" />}
-              تأكيد
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Category Override Dialog ── */}
-      <Dialog open={categoryDialog} onOpenChange={setCategoryDialog}>
-        <DialogContent dir="rtl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Crown className="w-5 h-5 text-amber-600" />
-              تغيير تصنيف العميل
-            </DialogTitle>
-          </DialogHeader>
-          {categoryUser && (
-            <div className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-3">
-                <p className="font-medium">{categoryUser.full_name_ar}</p>
-                <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                  <span>الإيرادات: {formatCurrencyJSX(categoryUser.totalRevenue)}</span>
-                  <span>•</span>
-                  <span>المشاريع: {categoryUser.projectCount}</span>
-                </div>
-                <div className="mt-2">
-                  <span className="text-xs text-muted-foreground ml-1">التصنيف الحالي:</span>
-                  <CategoryBadge category={categoryUser.client_category} manual={categoryUser.client_category_manual} />
-                </div>
-              </div>
-              <Select value={newCategory} onValueChange={setNewCategory}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <SelectItem key={c} value={c}>{CATEGORY_CONFIG[c].label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">⚠️ التغيير اليدوي سيُسجَّل ولن يتأثر بالحساب التلقائي</p>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCategoryDialog(false)}>إلغاء</Button>
-            <Button onClick={handleChangeCategory} disabled={categoryChanging || newCategory === categoryUser?.client_category}>
-              {categoryChanging && <Loader2 className="w-4 h-4 animate-spin ml-2" />}
-              تأكيد التصنيف
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Profile Dialog ── */}
-      <Dialog open={profileDialog} onOpenChange={setProfileDialog}>
-        <DialogContent dir="rtl">
-          <DialogHeader><DialogTitle>ملف المستخدم</DialogTitle></DialogHeader>
-          {profileUser && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground">الاسم</p>
-                  <p className="font-medium">{profileUser.full_name_ar}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">البريد</p>
-                  <p className="font-medium" dir="ltr">{profileUser.email || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">الجوال</p>
-                  <p className="font-medium" dir="ltr">{profileUser.phone || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">تاريخ التسجيل</p>
-                  <p className="font-medium">{format(new Date(profileUser.created_at), "yyyy/MM/dd")}</p>
-                </div>
-              </div>
-              <div className="border-t border-border pt-3 grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground">إجمالي الإيرادات</p>
-                  <p className="font-bold text-primary">{formatCurrencyJSX(profileUser.totalRevenue)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">عدد المشاريع</p>
-                  <p className="font-bold">{profileUser.projectCount}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">متوسط قيمة المشروع</p>
-                  <p className="font-medium">{formatCurrencyJSX(profileUser.avgProjectValue)}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">آخر نشاط</p>
-                  <p className="font-medium">{profileUser.lastActivity ? format(new Date(profileUser.lastActivity), "yyyy/MM/dd") : "—"}</p>
-                </div>
-              </div>
-              <div className="border-t border-border pt-3 flex items-center gap-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">التصنيف</p>
-                  <CategoryBadge category={profileUser.client_category} manual={profileUser.client_category_manual} />
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">الدور</p>
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[profileUser.role || "client"]}`}>
-                    {ROLE_LABELS[profileUser.role || "client"]}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">الحالة</p>
-                  <Badge variant={profileUser.account_status === "active" ? "default" : "destructive"}>
-                    {profileUser.account_status === "active" ? "نشط" : "موقوف"}
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* Dialogs */}
+      <RoleChangeDialog open={roleDialog} onOpenChange={setRoleDialog} user={selectedUser} onSuccess={fetchUsers} />
+      <CategoryOverrideDialog open={categoryDialog} onOpenChange={setCategoryDialog} user={categoryUser} onSuccess={fetchUsers} />
+      <ProfileDialog open={profileDialog} onOpenChange={setProfileDialog} user={profileUser} />
     </div>
   );
 }
