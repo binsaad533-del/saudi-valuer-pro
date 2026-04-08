@@ -24,6 +24,7 @@ import { formatDate, formatNumber } from "@/lib/utils";
 import BidiText from "@/components/ui/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
+import { STATUS_LABELS as WF_STATUS_LABELS } from "@/lib/workflow-engine";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
 
 // Aligned with the 19-status workflow engine
