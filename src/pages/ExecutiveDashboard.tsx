@@ -71,7 +71,7 @@ const getPurpose = (req: any) => purposeLabels[req.purpose] || req.purpose_ar ||
 const getAssetType = (req: any) => assetTypeLabels[req.property_type] || assetTypeLabels[req.valuation_type] || req.property_type || req.valuation_type || "غير محدد";
 const getStatus = (req: any) => {
   const normalized = normalizeStatus(req.status);
-  return statusLabels[normalized] || STATUS_LABELS[normalized]?.label || req.status || "غير محدد";
+  return statusLabels[normalized] || STATUS_LABELS[normalized]?.ar || req.status || "غير محدد";
 };
 const getMode = (req: any) => req.valuation_mode === "desktop" ? "مكتبي" : req.valuation_mode === "field" ? "ميداني" : "—";
 
