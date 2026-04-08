@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Send, Bot, Paperclip, Trash2, Sparkles, FileText, X, Edit3,
+  Send, Paperclip, Trash2, Sparkles, FileText, X,
   BookOpen, MessageSquare, Scale, FlaskConical, BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
