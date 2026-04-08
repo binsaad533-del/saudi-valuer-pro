@@ -28,6 +28,7 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { InspectionAnalysisView } from "@/components/inspectors/InspectionAnalysisView";
+import RaqeemContextCard from "@/components/raqeem/RaqeemContextCard";
 import ReportLifecyclePanel from "@/components/reports/ReportLifecyclePanel";
 import ValidationPanel from "@/components/validation/ValidationPanel";
 import { Clipboard } from "lucide-react";
@@ -628,6 +629,15 @@ export default function ValuationProduction() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Raqeem Agent */}
+      {assignmentId && (
+        <RaqeemContextCard
+          assignmentId={assignmentId}
+          pageContext="صفحة إنتاج التقييم - Valuation Production"
+          className="mt-4"
+        />
+      )}
     </div>
   );
 }
