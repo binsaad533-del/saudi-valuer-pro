@@ -429,7 +429,8 @@ export default function RequestDetails() {
                     if (!confirm("هل أنت متأكد من إلغاء الطلب؟")) return;
                     setSending(true);
                     try {
-                      await supabase.from("valuation_requests" as any).update({ status: "cancelled" as any } as any).eq("id", id!);
+                      const result = await changeStatusByRequestId(id!, "cancelled", { reason: "إلغاء من العميل" });
+                      if (!result.success) throw new Error(result.error);
                       await supabase.from("request_messages" as any).insert({ request_id: id!, sender_type: "system" as any, content: "❌ تم إلغاء الطلب من قبل العميل" });
                       toast({ title: "تم إلغاء الطلب" });
                       navigate("/client");
@@ -467,7 +468,9 @@ export default function RequestDetails() {
                     <Button className="w-full" size="sm" onClick={async () => {
                       setSending(true);
                       try {
-                        await supabase.from("valuation_requests" as any).update({ status: "sow_approved" as any, sow_signed_at: new Date().toISOString() } as any).eq("id", id!);
+                        const result = await changeStatusByRequestId(id!, "scope_approved", { reason: "اعتماد نطاق العمل من العميل" });
+                        if (!result.success) throw new Error(result.error);
+                        await supabase.from("valuation_requests" as any).update({ sow_signed_at: new Date().toISOString() } as any).eq("id", id!);
                         await supabase.from("request_messages" as any).insert({ request_id: id!, sender_type: "system" as any, content: "✅ تم اعتماد نطاق العمل والتوقيع الإلكتروني من قبل العميل" });
                         toast({ title: "تم اعتماد نطاق العمل بنجاح" });
                         loadData();

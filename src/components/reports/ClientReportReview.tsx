@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -141,9 +142,8 @@ export default function ClientReportReview({ reportId, requestId }: Props) {
         metadata: { type: "report_comment", report_id: reportId, section: selectedSection },
       });
 
-      await supabase.from("valuation_requests" as any)
-        .update({ status: "client_comments" as any })
-        .eq("id", requestId);
+      const statusResult = await changeStatusByRequestId(requestId, "client_review", { reason: "ملاحظة عميل على المسودة" });
+      if (!statusResult.success) console.warn("Status change warning:", statusResult.error);
 
       setNewComment("");
       setSelectedSection("general");
@@ -168,9 +168,8 @@ export default function ClientReportReview({ reportId, requestId }: Props) {
         content: "✅ تم مراجعة المسودة - لا توجد ملاحظات إضافية",
       });
 
-      await supabase.from("valuation_requests" as any)
-        .update({ status: "final_payment_pending" as any })
-        .eq("id", requestId);
+      const statusResult = await changeStatusByRequestId(requestId, "draft_approved", { reason: "اعتماد المسودة بدون ملاحظات" });
+      if (!statusResult.success) throw new Error(statusResult.error);
 
       toast({ title: "تم تأكيد المراجعة" });
       loadData();
