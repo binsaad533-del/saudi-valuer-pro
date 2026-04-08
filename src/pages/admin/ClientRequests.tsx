@@ -426,6 +426,29 @@ export default function ClientRequests() {
                             بدء جمع البيانات
                           </Button>
                         )}
+                        {req.status === "data_collection_open" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "data_collection_complete"); }}>
+                            <CheckCircle className="w-3 h-3 ml-1" />اكتمال جمع البيانات
+                          </Button>
+                        )}
+                        {req.status === "data_collection_complete" && (
+                          <>
+                            <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "inspection_pending"); }}>
+                              إسناد معاين ميداني
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "data_validated"); }}>
+                              تقييم مكتبي — تخطي المعاينة
+                            </Button>
+                          </>
+                        )}
+                        {req.status === "inspection_pending" && (
+                          <span className="text-xs text-muted-foreground">بانتظار اكتمال المعاينة</span>
+                        )}
+                        {req.status === "inspection_completed" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "data_validated"); }}>
+                            <CheckCircle className="w-3 h-3 ml-1" />تأكيد صحة البيانات
+                          </Button>
+                        )}
                         {req.status === "data_validated" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "analysis_complete"); }}>
                             <Brain className="w-3 h-3 ml-1" />بدء التحليل
