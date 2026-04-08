@@ -26,31 +26,45 @@ const disciplineLabels: Record<Discipline, string> = {
   mixed: "مختلط",
 };
 
-type Status = "all" | "new" | "in_progress" | "review" | "completed" | "archived";
+type Status = "all" | "draft" | "submitted" | "scope_generated" | "first_payment_confirmed" | "data_collection_open" | "inspection_pending" | "professional_review" | "draft_report_ready" | "client_review" | "issued" | "archived" | "cancelled";
 
 const statusLabels: Record<Status, string> = {
   all: "الكل",
-  new: "جديد",
-  in_progress: "قيد التنفيذ",
-  review: "قيد المراجعة",
-  completed: "مكتمل",
+  draft: "مسودة",
+  submitted: "تم الإرسال",
+  scope_generated: "نطاق العمل جاهز",
+  first_payment_confirmed: "مدفوع",
+  data_collection_open: "جمع البيانات",
+  inspection_pending: "بانتظار المعاينة",
+  professional_review: "مراجعة مهنية",
+  draft_report_ready: "المسودة جاهزة",
+  client_review: "مراجعة العميل",
+  issued: "صادر",
   archived: "مؤرشف",
+  cancelled: "ملغي",
 };
 
 const statusStyles: Record<string, string> = {
-  new: "bg-primary/10 text-primary",
-  in_progress: "bg-warning/10 text-warning",
-  review: "bg-accent/10 text-accent",
-  completed: "bg-success/10 text-success",
+  draft: "bg-muted text-muted-foreground",
+  submitted: "bg-primary/10 text-primary",
+  scope_generated: "bg-primary/10 text-primary",
+  first_payment_confirmed: "bg-success/10 text-success",
+  data_collection_open: "bg-accent text-accent-foreground",
+  inspection_pending: "bg-warning/10 text-warning",
+  professional_review: "bg-warning/10 text-warning",
+  draft_report_ready: "bg-primary/10 text-primary",
+  client_review: "bg-warning/10 text-warning",
+  issued: "bg-success/10 text-success",
   archived: "bg-muted text-muted-foreground",
+  cancelled: "bg-destructive/10 text-destructive",
 };
 
 const mockValuations = [
-  { id: "1", ref: "VAL-2026-0042", type: "فيلا سكنية", discipline: "real_estate" as Discipline, city: "الرياض", district: "حي النرجس", status: "in_progress", client: "شركة الراجحي للتطوير", date: "2026-03-25", purpose: "بيع", value: "2,500,000" },
-  { id: "2", ref: "VAL-2026-0041", type: "مبنى تجاري", discipline: "mixed" as Discipline, city: "جدة", district: "حي الروضة", status: "review", client: "مؤسسة البناء المتقدم", date: "2026-03-22", purpose: "تمويل", value: "8,750,000" },
-  { id: "3", ref: "VAL-2026-0040", type: "أرض خام", discipline: "real_estate" as Discipline, city: "الدمام", district: "حي الشاطئ", status: "completed", client: "صندوق الاستثمارات العامة", date: "2026-03-20", purpose: "استثمار", value: "15,200,000" },
-  { id: "4", ref: "VAL-2026-0039", type: "خط إنتاج", discipline: "machinery" as Discipline, city: "الرياض", district: "حي العليا", status: "new", client: "شركة دار الأركان", date: "2026-03-18", purpose: "بيع", value: "-" },
-  { id: "5", ref: "VAL-2026-0038", type: "عقار مدر للدخل", discipline: "real_estate" as Discipline, city: "مكة المكرمة", district: "حي العزيزية", status: "completed", client: "وزارة المالية", date: "2026-03-15", purpose: "نزع ملكية", value: "22,000,000" },
+  { id: "1", ref: "VAL-2026-0042", type: "فيلا سكنية", discipline: "real_estate" as Discipline, city: "الرياض", district: "حي النرجس", status: "data_collection_open", client: "شركة الراجحي للتطوير", date: "2026-03-25", purpose: "بيع", value: "2,500,000" },
+  { id: "2", ref: "VAL-2026-0041", type: "مبنى تجاري", discipline: "mixed" as Discipline, city: "جدة", district: "حي الروضة", status: "professional_review", client: "مؤسسة البناء المتقدم", date: "2026-03-22", purpose: "تمويل", value: "8,750,000" },
+  { id: "3", ref: "VAL-2026-0040", type: "أرض خام", discipline: "real_estate" as Discipline, city: "الدمام", district: "حي الشاطئ", status: "issued", client: "صندوق الاستثمارات العامة", date: "2026-03-20", purpose: "استثمار", value: "15,200,000" },
+  { id: "4", ref: "VAL-2026-0039", type: "خط إنتاج", discipline: "machinery" as Discipline, city: "الرياض", district: "حي العليا", status: "submitted", client: "شركة دار الأركان", date: "2026-03-18", purpose: "بيع", value: "-" },
+  { id: "5", ref: "VAL-2026-0038", type: "عقار مدر للدخل", discipline: "real_estate" as Discipline, city: "مكة المكرمة", district: "حي العزيزية", status: "issued", client: "وزارة المالية", date: "2026-03-15", purpose: "نزع ملكية", value: "22,000,000" },
   { id: "6", ref: "VAL-2026-0037", type: "معدات ثقيلة", discipline: "machinery" as Discipline, city: "الرياض", district: "حي الملقا", status: "archived", client: "شركة سمو العقارية", date: "2026-03-10", purpose: "تمويل", value: "45,000,000" },
 ];
 
@@ -64,8 +78,8 @@ export default function ValuationsList() {
 
   const setActiveTab = (tab: Tab) => {
     setSearchParams(tab === "all" ? {} : { tab });
-    if (tab === "review") setActiveStatus("review");
-    else if (tab === "completed") setActiveStatus("completed");
+    if (tab === "review") setActiveStatus("professional_review");
+    else if (tab === "completed") setActiveStatus("issued");
     else setActiveStatus("all");
   };
 
