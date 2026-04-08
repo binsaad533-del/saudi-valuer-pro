@@ -110,11 +110,11 @@ export default function SimplifiedJourney() {
   }, [navigate]);
 
   // ── File handling ──
-  const getFileIcon = (type: string) => {
-    if (type.startsWith("image/")) return <Image className="w-4 h-4 text-info" />;
+  const _getFileIcon = (type: string) => {
+    if (type.startsWith("image/")) return <ImageIcon className="w-4 h-4 text-info" />;
     if (type.includes("pdf")) return <FileText className="w-4 h-4 text-destructive" />;
     if (type.includes("sheet") || type.includes("excel") || type.includes("csv")) return <Table2 className="w-4 h-4 text-success" />;
-    return <File className="w-4 h-4 text-muted-foreground" />;
+    return <FileIcon className="w-4 h-4 text-muted-foreground" />;
   };
 
   const formatFileSize = (bytes: number) => {
