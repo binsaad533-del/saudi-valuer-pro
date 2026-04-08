@@ -12,32 +12,16 @@ import AssetReviewWorkspace from "@/components/client/AssetReviewWorkspace";
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
-  Upload,
-  FileText,
-  Image,
-  File,
-  X,
-  Loader2,
-  CheckCircle,
-  ArrowRight,
-  Sparkles,
-  User as UserIcon,
-  FileCheck,
-  Brain,
-  MapPin,
-  Navigation,
-  ExternalLink,
+  Upload, FileText, Image, File, X, Loader2, CheckCircle, ArrowRight,
+  Sparkles, User as UserIcon, FileCheck, Brain,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
-import { openLocationInGoogleMaps } from "@/lib/google-maps";
+import { DiscountCodeSection } from "@/components/client/request/DiscountCodeSection";
+import { LocationsSummary } from "@/components/client/request/LocationsSummary";
 
 interface UploadedFile {
   id: string;
