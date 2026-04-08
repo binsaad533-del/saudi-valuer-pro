@@ -203,12 +203,13 @@ export default function RequestDetails() {
     return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">الطلب غير موجود</p></div>;
   }
 
-  const needsPayment = ["awaiting_payment", "quotation_approved", "sow_approved"].includes(request.status);
-  const needsFinalPayment = ["final_payment_pending"].includes(request.status) && request.payment_structure === "partial";
-  const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
-  const showDraftReport = ["draft_report_sent", "draft_report_ready", "client_comments", "final_payment_pending"].includes(request.status);
-  const showFinalReport = ["final_report_ready", "report_issued", "completed"].includes(request.status);
-  const showSOW = request.status === "sow_sent";
+  // Visibility flags aligned with 19-status workflow
+  const needsPayment = ["scope_approved"].includes(request.status);
+  const needsFinalPayment = ["draft_approved"].includes(request.status) && request.payment_structure === "partial";
+  const showQuotation = request.quotation_amount && ["scope_generated"].includes(request.status);
+  const showDraftReport = ["draft_report_ready", "client_review"].includes(request.status);
+  const showFinalReport = ["issued", "archived"].includes(request.status);
+  const showSOW = request.status === "scope_generated" && request.scope_of_work_ar;
 
   return (
     <div className="bg-background min-h-screen" dir="rtl">
@@ -434,7 +435,7 @@ export default function RequestDetails() {
             )}
 
             {/* Client Actions */}
-            {["submitted", "under_pricing", "needs_clarification", "quotation_sent"].includes(request.status) && (
+            {["submitted", "scope_generated"].includes(request.status) && (
               <Card className="shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
@@ -556,9 +557,10 @@ export default function RequestDetails() {
                   {request.terms_ar && (
                     <div><p className="text-xs text-muted-foreground mb-1">الشروط:</p><p className="text-xs bg-muted/50 p-2 rounded">{request.terms_ar}</p></div>
                   )}
-                  {request.status === "quotation_sent" && (
+                  {request.status === "scope_generated" && (
                     <div className="flex gap-2 pt-2">
-                      <Button className="flex-1" size="sm" onClick={() => handleQuotationResponse(true)} disabled={sending}><CheckCircle className="w-3 h-3 ml-1" />قبول العرض</Button>
+                      <Button className="flex-1" size="sm" onClick={() => handleQuotationResponse(true)} disabled={sending}><CheckCircle className="w-3 h-3 ml-1" />قبول العرض واعتماد النطاق</Button>
+                      <Button variant="outline" className="flex-1" size="sm" onClick={() => handleQuotationResponse(false)} disabled={sending}><XCircle className="w-3 h-3 ml-1" />رفض</Button>
                       <Button variant="outline" className="flex-1" size="sm" onClick={() => handleQuotationResponse(false)} disabled={sending}><XCircle className="w-3 h-3 ml-1" />رفض</Button>
                     </div>
                   )}
