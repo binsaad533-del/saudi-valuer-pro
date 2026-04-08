@@ -16,7 +16,7 @@ import { normalizeStatus, STATUS_LABELS, PIPELINE_PHASES } from "@/lib/workflow-
 import {
   ArrowLeft, Send, MessageSquare, Loader2,
   User, Bot, Building2, Brain, Shield,
-  AlertTriangle, Clock, ChevronLeft,
+  AlertTriangle, ChevronLeft,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
