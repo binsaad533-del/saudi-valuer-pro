@@ -4,11 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import {
-  LayoutDashboard, Settings, LogOut, BookOpen,
+  LayoutDashboard, Settings, LogOut, BookOpen, FileText,
+  Users, UserCheck, ClipboardList, Archive, BarChart3,
+  DollarSign, Shield, Search, Activity, Bell, Briefcase,
+  TrendingUp, MapPin, Scale, Wrench,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
-  SidebarGroupContent, SidebarHeader, SidebarMenu,
+  SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
@@ -21,25 +24,102 @@ interface NavItem {
   path: string;
 }
 
-const ownerNav: NavItem[] = [
-  { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
-  { label: "قاعدة المعرفة المهنية", icon: BookOpen, path: "/knowledge" },
-  { label: "الإعدادات", icon: Settings, path: "/settings" },
+interface NavGroup {
+  title: string;
+  items: NavItem[];
+}
+
+// ── Owner Navigation (hierarchical) ──
+const ownerNavGroups: NavGroup[] = [
+  {
+    title: "الرئيسية",
+    items: [
+      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
+      { label: "البحث", icon: Search, path: "/search" },
+    ],
+  },
+  {
+    title: "العمليات",
+    items: [
+      { label: "طلبات العملاء", icon: ClipboardList, path: "/client-requests" },
+      { label: "ملفات التقييم", icon: Scale, path: "/valuations" },
+      { label: "تقييم جديد", icon: Briefcase, path: "/valuations/new" },
+    ],
+  },
+  {
+    title: "التقارير والإصدار",
+    items: [
+      { label: "التقارير", icon: FileText, path: "/reports" },
+      { label: "الأرشيف", icon: Archive, path: "/archive" },
+    ],
+  },
+  {
+    title: "الإدارة",
+    items: [
+      { label: "العملاء", icon: Users, path: "/clients-management" },
+      { label: "المعاينون", icon: UserCheck, path: "/inspectors" },
+      { label: "تغطية المعاينين", icon: MapPin, path: "/inspector-coverage" },
+    ],
+  },
+  {
+    title: "الذكاء والتحليل",
+    items: [
+      { label: "قاعدة المعرفة", icon: BookOpen, path: "/knowledge" },
+      { label: "بيانات السوق", icon: TrendingUp, path: "/market-data" },
+      { label: "التحليلات", icon: BarChart3, path: "/analytics" },
+    ],
+  },
+  {
+    title: "المالية والامتثال",
+    items: [
+      { label: "اللوحة المالية", icon: DollarSign, path: "/cfo-dashboard" },
+      { label: "اللوحة التجارية", icon: Briefcase, path: "/commercial" },
+      { label: "سجل التدقيق", icon: Shield, path: "/audit-log" },
+    ],
+  },
+  {
+    title: "النظام",
+    items: [
+      { label: "مراقبة النظام", icon: Activity, path: "/system-monitoring" },
+      { label: "الإشعارات", icon: Bell, path: "/notifications" },
+      { label: "الإعدادات", icon: Settings, path: "/settings" },
+    ],
+  },
 ];
 
-const inspectorNav: NavItem[] = [
-  { label: "المعاينات", icon: LayoutDashboard, path: "/inspector" },
-  { label: "الإعدادات", icon: Settings, path: "/inspector/settings" },
+const inspectorNavGroups: NavGroup[] = [
+  {
+    title: "الرئيسية",
+    items: [
+      { label: "المعاينات", icon: LayoutDashboard, path: "/inspector" },
+      { label: "الإشعارات", icon: Bell, path: "/inspector/notifications" },
+      { label: "الإعدادات", icon: Settings, path: "/inspector/settings" },
+    ],
+  },
 ];
 
-const financialNav: NavItem[] = [
-  { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
-  { label: "الإعدادات", icon: Settings, path: "/account" },
+const financialNavGroups: NavGroup[] = [
+  {
+    title: "الرئيسية",
+    items: [
+      { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
+      { label: "الإشعارات", icon: Bell, path: "/notifications" },
+      { label: "الإعدادات", icon: Settings, path: "/account" },
+    ],
+  },
 ];
 
-const clientNav: NavItem[] = [
-  { label: "لوحة التحكم", icon: LayoutDashboard, path: "/client" },
-  { label: "الإعدادات", icon: Settings, path: "/client/settings" },
+const clientNavGroups: NavGroup[] = [
+  {
+    title: "الرئيسية",
+    items: [
+      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/client" },
+      { label: "طلباتي", icon: ClipboardList, path: "/client/requests" },
+      { label: "طلب جديد", icon: Briefcase, path: "/client/new-request" },
+      { label: "الإشعارات", icon: Bell, path: "/client/notifications" },
+      { label: "الإعدادات", icon: Settings, path: "/client/settings" },
+    ],
+  },
 ];
 
 const roleKeyMap: Record<string, string> = {
@@ -50,12 +130,12 @@ const roleKeyMap: Record<string, string> = {
   client: "العميل",
 };
 
-function getNavForRole(role: string | null): NavItem[] {
+function getNavGroupsForRole(role: string | null): NavGroup[] {
   switch (role) {
-    case "inspector": return inspectorNav;
-    case "financial_manager": return financialNav;
-    case "client": return clientNav;
-    default: return ownerNav;
+    case "inspector": return inspectorNavGroups;
+    case "financial_manager": return financialNavGroups;
+    case "client": return clientNavGroups;
+    default: return ownerNavGroups;
   }
 }
 
@@ -87,7 +167,7 @@ export default function AppSidebar() {
   const isActive = (path: string) =>
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
-  const items = getNavForRole(role);
+  const navGroups = getNavGroupsForRole(role);
   const initials = profileName ? profileName.charAt(0) : "م";
 
   return (
@@ -104,34 +184,37 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => {
-                const active = isActive(item.path);
-                return (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={active}
-                      tooltip={item.label}
-                    >
-                      <NavLink
-                        to={item.path}
-                        end={item.path === "/"}
-                        className="hover:bg-sidebar-accent/60"
-                        activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.title}>
+            {!collapsed && <SidebarGroupLabel>{group.title}</SidebarGroupLabel>}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => {
+                  const active = isActive(item.path);
+                  return (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={active}
+                        tooltip={item.label}
                       >
-                        <item.icon className="w-4 h-4 shrink-0" />
-                        <span>{item.label}</span>
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                        <NavLink
+                          to={item.path}
+                          end={item.path === "/"}
+                          className="hover:bg-sidebar-accent/60"
+                          activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                        >
+                          <item.icon className="w-4 h-4 shrink-0" />
+                          <span>{item.label}</span>
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
