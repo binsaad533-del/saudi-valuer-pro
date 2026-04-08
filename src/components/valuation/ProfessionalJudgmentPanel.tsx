@@ -148,9 +148,11 @@ export default function ProfessionalJudgmentPanel({ request, userId, onStatusCha
       const result = await changeStatusByRequestId(
         request.id,
         "draft_report_ready",
-        userId,
-        "normal",
-        "تم اعتماد الحكم المهني من المقيّم المعتمد"
+        {
+          userId,
+          actionType: "normal",
+          reason: "تم اعتماد الحكم المهني من المقيّم المعتمد",
+        }
       );
       if (!result.success) {
         toast.error(result.error || "فشل تقديم الحكم المهني");
