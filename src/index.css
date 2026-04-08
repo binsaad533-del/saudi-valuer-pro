@@ -142,6 +142,21 @@
   [dir="ltr"] {
     direction: ltr;
   }
+
+  /* Global BiDi text rendering for Arabic content */
+  p, li, td, th, span, label, h1, h2, h3, h4, h5, h6 {
+    text-align: right;
+  }
+
+  /* Dynamic content blocks: ensure proper bidi rendering */
+  .bidi-content {
+    direction: rtl;
+    text-align: right;
+    unicode-bidi: plaintext;
+    line-height: 1.9;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
 }
 
 @layer utilities {
