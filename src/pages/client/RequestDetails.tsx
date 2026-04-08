@@ -26,14 +26,14 @@ import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
 
+// Aligned with the 19-status workflow engine
 const STATUS_ORDER = [
-  "draft", "ai_review", "submitted", "needs_clarification",
-  "sow_generated", "sow_sent", "sow_approved",
-  "under_pricing", "quotation_sent", "quotation_approved", "quotation_rejected",
-  "awaiting_payment", "payment_uploaded", "payment_under_review",
-  "partially_paid", "fully_paid", "in_production", "draft_report_sent",
-  "client_comments", "final_payment_pending", "final_payment_uploaded",
-  "final_payment_approved", "final_report_ready", "completed",
+  "draft", "submitted", "scope_generated", "scope_approved",
+  "first_payment_confirmed", "data_collection_open", "data_collection_complete",
+  "inspection_pending", "inspection_completed", "data_validated",
+  "analysis_complete", "professional_review", "draft_report_ready",
+  "client_review", "draft_approved", "final_payment_confirmed",
+  "issued", "archived", "cancelled",
 ];
 
 export default function RequestDetails() {
