@@ -24,16 +24,17 @@ import { formatDate, formatNumber } from "@/lib/utils";
 import BidiText from "@/components/ui/bidi-text";
 import { SAR, SARIcon } from "@/components/ui/saudi-riyal";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
+import { STATUS_LABELS as WF_STATUS_LABELS } from "@/lib/workflow-engine";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
 
+// Aligned with the 19-status workflow engine
 const STATUS_ORDER = [
-  "draft", "ai_review", "submitted", "needs_clarification",
-  "sow_generated", "sow_sent", "sow_approved",
-  "under_pricing", "quotation_sent", "quotation_approved", "quotation_rejected",
-  "awaiting_payment", "payment_uploaded", "payment_under_review",
-  "partially_paid", "fully_paid", "in_production", "draft_report_sent",
-  "client_comments", "final_payment_pending", "final_payment_uploaded",
-  "final_payment_approved", "final_report_ready", "completed",
+  "draft", "submitted", "scope_generated", "scope_approved",
+  "first_payment_confirmed", "data_collection_open", "data_collection_complete",
+  "inspection_pending", "inspection_completed", "data_validated",
+  "analysis_complete", "professional_review", "draft_report_ready",
+  "client_review", "draft_approved", "final_payment_confirmed",
+  "issued", "archived", "cancelled",
 ];
 
 export default function RequestDetails() {
@@ -116,17 +117,31 @@ export default function RequestDetails() {
   const handleQuotationResponse = async (approved: boolean) => {
     setSending(true);
     try {
-      const newStatus = approved ? "awaiting_payment" : "quotation_rejected";
-      await supabase.from("valuation_requests" as any).update({
-        status: newStatus as any,
-        quotation_response_at: new Date().toISOString(),
-        ...(approved ? { quotation_approved_at: new Date().toISOString() } : {}),
-      } as any).eq("id", id!);
+      if (approved) {
+        // Use RPC to transition: scope_generated → scope_approved
+        const result = await changeStatusByRequestId(id!, "scope_approved", {
+          reason: "العميل وافق على عرض السعر ونطاق العمل",
+        });
+        if (!result.success) throw new Error(result.error);
+        await supabase.from("valuation_requests" as any).update({
+          quotation_response_at: new Date().toISOString(),
+          quotation_approved_at: new Date().toISOString(),
+        } as any).eq("id", id!);
+      } else {
+        // Rejection — use RPC to cancel
+        const result = await changeStatusByRequestId(id!, "cancelled", {
+          reason: "العميل رفض عرض السعر",
+        });
+        if (!result.success) throw new Error(result.error);
+        await supabase.from("valuation_requests" as any).update({
+          quotation_response_at: new Date().toISOString(),
+        } as any).eq("id", id!);
+      }
       await supabase.from("request_messages" as any).insert({
         request_id: id!, sender_type: "system" as any,
-        content: approved ? "✅ تم قبول عرض السعر من قبل العميل" : "❌ تم رفض عرض السعر من قبل العميل",
+        content: approved ? "✅ تم قبول عرض السعر واعتماد نطاق العمل من قبل العميل" : "❌ تم رفض عرض السعر من قبل العميل",
       });
-      toast({ title: approved ? "تم قبول العرض" : "تم رفض العرض" });
+      toast({ title: approved ? "تم قبول العرض واعتماد النطاق" : "تم رفض العرض" });
       loadData();
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -168,18 +183,16 @@ export default function RequestDetails() {
   };
 
   const getStatusLabel = (status: string) => {
-    const map: Record<string, string> = {
-      draft: "مسودة", submitted: "تم الإرسال", needs_clarification: "يحتاج توضيح",
-      sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل", sow_approved: "نطاق العمل مُعتمد",
-      under_pricing: "قيد التسعير", quotation_sent: "عرض سعر مرسل",
-      quotation_approved: "عرض معتمد", quotation_rejected: "عرض مرفوض",
-      awaiting_payment: "بانتظار الدفع", payment_uploaded: "إيصال مرفوع",
-      partially_paid: "مدفوع جزئياً", fully_paid: "مدفوع بالكامل",
-      in_production: "قيد التنفيذ", draft_report_sent: "مسودة التقرير",
-      client_comments: "ملاحظات", final_payment_pending: "بانتظار الدفعة النهائية",
-      final_report_ready: "التقرير جاهز", completed: "مكتمل",
+    // Use workflow engine labels (19-status)
+    const wfLabel = WF_STATUS_LABELS[status];
+    if (wfLabel) return wfLabel.client_ar || wfLabel.ar;
+    // Fallback for any legacy statuses
+    const fallback: Record<string, string> = {
+      sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل",
+      quotation_sent: "عرض سعر مرسل", awaiting_payment: "بانتظار الدفع",
+      in_production: "قيد التنفيذ", completed: "مكتمل",
     };
-    return map[status] || status;
+    return fallback[status] || status;
   };
 
   if (loading) {
@@ -190,12 +203,13 @@ export default function RequestDetails() {
     return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">الطلب غير موجود</p></div>;
   }
 
-  const needsPayment = ["awaiting_payment", "quotation_approved", "sow_approved"].includes(request.status);
-  const needsFinalPayment = ["final_payment_pending"].includes(request.status) && request.payment_structure === "partial";
-  const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
-  const showDraftReport = ["draft_report_sent", "draft_report_ready", "client_comments", "final_payment_pending"].includes(request.status);
-  const showFinalReport = ["final_report_ready", "report_issued", "completed"].includes(request.status);
-  const showSOW = request.status === "sow_sent";
+  // Visibility flags aligned with 19-status workflow
+  const needsPayment = ["scope_approved"].includes(request.status);
+  const needsFinalPayment = ["draft_approved"].includes(request.status) && request.payment_structure === "partial";
+  const showQuotation = request.quotation_amount && ["scope_generated"].includes(request.status);
+  const showDraftReport = ["draft_report_ready", "client_review"].includes(request.status);
+  const showFinalReport = ["issued", "archived"].includes(request.status);
+  const showSOW = request.status === "scope_generated" && request.scope_of_work_ar;
 
   return (
     <div className="bg-background min-h-screen" dir="rtl">
@@ -421,7 +435,7 @@ export default function RequestDetails() {
             )}
 
             {/* Client Actions */}
-            {["submitted", "under_pricing", "needs_clarification", "quotation_sent"].includes(request.status) && (
+            {["submitted", "scope_generated"].includes(request.status) && (
               <Card className="shadow-sm">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2 flex-row-reverse justify-end">
@@ -543,9 +557,10 @@ export default function RequestDetails() {
                   {request.terms_ar && (
                     <div><p className="text-xs text-muted-foreground mb-1">الشروط:</p><p className="text-xs bg-muted/50 p-2 rounded">{request.terms_ar}</p></div>
                   )}
-                  {request.status === "quotation_sent" && (
+                  {request.status === "scope_generated" && (
                     <div className="flex gap-2 pt-2">
-                      <Button className="flex-1" size="sm" onClick={() => handleQuotationResponse(true)} disabled={sending}><CheckCircle className="w-3 h-3 ml-1" />قبول العرض</Button>
+                      <Button className="flex-1" size="sm" onClick={() => handleQuotationResponse(true)} disabled={sending}><CheckCircle className="w-3 h-3 ml-1" />قبول العرض واعتماد النطاق</Button>
+                      <Button variant="outline" className="flex-1" size="sm" onClick={() => handleQuotationResponse(false)} disabled={sending}><XCircle className="w-3 h-3 ml-1" />رفض</Button>
                       <Button variant="outline" className="flex-1" size="sm" onClick={() => handleQuotationResponse(false)} disabled={sending}><XCircle className="w-3 h-3 ml-1" />رفض</Button>
                     </div>
                   )}
