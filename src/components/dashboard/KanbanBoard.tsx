@@ -200,7 +200,7 @@ export default function KanbanBoard() {
                       <AssignmentCard
                         key={a.id}
                         a={a}
-                        onClick={() => navigate(`/valuation/${a.id}`)}
+                        onClick={() => navigate(`/assignment/${a.id}`)}
                       />
                     ))
                   )}
