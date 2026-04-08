@@ -24,30 +24,28 @@ import {
 /* ══════════════════════════════════════════════
    Status Groups
    ══════════════════════════════════════════════ */
-const STATUS_NEW = ["draft", "ai_review", "submitted", "client_submitted", "under_ai_review", "awaiting_client_info", "needs_clarification"];
-const STATUS_SOW = ["sow_generated", "sow_sent", "sow_approved"];
-const STATUS_PROGRESS = ["under_pricing", "quotation_sent", "quotation_approved", "awaiting_payment", "payment_uploaded", "payment_under_review", "partially_paid", "fully_paid", "in_production", "inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted", "valuation_in_progress", "draft_report_ready", "draft_report_sent", "under_client_review", "client_comments", "revision_in_progress", "priced", "awaiting_payment_initial", "payment_received_initial"];
-const STATUS_APPROVAL = ["final_payment_pending", "final_payment_uploaded", "final_payment_approved", "final_report_ready", "awaiting_final_payment", "final_payment_received"];
-const STATUS_COMPLETE = ["completed", "report_issued", "closed", "archived"];
-const STATUS_BLOCKED = ["cancelled", "quotation_rejected"];
+// ── Unified status groups aligned with RPC's 19 valid statuses ──
+const STATUS_NEW = ["draft", "submitted"];
+const STATUS_SOW = ["scope_generated", "scope_approved"];
+const STATUS_PROGRESS = ["first_payment_confirmed", "data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated", "analysis_complete", "professional_review", "draft_report_ready", "client_review"];
+const STATUS_APPROVAL = ["draft_approved", "final_payment_confirmed"];
+const STATUS_COMPLETE = ["issued", "archived"];
+const STATUS_BLOCKED = ["cancelled"];
+
+// ── Unified status labels matching RPC's 19 valid statuses + normalizer for legacy ──
+import { normalizeStatus, STATUS_LABELS } from "@/lib/workflow-engine";
 
 const statusLabels: Record<string, string> = {
-  draft: "مسودة", ai_review: "مراجعة ذكية", submitted: "مقدم", client_submitted: "مقدم من العميل",
-  under_ai_review: "مراجعة ذكية", awaiting_client_info: "بانتظار معلومات", needs_clarification: "يحتاج توضيح",
-  sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل", sow_approved: "نطاق العمل مُعتمد",
-  under_pricing: "قيد التسعير", priced: "تم التسعير", quotation_sent: "عرض مرسل",
-  quotation_approved: "عرض مقبول", quotation_rejected: "عرض مرفوض",
-  awaiting_payment: "بانتظار الدفع", awaiting_payment_initial: "بانتظار الدفعة الأولى",
-  payment_uploaded: "إيصال مرفوع", payment_under_review: "مراجعة الدفع",
-  payment_received_initial: "دفعة أولى مستلمة", partially_paid: "مدفوع جزئياً", fully_paid: "مدفوع بالكامل",
-  in_production: "قيد التنفيذ", inspection_required: "تحتاج معاينة", inspection_assigned: "معاينة مسندة",
-  inspection_in_progress: "معاينة جارية", inspection_submitted: "معاينة مقدمة", valuation_in_progress: "تقييم جاري",
-  draft_report_ready: "مسودة جاهزة", draft_report_sent: "مسودة مرسلة", under_client_review: "مراجعة العميل",
-  client_comments: "ملاحظات العميل", revision_in_progress: "تعديل جاري",
-  final_payment_pending: "بانتظار الدفعة النهائية", final_payment_uploaded: "إيصال نهائي مرفوع",
-  final_payment_approved: "دفعة نهائية معتمدة", final_report_ready: "التقرير النهائي جاهز",
-  awaiting_final_payment: "بانتظار الدفعة النهائية", final_payment_received: "دفعة نهائية مستلمة",
-  report_issued: "تم الإصدار", completed: "مكتمل", closed: "مغلق", archived: "مؤرشف", cancelled: "ملغي",
+  draft: "مسودة", submitted: "مقدم",
+  scope_generated: "نطاق العمل جاهز", scope_approved: "نطاق العمل مُعتمد",
+  first_payment_confirmed: "دفعة أولى مؤكدة",
+  data_collection_open: "جمع البيانات", data_collection_complete: "البيانات مكتملة",
+  inspection_pending: "بانتظار المعاينة", inspection_completed: "المعاينة مكتملة",
+  data_validated: "البيانات مُعتمدة",
+  analysis_complete: "التحليل مكتمل", professional_review: "المراجعة المهنية",
+  draft_report_ready: "مسودة جاهزة", client_review: "مراجعة العميل",
+  draft_approved: "المسودة مُعتمدة", final_payment_confirmed: "الدفعة النهائية مؤكدة",
+  issued: "صادر", archived: "مؤرشف", cancelled: "ملغي",
 };
 
 const purposeLabels: Record<string, string> = {
@@ -71,25 +69,31 @@ const getClientPhone = (req: any) => req.client_phone || req.ai_intake_summary?.
 const getClientEmail = (req: any) => req.client_email || req.ai_intake_summary?.clientInfo?.contactEmail || "";
 const getPurpose = (req: any) => purposeLabels[req.purpose] || req.purpose_ar || req.purpose_other || req.purpose || "غير محدد";
 const getAssetType = (req: any) => assetTypeLabels[req.property_type] || assetTypeLabels[req.valuation_type] || req.property_type || req.valuation_type || "غير محدد";
-const getStatus = (req: any) => statusLabels[req.status] || "غير محدد";
+const getStatus = (req: any) => {
+  const normalized = normalizeStatus(req.status);
+  return statusLabels[normalized] || STATUS_LABELS[normalized]?.label || req.status || "غير محدد";
+};
 const getMode = (req: any) => req.valuation_mode === "desktop" ? "مكتبي" : req.valuation_mode === "field" ? "ميداني" : "—";
 
 const matchesStatusGroup = (status: string, group: StatusGroupFilter) => {
   if (group === "all") return true;
-  if (group === "new") return STATUS_NEW.includes(status);
-  if (group === "sow") return STATUS_SOW.includes(status);
-  if (group === "progress") return STATUS_PROGRESS.includes(status);
-  if (group === "approval") return STATUS_APPROVAL.includes(status);
-  if (group === "complete") return STATUS_COMPLETE.includes(status);
-  if (group === "blocked") return STATUS_BLOCKED.includes(status);
+  const n = normalizeStatus(status);
+  if (group === "new") return STATUS_NEW.includes(n);
+  if (group === "sow") return STATUS_SOW.includes(n);
+  if (group === "progress") return STATUS_PROGRESS.includes(n);
+  if (group === "approval") return STATUS_APPROVAL.includes(n);
+  if (group === "complete") return STATUS_COMPLETE.includes(n);
+  if (group === "blocked") return STATUS_BLOCKED.includes(n);
   return true;
 };
 
 const statusColor = (status: string) => {
-  if (STATUS_COMPLETE.includes(status)) return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
-  if (STATUS_APPROVAL.includes(status)) return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
-  if (STATUS_BLOCKED.includes(status)) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
-  if (STATUS_NEW.includes(status)) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+  const n = normalizeStatus(status);
+  if (STATUS_COMPLETE.includes(n)) return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
+  if (STATUS_APPROVAL.includes(n)) return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+  if (STATUS_BLOCKED.includes(n)) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+  if (STATUS_NEW.includes(n)) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+  if (STATUS_SOW.includes(n)) return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400";
   return "bg-muted text-muted-foreground";
 };
 

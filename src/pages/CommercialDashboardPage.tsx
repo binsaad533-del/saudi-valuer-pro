@@ -40,9 +40,9 @@ export default function CommercialDashboardPage() {
         .from("valuation_assignments")
         .select("id, reference_number, status, payment_status, quotation_amount, total_fees, amount_paid, client_name_ar, created_at")
         .in("status", [
-          "under_pricing", "quotation_sent", "quotation_approved",
-          "awaiting_payment", "payment_uploaded", "in_progress",
-          "review", "approved", "issued",
+          "scope_generated", "scope_approved", "first_payment_confirmed",
+          "data_collection_open", "professional_review", "draft_approved",
+          "final_payment_confirmed", "issued",
         ] as any)
         .order("created_at", { ascending: false })
         .limit(200),
@@ -67,8 +67,8 @@ export default function CommercialDashboardPage() {
     setDiscountUsage(usage);
 
     // Calculate stats
-    const pendingQuotations = a.filter((r: any) => ["under_pricing", "quotation_sent"].includes(r.status)).length;
-    const awaitingPayment = a.filter((r: any) => ["awaiting_payment", "payment_uploaded"].includes(r.status)).length;
+    const pendingQuotations = a.filter((r: any) => ["scope_generated", "scope_approved"].includes(r.status)).length;
+    const awaitingPayment = a.filter((r: any) => ["draft_approved", "final_payment_confirmed"].includes(r.status)).length;
     const paidRequests = a.filter((r: any) => r.payment_status === "paid").length;
     const overduePayments = inv.filter((i: any) => i.payment_status === "overdue").length;
     const totalRevenue = a.reduce((sum: number, r: any) => sum + (r.amount_paid || 0), 0);
