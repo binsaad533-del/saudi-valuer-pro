@@ -43,6 +43,7 @@ export default function RequestDetails() {
   const { toast } = useToast();
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const chatFileRef = useRef<HTMLInputElement>(null);
 
   const [request, setRequest] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
