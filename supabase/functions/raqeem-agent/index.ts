@@ -58,8 +58,65 @@ function detectStage(status: string): string {
     draft_report_ready: "report", client_review: "report",
     draft_approved: "compliance", final_payment_confirmed: "compliance",
     issued: "delivery", archived: "delivery",
+    cancelled: "cancelled",
   };
   return stageMap[status] || "intake";
+}
+
+/** Maps current status → next allowed statuses + what's needed */
+function getWorkflowGuidance(status: string): string {
+  const guidance: Record<string, string> = {
+    draft: "الخطوة التالية: إرسال الطلب (submitted). المطلوب: تأكد من اكتمال بيانات العميل والغرض من التقييم.",
+    submitted: "الخطوة التالية: إعداد نطاق العمل والتسعير (scope_generated). المطلوب: مراجعة بيانات الطلب وتوليد SOW وعرض السعر.",
+    scope_generated: "الخطوة التالية: اعتماد العميل (scope_approved). المطلوب: إرسال عرض السعر للعميل وانتظار موافقته.",
+    scope_approved: "الخطوة التالية: تأكيد الدفعة الأولى 50% (first_payment_confirmed). المطلوب: تأكيد استلام الدفعة من العميل.",
+    first_payment_confirmed: "الخطوة التالية: فتح جمع البيانات (data_collection_open). المطلوب: بدء جمع المستندات والبيانات من العميل.",
+    data_collection_open: "الخطوة التالية: إكمال جمع البيانات (data_collection_complete). المطلوب: التأكد من اكتمال جميع المستندات المطلوبة.",
+    data_collection_complete: "خياران: (1) إسناد معاين ميداني (inspection_pending) أو (2) تقييم مكتبي — تخطي المعاينة (data_validated). القرار يعتمد على نوع التقييم.",
+    inspection_pending: "الخطوة التالية: اكتمال المعاينة (inspection_completed) — يتم تلقائياً عند إرسال المعاين لتقريره.",
+    inspection_completed: "الخطوة التالية: تأكيد صحة البيانات (data_validated). المطلوب: مراجعة نتائج المعاينة والتحقق من اكتمال البيانات.",
+    data_validated: "الخطوة التالية: بدء التحليل (analysis_complete). المطلوب: تشغيل محرك التقييم وتطبيق المنهجيات.",
+    analysis_complete: "الخطوة التالية: إحالة للحكم المهني (professional_review). المطلوب: مراجعة نتائج التحليل من المقيّم المعتمد (IVS 105).",
+    professional_review: "الخطوة التالية: إعداد مسودة التقرير (draft_report_ready). المطلوب: اعتماد الحكم المهني وتوليد المسودة.",
+    draft_report_ready: "الخطوة التالية: إرسال المسودة للعميل (client_review). المطلوب: مراجعة المسودة داخلياً ثم إرسالها.",
+    client_review: "خياران: (1) اعتماد العميل (draft_approved) أو (2) إرجاع للمراجعة المهنية (professional_review) إذا طلب العميل تعديلات.",
+    draft_approved: "الخطوة التالية: تأكيد الدفعة النهائية 50% (final_payment_confirmed). المطلوب: تأكيد استلام الدفعة النهائية.",
+    final_payment_confirmed: "الخطوة التالية: الإصدار النهائي (issued). المطلوب: اجتياز بوابة الإصدار (9 شروط إلزامية) + توقيع إلكتروني.",
+    issued: "الخطوة التالية: الأرشفة (archived). المطلوب: حفظ ملف العمل كاملاً لمدة 10 سنوات.",
+    archived: "المهمة مكتملة ومؤرشفة. لا يمكن إجراء أي تعديل.",
+    cancelled: "الطلب ملغي.",
+  };
+  return guidance[status] || "حالة غير معروفة.";
+}
+
+/** Build a checklist of what's missing for the current stage */
+async function getMissingRequirements(db: any, assignmentId: string, status: string): Promise<string[]> {
+  const missing: string[] = [];
+
+  if (["data_validated", "analysis_complete", "professional_review"].includes(status)) {
+    const { data: comps } = await db.from("assignment_comparables")
+      .select("id").eq("assignment_id", assignmentId);
+    if (!comps?.length) missing.push("لم يتم ربط أي مقارنات بالمهمة");
+
+    const { data: checks } = await db.from("compliance_checks")
+      .select("is_passed").eq("assignment_id", assignmentId).eq("is_mandatory", true);
+    const failedChecks = (checks || []).filter((c: any) => !c.is_passed);
+    if (failedChecks.length > 0) missing.push(`${failedChecks.length} فحص امتثال إلزامي لم يُجتز`);
+  }
+
+  if (status === "professional_review") {
+    const { data: req } = await db.from("valuation_requests")
+      .select("professional_judgment").eq("assignment_id", assignmentId).limit(1).maybeSingle();
+    if (!req?.professional_judgment) missing.push("لم يتم تطبيق الحكم المهني (IVS 105) بعد");
+  }
+
+  if (status === "draft_report_ready" || status === "client_review") {
+    const { data: drafts } = await db.from("report_drafts")
+      .select("id, status").eq("request_id", assignmentId).limit(1);
+    if (!drafts?.length) missing.push("لم يتم إنشاء مسودة تقرير");
+  }
+
+  return missing;
 }
 
 serve(async (req) => {
@@ -167,6 +224,13 @@ serve(async (req) => {
     const client = request?.clients;
     const subject = Array.isArray(assignment.subjects) ? assignment.subjects[0] : assignment.subjects;
 
+    // Workflow intelligence
+    const workflowGuidance = getWorkflowGuidance(assignment.status);
+    const missingReqs = await getMissingRequirements(db, assignment_id, assignment.status);
+    const missingReqsText = missingReqs.length
+      ? `\n🔴 متطلبات ناقصة للانتقال:\n${missingReqs.map(r => `- ${r}`).join("\n")}`
+      : "\n✅ لا توجد متطلبات ناقصة حالياً.";
+
     const systemPrompt = `أنت "رقيم" — العقل الذكي لمنصة جساس للتقييم. أنت وكيل مستقل (Autonomous Agent) يراقب كل مرحلة ويقدم رؤى استباقية.
 
 ## سياق المهمة الحالية
@@ -178,6 +242,10 @@ serve(async (req) => {
 - العقار/الأصل: ${subject?.name_ar || subject?.description_ar || "غير محدد"}
 - المدينة: ${subject?.city_ar || ""} - الحي: ${subject?.district_ar || ""}
 ${stageData}
+
+## خريطة سير العمل (Workflow)
+${workflowGuidance}
+${missingReqsText}
 
 ## المرحلة الحالية
 ${STAGE_PROMPTS[currentStage] || ""}
@@ -197,6 +265,8 @@ ${correctionsContext ? `## تصحيحات المدير (أعلى أولوية)\n
 4. صنّف ملاحظاتك: ⚠️ تحذير | ℹ️ معلومة | ✅ جاهز | 🔴 يتطلب إجراء.
 5. لا تعتمد شيئاً تلقائياً — اعرض التوصية وانتظر قرار المقيّم.
 6. تذكّر: أنت مساعد ذكي وليس مقيّماً — الحكم المهني للمقيّم المعتمد فقط.
+7. عند اقتراح "الإجراء التالي" (next_action)، اذكر بوضوح الخطوة المحددة من خريطة سير العمل.
+8. إذا توجد متطلبات ناقصة، نبّه عليها كأولوية قبل أي تحليل آخر.
 
 ## سياق الصفحة
 ${page_context || "الصفحة الرئيسية"}`;
