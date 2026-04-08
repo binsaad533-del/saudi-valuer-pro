@@ -366,6 +366,22 @@ export default function RequestDetails() {
                 </CardTitle>
               </CardHeader>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Raqeem Welcome — always first */}
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 shadow-sm">
+                    <Bot className="w-4 h-4 text-primary-foreground" />
+                  </div>
+                  <div className="max-w-[85%] rounded-xl px-4 py-3 text-sm bg-card border border-primary/20 text-foreground shadow-sm">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className="text-xs font-bold text-primary">رقيم</span>
+                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5">مساعدك الذكي</Badge>
+                    </div>
+                    <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right' }}>
+                      <ReactMarkdown>{getRaqeemWelcome(request.status, request)}</ReactMarkdown>
+                    </div>
+                  </div>
+                </div>
+
                 {messages.map((msg) => {
                   const isClient = msg.sender_type === "client";
                   const isAI = msg.sender_type === "ai";
@@ -381,10 +397,15 @@ export default function RequestDetails() {
                   }
                   return (
                     <div key={msg.id} className={`flex gap-2 ${isClient ? "flex-row-reverse" : ""}`}>
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isAI ? "gradient-primary" : isClient ? "bg-muted" : "bg-accent"}`}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 ${isAI ? "bg-gradient-to-br from-primary to-primary/70" : isClient ? "bg-muted" : "bg-accent"}`}>
                         {isAI ? <Bot className="w-3.5 h-3.5 text-primary-foreground" /> : <User className="w-3.5 h-3.5 text-muted-foreground" />}
                       </div>
-                      <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${isClient ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                      <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${isClient ? "bg-primary text-primary-foreground" : isAI ? "bg-card border border-primary/20 text-foreground" : "bg-muted text-foreground"}`}>
+                        {isAI && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-[10px] font-bold text-primary">رقيم</span>
+                          </div>
+                        )}
                         {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
                         <p className={`text-[10px] mt-1 ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
                           {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
@@ -395,9 +416,9 @@ export default function RequestDetails() {
                 })}
                 <div ref={chatEndRef} />
               </div>
-              <div className="p-4 border-t border-border">
+              <div className="p-4 border-t border-border bg-card/50">
                 <div className="flex gap-2">
-                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending || uploading} dir="rtl" className="flex-1" />
+                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اسأل رقيم أو اكتب ملاحظة..." disabled={sending || uploading} dir="rtl" className="flex-1" />
                   <input ref={chatFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" onChange={handleChatFileUpload} />
                   <Button variant="outline" size="icon" onClick={() => chatFileRef.current?.click()} disabled={uploading} title="إرفاق ملف">
                     {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
@@ -406,7 +427,7 @@ export default function RequestDetails() {
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5">يمكنك إرفاق صور أو مستندات (PDF, Excel, Word)</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><Bot className="w-3 h-3 text-primary" /> رقيم حاضر لمساعدتك — اسأل أي شيء أو أرفق مستنداً</p>
               </div>
             </Card>
           </div>
