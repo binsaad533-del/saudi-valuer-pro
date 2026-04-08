@@ -375,20 +375,16 @@ export default function ExecutiveDashboard() {
                 <button
                   key={item.id}
                   onClick={() => openWorkspace(item.id)}
-                  className="w-full flex items-center gap-4 py-3 px-4 text-right hover:bg-muted/30 transition-colors group"
+                  className="w-full flex items-center gap-3 py-2 px-3 text-right hover:bg-muted/30 transition-colors group"
                 >
-                  {/* Priority indicator */}
-                  <span className="text-[9px] font-bold text-muted-foreground/40 tabular-nums w-4 shrink-0">{i + 1}</span>
-                  {/* Urgency bar */}
-                  <div className={`w-[3px] h-9 rounded-full shrink-0 ${i === 0 ? "bg-red-400" : i < 3 ? "bg-amber-400" : "bg-muted-foreground/20"}`} />
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <span className="text-[11px] font-semibold text-foreground">{item.client}</span>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{item.action}</p>
+                  <span className="text-[9px] font-bold text-muted-foreground/40 tabular-nums w-3 shrink-0">{i + 1}</span>
+                  <div className={`w-[3px] self-stretch rounded-full shrink-0 ${i === 0 ? "bg-red-400" : i < 3 ? "bg-amber-400" : "bg-muted-foreground/20"}`} />
+                  <div className="flex-1 min-w-0 flex items-center gap-3">
+                    <span className="text-[11px] font-semibold text-foreground whitespace-nowrap">{item.client}</span>
+                    <span className="text-[10px] text-muted-foreground truncate">{item.action}</span>
                   </div>
-                  {/* Time */}
                   <span className="text-[9px] text-muted-foreground/40 tabular-nums shrink-0">{item.time}</span>
-                  <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/60 transition-colors shrink-0" />
+                  <ChevronLeft className="w-3 h-3 text-muted-foreground/20 group-hover:text-muted-foreground/60 transition-colors shrink-0" />
                 </button>
               ))}
             </div>
