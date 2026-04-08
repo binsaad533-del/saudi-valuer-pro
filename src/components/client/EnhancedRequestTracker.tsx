@@ -10,16 +10,29 @@ const ALL_STAGES = [
 ];
 
 const STATUS_TO_STAGE_KEY: Record<string, string> = {
-  draft: "submitted", ai_review: "submitted", submitted: "submitted", needs_clarification: "submitted",
-  under_pricing: "submitted", quotation_sent: "payment", quotation_approved: "payment", quotation_rejected: "payment",
-  awaiting_payment: "payment", payment_uploaded: "payment", payment_under_review: "payment",
+  // 19-status workflow engine (canonical)
+  draft: "submitted", submitted: "submitted",
+  scope_generated: "payment", scope_approved: "payment",
+  first_payment_confirmed: "assigned",
+  data_collection_open: "assigned", data_collection_complete: "assigned",
+  inspection_pending: "inspection", inspection_completed: "inspection",
+  data_validated: "drafting",
+  analysis_complete: "drafting", professional_review: "drafting",
+  draft_report_ready: "drafting", client_review: "drafting",
+  draft_approved: "drafting",
+  final_payment_confirmed: "delivered",
+  issued: "delivered", archived: "delivered",
+  cancelled: "cancelled",
+  // Legacy fallbacks
+  ai_review: "submitted", needs_clarification: "submitted",
+  under_pricing: "submitted", quotation_sent: "payment", quotation_approved: "payment",
+  awaiting_payment: "payment", payment_uploaded: "payment",
   partially_paid: "payment", fully_paid: "assigned",
-  in_production: "assigned", inspection_scheduled: "inspection", inspection_completed: "inspection",
+  in_production: "assigned", inspection_scheduled: "inspection",
   report_drafting: "drafting", draft_report_sent: "drafting", client_comments: "drafting",
   quality_review: "drafting", final_review: "drafting",
   final_payment_pending: "drafting", final_payment_uploaded: "drafting", final_payment_approved: "drafting",
-  final_report_ready: "delivered", completed: "delivered", archived: "delivered",
-  cancelled: "cancelled",
+  final_report_ready: "delivered", completed: "delivered",
 };
 
 interface EnhancedRequestTrackerProps {
