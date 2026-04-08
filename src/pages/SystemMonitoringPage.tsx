@@ -114,7 +114,7 @@ export default function SystemMonitoringPage() {
   const resolveEvent = async (id: string) => {
     await supabase
       .from("system_events")
-      .update({ resolved: true, resolved_at: new Date().toISOString() } as Record<string, unknown>)
+      .update({ resolved: true, resolved_at: new Date().toISOString() } as any)
       .eq("id", id);
     setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, resolved: true } : e)));
     toast.success("تم حل المشكلة");
