@@ -15,10 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import BidiText from "@/components/ui/bidi-text";
 import {
-  BarChart3, Calendar, CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
-  FolderOpen, Search, Shield, ShieldCheck, Users, AlertTriangle, X, Send,
-  MessageSquare, Loader2, User, Bot, ArrowLeft, Building2, TrendingUp,
-  Zap, LayoutDashboard, BookOpen, Settings,
+  CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
+  Search, ShieldCheck, AlertTriangle, X, Send,
+  MessageSquare, Loader2, User, Bot, ArrowLeft, Building2,
+  Zap,
 } from "lucide-react";
 
 /* ══════════════════════════════════════════════
