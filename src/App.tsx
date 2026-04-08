@@ -195,6 +195,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </RaqeemAgentProvider>
     </LanguageProvider>
     </AuthProvider>
   </QueryClientProvider>
