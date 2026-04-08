@@ -78,8 +78,8 @@ export default function ValuationsList() {
 
   const setActiveTab = (tab: Tab) => {
     setSearchParams(tab === "all" ? {} : { tab });
-    if (tab === "review") setActiveStatus("review");
-    else if (tab === "completed") setActiveStatus("completed");
+    if (tab === "review") setActiveStatus("professional_review");
+    else if (tab === "completed") setActiveStatus("issued");
     else setActiveStatus("all");
   };
 
