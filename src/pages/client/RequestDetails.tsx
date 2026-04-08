@@ -507,7 +507,7 @@ export default function RequestDetails() {
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><Bot className="w-3 h-3 text-primary" /> رقيم حاضر لمساعدتك — اسأل أي شيء أو أرفق مستنداً</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><Bot className="w-3 h-3 text-primary" /> رقيم – مساعدك الذكي — حاضر للإجابة على استفساراتك فوراً</p>
               </div>
             </Card>
           </div>
