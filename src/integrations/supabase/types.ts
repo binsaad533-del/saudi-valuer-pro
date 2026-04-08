@@ -3388,6 +3388,48 @@ export type Database = {
           },
         ]
       }
+      raqeem_agent_context: {
+        Row: {
+          assignment_id: string
+          context_data: Json
+          conversation_summary: string | null
+          created_at: string
+          id: string
+          last_insight: string | null
+          observations: string[] | null
+          pending_actions: string[] | null
+          risk_flags: string[] | null
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          context_data?: Json
+          conversation_summary?: string | null
+          created_at?: string
+          id?: string
+          last_insight?: string | null
+          observations?: string[] | null
+          pending_actions?: string[] | null
+          risk_flags?: string[] | null
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          context_data?: Json
+          conversation_summary?: string | null
+          created_at?: string
+          id?: string
+          last_insight?: string | null
+          observations?: string[] | null
+          pending_actions?: string[] | null
+          risk_flags?: string[] | null
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       raqeem_audit_log: {
         Row: {
           action: string

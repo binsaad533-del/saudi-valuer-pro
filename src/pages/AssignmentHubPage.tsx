@@ -7,6 +7,7 @@ import {
   FileText, CheckCircle2, AlertTriangle, ChevronLeft, Loader2,
   ClipboardCheck, Scale, Shield, Sparkles, ExternalLink,
 } from "lucide-react";
+import RaqeemContextCard from "@/components/raqeem/RaqeemContextCard";
 import ComparableSelectionEngine from "@/components/valuation/ComparableSelectionEngine";
 import JustificationWriter from "@/components/valuation/JustificationWriter";
 import type { RiskContext } from "@/lib/risk-detection";
@@ -413,6 +414,15 @@ export default function AssignmentHubPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Raqeem Agent Card */}
+      {id && (
+        <RaqeemContextCard
+          assignmentId={id}
+          pageContext="لوحة تتبع المهمة - Assignment Hub"
+          className="mt-4"
+        />
+      )}
     </div>
   );
 }
