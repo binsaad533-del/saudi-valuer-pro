@@ -19,10 +19,10 @@ import {
 import { format, differenceInDays } from "date-fns";
 import { SARIcon } from "@/components/ui/saudi-riyal";
 import {
-  type UserRow, ROLE_LABELS, ROLE_COLORS, CATEGORY_CONFIG,
+  type UserRow, ROLE_LABELS, ROLE_COLORS,
   CategoryBadge, formatCurrencyJSX,
   RoleChangeDialog, CategoryOverrideDialog, ProfileDialog,
-} from "./ClientIdentityPanel";
+} from "./ClientDialogs";
 
 // ── Classification Logic ──
 const VIP_REVENUE = 50000;

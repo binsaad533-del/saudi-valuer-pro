@@ -15,7 +15,7 @@ import CorrectionsModule from "@/components/raqeem/CorrectionsModule";
 import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
 import PerformanceDashboard from "@/components/raqeem/PerformanceDashboard";
 import TestHistoryModule from "@/components/raqeem/TestHistoryModule";
-import RaqeemChatMessages from "@/components/raqeem/RaqeemKnowledgePanel";
+import RaqeemChatMessages from "@/components/raqeem/RaqeemChatMessages";
 
 interface OrchestrationTool {
   name: string;
