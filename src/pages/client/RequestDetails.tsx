@@ -116,17 +116,31 @@ export default function RequestDetails() {
   const handleQuotationResponse = async (approved: boolean) => {
     setSending(true);
     try {
-      const newStatus = approved ? "awaiting_payment" : "quotation_rejected";
-      await supabase.from("valuation_requests" as any).update({
-        status: newStatus as any,
-        quotation_response_at: new Date().toISOString(),
-        ...(approved ? { quotation_approved_at: new Date().toISOString() } : {}),
-      } as any).eq("id", id!);
+      if (approved) {
+        // Use RPC to transition: scope_generated → scope_approved
+        const result = await changeStatusByRequestId(id!, "scope_approved", {
+          reason: "العميل وافق على عرض السعر ونطاق العمل",
+        });
+        if (!result.success) throw new Error(result.error);
+        await supabase.from("valuation_requests" as any).update({
+          quotation_response_at: new Date().toISOString(),
+          quotation_approved_at: new Date().toISOString(),
+        } as any).eq("id", id!);
+      } else {
+        // Rejection — use RPC to cancel
+        const result = await changeStatusByRequestId(id!, "cancelled", {
+          reason: "العميل رفض عرض السعر",
+        });
+        if (!result.success) throw new Error(result.error);
+        await supabase.from("valuation_requests" as any).update({
+          quotation_response_at: new Date().toISOString(),
+        } as any).eq("id", id!);
+      }
       await supabase.from("request_messages" as any).insert({
         request_id: id!, sender_type: "system" as any,
-        content: approved ? "✅ تم قبول عرض السعر من قبل العميل" : "❌ تم رفض عرض السعر من قبل العميل",
+        content: approved ? "✅ تم قبول عرض السعر واعتماد نطاق العمل من قبل العميل" : "❌ تم رفض عرض السعر من قبل العميل",
       });
-      toast({ title: approved ? "تم قبول العرض" : "تم رفض العرض" });
+      toast({ title: approved ? "تم قبول العرض واعتماد النطاق" : "تم رفض العرض" });
       loadData();
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -168,18 +182,16 @@ export default function RequestDetails() {
   };
 
   const getStatusLabel = (status: string) => {
-    const map: Record<string, string> = {
-      draft: "مسودة", submitted: "تم الإرسال", needs_clarification: "يحتاج توضيح",
-      sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل", sow_approved: "نطاق العمل مُعتمد",
-      under_pricing: "قيد التسعير", quotation_sent: "عرض سعر مرسل",
-      quotation_approved: "عرض معتمد", quotation_rejected: "عرض مرفوض",
-      awaiting_payment: "بانتظار الدفع", payment_uploaded: "إيصال مرفوع",
-      partially_paid: "مدفوع جزئياً", fully_paid: "مدفوع بالكامل",
-      in_production: "قيد التنفيذ", draft_report_sent: "مسودة التقرير",
-      client_comments: "ملاحظات", final_payment_pending: "بانتظار الدفعة النهائية",
-      final_report_ready: "التقرير جاهز", completed: "مكتمل",
+    // Use workflow engine labels (19-status)
+    const wfLabel = WF_STATUS_LABELS[status];
+    if (wfLabel) return wfLabel.client_ar || wfLabel.ar;
+    // Fallback for any legacy statuses
+    const fallback: Record<string, string> = {
+      sow_generated: "نطاق العمل جاهز", sow_sent: "نطاق العمل مُرسل",
+      quotation_sent: "عرض سعر مرسل", awaiting_payment: "بانتظار الدفع",
+      in_production: "قيد التنفيذ", completed: "مكتمل",
     };
-    return map[status] || status;
+    return fallback[status] || status;
   };
 
   if (loading) {
