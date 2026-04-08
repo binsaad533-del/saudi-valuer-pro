@@ -1,4 +1,5 @@
 import { Report } from "@/types/report";
+import BidiText from "@/components/ui/bidi-text";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
@@ -81,7 +82,7 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
         </div>
         <div>
           <h2 className="text-lg font-bold border-b pb-2 mb-2">تحليل السوق</h2>
-          <p className="text-sm leading-relaxed">{report.marketAnalysis}</p>
+          <BidiText className="text-sm">{report.marketAnalysis}</BidiText>
         </div>
       </div>
 

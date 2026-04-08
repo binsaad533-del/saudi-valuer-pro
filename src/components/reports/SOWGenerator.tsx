@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BidiText from "@/components/ui/bidi-text";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -145,7 +146,7 @@ export default function SOWGenerator({ request, userId, onStatusChange }: SOWGen
               {sow.sections.map((section, i) => (
                 <div key={i}>
                   <h4 className="text-xs font-bold text-primary">{section.heading}</h4>
-                  <p className="text-xs text-foreground whitespace-pre-line leading-6 mt-1">{section.content}</p>
+                  <BidiText className="text-xs text-foreground mt-1" preserveNewlines>{section.content}</BidiText>
                 </div>
               ))}
             </div>
