@@ -3,45 +3,19 @@ import { useNavigate } from "react-router-dom";
 import { parseExcelFile, autoMapColumns, applyMapping } from "@/lib/excel-parser";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Upload,
-  FileText,
-  Image,
-  File,
-  X,
-  Loader2,
-  CheckCircle,
-  ArrowRight,
-  ArrowLeft,
-  User as UserIcon,
-  Send,
-  Home,
-  Edit3,
-  Clock,
-  Shield,
-  AlertTriangle,
-  Table2,
-  Monitor,
-  Eye,
-  Zap,
-  BadgeCheck,
+  CheckCircle, Edit3, AlertTriangle, Shield, Loader2,
 } from "lucide-react";
-import logo from "@/assets/logo.png";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
+import JourneyHeader from "@/components/client/journey/JourneyHeader";
+import JourneyStartStep from "@/components/client/journey/JourneyStartStep";
+import JourneyUploadStep from "@/components/client/journey/JourneyUploadStep";
+import JourneyProcessingStep from "@/components/client/journey/JourneyProcessingStep";
+import JourneyCompleteStep from "@/components/client/journey/JourneyCompleteStep";
 
 // ── Types ──
 interface UploadedFile {
