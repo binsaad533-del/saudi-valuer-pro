@@ -14,10 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import BidiText from "@/components/ui/bidi-text";
-import KanbanBoard from "@/components/dashboard/KanbanBoard";
-import WorkflowPipeline from "@/components/dashboard/WorkflowPipeline";
+import OwnerInsightsPanel from "@/components/dashboard/OwnerInsightsPanel";
+import RaqeemDailySummary from "@/components/dashboard/RaqeemDailySummary";
 import LiveActivityTimeline from "@/components/dashboard/LiveActivityTimeline";
 import SmartAlertsBanner from "@/components/dashboard/SmartAlertsBanner";
+import CommandPalette from "@/components/dashboard/CommandPalette";
 import {
   CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
   Search, ShieldCheck, AlertTriangle, X, Send,
