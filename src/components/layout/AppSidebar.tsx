@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,14 +7,18 @@ import {
   LayoutDashboard, Settings, LogOut, BookOpen, FileText,
   Users, UserCheck, ClipboardList, Archive, BarChart3,
   DollarSign, Shield, Search, Activity, Bell, Briefcase,
-  TrendingUp, MapPin, Scale, Wrench,
+  TrendingUp, MapPin, Scale, Wrench, ChevronDown,
+  Brain, AlertTriangle, Zap, Database,
 } from "lucide-react";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
-  SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu,
+  SidebarGroupContent, SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 const logo = "/favicon.png";
 
@@ -26,100 +30,80 @@ interface NavItem {
 
 interface NavGroup {
   title: string;
+  icon: React.ElementType;
   items: NavItem[];
 }
 
-// ── Owner Navigation (hierarchical) ──
 const ownerNavGroups: NavGroup[] = [
   {
-    title: "الرئيسية",
+    title: "القيادة",
+    icon: LayoutDashboard,
     items: [
       { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
-      { label: "البحث", icon: Search, path: "/search" },
+      { label: "البحث الذكي", icon: Search, path: "/search" },
     ],
   },
   {
-    title: "العمليات",
+    title: "التشغيل",
+    icon: Zap,
     items: [
-      { label: "طلبات العملاء", icon: ClipboardList, path: "/client-requests" },
+      { label: "الطلبات", icon: ClipboardList, path: "/client-requests" },
       { label: "ملفات التقييم", icon: Scale, path: "/valuations" },
       { label: "تقييم جديد", icon: Briefcase, path: "/valuations/new" },
-    ],
-  },
-  {
-    title: "التقارير والإصدار",
-    items: [
       { label: "التقارير", icon: FileText, path: "/reports" },
       { label: "الأرشيف", icon: Archive, path: "/archive" },
     ],
   },
   {
-    title: "الإدارة",
-    items: [
-      { label: "العملاء", icon: Users, path: "/clients-management" },
-      { label: "المعاينون", icon: UserCheck, path: "/inspectors" },
-      { label: "تغطية المعاينين", icon: MapPin, path: "/inspector-coverage" },
-    ],
-  },
-  {
-    title: "الذكاء والتحليل",
+    title: "الذكاء",
+    icon: Brain,
     items: [
       { label: "قاعدة المعرفة", icon: BookOpen, path: "/knowledge" },
-      { label: "بيانات السوق", icon: TrendingUp, path: "/market-data" },
+      { label: "السوق والتحليلات", icon: TrendingUp, path: "/market-data" },
       { label: "التحليلات", icon: BarChart3, path: "/analytics" },
-    ],
-  },
-  {
-    title: "المالية والامتثال",
-    items: [
       { label: "اللوحة المالية", icon: DollarSign, path: "/cfo-dashboard" },
       { label: "اللوحة التجارية", icon: Briefcase, path: "/commercial" },
-      { label: "سجل التدقيق", icon: Shield, path: "/audit-log" },
     ],
   },
   {
     title: "النظام",
+    icon: Settings,
     items: [
-      { label: "مراقبة النظام", icon: Activity, path: "/system-monitoring" },
-      { label: "الإشعارات", icon: Bell, path: "/notifications" },
+      { label: "العملاء", icon: Users, path: "/clients-management" },
+      { label: "المعاينون", icon: UserCheck, path: "/inspectors" },
+      { label: "التغطية", icon: MapPin, path: "/inspector-coverage" },
       { label: "الإعدادات", icon: Settings, path: "/settings" },
+      { label: "الإشعارات", icon: Bell, path: "/notifications" },
+      { label: "سجل التدقيق", icon: Shield, path: "/audit-log" },
+      { label: "مراقبة النظام", icon: Activity, path: "/system-monitoring" },
     ],
   },
 ];
 
 const inspectorNavGroups: NavGroup[] = [
-  {
-    title: "الرئيسية",
-    items: [
-      { label: "المعاينات", icon: LayoutDashboard, path: "/inspector" },
-      { label: "الإشعارات", icon: Bell, path: "/inspector/notifications" },
-      { label: "الإعدادات", icon: Settings, path: "/inspector/settings" },
-    ],
-  },
+  { title: "الرئيسية", icon: LayoutDashboard, items: [
+    { label: "المعاينات", icon: LayoutDashboard, path: "/inspector" },
+    { label: "الإشعارات", icon: Bell, path: "/inspector/notifications" },
+    { label: "الإعدادات", icon: Settings, path: "/inspector/settings" },
+  ]},
 ];
 
 const financialNavGroups: NavGroup[] = [
-  {
-    title: "الرئيسية",
-    items: [
-      { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
-      { label: "الإشعارات", icon: Bell, path: "/notifications" },
-      { label: "الإعدادات", icon: Settings, path: "/account" },
-    ],
-  },
+  { title: "الرئيسية", icon: LayoutDashboard, items: [
+    { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
+    { label: "الإشعارات", icon: Bell, path: "/notifications" },
+    { label: "الإعدادات", icon: Settings, path: "/account" },
+  ]},
 ];
 
 const clientNavGroups: NavGroup[] = [
-  {
-    title: "الرئيسية",
-    items: [
-      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/client" },
-      { label: "طلباتي", icon: ClipboardList, path: "/client/requests" },
-      { label: "طلب جديد", icon: Briefcase, path: "/client/new-request" },
-      { label: "الإشعارات", icon: Bell, path: "/client/notifications" },
-      { label: "الإعدادات", icon: Settings, path: "/client/settings" },
-    ],
-  },
+  { title: "الرئيسية", icon: LayoutDashboard, items: [
+    { label: "لوحة التحكم", icon: LayoutDashboard, path: "/client" },
+    { label: "طلباتي", icon: ClipboardList, path: "/client/requests" },
+    { label: "طلب جديد", icon: Briefcase, path: "/client/new-request" },
+    { label: "الإشعارات", icon: Bell, path: "/client/notifications" },
+    { label: "الإعدادات", icon: Settings, path: "/client/settings" },
+  ]},
 ];
 
 const roleKeyMap: Record<string, string> = {
@@ -144,19 +128,6 @@ export default function AppSidebar() {
   const { user, role } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
-  const [profileName, setProfileName] = useState("");
-
-  useEffect(() => {
-    if (!user) return;
-    supabase
-      .from("profiles")
-      .select("full_name_ar")
-      .eq("user_id", user.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setProfileName(data.full_name_ar);
-      });
-  }, [user]);
 
   const handleLogout = async () => {
     try { await supabase.auth.signOut({ scope: "local" }); } catch {}
@@ -168,7 +139,9 @@ export default function AppSidebar() {
     path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
 
   const navGroups = getNavGroupsForRole(role);
-  const initials = profileName ? profileName.charAt(0) : "م";
+
+  // Determine which group is active
+  const activeGroupIndex = navGroups.findIndex(g => g.items.some(i => isActive(i.path)));
 
   return (
     <Sidebar collapsible="icon" side="right">
@@ -184,70 +157,92 @@ export default function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        {navGroups.map((group) => (
-          <SidebarGroup key={group.title}>
-            {!collapsed && <SidebarGroupLabel>{group.title}</SidebarGroupLabel>}
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {group.items.map((item) => {
-                  const active = isActive(item.path);
-                  return (
-                    <SidebarMenuItem key={item.path}>
-                      <SidebarMenuButton
-                        asChild
-                        isActive={active}
-                        tooltip={item.label}
-                      >
-                        <NavLink
-                          to={item.path}
-                          end={item.path === "/"}
-                          className="hover:bg-sidebar-accent/60"
-                          activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
-                        >
-                          <item.icon className="w-4 h-4 shrink-0" />
-                          <span>{item.label}</span>
-                        </NavLink>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
-                  );
-                })}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        ))}
+        {navGroups.map((group, gi) => {
+          const isGroupActive = gi === activeGroupIndex;
+          const GroupIcon = group.icon;
+
+          if (collapsed) {
+            return (
+              <SidebarGroup key={group.title}>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {group.items.map((item) => {
+                      const active = isActive(item.path);
+                      return (
+                        <SidebarMenuItem key={item.path}>
+                          <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                            <NavLink to={item.path} end={item.path === "/"} className="hover:bg-sidebar-accent/60" activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold">
+                              <item.icon className="w-4 h-4 shrink-0" />
+                            </NavLink>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      );
+                    })}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            );
+          }
+
+          return (
+            <Collapsible key={group.title} defaultOpen={isGroupActive} className="group/collapsible">
+              <SidebarGroup>
+                <CollapsibleTrigger className="w-full">
+                  <div className={cn(
+                    "flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer select-none",
+                    isGroupActive
+                      ? "text-sidebar-primary"
+                      : "text-sidebar-muted hover:text-sidebar-foreground"
+                  )}>
+                    <div className="flex items-center gap-2">
+                      <GroupIcon className="w-3.5 h-3.5" />
+                      <span>{group.title}</span>
+                    </div>
+                    <ChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
+                  </div>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <SidebarGroupContent>
+                    <SidebarMenu>
+                      {group.items.map((item) => {
+                        const active = isActive(item.path);
+                        return (
+                          <SidebarMenuItem key={item.path}>
+                            <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                              <NavLink
+                                to={item.path}
+                                end={item.path === "/"}
+                                className="hover:bg-sidebar-accent/60 text-[13px]"
+                                activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
+                              >
+                                <item.icon className="w-3.5 h-3.5 shrink-0" />
+                                <span>{item.label}</span>
+                              </NavLink>
+                            </SidebarMenuButton>
+                          </SidebarMenuItem>
+                        );
+                      })}
+                    </SidebarMenu>
+                  </SidebarGroupContent>
+                </CollapsibleContent>
+              </SidebarGroup>
+            </Collapsible>
+          );
+        })}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
-        {!collapsed ? (
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-xs font-bold shrink-0">
-              {initials}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sidebar-foreground text-xs font-medium truncate">
-                {profileName || "..."}
-              </p>
-              <p className="text-muted-foreground text-[10px] truncate">
-                {roleKeyMap[role || ""] || ""}
-              </p>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="p-1.5 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
-              title="تسجيل الخروج"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={handleLogout}
-            className="w-full flex justify-center p-1.5 rounded-md text-destructive hover:bg-destructive/10 transition-colors"
-            title="تسجيل الخروج"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        )}
+        <button
+          onClick={handleLogout}
+          className={cn(
+            "flex items-center gap-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors text-xs",
+            collapsed ? "w-full justify-center p-1.5" : "px-3 py-2 w-full"
+          )}
+          title="تسجيل الخروج"
+        >
+          <LogOut className="w-3.5 h-3.5" />
+          {!collapsed && <span>تسجيل الخروج</span>}
+        </button>
       </SidebarFooter>
     </Sidebar>
   );
