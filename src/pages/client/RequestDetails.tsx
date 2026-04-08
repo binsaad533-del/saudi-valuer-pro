@@ -370,11 +370,16 @@ export default function RequestDetails() {
               </div>
               <div className="p-4 border-t border-border">
                 <div className="flex gap-2">
-                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending} dir="rtl" />
+                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اكتب ملاحظة أو استفسار..." disabled={sending || uploading} dir="rtl" className="flex-1" />
+                  <input ref={chatFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" onChange={handleChatFileUpload} />
+                  <Button variant="outline" size="icon" onClick={() => chatFileRef.current?.click()} disabled={uploading} title="إرفاق ملف">
+                    {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  </Button>
                   <Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending} size="icon">
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-1.5">يمكنك إرفاق صور أو مستندات (PDF, Excel, Word)</p>
               </div>
             </Card>
           </div>
