@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { UserCircle, Upload, Save, PenTool, Loader2, Lock } from "lucide-react";
+import SignatureUpload from "@/components/reports/SignatureUpload";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -192,19 +193,12 @@ export default function ValuerSettings({ isOwnerView = true }: ValuerSettingsPro
                 رفع الصورة
               </Button>
             </div>
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-40 h-24 rounded-xl border-2 border-dashed border-border bg-muted flex items-center justify-center overflow-hidden">
-                {localProfile.signature_url ? (
-                  <img src={localProfile.signature_url} alt="التوقيع" className="w-full h-full object-contain" />
-                ) : (
-                  <PenTool className="w-8 h-8 text-muted-foreground" />
-                )}
-              </div>
-              <input ref={signatureRef} type="file" accept=".png,.jpg,.jpeg" className="hidden" onChange={e => handleFileUpload(e, "signatures", "signature_url", setUploadingSignature)} />
-              <Button variant="outline" size="sm" onClick={() => signatureRef.current?.click()} disabled={uploadingSignature}>
-                {uploadingSignature ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Upload className="w-4 h-4 ml-2" />}
-                رفع التوقيع الرقمي
-              </Button>
+            <div className="flex-1 min-w-[300px]">
+              <SignatureUpload
+                currentUrl={localProfile.signature_url || null}
+                onSignatureChange={(url) => update("signature_url", url || "")}
+                compact
+              />
             </div>
           </div>
         </CardContent>
