@@ -464,6 +464,31 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
     }
   }
 
+  // ── Disclaimer & Limitations Page (IVS 106 / Taqeem Standard 30) ──
+  doc.addPage();
+  let dy = MARGIN + 5;
+  dy = drawSectionTitle(doc, "إخلاء المسؤولية والقيود", dy);
+  dy += 3;
+
+  const disclaimerParagraphs = [
+    "١. هذا التقرير مُعد وفقاً لمعايير التقييم الدولية (IVS 2025) ومعايير الهيئة السعودية للمقيّمين المعتمدين (تقييم).",
+    "٢. القيمة المقدرة في هذا التقرير تمثل رأي المقيّم المعتمد بناءً على المعلومات المتاحة في تاريخ التقييم، وهي ليست ضماناً لسعر البيع الفعلي.",
+    "٣. لم يُجرِ المقيّم أي تحقق مستقل من المعلومات المقدمة من العميل أو الجهات الحكومية، ويُفترض صحتها ودقتها.",
+    "٤. لم يتم إجراء أي فحوصات هندسية أو بيئية للأصل. يُنصح بالاستعانة بمتخصصين في حال الحاجة.",
+    "٥. لا يتحمل المقيّم أي مسؤولية عن أي خسائر ناتجة عن استخدام هذا التقرير لغير الغرض المحدد فيه.",
+    "٦. يخضع هذا التقرير لحقوق الملكية الفكرية ولا يجوز نسخه أو توزيعه جزئياً أو كلياً دون إذن خطي مسبق.",
+    "٧. يحتفظ المقيّم بملف العمل كاملاً لمدة (10) سنوات وفقاً لمتطلبات الهيئة السعودية للمقيّمين المعتمدين.",
+  ];
+
+  disclaimerParagraphs.forEach((p) => {
+    const lines = doc.splitTextToSize(p, CONTENT_WIDTH - 10);
+    dy = checkPageBreak(doc, dy, lines.length * 5 + 5);
+    doc.setTextColor(...DARK);
+    doc.setFontSize(9);
+    doc.text(lines, PAGE_WIDTH - MARGIN - 4, dy, { align: "right" });
+    dy += lines.length * 5 + 4;
+  });
+
   // Post-processing
   addHeader(doc, report.reportNumber, 2);
   addPageNumbers(doc, 2);
