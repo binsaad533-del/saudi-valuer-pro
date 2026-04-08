@@ -10,46 +10,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import BidiText from "@/components/ui/bidi-text";
-import OwnerInsightsPanel from "@/components/dashboard/OwnerInsightsPanel";
-import RaqeemDailySummary from "@/components/dashboard/RaqeemDailySummary";
-import LiveActivityTimeline from "@/components/dashboard/LiveActivityTimeline";
-import SmartAlertsBanner from "@/components/dashboard/SmartAlertsBanner";
 import CommandPalette from "@/components/dashboard/CommandPalette";
+import SystemStatusBar from "@/components/dashboard/SystemStatusBar";
+import OperationalOverview from "@/components/dashboard/OperationalOverview";
+import ActionRequiredPanel from "@/components/dashboard/ActionRequiredPanel";
+import LiveFeed from "@/components/dashboard/LiveFeed";
+import WorkflowMonitor from "@/components/dashboard/WorkflowMonitor";
+import RaqeemExecutiveInsight from "@/components/dashboard/RaqeemExecutiveInsight";
+import { normalizeStatus, STATUS_LABELS, PIPELINE_PHASES } from "@/lib/workflow-engine";
+import { SAR } from "@/components/ui/saudi-riyal";
+import { formatNumber } from "@/lib/utils";
+import { motion } from "framer-motion";
 import {
-  CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
-  Search, ShieldCheck, AlertTriangle, X, Send,
-  MessageSquare, Loader2, User, Bot, ArrowLeft, Building2,
-  Zap,
+  ArrowLeft, Send, MessageSquare, Loader2,
+  User, Bot, Building2, TrendingUp,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 
-/* ══════════════════════════════════════════════
-   Status Groups
-   ══════════════════════════════════════════════ */
-// ── Unified status groups aligned with RPC's 19 valid statuses ──
+/* ═══ Status utilities ═══ */
 const STATUS_NEW = ["draft", "submitted"];
-const STATUS_SOW = ["scope_generated", "scope_approved"];
-const STATUS_PROGRESS = ["first_payment_confirmed", "data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated", "analysis_complete", "professional_review", "draft_report_ready", "client_review"];
-const STATUS_APPROVAL = ["draft_approved", "final_payment_confirmed"];
+
 const STATUS_COMPLETE = ["issued", "archived"];
 const STATUS_BLOCKED = ["cancelled"];
 
-// ── Unified status labels matching RPC's 19 valid statuses + normalizer for legacy ──
-import { normalizeStatus, STATUS_LABELS } from "@/lib/workflow-engine";
-
 const statusLabels: Record<string, string> = {
-  draft: "مسودة", submitted: "مقدم",
-  scope_generated: "نطاق العمل جاهز", scope_approved: "نطاق العمل مُعتمد",
-  first_payment_confirmed: "دفعة أولى مؤكدة",
-  data_collection_open: "جمع البيانات", data_collection_complete: "البيانات مكتملة",
-  inspection_pending: "بانتظار المعاينة", inspection_completed: "المعاينة مكتملة",
-  data_validated: "البيانات مُعتمدة",
-  analysis_complete: "التحليل مكتمل", professional_review: "المراجعة المهنية",
-  draft_report_ready: "مسودة جاهزة", client_review: "مراجعة العميل",
-  draft_approved: "المسودة مُعتمدة", final_payment_confirmed: "الدفعة النهائية مؤكدة",
+  draft: "مسودة", submitted: "مقدم", scope_generated: "نطاق العمل جاهز", scope_approved: "نطاق العمل مُعتمد",
+  first_payment_confirmed: "دفعة أولى مؤكدة", data_collection_open: "جمع البيانات", data_collection_complete: "البيانات مكتملة",
+  inspection_pending: "بانتظار المعاينة", inspection_completed: "المعاينة مكتملة", data_validated: "البيانات مُعتمدة",
+  analysis_complete: "التحليل مكتمل", professional_review: "المراجعة المهنية", draft_report_ready: "مسودة جاهزة",
+  client_review: "مراجعة العميل", draft_approved: "المسودة مُعتمدة", final_payment_confirmed: "الدفعة النهائية مؤكدة",
   issued: "صادر", archived: "مؤرشف", cancelled: "ملغي",
 };
 
@@ -66,56 +58,34 @@ const assetTypeLabels: Record<string, string> = {
   vehicle: "مركبة", residential_land: "أرض سكنية", commercial_land: "أرض تجارية", building: "مبنى",
 };
 
-type ViewMode = "dashboard" | "workspace";
-type StatusGroupFilter = "all" | "new" | "sow" | "progress" | "approval" | "complete" | "blocked";
-
 const getClientName = (req: any) => req.client_name_ar || req.ai_intake_summary?.clientInfo?.contactName || "عميل غير محدد";
 const getClientPhone = (req: any) => req.client_phone || req.ai_intake_summary?.clientInfo?.contactPhone || "";
 const getClientEmail = (req: any) => req.client_email || req.ai_intake_summary?.clientInfo?.contactEmail || "";
 const getPurpose = (req: any) => purposeLabels[req.purpose] || req.purpose_ar || req.purpose_other || req.purpose || "غير محدد";
 const getAssetType = (req: any) => assetTypeLabels[req.property_type] || assetTypeLabels[req.valuation_type] || req.property_type || req.valuation_type || "غير محدد";
 const getStatus = (req: any) => {
-  const normalized = normalizeStatus(req.status);
-  return statusLabels[normalized] || STATUS_LABELS[normalized]?.ar || req.status || "غير محدد";
+  const n = normalizeStatus(req.status);
+  return statusLabels[n] || STATUS_LABELS[n]?.ar || req.status || "غير محدد";
 };
 const getMode = (req: any) => req.valuation_mode === "desktop" ? "مكتبي" : req.valuation_mode === "field" ? "ميداني" : "—";
-
-const matchesStatusGroup = (status: string, group: StatusGroupFilter) => {
-  if (group === "all") return true;
-  const n = normalizeStatus(status);
-  if (group === "new") return STATUS_NEW.includes(n);
-  if (group === "sow") return STATUS_SOW.includes(n);
-  if (group === "progress") return STATUS_PROGRESS.includes(n);
-  if (group === "approval") return STATUS_APPROVAL.includes(n);
-  if (group === "complete") return STATUS_COMPLETE.includes(n);
-  if (group === "blocked") return STATUS_BLOCKED.includes(n);
-  return true;
-};
 
 const statusColor = (status: string) => {
   const n = normalizeStatus(status);
   if (STATUS_COMPLETE.includes(n)) return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
-  if (STATUS_APPROVAL.includes(n)) return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
   if (STATUS_BLOCKED.includes(n)) return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
   if (STATUS_NEW.includes(n)) return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
-  if (STATUS_SOW.includes(n)) return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400";
   return "bg-muted text-muted-foreground";
 };
 
-/* ══════════════════════════════════════════════
-   Main Component
-   ══════════════════════════════════════════════ */
+const ACTION_STATUSES = ["submitted", "scope_generated", "professional_review", "draft_report_ready", "client_review", "draft_approved", "final_payment_confirmed"];
+
+type ViewMode = "dashboard" | "workspace";
+
 export default function ExecutiveDashboard() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [profileName, setProfileName] = useState("");
   const [requests, setRequests] = useState<any[]>([]);
   const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
-  const [statusGroupFilter, setStatusGroupFilter] = useState<StatusGroupFilter>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  // Workspace state
   const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
   const [drawerMessages, setDrawerMessages] = useState<any[]>([]);
   const [drawerReply, setDrawerReply] = useState("");
@@ -123,20 +93,27 @@ export default function ExecutiveDashboard() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  /* ── Load data ── */
+  // Financial data
+  const [financials, setFinancials] = useState({ revenue: 0, pending: 0 });
+
   useEffect(() => {
     if (!user) return;
-    const loadDashboard = async () => {
+    const load = async () => {
       setLoading(true);
-      const [{ data: profile }, { data: requestRows }] = await Promise.all([
-        supabase.from("profiles").select("full_name_ar").eq("user_id", user.id).maybeSingle(),
+      const [{ data: requestRows }, { data: payments }] = await Promise.all([
         supabase.from("valuation_requests" as any).select("*").order("created_at", { ascending: false }).limit(500),
+        supabase.from("payments").select("amount, payment_status"),
       ]);
-      setProfileName(profile?.full_name_ar || "");
       setRequests((requestRows as any[]) || []);
+      let rev = 0, pend = 0;
+      (payments || []).forEach((p: any) => {
+        if (p.payment_status === "paid") rev += (p.amount || 0);
+        else if (p.payment_status === "pending") pend += (p.amount || 0);
+      });
+      setFinancials({ revenue: rev, pending: pend });
       setLoading(false);
     };
-    loadDashboard();
+    load();
   }, [user]);
 
   const refreshRequests = useCallback(async () => {
@@ -144,7 +121,7 @@ export default function ExecutiveDashboard() {
     if (data) setRequests(data as any[]);
   }, []);
 
-  /* ── Messages ── */
+  // Messages
   useEffect(() => {
     if (!selectedRequest) { setDrawerMessages([]); return; }
     let cancelled = false;
@@ -176,32 +153,62 @@ export default function ExecutiveDashboard() {
     setSendingReply(false);
   }, [drawerReply, selectedRequest, user]);
 
-  /* ── Computed ── */
-  const counts = useMemo(() => ({
-    total: requests.length,
-    new: requests.filter(r => STATUS_NEW.includes(r.status)).length,
-    sow: requests.filter(r => STATUS_SOW.includes(r.status)).length,
-    progress: requests.filter(r => STATUS_PROGRESS.includes(r.status)).length,
-    approval: requests.filter(r => STATUS_APPROVAL.includes(r.status)).length,
-    complete: requests.filter(r => STATUS_COMPLETE.includes(r.status)).length,
-    blocked: requests.filter(r => STATUS_BLOCKED.includes(r.status)).length,
-  }), [requests]);
+  /* ═══ Computed data ═══ */
+  const threeDaysAgo = Date.now() - 3 * 86400000;
 
-  const filteredRequests = useMemo(() => {
-    return requests.filter(req => {
-      const clientName = getClientName(req);
-      const matchesSearch = !searchTerm.trim() || clientName.includes(searchTerm) || String(req.id).includes(searchTerm);
-      const matchesGroup = matchesStatusGroup(req.status, statusGroupFilter);
-      const matchesStatus = statusFilter === "all" || req.status === statusFilter;
-      return matchesSearch && matchesGroup && matchesStatus;
+  const overviewCounts = useMemo(() => ({
+    newRequests: requests.filter(r => STATUS_NEW.includes(normalizeStatus(r.status))).length,
+    stale: requests.filter(r => {
+      const n = normalizeStatus(r.status);
+      return !["issued", "archived", "cancelled", "draft"].includes(n) && new Date(r.updated_at).getTime() < threeDaysAgo;
+    }).length,
+    awaitingApproval: requests.filter(r => ["professional_review", "draft_report_ready", "draft_approved", "final_payment_confirmed"].includes(normalizeStatus(r.status))).length,
+    stopped: requests.filter(r => normalizeStatus(r.status) === "cancelled").length,
+    pendingPayments: financials.pending > 0 ? 1 : 0, // simplified
+    draftsReady: requests.filter(r => normalizeStatus(r.status) === "draft_report_ready").length,
+  }), [requests, financials.pending]);
+
+  const actionItems = useMemo(() =>
+    requests
+      .filter(r => ACTION_STATUSES.includes(normalizeStatus(r.status)))
+      .sort((a, b) => new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime())
+      .map(r => ({
+        id: r.id,
+        clientName: getClientName(r),
+        status: r.status,
+        reason: getActionReason(normalizeStatus(r.status)),
+        updatedAt: r.updated_at,
+      }))
+  , [requests]);
+
+  const pipelineStages = useMemo(() => {
+    const statusCounts: Record<string, number> = {};
+    requests.forEach(r => {
+      const n = normalizeStatus(r.status);
+      if (!["issued", "archived", "cancelled"].includes(n)) {
+        statusCounts[n] = (statusCounts[n] || 0) + 1;
+      }
     });
-  }, [requests, searchTerm, statusGroupFilter, statusFilter]);
 
-  const actionItems = useMemo(() => requests.filter(r =>
-    ["submitted", "client_submitted", "payment_uploaded", "final_payment_uploaded", "draft_report_ready", "client_comments"].includes(r.status)
-  ), [requests]);
+    const phases = PIPELINE_PHASES.filter(p => p.key !== "finalization");
+    const total = Object.values(statusCounts).reduce((a, b) => a + b, 0);
 
-  const openWorkspace = (req: any) => {
+    return {
+      stages: phases.map(p => ({
+        label: p.label,
+        count: p.statuses.reduce((sum, s) => sum + (statusCounts[s] || 0), 0),
+        isBottleneck: p.statuses.some(s => (statusCounts[s] || 0) >= 3),
+      })),
+      total,
+    };
+  }, [requests]);
+
+  const collectionRate = financials.revenue + financials.pending > 0
+    ? Math.round((financials.revenue / (financials.revenue + financials.pending)) * 100) : 0;
+
+  const openWorkspace = (reqOrId: any) => {
+    const req = typeof reqOrId === "string" ? requests.find(r => r.id === reqOrId) : reqOrId;
+    if (!req) return;
     setSelectedRequest(req);
     setViewMode("workspace");
   };
@@ -212,30 +219,27 @@ export default function ExecutiveDashboard() {
     refreshRequests();
   };
 
-  /* ── Loading ── */
+  /* ═══ Loading ═══ */
   if (loading) {
     return (
       <div className="min-h-screen" dir="rtl">
         <TopBar />
-        <div className="space-y-6 p-6 max-w-[1400px] mx-auto">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:grid-cols-6">
-            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+        <div className="space-y-4 p-6 max-w-[1400px] mx-auto">
+          <Skeleton className="h-10 rounded-lg" />
+          <div className="grid grid-cols-3 gap-3 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
           </div>
-          <Skeleton className="h-[500px] rounded-xl" />
+          <Skeleton className="h-[300px] rounded-xl" />
         </div>
       </div>
     );
   }
 
-  /* ══════════════════════════════════════════════
-     WORKSPACE VIEW — Full-page review for a request
-     ══════════════════════════════════════════════ */
+  /* ═══ WORKSPACE VIEW ═══ */
   if (viewMode === "workspace" && selectedRequest) {
     return (
       <div className="min-h-screen bg-background" dir="rtl">
         <TopBar />
-
-        {/* Workspace Header */}
         <div className="border-b border-border bg-card sticky top-0 z-20">
           <div className="max-w-[1400px] mx-auto px-6 py-4">
             <div className="flex items-center justify-between gap-4">
@@ -258,37 +262,21 @@ export default function ExecutiveDashboard() {
                     <span>{getPurpose(selectedRequest)}</span>
                     <span>•</span>
                     <span>{getMode(selectedRequest)}</span>
-                    <span>•</span>
-                    <span>{new Date(selectedRequest.created_at).toLocaleDateString("ar-SA")}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Workspace Body */}
         <div className="max-w-[1400px] mx-auto px-6 py-6">
           <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
-
-            {/* Main Column: Workflow Panels */}
             <div className="space-y-6 min-w-0">
-              {/* SOW */}
               <SOWGenerator request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
-
-              {/* Professional Judgment */}
               <ProfessionalJudgmentPanel request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
-
-              {/* Report Draft */}
               <ReportDraftGenerator request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
-
-              {/* Final Issuance */}
               <FinalIssuancePanel request={selectedRequest} userId={user!.id} onStatusChange={refreshRequests} />
             </div>
-
-            {/* Sidebar: Info + Chat */}
             <div className="space-y-4">
-              {/* Request Info Card */}
               <Card className="border-border">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -317,8 +305,6 @@ export default function ExecutiveDashboard() {
                   )}
                 </CardContent>
               </Card>
-
-              {/* Chat Card */}
               <Card className="border-border">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm flex items-center gap-2">
@@ -336,8 +322,8 @@ export default function ExecutiveDashboard() {
                     ) : (
                       drawerMessages.map((msg: any, i: number) => {
                         const isClient = msg.sender_type === "client";
-                        const isSystem = msg.sender_type === "system";
                         const isAdmin = msg.sender_type === "admin";
+                        const isSystem = msg.sender_type === "system";
                         return (
                           <div key={msg.id || i} className={`flex gap-2 ${isClient ? "justify-start" : "justify-end"}`}>
                             {isClient && <div className="shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center"><User className="w-3 h-3 text-primary" /></div>}
@@ -373,181 +359,90 @@ export default function ExecutiveDashboard() {
     );
   }
 
-  /* ══════════════════════════════════════════════
-     DASHBOARD VIEW — Command Center
-     ══════════════════════════════════════════════ */
-
-  const kpiCards: { label: string; value: number; group: StatusGroupFilter; icon: React.ElementType; accent: string }[] = [
-    { label: "إجمالي الطلبات", value: counts.total, group: "all", icon: FileText, accent: "text-foreground" },
-    { label: "طلبات جديدة", value: counts.new, group: "new", icon: ClipboardCheck, accent: "text-amber-600 dark:text-amber-400" },
-    { label: "قيد التنفيذ", value: counts.progress, group: "progress", icon: Clock, accent: "text-blue-600 dark:text-blue-400" },
-    { label: "بانتظار الاعتماد", value: counts.approval, group: "approval", icon: ShieldCheck, accent: "text-indigo-600 dark:text-indigo-400" },
-    { label: "مكتملة", value: counts.complete, group: "complete", icon: CheckCircle2, accent: "text-emerald-600 dark:text-emerald-400" },
-    { label: "متوقفة", value: counts.blocked, group: "blocked", icon: AlertTriangle, accent: "text-red-600 dark:text-red-400" },
-  ];
-
+  /* ═══ COMMAND CENTER ═══ */
   return (
     <div className="min-h-screen bg-background" dir="rtl">
       <TopBar />
 
-      <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-5">
+      <div className="max-w-[1400px] mx-auto px-6 py-5 space-y-4">
 
-        {/* ═══ ROW 1: HEADER + ALERTS (urgent, top priority) ═══ */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">مركز التحكم</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">مرحباً {profileName || "المالك"}</p>
-          </div>
-          <Badge variant="outline" className="text-xs gap-1.5 px-3 py-1">
-            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            متصل
-          </Badge>
-        </div>
+        {/* Zone 1: System Status Bar */}
+        <SystemStatusBar />
 
-        <SmartAlertsBanner />
+        {/* Zone 2: Operational Overview — unique KPIs */}
+        <OperationalOverview counts={overviewCounts} />
 
-        {/* ═══ ROW 2: KPI CARDS (quick status snapshot) ═══ */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-          {kpiCards.map(kpi => {
-            const Icon = kpi.icon;
-            const isActive = statusGroupFilter === kpi.group && statusGroupFilter !== "all";
-            return (
-              <button key={kpi.label} type="button" onClick={() => setStatusGroupFilter(prev => prev === kpi.group ? "all" : kpi.group)} className="text-right">
-                <Card className={`h-full transition-all hover:shadow-md ${isActive ? "border-primary ring-1 ring-primary/20 shadow-md" : "border-border hover:border-primary/30"}`}>
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isActive ? "bg-primary/10" : "bg-muted"}`}>
-                        <Icon className={`w-4 h-4 ${isActive ? "text-primary" : kpi.accent}`} />
-                      </div>
-                      <span className={`text-2xl font-bold ${kpi.accent}`}>{kpi.value}</span>
-                    </div>
-                    <p className="text-xs font-medium text-muted-foreground">{kpi.label}</p>
-                  </CardContent>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
+        {/* Two-column layout: Actions + Intelligence */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-4">
 
-        {/* ═══ ROW 3: ACTION ITEMS (urgent tasks needing owner intervention) ═══ */}
-        {actionItems.length > 0 && (
-          <Card className="border-amber-200 dark:border-amber-800/50 bg-amber-50/50 dark:bg-amber-900/10">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-foreground">إجراء مطلوب</p>
-                  <p className="text-xs text-muted-foreground">{actionItems.length} طلب بحاجة إلى تدخلك</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {actionItems.slice(0, 5).map(req => (
-                  <button key={req.id} onClick={() => openWorkspace(req)} className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800/50 bg-background px-3 py-2 text-xs hover:bg-muted/50 transition-colors">
-                    <span className="font-medium text-foreground truncate max-w-[140px]">{getClientName(req)}</span>
-                    <Badge className={`${statusColor(req.status)} border-0 text-[10px]`}>{getStatus(req)}</Badge>
-                  </button>
-                ))}
-                {actionItems.length > 5 && <span className="text-xs text-muted-foreground self-center">+{actionItems.length - 5} أخرى</span>}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* ═══ ROW 4: MAIN CONTENT — Two-column layout ═══ */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-5">
-
-          {/* ── Main Column: Requests Table (primary workspace) ── */}
+          {/* Main Column */}
           <div className="space-y-4 min-w-0">
-            {/* Filters */}
-            <div className="flex items-center gap-3 flex-wrap">
-              <div className="relative min-w-[220px] flex-1 max-w-md">
-                <Search className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="بحث بالاسم أو رقم الطلب..." className="pr-9 h-10" />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px] h-10"><SelectValue placeholder="كل الحالات" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">كل الحالات</SelectItem>
-                  {Array.from(new Set(requests.map(r => r.status).filter(Boolean))).map(status => (
-                    <SelectItem key={status} value={status}>{statusLabels[status] || status}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {statusGroupFilter !== "all" && (
-                <Button variant="ghost" size="sm" onClick={() => setStatusGroupFilter("all")} className="gap-1 text-xs text-muted-foreground">
-                  <X className="w-3 h-3" /> إزالة الفلتر
-                </Button>
-              )}
-              <div className="mr-auto">
-                <Badge variant="outline" className="text-xs">{filteredRequests.length} طلب</Badge>
-              </div>
-            </div>
 
-            {/* Table */}
-            <Card className="border-border overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">العميل</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">الغرض</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">نوع الأصل</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">الحالة</th>
-                      <th className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground">التاريخ</th>
-                      <th className="px-4 py-3 w-16"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRequests.length === 0 ? (
-                      <tr><td colSpan={6} className="px-4 py-16 text-center text-muted-foreground text-sm">لا توجد طلبات مطابقة</td></tr>
-                    ) : filteredRequests.slice(0, 15).map(req => (
-                      <tr key={req.id} className="border-b border-border/40 transition-colors hover:bg-muted/20 cursor-pointer" onClick={() => openWorkspace(req)}>
-                        <td className="px-4 py-3">
-                          <p className="font-semibold text-foreground text-sm">{getClientName(req)}</p>
-                          {req.reference_number && <p className="text-[10px] text-muted-foreground font-mono mt-0.5" dir="ltr">{req.reference_number}</p>}
-                        </td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{getPurpose(req)}</td>
-                        <td className="px-4 py-3 text-muted-foreground text-xs">{getAssetType(req)}</td>
-                        <td className="px-4 py-3">
-                          <Badge className={`${statusColor(req.status)} border-0 text-[10px] font-medium`}>{getStatus(req)}</Badge>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(req.created_at).toLocaleDateString("ar-SA")}</td>
-                        <td className="px-4 py-3">
-                          <Button variant="ghost" size="sm" className="gap-1 text-xs h-7 px-2">
-                            <Eye className="w-3 h-3" /> فتح
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {filteredRequests.length > 15 && (
-                <div className="px-4 py-2.5 border-t border-border bg-muted/20 text-center">
-                  <span className="text-xs text-muted-foreground">يعرض 15 من {filteredRequests.length} — استخدم الفلترة لتضييق النتائج</span>
-                </div>
-              )}
-            </Card>
+            {/* Zone 3: Action Required Now */}
+            <ActionRequiredPanel items={actionItems} onOpen={openWorkspace} />
+
+            {/* Zone 5: Workflow Monitor */}
+            <WorkflowMonitor stages={pipelineStages.stages} total={pipelineStages.total} />
+
+            {/* Zone 4: Live Feed */}
+            <LiveFeed />
           </div>
 
-          {/* ── Side Column: Intelligence & Insights ── */}
+          {/* Intelligence Sidebar */}
           <div className="space-y-4">
-            {/* Raqeem Daily Summary */}
-            <RaqeemDailySummary />
 
-            {/* Financial + Performance (stacked compactly) */}
-            <OwnerInsightsPanel />
+            {/* Zone 6: Raqeem Executive Insight */}
+            <RaqeemExecutiveInsight />
 
-            {/* Activity Timeline */}
-            <LiveActivityTimeline />
+            {/* Compact Financial */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.45 }}
+              className="rounded-xl border border-border bg-card p-4"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-xs font-bold text-foreground">المالية</span>
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[11px] text-muted-foreground">المحصّل</span>
+                  <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatNumber(financials.revenue)} <SAR /></span>
+                </div>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[11px] text-muted-foreground">معلّق</span>
+                  <span className="text-sm font-bold text-amber-600 dark:text-amber-400 tabular-nums">{formatNumber(financials.pending)} <SAR /></span>
+                </div>
+                {collectionRate > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-muted-foreground">التحصيل</span>
+                      <span className="text-[10px] font-medium text-foreground tabular-nums">{collectionRate}%</span>
+                    </div>
+                    <Progress value={collectionRate} className="h-1" />
+                  </div>
+                )}
+              </div>
+            </motion.div>
           </div>
         </div>
 
-        {/* ═══ COMMAND PALETTE (global, hidden) ═══ */}
         <CommandPalette />
       </div>
     </div>
   );
+}
+
+function getActionReason(status: string): string {
+  const map: Record<string, string> = {
+    submitted: "طلب جديد بانتظار المراجعة",
+    scope_generated: "نطاق العمل جاهز للاعتماد",
+    professional_review: "بانتظار الحكم المهني",
+    draft_report_ready: "مسودة التقرير جاهزة",
+    client_review: "العميل أرسل ملاحظاته",
+    draft_approved: "المسودة معتمدة — بانتظار الإصدار",
+    final_payment_confirmed: "الدفعة النهائية مؤكدة — جاهز للإصدار",
+  };
+  return map[status] || "يحتاج مراجعة";
 }
