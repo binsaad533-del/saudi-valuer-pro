@@ -185,7 +185,7 @@ export default function RequestDetails() {
   const needsPayment = ["awaiting_payment", "quotation_approved", "sow_approved"].includes(request.status);
   const needsFinalPayment = ["final_payment_pending"].includes(request.status) && request.payment_structure === "partial";
   const showQuotation = request.quotation_amount && ["quotation_sent", "quotation_approved", "quotation_rejected", "awaiting_payment"].includes(request.status);
-  const showDraftReport = ["draft_report_sent", "client_comments"].includes(request.status);
+  const showDraftReport = ["draft_report_sent", "draft_report_ready", "client_comments", "final_payment_pending"].includes(request.status);
   const showFinalReport = ["final_report_ready", "report_issued", "completed"].includes(request.status);
   const showSOW = request.status === "sow_sent";
 

@@ -137,7 +137,17 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
     );
   }
 
-  if (!draft) return null;
+  if (!draft) {
+    return (
+      <div dir="rtl" className="rounded-2xl border border-border bg-card p-8 text-center space-y-3">
+        <div className="w-14 h-14 rounded-2xl bg-muted flex items-center justify-center mx-auto">
+          <FileText className="w-7 h-7 text-muted-foreground" />
+        </div>
+        <p className="text-sm font-semibold text-foreground">مسودة التقرير قيد الإعداد</p>
+        <p className="text-xs text-muted-foreground">سيتم إشعارك فور جاهزية المسودة للمراجعة</p>
+      </div>
+    );
+  }
 
   const sections = draft.sections || {};
   const sectionEntries = Object.entries(sections).filter(
