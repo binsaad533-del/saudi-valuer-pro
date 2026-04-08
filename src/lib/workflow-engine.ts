@@ -275,6 +275,7 @@ export const TRANSITION_RULES: Record<string, TransitionRule[]> = {
   }],
 
   archived: [],
+  cancelled: [],
 };
 
 // ── Flatten to simple map for backward compat ──
@@ -308,6 +309,7 @@ export const BLOCKING_RULES: Record<string, string> = {
   final_payment_confirmed:  "يجب تأكيد الدفعة النهائية (50%)",
   issued:                   "يجب اجتياز بوابة الإصدار النهائي",
   archived:                 "يجب إصدار التقرير أولاً",
+  cancelled:                "—",
 };
 
 // ── Status labels: per-role views ──
@@ -384,7 +386,7 @@ export const PIPELINE_PHASES = [
   { key: "validation", label: "التحقق والتحليل", statuses: ["data_validated", "analysis_complete"] },
   { key: "valuation", label: "التقييم والحكم المهني", statuses: ["professional_review"] },
   { key: "review", label: "المراجعة والاعتماد", statuses: ["draft_report_ready", "client_review", "draft_approved", "final_payment_confirmed"] },
-  { key: "finalization", label: "الإصدار والأرشفة", statuses: ["issued", "archived"] },
+  { key: "finalization", label: "الإصدار والأرشفة", statuses: ["issued", "archived", "cancelled"] },
 ];
 
 // ── AI steps with manual fallback ──
