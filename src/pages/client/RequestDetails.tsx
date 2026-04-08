@@ -412,7 +412,7 @@ export default function RequestDetails() {
                   {request.sow_special_assumptions_ar && (
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
                       <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-1">الافتراضات الخاصة:</p>
-                      <p className="text-xs text-amber-700 dark:text-amber-300 whitespace-pre-line leading-5">{request.sow_special_assumptions_ar}</p>
+                      <BidiText className="text-xs text-amber-700 dark:text-amber-300" preserveNewlines>{request.sow_special_assumptions_ar}</BidiText>
                     </div>
                   )}
                   <div className="border-t border-border pt-3 space-y-2">
