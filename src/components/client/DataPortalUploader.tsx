@@ -14,6 +14,7 @@ import {
   ShieldAlert, Info,
 } from "lucide-react";
 import type { InspectionType } from "@/lib/sow-engine";
+import { applyClientWatermark } from "@/lib/image-watermark";
 
 interface DataPortalUploaderProps {
   requestId: string;
@@ -146,9 +147,15 @@ export default function DataPortalUploader({ requestId, inspectionType, status, 
       const f = files[i];
       const path = `client-data/${requestId}/${f.category}/${crypto.randomUUID()}_${f.name}`;
 
+      // Apply watermark to client photos in desktop_with_photos mode
+      let fileToUpload: File | Blob = f.file;
+      if (f.category === "photo" && inspectionType === "desktop_with_photos") {
+        fileToUpload = await applyClientWatermark(f.file);
+      }
+
       const { error } = await supabase.storage
         .from("client-uploads")
-        .upload(path, f.file, { upsert: true });
+        .upload(path, fileToUpload, { upsert: true });
 
       if (error) {
         setFiles(prev => prev.map((p, idx) => idx === i ? { ...p, status: "error" } : p));
