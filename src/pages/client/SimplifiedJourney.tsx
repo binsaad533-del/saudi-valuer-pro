@@ -12,6 +12,7 @@ import {
   Image as ImageIcon, FileText, Table2, File as FileIcon,
 } from "lucide-react";
 import ScopeAssetsTable, { type ScopeAsset } from "@/components/client/ScopeAssetsTable";
+import type { AssetLocation } from "@/components/client/AssetLocationPicker";
 import JourneyHeader from "@/components/client/journey/JourneyHeader";
 import JourneyStartStep from "@/components/client/journey/JourneyStartStep";
 import JourneyUploadStep from "@/components/client/journey/JourneyUploadStep";
@@ -74,6 +75,7 @@ export default function SimplifiedJourney() {
   const [intendedUsersOther, setIntendedUsersOther] = useState("");
   const [valuationMode, setValuationMode] = useState<"field" | "desktop">("field");
   const [desktopDisclaimer, setDesktopDisclaimer] = useState(false);
+  const [assetLocations, setAssetLocations] = useState<AssetLocation[]>([]);
 
   // Step 2: Files
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
