@@ -15,6 +15,7 @@ import type { SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import RaqeemContextCard from "@/components/raqeem/RaqeemContextCard";
 import {
   SectionGeneral, SectionLocation, SectionVerification, SectionDimensions,
   SectionExterior, SectionInterior, SectionCondition, SectionUtilities,
@@ -69,6 +70,7 @@ const ME_STEPS = [
 
 export default function FieldInspectionPage() {
   const [searchParams] = useSearchParams();
+  const assignmentId = searchParams.get("assignmentId") || "";
   const disciplineParam = (searchParams.get("discipline") || "real_estate") as Discipline;
   const [discipline, setDiscipline] = useState<Discipline>(disciplineParam);
   const [mixedTab, setMixedTab] = useState<"real_estate" | "machinery">("real_estate");
@@ -408,6 +410,17 @@ export default function FieldInspectionPage() {
           </Button>
         )}
       </div>
+
+      {/* Raqeem Agent */}
+      {assignmentId && (
+        <div className="px-4 pb-4">
+          <RaqeemContextCard
+            assignmentId={assignmentId}
+            stage="inspection"
+            pageContext="صفحة المعاينة الميدانية - Field Inspection"
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ import { type ReportLanguage, type ReportData } from "@/lib/report-types";
 import { translateReportSections } from "@/lib/report-api";
 import { exportReportToPDF, downloadPdfBlob } from "@/services/pdfExportService";
 import { isReportLocked, getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
+import RaqeemContextCard from "@/components/raqeem/RaqeemContextCard";
 import { mockReports } from "@/data/mockReports";
 import type { Report } from "@/types/report";
 import { formatDate } from "@/lib/utils";
@@ -469,6 +470,16 @@ export default function ReportGeneratorPage() {
               />
             </TabsContent>
           </Tabs>
+
+          {/* Raqeem Agent */}
+          {id && (
+            <RaqeemContextCard
+              assignmentId={id}
+              stage="report_generation"
+              pageContext="صفحة إعداد التقرير - Report Generator"
+              className="mt-4"
+            />
+          )}
         </>
       )}
     </div>

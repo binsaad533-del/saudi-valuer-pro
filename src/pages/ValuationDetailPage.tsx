@@ -16,6 +16,7 @@ import type { RiskContext } from "@/lib/risk-detection";
 import JustificationWriter from "@/components/valuation/JustificationWriter";
 import { calculateConfidence } from "@/lib/confidence-scoring";
 import ReportGeneratorPanel from "@/components/reports/ReportGeneratorPanel";
+import RaqeemContextCard from "@/components/raqeem/RaqeemContextCard";
 import type { FullReportData } from "@/services/fullReportGenerator";
 
 const MOCK = {
