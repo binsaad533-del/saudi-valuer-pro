@@ -352,18 +352,40 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
   y = drawKeyValue(doc, "ASA", report.evaluatorCredentials.asa, y);
   y += 8;
 
-  // Signature image
+  // Auto-embed electronic signature
+  let signatureLoaded = false;
   if (report.signatureImageUrl) {
     try {
       const img = await loadImage(report.signatureImageUrl);
       doc.addImage(img, "PNG", PAGE_WIDTH / 2 - 25, y, 50, 20);
       y += 25;
+      signatureLoaded = true;
     } catch {
-      doc.setDrawColor(...GRAY);
-      doc.line(PAGE_WIDTH / 2 - 25, y + 15, PAGE_WIDTH / 2 + 25, y + 15);
-      y += 20;
+      // Fallback to line if image fails
     }
-  } else {
+  }
+
+  // If no signature image or final report, try to load from storage
+  if (!signatureLoaded && !isDraft) {
+    try {
+      const { data: sigFiles } = await (await import("@/integrations/supabase/client")).supabase
+        .storage.from("signatures").list("", { limit: 1, sortBy: { column: "created_at", order: "desc" } });
+      if (sigFiles && sigFiles.length > 0) {
+        const { data: sigUrl } = (await import("@/integrations/supabase/client")).supabase
+          .storage.from("signatures").getPublicUrl(sigFiles[0].name);
+        if (sigUrl?.publicUrl) {
+          try {
+            const sigImg = await loadImage(sigUrl.publicUrl);
+            doc.addImage(sigImg, "PNG", PAGE_WIDTH / 2 - 25, y, 50, 20);
+            y += 25;
+            signatureLoaded = true;
+          } catch { /* ignore */ }
+        }
+      }
+    } catch { /* ignore */ }
+  }
+
+  if (!signatureLoaded) {
     doc.setDrawColor(...GRAY);
     doc.line(PAGE_WIDTH / 2 - 25, y + 15, PAGE_WIDTH / 2 + 25, y + 15);
     y += 20;
@@ -371,12 +393,32 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
 
   doc.setTextColor(...GRAY);
   doc.setFontSize(8);
-  doc.text("التوقيع", PAGE_WIDTH / 2, y, { align: "center" });
+  doc.text(signatureLoaded ? "التوقيع الإلكتروني المعتمد" : "التوقيع", PAGE_WIDTH / 2, y, { align: "center" });
   y += 8;
 
   const dateLabel = report.issuedAt ? formatDate(report.issuedAt) : formatDate(report.createdAt);
   doc.text(`التاريخ: ${dateLabel}`, PAGE_WIDTH / 2, y, { align: "center" });
-  y += 15;
+  y += 5;
+
+  // Certification stamp for final (non-draft) reports
+  if (!isDraft && !isTest) {
+    y += 5;
+    doc.setFillColor(240, 248, 240);
+    doc.roundedRect(MARGIN + 20, y, CONTENT_WIDTH - 40, 22, 2, 2, "F");
+    doc.setDrawColor(34, 139, 34);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(MARGIN + 20, y, CONTENT_WIDTH - 40, 22, 2, 2, "S");
+    doc.setLineWidth(0.2);
+    doc.setTextColor(34, 139, 34);
+    doc.setFontSize(9);
+    doc.text("✓ تقرير معتمد إلكترونياً — Electronically Certified Report", PAGE_WIDTH / 2, y + 9, { align: "center" });
+    doc.setFontSize(7);
+    doc.setTextColor(...GRAY);
+    doc.text(`رقم التقرير: ${report.reportNumber} | تاريخ الإصدار: ${dateLabel}`, PAGE_WIDTH / 2, y + 17, { align: "center" });
+    y += 28;
+  }
+
+  y += 5;
 
   // QR Code
   if (report.verificationToken) {

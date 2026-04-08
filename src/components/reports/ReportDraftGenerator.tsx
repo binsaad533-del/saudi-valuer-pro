@@ -223,6 +223,29 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* ═══ DRAFT LEGAL DISCLAIMER (IVS 106 / TAQEEM) ═══ */}
+        {draft && !isSentToClient && (
+          <div className="p-4 rounded-xl border-2 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20">
+            <div className="flex items-start gap-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-800/40 flex items-center justify-center shrink-0 mt-0.5">
+                <span className="text-lg">⚠️</span>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                  مسودة مبدئية للاستخدام الداخلي فقط — DRAFT
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                  هذا الرأي مؤقت، مخصص لأغراض المراجعة الداخلية للعميل، ولا يجوز نشره أو الاعتماد عليه قانونياً.
+                  لا يُعد هذا التقرير نهائياً إلا بعد اعتماده من المقيّم المعتمد وإصداره بالتوقيع الإلكتروني ورقم الإيداع.
+                </p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-400">
+                  وفقاً لمعيار التقييم الدولي IVS 106 ومعايير الهيئة السعودية للمقيّمين المعتمدين (تقييم)
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {!draft ? (
           /* ═══ NO DRAFT ═══ */
           <div className="text-center py-8 space-y-4">

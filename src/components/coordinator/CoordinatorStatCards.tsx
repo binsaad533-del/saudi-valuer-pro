@@ -9,16 +9,16 @@ interface Props {
 export default function CoordinatorStatCards({ requests, clients }: Props) {
   const totalRequests = requests.length;
   const pendingRequests = requests.filter(r =>
-    ["draft", "client_submitted", "submitted", "under_pricing", "quotation_sent"].includes(r.status)
+    ["draft", "submitted", "scope_generated", "scope_approved"].includes(r.status)
   ).length;
   const inProgress = requests.filter(r =>
-    ["in_production", "inspection_assigned", "inspection_in_progress", "valuation_in_progress"].includes(r.status)
+    ["first_payment_confirmed", "data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated", "analysis_complete", "professional_review"].includes(r.status)
   ).length;
   const completed = requests.filter(r =>
-    ["completed", "report_issued", "closed"].includes(r.status)
+    ["issued", "archived"].includes(r.status)
   ).length;
   const needsAttention = requests.filter(r =>
-    ["payment_uploaded", "final_payment_uploaded", "client_comments", "awaiting_client_info"].includes(r.status)
+    ["draft_report_ready", "client_review", "draft_approved", "final_payment_confirmed"].includes(r.status)
   ).length;
   const totalClients = clients.length;
 
