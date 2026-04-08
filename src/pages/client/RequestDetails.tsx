@@ -116,12 +116,36 @@ export default function RequestDetails() {
     }
   };
 
+  const sanitizeStorageFileName = (originalName: string) => {
+    const normalized = originalName
+      .normalize("NFKC")
+      .replace(/[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
+      .trim();
+
+    const lastDotIndex = normalized.lastIndexOf(".");
+    const hasExtension = lastDotIndex > 0;
+    const rawBaseName = hasExtension ? normalized.slice(0, lastDotIndex) : normalized;
+    const rawExtension = hasExtension ? normalized.slice(lastDotIndex + 1) : "";
+
+    const baseName = rawBaseName
+      .replace(/[\\/]+/g, "-")
+      .replace(/\s+/g, "-")
+      .replace(/[^\p{L}\p{N}._()-]+/gu, "-")
+      .replace(/-+/g, "-")
+      .replace(/^[-._]+|[-._]+$/g, "") || "file";
+
+    const extension = rawExtension.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+    return extension ? `${baseName}.${extension}` : baseName;
+  };
+
   const handleChatFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     setUploading(true);
     try {
-      const filePath = `${user.id}/chat/${Date.now()}_${file.name}`;
+      const safeFileName = sanitizeStorageFileName(file.name);
+      const filePath = `${user.id}/chat/${Date.now()}_${safeFileName}`;
       const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
       if (uploadErr) throw uploadErr;
       // Save as document
