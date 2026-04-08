@@ -391,6 +391,9 @@ export default function ExecutiveDashboard() {
 
       <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
 
+        {/* ═══ SMART ALERTS ═══ */}
+        <SmartAlertsBanner />
+
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between">
           <div>
