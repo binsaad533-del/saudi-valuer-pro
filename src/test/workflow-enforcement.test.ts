@@ -54,13 +54,13 @@ describe("ALLOWED_TRANSITIONS enforcement", () => {
 });
 
 describe("18-status validation", () => {
-  it("should have exactly 18 statuses", () => {
-    expect(WORKFLOW_STATUSES.length).toBe(18);
+  it("should have exactly 19 statuses (including cancelled)", () => {
+    expect(WORKFLOW_STATUSES.length).toBe(19);
   });
 
   it("should have transitions defined for all statuses except archived", () => {
     for (const status of WORKFLOW_STATUSES) {
-      if (status === "archived") {
+      if (status === "archived" || status === "cancelled") {
         expect(ALLOWED_TRANSITIONS[status]?.length || 0).toBe(0);
       } else {
         expect(ALLOWED_TRANSITIONS[status]?.length).toBeGreaterThan(0);
