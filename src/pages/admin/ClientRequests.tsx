@@ -409,55 +409,43 @@ export default function ClientRequests() {
                           <Eye className="w-3 h-3 ml-1" />عرض الطلب
                         </Button>
 
-                        {/* Action buttons based on status */}
+                        {/* Action buttons based on assignment workflow status */}
                         {req.status === "submitted" && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "under_pricing"); }}>
-                            <SARIcon className="w-3 h-3 ml-1" />تسعير
-                          </Button>
-                        )}
-                        {req.status === "under_pricing" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); openPricing(req); }}>
-                            <Send className="w-3 h-3 ml-1" />إعداد العرض
+                            <SARIcon className="w-3 h-3 ml-1" />إعداد التسعير
                           </Button>
                         )}
-                        {(req.status === "payment_uploaded" || req.status === "final_payment_uploaded") && (
-                          <Button size="sm" variant="outline" onClick={async (e) => {
-                            e.stopPropagation();
-                            setSelectedRequest(req);
-                            await loadPayments(req.id);
-                            setPaymentReviewDialog(true);
-                          }}>
-                            <Eye className="w-3 h-3 ml-1" />مراجعة الإيصال
+                        {req.status === "scope_generated" && (
+                          <span className="text-xs text-muted-foreground">بانتظار اعتماد العميل</span>
+                        )}
+                        {req.status === "scope_approved" && (
+                          <span className="text-xs text-muted-foreground">بانتظار الدفعة الأولى</span>
+                        )}
+                        {req.status === "first_payment_confirmed" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "data_collection_open"); }}>
+                            بدء جمع البيانات
                           </Button>
                         )}
-                        {req.status === "in_production" && (
+                        {req.status === "data_validated" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "analysis_complete"); }}>
+                            <Brain className="w-3 h-3 ml-1" />بدء التحليل
+                          </Button>
+                        )}
+                        {req.status === "professional_review" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/valuation-production/${req.assignment_id || req.id}`); }}>
                             <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
-                        {(req.status === "draft_report_sent" || req.status === "client_comments") && (
-                          <Button size="sm" variant="outline" onClick={async (e) => {
-                            e.stopPropagation();
-                            // Load report for this assignment
-                            const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", req.assignment_id).order("created_at", { ascending: false }).limit(1);
-                            const report = (reps as any[])?.[0];
-                            if (report) {
-                              setSelectedReportId(report.id);
-                              setSelectedAssignmentId(req.assignment_id);
-                              setSelectedRequestId(req.id);
-                              setRevisionDialog(true);
-                            }
-                          }}>
-                            <MessageSquareText className="w-3 h-3 ml-1" />المراجعات
+                        {req.status === "draft_report_ready" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "client_review"); }}>
+                            <Send className="w-3 h-3 ml-1" />إرسال للعميل
                           </Button>
                         )}
-                        {req.status === "fully_paid" && !req.draft_report_url && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "in_production"); }}>
-                            بدء الإنتاج
-                          </Button>
+                        {req.status === "draft_approved" && (
+                          <span className="text-xs text-muted-foreground">بانتظار الدفعة النهائية</span>
                         )}
-                        {req.status === "final_report_ready" && (
-                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "completed"); }}>
+                        {req.status === "final_payment_confirmed" && (
+                          <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "issued"); }}>
                             <CheckCircle className="w-3 h-3 ml-1" />إصدار نهائي
                           </Button>
                         )}
