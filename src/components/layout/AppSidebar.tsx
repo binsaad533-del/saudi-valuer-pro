@@ -6,80 +6,67 @@ import {
   LayoutDashboard, Settings, LogOut, BookOpen, FileText,
   Users, UserCheck, ClipboardList, Archive, BarChart3,
   DollarSign, Shield, Search, Activity, Bell, Briefcase,
-  TrendingUp, MapPin, Scale, ChevronDown,
+  TrendingUp, MapPin, Scale,
   Brain, Zap,
 } from "lucide-react";
 import {
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup,
-  SidebarGroupContent, SidebarHeader, SidebarMenu,
+  Sidebar, SidebarContent, SidebarFooter,
+  SidebarHeader, SidebarMenu,
   SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
 import { NavLink } from "@/components/NavLink";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import { useState } from "react";
 
 const logo = "/favicon.png";
 
-interface NavItem {
-  label: string;
-  icon: React.ElementType;
-  path: string;
-}
-
-interface NavGroup {
-  title: string;
-  icon: React.ElementType;
-  items: NavItem[];
-}
+interface NavItem { label: string; icon: React.ElementType; path: string }
+interface NavGroup { id: string; title: string; icon: React.ElementType; items: NavItem[] }
 
 const ownerNavGroups: NavGroup[] = [
   {
-    title: "القيادة",
-    icon: LayoutDashboard,
+    id: "command", title: "القيادة", icon: LayoutDashboard,
     items: [
-      { label: "لوحة التحكم", icon: LayoutDashboard, path: "/" },
-      { label: "البحث الذكي", icon: Search, path: "/search" },
+      { label: "مركز التحكم", icon: LayoutDashboard, path: "/" },
+      { label: "البحث", icon: Search, path: "/search" },
     ],
   },
   {
-    title: "التشغيل",
-    icon: Zap,
+    id: "ops", title: "التشغيل", icon: Zap,
     items: [
       { label: "الطلبات", icon: ClipboardList, path: "/client-requests" },
-      { label: "ملفات التقييم", icon: Scale, path: "/valuations" },
+      { label: "الملفات", icon: Scale, path: "/valuations" },
       { label: "تقييم جديد", icon: Briefcase, path: "/valuations/new" },
       { label: "التقارير", icon: FileText, path: "/reports" },
       { label: "الأرشيف", icon: Archive, path: "/archive" },
     ],
   },
   {
-    title: "الذكاء",
-    icon: Brain,
+    id: "intel", title: "الذكاء", icon: Brain,
     items: [
-      { label: "قاعدة المعرفة", icon: BookOpen, path: "/knowledge" },
-      { label: "السوق والتحليلات", icon: TrendingUp, path: "/market-data" },
+      { label: "المعرفة", icon: BookOpen, path: "/knowledge" },
+      { label: "السوق", icon: TrendingUp, path: "/market-data" },
       { label: "التحليلات", icon: BarChart3, path: "/analytics" },
-      { label: "اللوحة المالية", icon: DollarSign, path: "/cfo-dashboard" },
-      { label: "اللوحة التجارية", icon: Briefcase, path: "/commercial" },
+      { label: "المالية", icon: DollarSign, path: "/cfo-dashboard" },
+      { label: "التجارية", icon: Briefcase, path: "/commercial" },
     ],
   },
   {
-    title: "النظام",
-    icon: Settings,
+    id: "system", title: "النظام", icon: Settings,
     items: [
       { label: "العملاء", icon: Users, path: "/clients-management" },
       { label: "المعاينون", icon: UserCheck, path: "/inspectors" },
       { label: "التغطية", icon: MapPin, path: "/inspector-coverage" },
       { label: "الإعدادات", icon: Settings, path: "/settings" },
       { label: "الإشعارات", icon: Bell, path: "/notifications" },
-      { label: "سجل التدقيق", icon: Shield, path: "/audit-log" },
-      { label: "مراقبة النظام", icon: Activity, path: "/system-monitoring" },
+      { label: "التدقيق", icon: Shield, path: "/audit-log" },
+      { label: "المراقبة", icon: Activity, path: "/system-monitoring" },
     ],
   },
 ];
 
 const inspectorNavGroups: NavGroup[] = [
-  { title: "الرئيسية", icon: LayoutDashboard, items: [
+  { id: "main", title: "الرئيسية", icon: LayoutDashboard, items: [
     { label: "المعاينات", icon: LayoutDashboard, path: "/inspector" },
     { label: "الإشعارات", icon: Bell, path: "/inspector/notifications" },
     { label: "الإعدادات", icon: Settings, path: "/inspector/settings" },
@@ -87,15 +74,15 @@ const inspectorNavGroups: NavGroup[] = [
 ];
 
 const financialNavGroups: NavGroup[] = [
-  { title: "الرئيسية", icon: LayoutDashboard, items: [
-    { label: "اللوحة المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
+  { id: "main", title: "الرئيسية", icon: LayoutDashboard, items: [
+    { label: "المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
     { label: "الإشعارات", icon: Bell, path: "/notifications" },
     { label: "الإعدادات", icon: Settings, path: "/account" },
   ]},
 ];
 
 const clientNavGroups: NavGroup[] = [
-  { title: "الرئيسية", icon: LayoutDashboard, items: [
+  { id: "main", title: "الرئيسية", icon: LayoutDashboard, items: [
     { label: "لوحة التحكم", icon: LayoutDashboard, path: "/client" },
     { label: "طلباتي", icon: ClipboardList, path: "/client/requests" },
     { label: "طلب جديد", icon: Briefcase, path: "/client/new-request" },
@@ -118,6 +105,7 @@ export default function AppSidebar() {
   const { role } = useAuth();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
+  const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
 
   const handleLogout = async () => {
     try { await supabase.auth.signOut({ scope: "local" }); } catch {}
@@ -130,108 +118,112 @@ export default function AppSidebar() {
 
   const navGroups = getNavGroupsForRole(role);
 
-  // Determine which group is active
-  const activeGroupIndex = navGroups.findIndex(g => g.items.some(i => isActive(i.path)));
+  // Auto-detect active group
+  const activeGroupId = navGroups.find(g => g.items.some(i => isActive(i.path)))?.id || null;
+  const visibleGroup = expandedGroup || activeGroupId;
 
   return (
     <Sidebar collapsible="icon" side="right">
-      <SidebarHeader className="border-b border-sidebar-border px-3 py-3">
-        <div className="flex items-center gap-2.5">
-          <img src={logo} alt="جساس" className="w-8 h-8 rounded-md bg-white p-0.5 object-contain shrink-0" />
+      {/* Header — compact logo */}
+      <SidebarHeader className="border-b border-sidebar-border px-2.5 py-2.5">
+        <div className="flex items-center gap-2">
+          <img src={logo} alt="جساس" className="w-7 h-7 rounded bg-white/80 p-0.5 object-contain shrink-0" />
           {!collapsed && (
-            <span className="text-sidebar-foreground font-bold text-sm leading-tight truncate">
-              جساس للتقييم
+            <span className="text-sidebar-foreground font-semibold text-[13px] tracking-tight truncate">
+              جساس
             </span>
           )}
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        {navGroups.map((group, gi) => {
-          const isGroupActive = gi === activeGroupIndex;
-          const GroupIcon = group.icon;
+      <SidebarContent className="px-1.5 py-2">
+        {collapsed ? (
+          /* Collapsed: show only group icons */
+          <SidebarMenu>
+            {navGroups.map((group) => {
+              const GIcon = group.icon;
+              const groupActive = group.id === activeGroupId;
+              return (
+                <SidebarMenuItem key={group.id}>
+                  <SidebarMenuButton tooltip={group.title} isActive={groupActive} asChild>
+                    <NavLink
+                      to={group.items[0].path}
+                      end={group.items[0].path === "/"}
+                      className="hover:bg-sidebar-accent/50"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary"
+                    >
+                      <GIcon className="w-4 h-4" />
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        ) : (
+          /* Expanded: group tabs + items */
+          <>
+            {/* Group selectors — horizontal tabs */}
+            <div className="flex items-center gap-0.5 px-1 mb-2">
+              {navGroups.map((group) => {
+                const GIcon = group.icon;
+                const isSelected = visibleGroup === group.id;
+                return (
+                  <button
+                    key={group.id}
+                    onClick={() => setExpandedGroup(group.id === expandedGroup ? null : group.id)}
+                    className={cn(
+                      "flex-1 flex flex-col items-center gap-0.5 py-1.5 rounded-md text-[9px] font-medium transition-all",
+                      isSelected
+                        ? "bg-sidebar-accent text-sidebar-primary"
+                        : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent/30"
+                    )}
+                  >
+                    <GIcon className="w-3.5 h-3.5" />
+                    <span>{group.title}</span>
+                  </button>
+                );
+              })}
+            </div>
 
-          if (collapsed) {
-            return (
-              <SidebarGroup key={group.title}>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    {group.items.map((item) => {
-                      const active = isActive(item.path);
-                      return (
-                        <SidebarMenuItem key={item.path}>
-                          <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-                            <NavLink to={item.path} end={item.path === "/"} className="hover:bg-sidebar-accent/60" activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold">
-                              <item.icon className="w-4 h-4 shrink-0" />
-                            </NavLink>
-                          </SidebarMenuButton>
-                        </SidebarMenuItem>
-                      );
-                    })}
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            );
-          }
-
-          return (
-            <Collapsible key={group.title} defaultOpen={isGroupActive} className="group/collapsible">
-              <SidebarGroup>
-                <CollapsibleTrigger className="w-full">
-                  <div className={cn(
-                    "flex items-center justify-between px-3 py-2 rounded-md text-xs font-semibold transition-colors cursor-pointer select-none",
-                    isGroupActive
-                      ? "text-sidebar-primary"
-                      : "text-sidebar-muted hover:text-sidebar-foreground"
-                  )}>
-                    <div className="flex items-center gap-2">
-                      <GroupIcon className="w-3.5 h-3.5" />
-                      <span>{group.title}</span>
-                    </div>
-                    <ChevronDown className="w-3 h-3 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-180" />
-                  </div>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {group.items.map((item) => {
-                        const active = isActive(item.path);
-                        return (
-                          <SidebarMenuItem key={item.path}>
-                            <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
-                              <NavLink
-                                to={item.path}
-                                end={item.path === "/"}
-                                className="hover:bg-sidebar-accent/60 text-[13px]"
-                                activeClassName="bg-sidebar-accent text-sidebar-primary font-semibold"
-                              >
-                                <item.icon className="w-3.5 h-3.5 shrink-0" />
-                                <span>{item.label}</span>
-                              </NavLink>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </CollapsibleContent>
-              </SidebarGroup>
-            </Collapsible>
-          );
-        })}
+            {/* Active group items */}
+            <div className="border-t border-sidebar-border/50 pt-1.5">
+              <SidebarMenu>
+                {navGroups
+                  .find(g => g.id === visibleGroup)
+                  ?.items.map((item) => {
+                    const active = isActive(item.path);
+                    return (
+                      <SidebarMenuItem key={item.path}>
+                        <SidebarMenuButton asChild isActive={active} tooltip={item.label}>
+                          <NavLink
+                            to={item.path}
+                            end={item.path === "/"}
+                            className="hover:bg-sidebar-accent/40 text-[12px] py-1.5"
+                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                          >
+                            <item.icon className="w-3.5 h-3.5 shrink-0 opacity-60" />
+                            <span>{item.label}</span>
+                          </NavLink>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    );
+                  })}
+              </SidebarMenu>
+            </div>
+          </>
+        )}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
+      <SidebarFooter className="border-t border-sidebar-border px-2.5 py-2">
         <button
           onClick={handleLogout}
           className={cn(
-            "flex items-center gap-2 rounded-md text-destructive hover:bg-destructive/10 transition-colors text-xs",
-            collapsed ? "w-full justify-center p-1.5" : "px-3 py-2 w-full"
+            "flex items-center gap-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors text-[11px]",
+            collapsed ? "w-full justify-center p-1.5" : "px-2 py-1.5 w-full"
           )}
-          title="تسجيل الخروج"
         >
-          <LogOut className="w-3.5 h-3.5" />
-          {!collapsed && <span>تسجيل الخروج</span>}
+          <LogOut className="w-3 h-3" />
+          {!collapsed && <span>خروج</span>}
         </button>
       </SidebarFooter>
     </Sidebar>
