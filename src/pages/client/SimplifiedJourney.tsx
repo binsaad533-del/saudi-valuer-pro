@@ -188,6 +188,9 @@ export default function SimplifiedJourney() {
     if (valuationMode === "desktop" && !desktopDisclaimer) {
       toast({ title: "يرجى الموافقة على إقرار التقييم المكتبي", variant: "destructive" }); return;
     }
+    if (assetLocations.length === 0) {
+      toast({ title: "يرجى إضافة موقع واحد على الأقل", description: "الصق رابط خرائط قوقل لموقع الأصل", variant: "destructive" }); return;
+    }
     setStep("upload");
   };
 
@@ -552,6 +555,10 @@ export default function SimplifiedJourney() {
             jobId,
             files: uploadedFiles,
             clientInfo: { contactName: clientName, contactPhone: clientPhone, contactEmail: clientEmail },
+            locations: assetLocations.map(l => ({
+              name: l.name, city: l.city, googleMapsUrl: l.googleMapsUrl,
+              latitude: l.latitude, longitude: l.longitude,
+            })),
             totalAssets: scopeData.totalAssets,
             simplified: true,
             valuation_mode: valuationMode,
