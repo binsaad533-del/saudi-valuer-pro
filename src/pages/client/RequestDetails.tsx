@@ -101,14 +101,67 @@ export default function RequestDetails() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  const buildRequestContext = () => {
+    if (!request) return {};
+    const inv = request.asset_data?.inventory as any[] | undefined;
+    const assetCount = inv?.length || 0;
+    const assetSummary = inv ? (() => {
+      const counts: Record<string, number> = {};
+      for (const a of inv) counts[a.type] = (counts[a.type] || 0) + 1;
+      return Object.entries(counts).map(([t, c]) => `${t}: ${c}`).join("، ");
+    })() : "";
+    const imgDocs = documents.filter(d => d.mime_type?.startsWith("image/"));
+    return {
+      reference_number: request.reference_number,
+      status: request.status,
+      status_label: getStatusLabel(request.status),
+      client_name: request.client_name_ar || request.ai_intake_summary?.client_name,
+      property_type: request.property_type_ar || request.ai_intake_summary?.property_type,
+      property_city: request.property_city_ar,
+      property_description: request.property_description_ar,
+      valuation_mode: request.ai_intake_summary?.valuation_mode,
+      total_fees: request.total_fees,
+      amount_paid: request.amount_paid,
+      payment_status: request.payment_status,
+      asset_count: assetCount,
+      asset_summary: assetSummary,
+      documents_count: documents.length,
+      has_photos: imgDocs.length > 0,
+      created_at: request.created_at,
+    };
+  };
+
+  const callRaqeemAI = async (clientMessage: string) => {
+    try {
+      const conversationHistory = messages.slice(-16).map(m => ({
+        content: m.content,
+        sender_type: m.sender_type,
+      }));
+      const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
+        body: {
+          message: clientMessage,
+          request_id: id,
+          conversationHistory,
+          requestContext: buildRequestContext(),
+        },
+      });
+      if (error) console.error("Raqeem AI error:", error);
+    } catch (e) {
+      console.error("Raqeem AI call error:", e);
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user) return;
+    const msgText = newMessage.trim();
     setSending(true);
     try {
       await supabase.from("request_messages" as any).insert({
-        request_id: id!, sender_id: user.id, sender_type: "client" as any, content: newMessage,
+        request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msgText,
       });
       setNewMessage("");
+      // Call Raqeem AI in the background — response saved via edge function
+      callRaqeemAI(msgText);
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -161,6 +214,8 @@ export default function RequestDetails() {
       });
       toast({ title: "تم رفع المرفق بنجاح" });
       loadData();
+      // Notify Raqeem about the attachment
+      callRaqeemAI(`تم رفع ملف جديد: ${file.name} (${file.type})`);
     } catch (err: any) {
       toast({ title: "خطأ في رفع الملف", description: err.message, variant: "destructive" });
     } finally {
@@ -244,20 +299,21 @@ export default function RequestDetails() {
     const refNum = req?.reference_number || "";
 
     const statusMessages: Record<string, string> = {
-      submitted: `${greeting} 👋\n\nأنا **رقيم**، مساعدك الذكي لمتابعة طلب التقييم${refNum ? ` رقم **${refNum}**` : ""}.\n\nطلبك قيد المراجعة الآن وسأقوم بتحليل البيانات وإعداد نطاق العمل وعرض السعر. سأُبلغك فور جاهزيته.\n\n**يمكنك:**\n- إرسال أي استفسار هنا وسأجيبك فوراً\n- إرفاق مستندات إضافية عبر أيقونة المرفقات\n- متابعة حالة الطلب من شريط التقدم أعلاه`,
-      scope_generated: `${greeting} 👋\n\nتم إعداد **نطاق العمل وعرض السعر** لطلبك.\n\nيرجى مراجعة التفاصيل في اللوحة الجانبية والموافقة عليها للمتابعة.\n\nإذا كان لديك أي استفسار حول النطاق أو التسعير، لا تتردد في السؤال هنا.`,
-      scope_approved: `${greeting}\n\nتم اعتماد نطاق العمل بنجاح ✅\n\nالخطوة التالية: **سداد الدفعة الأولى** لبدء التنفيذ.\n\nيمكنك الدفع إلكترونياً أو رفع إيصال تحويل من اللوحة الجانبية.`,
-      first_payment_confirmed: `${greeting}\n\nتم تأكيد الدفعة بنجاح ✅\n\nبدأنا العمل على طلبك الآن. سأتابع كل خطوة وأُبلغك بالتطورات.\n\nإذا احتجت أي شيء، أنا هنا.`,
-      data_collection_open: `${greeting}\n\nنحتاج منك **بيانات ومستندات إضافية** لإتمام التقييم.\n\nيرجى رفع المطلوب عبر بوابة البيانات أدناه. يمكنك أيضاً إرفاق الملفات مباشرة في المحادثة.`,
-      inspection_pending: `${greeting}\n\nتم جدولة **المعاينة الميدانية** وسيتم التنسيق معك قريباً.\n\nأي استفسار حول موعد أو ترتيبات المعاينة، اسأل هنا.`,
-      inspection_completed: `${greeting}\n\nتمت المعاينة بنجاح ✅\n\nجارٍ الآن تحليل البيانات وإعداد التقييم. سأُبلغك عند جاهزية المسودة.`,
-      draft_report_ready: `${greeting}\n\n**مسودة التقرير** جاهزة لمراجعتك 📋\n\nيرجى مراجعة الأقسام وإبداء ملاحظاتك. يمكنك كتابة أي تعليق هنا أو مباشرة على المسودة أعلاه.`,
-      client_review: `${greeting}\n\nالمسودة بانتظار مراجعتك.\n\nخذ وقتك في القراءة، وإذا كانت لديك ملاحظات أو تصحيحات أرسلها هنا وسأنقلها للمقيم المعتمد.`,
+      submitted: `${greeting} 👋\n\nأنا **رقيم – مساعدك الذكي** لمتابعة طلب التقييم${refNum ? ` رقم **${refNum}**` : ""}.\n\nطلبك قيد المراجعة الآن، وسأُبلغك فور جاهزية نطاق العمل وعرض السعر.\n\nيمكنك سؤالي عن أي شيء أو إرفاق مستندات إضافية.`,
+      under_pricing: `${greeting}\n\nطلبك بانتظار **إعداد عرض السعر** من فريق التسعير. سأُبلغك فور جاهزيته.\n\nإذا كان لديك أي استفسار، أنا هنا.`,
+      scope_generated: `${greeting}\n\nتم إعداد **نطاق العمل وعرض السعر**.\n\nيرجى مراجعة التفاصيل في اللوحة الجانبية والموافقة عليها للمتابعة.`,
+      scope_approved: `${greeting}\n\nتم اعتماد نطاق العمل ✅\n\nالخطوة التالية: **سداد الدفعة الأولى** لبدء التنفيذ.`,
+      first_payment_confirmed: `${greeting}\n\nتم تأكيد الدفعة ✅ بدأنا العمل على طلبك.\n\nسأتابع التطورات وأُبلغك بكل جديد.`,
+      data_collection_open: `${greeting}\n\nنحتاج **بيانات ومستندات إضافية** لإتمام التقييم.\n\nيرجى رفع المطلوب من بوابة البيانات أو مباشرة هنا في المحادثة.`,
+      inspection_pending: `${greeting}\n\nتم جدولة **المعاينة الميدانية** وسيتم التنسيق معك قريباً.`,
+      inspection_completed: `${greeting}\n\nتمت المعاينة ✅ جارٍ التحليل وإعداد التقييم.`,
+      draft_report_ready: `${greeting}\n\n**مسودة التقرير** جاهزة لمراجعتك 📋\n\nراجع الأقسام وأرسل أي ملاحظات هنا.`,
+      client_review: `${greeting}\n\nالمسودة بانتظار مراجعتك.\n\nأرسل ملاحظاتك هنا وسأنقلها للمقيم المعتمد.`,
       draft_approved: `${greeting}\n\nتم اعتماد المسودة ✅\n\nلإصدار التقرير النهائي، يرجى **سداد الدفعة النهائية**.`,
-      issued: `${greeting}\n\n**التقرير النهائي** جاهز 🎉\n\nيمكنك تحميله من الأعلى. التقرير موقّع ومعتمد رسمياً.\n\nإذا احتجت نسخة إضافية أو أي استفسار مستقبلي، أنا هنا دائماً.`,
+      issued: `${greeting}\n\n**التقرير النهائي** جاهز 🎉 يمكنك تحميله من الأعلى.\n\nإذا احتجت أي شيء مستقبلاً، أنا هنا.`,
     };
 
-    return statusMessages[status] || `${greeting} 👋\n\nأنا **رقيم**، مساعدك الذكي لمتابعة طلب التقييم.\n\nيمكنك سؤالي عن أي شيء يخص طلبك أو إرفاق مستندات إضافية.\n\nأنا هنا لمساعدتك في كل خطوة.`;
+    return statusMessages[status] || `${greeting} 👋\n\nأنا **رقيم – مساعدك الذكي** لمتابعة طلب التقييم.\n\nيمكنك سؤالي عن أي شيء يخص طلبك وسأجيبك فوراً.`;
   };
 
   const getStatusLabel = (status: string) => {
@@ -386,7 +442,8 @@ export default function RequestDetails() {
             <Card className="shadow-sm h-[calc(100vh-300px)] flex flex-col">
               <CardHeader className="pb-3 border-b border-border">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4 text-primary" />المحادثة والملاحظات
+                  <Bot className="w-4 h-4 text-primary" />
+                  <span>رقيم – مساعدك الذكي</span>
                 </CardTitle>
               </CardHeader>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -397,8 +454,7 @@ export default function RequestDetails() {
                   </div>
                   <div className="max-w-[85%] rounded-xl px-4 py-3 text-sm bg-card border border-primary/20 text-foreground shadow-sm">
                     <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-xs font-bold text-primary">رقيم</span>
-                      <Badge variant="secondary" className="text-[9px] h-4 px-1.5">مساعدك الذكي</Badge>
+                      <span className="text-xs font-bold text-primary">رقيم – مساعدك الذكي</span>
                     </div>
                     <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right' }}>
                       <ReactMarkdown>{getRaqeemWelcome(request.status, request)}</ReactMarkdown>
@@ -427,7 +483,7 @@ export default function RequestDetails() {
                       <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${isClient ? "bg-primary text-primary-foreground" : isAI ? "bg-card border border-primary/20 text-foreground" : "bg-muted text-foreground"}`}>
                         {isAI && (
                           <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[10px] font-bold text-primary">رقيم</span>
+                            <span className="text-[10px] font-bold text-primary">رقيم – مساعدك الذكي</span>
                           </div>
                         )}
                         {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
@@ -451,7 +507,7 @@ export default function RequestDetails() {
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><Bot className="w-3 h-3 text-primary" /> رقيم حاضر لمساعدتك — اسأل أي شيء أو أرفق مستنداً</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><Bot className="w-3 h-3 text-primary" /> رقيم – مساعدك الذكي — حاضر للإجابة على استفساراتك فوراً</p>
               </div>
             </Card>
           </div>
