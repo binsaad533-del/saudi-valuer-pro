@@ -210,6 +210,20 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
         </div>
       </div>
 
+      {/* ═══════════════ DRAFT DISCLAIMER (IVS 106 / معيار 30) ═══════════════ */}
+      <div className="border-x border-border bg-amber-50 dark:bg-amber-950/20 px-6 py-4">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 mt-0.5">
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="text-xs text-amber-800 dark:text-amber-300 space-y-1">
+            <p className="font-bold text-sm">مسودة مبدئية للاستخدام الداخلي فقط — DRAFT</p>
+            <p>هذا الرأي مؤقت، مخصص لأغراض المراجعة الداخلية للعميل، ولا يجوز نشره أو الاعتماد عليه قانونياً أو تقديمه لأي طرف ثالث. القيم والتحليلات الواردة قابلة للتعديل حتى إصدار التقرير النهائي.</p>
+            <p className="text-[10px] text-amber-600 dark:text-amber-500">متوافق مع معايير التقييم الدولية (IVS 2025) — المعيار 106، ومعايير الهيئة السعودية للمقيمين المعتمدين (تقييم) — المعيار 30.</p>
+          </div>
+        </div>
+      </div>
+
       {/* ═══════════════ SECTIONS ACCORDION ═══════════════ */}
       <div className="border-x border-border bg-card px-6 py-5">
         <Accordion type="multiple" className="space-y-3">
