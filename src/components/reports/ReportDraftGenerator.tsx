@@ -282,10 +282,10 @@ export default function ReportDraftGenerator({ request, userId, onStatusChange }
                   const label = SECTION_LABELS[key];
                   if (!label || !value) return null;
                   return (
-                    <div key={key} className="space-y-1">
-                      <div className="flex items-center gap-2">
+                    <div key={key} className="space-y-1" dir="rtl">
+                      <div className="flex items-center gap-2 justify-end flex-row-reverse">
+                        <p className="text-xs font-semibold text-foreground text-right">{label}</p>
                         <CheckCircle className="w-3 h-3 text-green-500 shrink-0" />
-                        <p className="text-xs font-semibold text-foreground">{label}</p>
                       </div>
                       <BidiText className="text-xs text-muted-foreground bg-muted/30 rounded p-2" lineClamp={3} preserveNewlines>
                         {String(value)}

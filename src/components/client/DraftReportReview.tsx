@@ -190,10 +190,10 @@ export default function DraftReportReview({ requestId, userId, paymentStructure,
         <ScrollArea className={expanded ? "max-h-[500px]" : "max-h-48"}>
           <div className="space-y-3">
             {sectionEntries.map(([key, value]) => (
-              <div key={key} className="space-y-1">
-                <div className="flex items-center gap-2">
+              <div key={key} className="space-y-1" dir="rtl">
+                <div className="flex items-center gap-2 justify-end flex-row-reverse">
+                  <p className="text-xs font-semibold text-foreground text-right">{SECTION_LABELS[key]}</p>
                   <CheckCircle className="w-3 h-3 text-primary shrink-0" />
-                  <p className="text-xs font-semibold text-foreground">{SECTION_LABELS[key]}</p>
                 </div>
                 <BidiText className="text-xs text-muted-foreground bg-muted/30 rounded p-3" lineClamp={4} preserveNewlines>
                   {String(value)}
