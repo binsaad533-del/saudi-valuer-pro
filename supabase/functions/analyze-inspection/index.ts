@@ -261,7 +261,15 @@ ${JSON.stringify(checklistSummary, null, 2)}`;
 
     if (saveErr) throw new Error("Failed to save analysis");
 
-    await admin.from("valuation_assignments").update({ status: "valuation_in_progress" }).eq("id", inspection.assignment_id);
+    // Use RPC for status change — no direct updates allowed
+    await admin.rpc("update_request_status", {
+      _assignment_id: inspection.assignment_id,
+      _new_status: "data_validated",
+      _user_id: "system",
+      _action_type: "auto",
+      _reason: "تحليل المعاينة مكتمل بالذكاء الاصطناعي",
+      _bypass_justification: null,
+    });
 
     await admin.from("audit_logs").insert({
       table_name: "inspection_analysis", action: "create", record_id: analysis?.id,
