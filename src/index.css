@@ -144,7 +144,7 @@
   }
 
   /* Global BiDi text rendering for Arabic content */
-  p, li, td, th, span, label, h1, h2, h3, h4, h5, h6 {
+  p, li, td, th, label, h1, h2, h3, h4, h5, h6 {
     text-align: right;
   }
 
@@ -156,6 +156,22 @@
     line-height: 1.9;
     overflow-wrap: break-word;
     word-break: break-word;
+  }
+
+  /* Prose/Markdown blocks inside RTL layout */
+  .prose {
+    direction: rtl;
+    text-align: right;
+    line-height: 1.9;
+  }
+  .prose p, .prose li, .prose td {
+    unicode-bidi: plaintext;
+    overflow-wrap: break-word;
+  }
+
+  /* LTR exceptions */
+  [dir="ltr"], [dir="ltr"] p, [dir="ltr"] span, [dir="ltr"] td {
+    text-align: left;
   }
 }
 
