@@ -14,6 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import BidiText from "@/components/ui/bidi-text";
+import KanbanBoard from "@/components/dashboard/KanbanBoard";
+import WorkflowPipeline from "@/components/dashboard/WorkflowPipeline";
+import LiveActivityTimeline from "@/components/dashboard/LiveActivityTimeline";
+import SmartAlertsBanner from "@/components/dashboard/SmartAlertsBanner";
 import {
   CheckCircle2, ClipboardCheck, Clock, Eye, FileText,
   Search, ShieldCheck, AlertTriangle, X, Send,
@@ -387,6 +391,9 @@ export default function ExecutiveDashboard() {
 
       <div className="max-w-[1400px] mx-auto px-6 py-6 space-y-6">
 
+        {/* ═══ SMART ALERTS ═══ */}
+        <SmartAlertsBanner />
+
         {/* ═══ HEADER ═══ */}
         <div className="flex items-center justify-between">
           <div>
@@ -536,6 +543,14 @@ export default function ExecutiveDashboard() {
               </table>
             </div>
           </Card>
+        </div>
+        {/* ═══ KANBAN BOARD ═══ */}
+        <KanbanBoard />
+
+        {/* ═══ WORKFLOW PIPELINE + ACTIVITY ═══ */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <WorkflowPipeline />
+          <LiveActivityTimeline />
         </div>
       </div>
     </div>
