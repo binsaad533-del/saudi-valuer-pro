@@ -360,7 +360,7 @@ export function InspectionAnalysisView({ inspectionId, isAdmin = false }: Props)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{analysis.ai_reasoning_ar}</p>
+            <BidiText className="text-sm" preserveNewlines>{analysis.ai_reasoning_ar}</BidiText>
           </CardContent>
         </Card>
       )}
