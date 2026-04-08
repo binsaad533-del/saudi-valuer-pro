@@ -31,13 +31,10 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const [archiving, setArchiving] = useState(false);
 
   const status = request.status;
+  // Show panel after final payment confirmed, or when already issued/archived
   const isVisible = [
-    "final_payment_approved", "final_report_ready",
-    "completed", "report_issued",
-  ].includes(status) || (
-    // Also show if client approved draft and no partial payment needed
-    status === "final_report_ready"
-  );
+    "final_payment_confirmed", "issued", "archived",
+  ].includes(status);
 
   useEffect(() => {
     if (!isVisible) { setLoading(false); return; }
@@ -67,8 +64,8 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
     return null;
   }
 
-  const isIssued = ["report_issued", "completed"].includes(status) || draft?.status === "issued";
-  const isArchived = status === "completed" || draft?.status === "archived";
+  const isIssued = status === "issued" || status === "archived" || draft?.status === "issued";
+  const isArchived = status === "archived" || draft?.status === "archived";
 
   const handleIssue = async () => {
     setIssuing(true);
@@ -227,14 +224,14 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
 
         {/* Step 2: Deliver */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isArchived || status === "completed" ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
-            {isArchived || status === "completed" ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Send className="w-4 h-4 text-muted-foreground" />}
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isArchived ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
+            {isArchived ? <CheckCircle className="w-4 h-4 text-green-600" /> : <Send className="w-4 h-4 text-muted-foreground" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-semibold text-foreground">٢. تسليم التقرير للعميل</p>
             <p className="text-[10px] text-muted-foreground">إرسال التقرير المشفّر + خطاب إغلاق المهمة</p>
           </div>
-          {isIssued && !isArchived && status !== "completed" && (
+          {isIssued && !isArchived && (
             <Button size="sm" onClick={handleDeliver} disabled={delivering} className="gap-1 shrink-0">
               {delivering ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
               تسليم
@@ -253,7 +250,7 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
               {isArchived ? "ملف العمل مقفل ومحفوظ في السحابة" : "قفل إلكتروني + حفظ سحابي لجميع الوثائق"}
             </p>
           </div>
-          {(status === "completed") && !isArchived && (
+          {isIssued && !isArchived && (
             <Button size="sm" variant="outline" onClick={handleArchive} disabled={archiving} className="gap-1 shrink-0">
               {archiving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Archive className="w-3 h-3" />}
               أرشفة
