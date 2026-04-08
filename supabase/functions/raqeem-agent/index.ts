@@ -224,6 +224,13 @@ serve(async (req) => {
     const client = request?.clients;
     const subject = Array.isArray(assignment.subjects) ? assignment.subjects[0] : assignment.subjects;
 
+    // Workflow intelligence
+    const workflowGuidance = getWorkflowGuidance(assignment.status);
+    const missingReqs = await getMissingRequirements(db, assignment_id, assignment.status);
+    const missingReqsText = missingReqs.length
+      ? `\n🔴 متطلبات ناقصة للانتقال:\n${missingReqs.map(r => `- ${r}`).join("\n")}`
+      : "\n✅ لا توجد متطلبات ناقصة حالياً.";
+
     const systemPrompt = `أنت "رقيم" — العقل الذكي لمنصة جساس للتقييم. أنت وكيل مستقل (Autonomous Agent) يراقب كل مرحلة ويقدم رؤى استباقية.
 
 ## سياق المهمة الحالية
@@ -235,6 +242,10 @@ serve(async (req) => {
 - العقار/الأصل: ${subject?.name_ar || subject?.description_ar || "غير محدد"}
 - المدينة: ${subject?.city_ar || ""} - الحي: ${subject?.district_ar || ""}
 ${stageData}
+
+## خريطة سير العمل (Workflow)
+${workflowGuidance}
+${missingReqsText}
 
 ## المرحلة الحالية
 ${STAGE_PROMPTS[currentStage] || ""}
@@ -254,6 +265,8 @@ ${correctionsContext ? `## تصحيحات المدير (أعلى أولوية)\n
 4. صنّف ملاحظاتك: ⚠️ تحذير | ℹ️ معلومة | ✅ جاهز | 🔴 يتطلب إجراء.
 5. لا تعتمد شيئاً تلقائياً — اعرض التوصية وانتظر قرار المقيّم.
 6. تذكّر: أنت مساعد ذكي وليس مقيّماً — الحكم المهني للمقيّم المعتمد فقط.
+7. عند اقتراح "الإجراء التالي" (next_action)، اذكر بوضوح الخطوة المحددة من خريطة سير العمل.
+8. إذا توجد متطلبات ناقصة، نبّه عليها كأولوية قبل أي تحليل آخر.
 
 ## سياق الصفحة
 ${page_context || "الصفحة الرئيسية"}`;
