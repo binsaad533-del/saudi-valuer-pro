@@ -496,6 +496,80 @@ export type Database = {
         }
         Relationships: []
       }
+      client_engagement_scores: {
+        Row: {
+          activity_status: string | null
+          avg_response_time_hours: number | null
+          churn_risk_score: number | null
+          client_id: string
+          client_user_id: string | null
+          created_at: string
+          engagement_score: number | null
+          id: string
+          interests: string[] | null
+          last_interaction_at: string | null
+          last_request_at: string | null
+          lifecycle_stage: string | null
+          next_action_date: string | null
+          next_recommended_action: string | null
+          preferred_channel: string | null
+          preferred_contact_time: string | null
+          total_requests: number | null
+          total_revenue: number | null
+          updated_at: string
+        }
+        Insert: {
+          activity_status?: string | null
+          avg_response_time_hours?: number | null
+          churn_risk_score?: number | null
+          client_id: string
+          client_user_id?: string | null
+          created_at?: string
+          engagement_score?: number | null
+          id?: string
+          interests?: string[] | null
+          last_interaction_at?: string | null
+          last_request_at?: string | null
+          lifecycle_stage?: string | null
+          next_action_date?: string | null
+          next_recommended_action?: string | null
+          preferred_channel?: string | null
+          preferred_contact_time?: string | null
+          total_requests?: number | null
+          total_revenue?: number | null
+          updated_at?: string
+        }
+        Update: {
+          activity_status?: string | null
+          avg_response_time_hours?: number | null
+          churn_risk_score?: number | null
+          client_id?: string
+          client_user_id?: string | null
+          created_at?: string
+          engagement_score?: number | null
+          id?: string
+          interests?: string[] | null
+          last_interaction_at?: string | null
+          last_request_at?: string | null
+          lifecycle_stage?: string | null
+          next_action_date?: string | null
+          next_recommended_action?: string | null
+          preferred_channel?: string | null
+          preferred_contact_time?: string | null
+          total_requests?: number | null
+          total_revenue?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_engagement_scores_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_merge_log: {
         Row: {
           confidence_score: number | null
@@ -1304,6 +1378,129 @@ export type Database = {
           used_at?: string | null
         }
         Relationships: []
+      }
+      engagement_campaigns: {
+        Row: {
+          campaign_name_ar: string
+          campaign_type: string
+          channel: string
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          message_template_ar: string
+          message_template_en: string | null
+          priority: string | null
+          schedule_cron: string | null
+          stats: Json | null
+          target_segment: string | null
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string
+        }
+        Insert: {
+          campaign_name_ar: string
+          campaign_type?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_template_ar: string
+          message_template_en?: string | null
+          priority?: string | null
+          schedule_cron?: string | null
+          stats?: Json | null
+          target_segment?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Update: {
+          campaign_name_ar?: string
+          campaign_type?: string
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          message_template_ar?: string
+          message_template_en?: string | null
+          priority?: string | null
+          schedule_cron?: string | null
+          stats?: Json | null
+          target_segment?: string | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      engagement_logs: {
+        Row: {
+          campaign_id: string | null
+          campaign_type: string
+          channel: string
+          client_id: string | null
+          client_user_id: string | null
+          conversion_value: number | null
+          created_at: string
+          delivery_status: string | null
+          discount_code: string | null
+          id: string
+          message_ar: string
+          opened_at: string | null
+          responded_at: string | null
+          response_type: string | null
+        }
+        Insert: {
+          campaign_id?: string | null
+          campaign_type: string
+          channel?: string
+          client_id?: string | null
+          client_user_id?: string | null
+          conversion_value?: number | null
+          created_at?: string
+          delivery_status?: string | null
+          discount_code?: string | null
+          id?: string
+          message_ar: string
+          opened_at?: string | null
+          responded_at?: string | null
+          response_type?: string | null
+        }
+        Update: {
+          campaign_id?: string | null
+          campaign_type?: string
+          channel?: string
+          client_id?: string | null
+          client_user_id?: string | null
+          conversion_value?: number | null
+          created_at?: string
+          delivery_status?: string | null
+          discount_code?: string | null
+          id?: string
+          message_ar?: string
+          opened_at?: string | null
+          responded_at?: string | null
+          response_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "engagement_logs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "engagement_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "engagement_logs_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       extracted_assets: {
         Row: {
@@ -2331,6 +2528,57 @@ export type Database = {
         }
         Relationships: []
       }
+      loyalty_rewards: {
+        Row: {
+          applicable_services: string[] | null
+          auto_apply: boolean | null
+          created_at: string
+          discount_percentage: number | null
+          fixed_amount: number | null
+          id: string
+          is_active: boolean | null
+          min_requests: number | null
+          min_revenue: number | null
+          reward_name_ar: string
+          reward_type: string
+          trigger_condition: Json | null
+          updated_at: string
+          validity_days: number | null
+        }
+        Insert: {
+          applicable_services?: string[] | null
+          auto_apply?: boolean | null
+          created_at?: string
+          discount_percentage?: number | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean | null
+          min_requests?: number | null
+          min_revenue?: number | null
+          reward_name_ar: string
+          reward_type?: string
+          trigger_condition?: Json | null
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Update: {
+          applicable_services?: string[] | null
+          auto_apply?: boolean | null
+          created_at?: string
+          discount_percentage?: number | null
+          fixed_amount?: number | null
+          id?: string
+          is_active?: boolean | null
+          min_requests?: number | null
+          min_revenue?: number | null
+          reward_name_ar?: string
+          reward_type?: string
+          trigger_condition?: Json | null
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Relationships: []
+      }
       machinery_valuations: {
         Row: {
           approach: string
@@ -2623,6 +2871,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      occasion_templates: {
+        Row: {
+          created_at: string
+          default_message_ar: string
+          gregorian_day: number | null
+          gregorian_month: number | null
+          hijri_day: number | null
+          hijri_month: number | null
+          id: string
+          include_offer: boolean | null
+          is_active: boolean | null
+          occasion_key: string
+          occasion_name_ar: string
+          offer_discount_pct: number | null
+          offer_validity_days: number | null
+          send_days_before: number | null
+        }
+        Insert: {
+          created_at?: string
+          default_message_ar: string
+          gregorian_day?: number | null
+          gregorian_month?: number | null
+          hijri_day?: number | null
+          hijri_month?: number | null
+          id?: string
+          include_offer?: boolean | null
+          is_active?: boolean | null
+          occasion_key: string
+          occasion_name_ar: string
+          offer_discount_pct?: number | null
+          offer_validity_days?: number | null
+          send_days_before?: number | null
+        }
+        Update: {
+          created_at?: string
+          default_message_ar?: string
+          gregorian_day?: number | null
+          gregorian_month?: number | null
+          hijri_day?: number | null
+          hijri_month?: number | null
+          id?: string
+          include_offer?: boolean | null
+          is_active?: boolean | null
+          occasion_key?: string
+          occasion_name_ar?: string
+          offer_discount_pct?: number | null
+          offer_validity_days?: number | null
+          send_days_before?: number | null
+        }
+        Relationships: []
       }
       organization_settings: {
         Row: {
