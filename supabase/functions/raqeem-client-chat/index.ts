@@ -357,7 +357,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       }
     }
 
-    return new Response(JSON.stringify({ reply, suggestedActions, documentReadiness }), {
+    return new Response(JSON.stringify({
+      reply, suggestedActions, documentReadiness,
+      complianceReadiness: complianceStatus.totalChecks > 0 ? {
+        percent: complianceStatus.mandatoryTotal > 0 ? Math.round((complianceStatus.mandatoryPassed / complianceStatus.mandatoryTotal) * 100) : 0,
+        issuanceReady: complianceStatus.issuanceReady,
+        failedMandatory: complianceStatus.failedMandatory,
+      } : null,
+      predictions: predictions.estimatedDays ? {
+        estimatedDays: predictions.estimatedDays,
+        valueRange: predictions.valueRange,
+        riskFlags: predictions.riskFlags,
+      } : null,
+      workflowReadiness: workflowStatus.nextStatus ? {
+        canAdvance: workflowStatus.canAdvance,
+        nextStatus: workflowStatus.nextStatus,
+        blockers: workflowStatus.blockers,
+      } : null,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
