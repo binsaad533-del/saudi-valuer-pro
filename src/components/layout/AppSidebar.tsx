@@ -7,8 +7,9 @@ import {
   Users, UserCheck, ClipboardList, Archive, BarChart3,
   DollarSign, Shield, Search, Activity, Bell, Briefcase,
   TrendingUp, MapPin, Scale,
-  Brain, Zap,
+  Zap,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import {
   Sidebar, SidebarContent, SidebarFooter,
   SidebarHeader, SidebarMenu,
@@ -42,7 +43,7 @@ const ownerNavGroups: NavGroup[] = [
     ],
   },
   {
-    id: "intel", title: "الذكاء", icon: Brain,
+    id: "intel", title: "الذكاء", icon: RaqeemIcon,
     items: [
       { label: "المعرفة", icon: BookOpen, path: "/knowledge" },
       { label: "السوق", icon: TrendingUp, path: "/market-data" },
