@@ -199,6 +199,11 @@ export default function RequestDetails() {
         return;
       }
 
+      // Update suggested actions from AI
+      if (functionData?.suggestedActions && Array.isArray(functionData.suggestedActions)) {
+        setAiSuggestedActions(functionData.suggestedActions);
+      }
+
       setMessages(prev => {
         const alreadyExists = prev.some(m => m.sender_type === "ai" && m.content === reply);
         if (alreadyExists) return prev;
@@ -575,6 +580,33 @@ export default function RequestDetails() {
                 })}
                 {/* Typing indicator */}
                 {aiTyping && <RaqeemTypingIndicator />}
+                {/* AI Suggested Actions */}
+                {!aiTyping && aiSuggestedActions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-2">
+                    {aiSuggestedActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={async () => {
+                          if (!user || sending || aiTyping) return;
+                          setAiSuggestedActions([]);
+                          setSending(true);
+                          try {
+                            await supabase.from("request_messages" as any).insert({
+                              request_id: id!, sender_id: user.id, sender_type: "client" as any, content: action.message,
+                            });
+                            callRaqeemAI(action.message);
+                          } finally {
+                            setSending(false);
+                          }
+                        }}
+                        disabled={sending || aiTyping}
+                        className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div ref={chatEndRef} />
               </div>
               {/* Persistent Quick Actions */}
