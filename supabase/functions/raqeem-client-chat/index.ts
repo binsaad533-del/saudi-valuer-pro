@@ -386,6 +386,27 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         nextStatus: workflowStatus.nextStatus,
         blockers: workflowStatus.blockers,
       } : null,
+      marketTrends: marketTrends.trends.length > 0 ? {
+        trends: marketTrends.trends,
+        alerts: marketTrends.alerts,
+        recentTransactions: marketTrends.recentTransactions,
+      } : null,
+      partyCoordination: partyStatus.parties.length > 0 ? {
+        parties: partyStatus.parties,
+        escalationNeeded: partyStatus.escalationNeeded,
+        escalationReason: partyStatus.escalationReason,
+        summary: partyStatus.unifiedSummary,
+      } : null,
+      autonomousActions: autonomousResult.actions.length > 0 ? {
+        actions: autonomousResult.actions,
+        decisions: autonomousResult.decisionsAvailable,
+        selfHealAttempts: autonomousResult.selfHealAttempts,
+      } : null,
+      performanceInsights: selfLearning.totalPredictions > 0 ? {
+        totalCompleted: selfLearning.totalPredictions,
+        trend: selfLearning.improvementTrend,
+        commonErrors: selfLearning.commonErrors,
+      } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
