@@ -63,6 +63,7 @@ export default function RequestDetails() {
   const [uploading, setUploading] = useState(false);
   const [paymentType, setPaymentType] = useState("first");
   const [aiTyping, setAiTyping] = useState(false);
+  const [aiSuggestedActions, setAiSuggestedActions] = useState<{ label: string; message: string }[]>([]);
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const loadData = async () => {
@@ -115,9 +116,18 @@ export default function RequestDetails() {
     return () => { supabase.removeChannel(channel); };
   }, [id, navigate]);
 
-  // Real-time assignment status updates
-  useRealtimeAssignment(request?.assignment_id, (newStatus, oldStatus) => {
-    toast({ title: "تحديث حالة الطلب", description: `تم تغيير الحالة من ${oldStatus} إلى ${newStatus}` });
+  // Real-time assignment status updates — inject system message into chat
+  useRealtimeAssignment(request?.assignment_id, async (newStatus, oldStatus) => {
+    const newLabel = getStatusLabel(newStatus);
+    const oldLabel = getStatusLabel(oldStatus);
+    toast({ title: "تحديث حالة الطلب", description: `تم تغيير الحالة إلى: ${newLabel}` });
+    // Inject a visible system notification into the chat
+    if (id) {
+      await supabase.from("request_messages" as any).insert({
+        request_id: id, sender_type: "system" as any,
+        content: `🔄 تم تحديث حالة الطلب: **${oldLabel}** ← **${newLabel}**`,
+      });
+    }
     loadData();
   });
 
@@ -187,6 +197,11 @@ export default function RequestDetails() {
       if (!reply) {
         console.warn("Raqeem returned empty reply", functionData);
         return;
+      }
+
+      // Update suggested actions from AI
+      if (functionData?.suggestedActions && Array.isArray(functionData.suggestedActions)) {
+        setAiSuggestedActions(functionData.suggestedActions);
       }
 
       setMessages(prev => {
@@ -565,6 +580,33 @@ export default function RequestDetails() {
                 })}
                 {/* Typing indicator */}
                 {aiTyping && <RaqeemTypingIndicator />}
+                {/* AI Suggested Actions */}
+                {!aiTyping && aiSuggestedActions.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-2">
+                    {aiSuggestedActions.map((action, idx) => (
+                      <button
+                        key={idx}
+                        onClick={async () => {
+                          if (!user || sending || aiTyping) return;
+                          setAiSuggestedActions([]);
+                          setSending(true);
+                          try {
+                            await supabase.from("request_messages" as any).insert({
+                              request_id: id!, sender_id: user.id, sender_type: "client" as any, content: action.message,
+                            });
+                            callRaqeemAI(action.message);
+                          } finally {
+                            setSending(false);
+                          }
+                        }}
+                        disabled={sending || aiTyping}
+                        className="text-xs px-3 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                      >
+                        {action.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div ref={chatEndRef} />
               </div>
               {/* Persistent Quick Actions */}
