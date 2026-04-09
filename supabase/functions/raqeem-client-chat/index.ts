@@ -50,7 +50,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -67,6 +67,13 @@ serve(async (req) => {
       analyzeMachineryDepreciation(db, ctx.assignment_id),
       analyzeMachineryMarket(db, ctx.assignment_id, ctx.organization_id),
       analyzeProductionLines(db, ctx.assignment_id),
+      analyzeIoTTelemetry(db, ctx.assignment_id),
+      analyzePredictiveMaintenance(db, ctx.assignment_id),
+      analyzeAuctionIntelligence(db, ctx.assignment_id),
+      analyzeDigitalTwins(db, ctx.assignment_id),
+      analyzeFleetPortfolio(db, ctx.assignment_id),
+      analyzeRegulatoryCompliance(db, ctx.assignment_id),
+      analyzeInsuranceRisk(db, ctx.assignment_id),
     ]);
 
     // ── Knowledge section ──
