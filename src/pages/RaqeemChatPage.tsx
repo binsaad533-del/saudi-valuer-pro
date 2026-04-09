@@ -120,6 +120,7 @@ export default function RaqeemChatPage() {
     ? "owner" : (role || "client");
 
   const suggestedPrompts = ROLE_PROMPTS[effectiveRole] || ROLE_PROMPTS.client;
+  const quickActions = ROLE_QUICK_ACTIONS[effectiveRole] || ROLE_QUICK_ACTIONS.client;
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
