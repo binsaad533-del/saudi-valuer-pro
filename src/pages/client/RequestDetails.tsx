@@ -525,9 +525,17 @@ export default function RequestDetails() {
                 {messages.length === 0 && (
                   <QuickActionButtons
                     status={request.status}
-                    onAction={(msg) => {
-                      setNewMessage(msg);
-                      setTimeout(() => handleSendMessage(), 100);
+                    onAction={async (msg) => {
+                      if (!user) return;
+                      setSending(true);
+                      try {
+                        await supabase.from("request_messages" as any).insert({
+                          request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg,
+                        });
+                        callRaqeemAI(msg);
+                      } finally {
+                        setSending(false);
+                      }
                     }}
                     disabled={sending}
                   />
