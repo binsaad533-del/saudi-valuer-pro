@@ -575,7 +575,7 @@ export default function RequestDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* ── Chat (2 cols) ── */}
           <div className="lg:col-span-2">
-            <Card className="shadow-sm h-[calc(100vh-300px)] flex flex-col">
+            <Card className="shadow-sm flex flex-col" style={{ height: 'calc(100vh - 220px)', minHeight: '500px' }}>
               <CardHeader className="pb-3 border-b border-border">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm flex items-center gap-2">
