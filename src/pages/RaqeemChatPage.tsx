@@ -362,14 +362,35 @@ export default function RaqeemChatPage() {
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center py-16 space-y-6">
+            <div className="text-center py-12 space-y-6">
               <div className="flex items-center justify-center mx-auto">
                 <RaqeemAnimatedLogo size={128} />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا رقيم</h2>
-                <p className="text-sm text-muted-foreground">كيف يمكنني مساعدتك اليوم؟</p>
+                <p className="text-sm text-muted-foreground">
+                  {effectiveRole === "owner" ? "مساعدك التنفيذي — أدير لك العمليات مباشرة" :
+                   effectiveRole === "inspector" ? "مساعدك الميداني — أنسق معاك مهام المعاينة" :
+                   effectiveRole === "financial_manager" ? "مساعدك المالي — أتابع لك المدفوعات والإيرادات" :
+                   "كيف يمكنني مساعدتك اليوم؟"}
+                </p>
               </div>
+
+              {/* Quick Action Buttons */}
+              <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    onClick={() => sendMessage(action.message)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-medium text-primary transition-colors"
+                  >
+                    <span>{action.icon}</span>
+                    <span>{action.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Suggested Prompts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
                 {suggestedPrompts.map((prompt) => (
                   <button
