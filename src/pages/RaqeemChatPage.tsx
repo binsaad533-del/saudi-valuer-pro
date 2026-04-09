@@ -4,7 +4,7 @@
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, ArrowRight, Paperclip, X, FileText, Image, File } from "lucide-react";
+import { Send, ArrowRight, Paperclip, X, FileText, Image, File, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -117,6 +117,7 @@ export default function RaqeemChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -435,6 +436,30 @@ export default function RaqeemChatPage() {
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   )}
                   {msg.attachments && msg.attachments.length > 0 && renderAttachments(msg.attachments)}
+                  {msg.role === "assistant" && msg.content && (
+                    <div className="flex items-center gap-1 mt-1.5 pt-1 border-t border-border/30">
+                      <button
+                        onClick={() => setRatings((prev) => ({ ...prev, [i]: "up" }))}
+                        disabled={!!ratings[i]}
+                        className={`p-0.5 rounded transition-all ${
+                          ratings[i] === "up" ? "text-primary" : ratings[i] ? "text-muted-foreground/20 cursor-default" : "text-muted-foreground/40 hover:text-primary cursor-pointer"
+                        }`}
+                        title="رد مفيد"
+                      >
+                        <ThumbsUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => setRatings((prev) => ({ ...prev, [i]: "down" }))}
+                        disabled={!!ratings[i]}
+                        className={`p-0.5 rounded transition-all ${
+                          ratings[i] === "down" ? "text-destructive" : ratings[i] ? "text-muted-foreground/20 cursor-default" : "text-muted-foreground/40 hover:text-destructive cursor-pointer"
+                        }`}
+                        title="رد غير مفيد"
+                      >
+                        <ThumbsDown className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
