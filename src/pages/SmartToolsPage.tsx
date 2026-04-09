@@ -1,7 +1,8 @@
 import { useState } from "react";
 import TopBar from "@/components/layout/TopBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Brain, Calculator, FileText, Sparkles } from "lucide-react";
+import { Calculator, FileText, Sparkles } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import AIDocumentProcessingPage from "./AIDocumentProcessingPage";
 import ScopeAndPricingPage from "./ScopeAndPricingPage";
 import AIReportGenerationPage from "./AIReportGenerationPage";
@@ -26,7 +27,7 @@ export default function SmartToolsPage() {
         <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
           <TabsList className="w-full justify-start">
             <TabsTrigger value="documents" className="gap-1.5">
-              <Brain className="w-3.5 h-3.5" />
+              <RaqeemIcon size={14} />
               معالجة المستندات
             </TabsTrigger>
             <TabsTrigger value="scope" className="gap-1.5">

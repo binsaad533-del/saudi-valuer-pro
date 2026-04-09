@@ -4,8 +4,9 @@ import { Progress } from "@/components/ui/progress";
 import {
   FileText, Loader2, X, Upload,
   File, Image as ImageIcon, FileSpreadsheet,
-  CheckCircle2, AlertTriangle, Brain,
+  CheckCircle2, AlertTriangle,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -209,7 +210,7 @@ export default function ValuationWorkspacePage() {
             <h2 className="text-sm font-semibold text-foreground">الملفات</h2>
             {phase === "idle" && files.length > 0 && (
               <Button size="sm" onClick={startProcessing} className="text-xs h-8 gap-1.5">
-                <Brain className="w-3.5 h-3.5" />
+                <RaqeemIcon size={14} />
                 بدء الاستخراج
               </Button>
             )}

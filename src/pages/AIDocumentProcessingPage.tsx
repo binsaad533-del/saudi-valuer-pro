@@ -3,10 +3,11 @@ import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-pat
 import TopBar from "@/components/layout/TopBar";
 import { Progress } from "@/components/ui/progress";
 import {
-  Brain, FileText, FolderUp, Loader2, X,
+  FileText, FolderUp, Loader2, X,
   File, Image as ImageIcon, FileSpreadsheet,
   CheckCircle2, AlertTriangle, Upload,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -221,7 +222,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
           {/* Header */}
           <div className="text-center space-y-2">
             <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center mx-auto shadow-lg">
-              <Brain className="w-8 h-8 text-primary-foreground" />
+              <RaqeemIcon size={32} />
             </div>
             <h1 className="text-2xl font-bold text-foreground">محرك الاستخراج الذكي</h1>
             <p className="text-sm text-muted-foreground max-w-lg mx-auto">
@@ -341,7 +342,7 @@ export default function AIDocumentProcessingPage({ embedded }: { embedded?: bool
                 {uploading ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> جارٍ الرفع والمعالجة...</>
                 ) : (
-                  <><Brain className="w-5 h-5" /> بدء الاستخراج الذكي ({uploadedFiles.length} ملف)</>
+                  <><RaqeemIcon size={20} /> بدء الاستخراج الذكي ({uploadedFiles.length} ملف)</>
                 )}
               </Button>
             </div>
