@@ -485,6 +485,21 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         systemPremium: productionLines.systemPremium,
         recommendations: productionLines.recommendations,
       } : null,
+      fleetAnalysis: bulkIntake.totalAssets > 0 ? {
+        totalAssets: bulkIntake.totalAssets,
+        duplicates: bulkIntake.duplicatesDetected,
+        qualityScore: bulkIntake.qualityScore,
+        clusters: smartClustering.totalClusters,
+        timeSaving: smartClustering.timeSavingPercent,
+        sites: multiSite.totalSites,
+        desktopMode: desktopFleet.valuationMode,
+        riskPremium: desktopFleet.riskPremiumPercent,
+        fleetValue: fleetReport.totalFleetValue,
+        qcScore: bulkQC.overallQualityScore,
+        qcReady: bulkQC.readyForIssuance,
+        progress: fleetDashboard.progress.progressPercent,
+        exportReady: fleetDashboard.exportReady,
+      } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
