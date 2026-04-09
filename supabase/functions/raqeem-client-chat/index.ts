@@ -39,6 +39,18 @@ import { analyzeDesktopFleet } from "./_shared/desktop-fleet-valuator.ts";
 import { generateFleetReport } from "./_shared/fleet-report-templates.ts";
 import { analyzeBulkQC } from "./_shared/bulk-qc-engine.ts";
 import { generateFleetDashboard } from "./_shared/fleet-dashboard.ts";
+import { analyzePredictiveValuation } from "./_shared/predictive-valuation.ts";
+import { analyzeDigitalTwin3D } from "./_shared/digital-twin-3d.ts";
+import { analyzeAIPeerReview } from "./_shared/ai-peer-review.ts";
+import { analyzeVoiceFieldCapture } from "./_shared/voice-field-capture.ts";
+import { analyzeImageFraud } from "./_shared/image-fraud-detection.ts";
+import { analyzeSmartPortal } from "./_shared/smart-client-portal.ts";
+import { analyzeCompetitiveBenchmark } from "./_shared/competitive-benchmark.ts";
+import { analyzeMultiCurrency } from "./_shared/multi-currency.ts";
+import { analyzeInstitutionalMemory } from "./_shared/institutional-memory.ts";
+import { analyzePortfolioHealth } from "./_shared/portfolio-health.ts";
+import { analyzeERPIntegration } from "./_shared/erp-integration.ts";
+import { analyzeBlockchainNotarization } from "./_shared/blockchain-notarization.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -68,7 +80,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -99,6 +111,18 @@ serve(async (req) => {
       generateFleetReport(db, ctx.assignment_id),
       analyzeBulkQC(db, ctx.assignment_id),
       generateFleetDashboard(db, ctx.assignment_id),
+      analyzePredictiveValuation(db, ctx.assignment_id),
+      analyzeDigitalTwin3D(db, ctx.assignment_id),
+      analyzeAIPeerReview(db, ctx.assignment_id),
+      analyzeVoiceFieldCapture(db, ctx.assignment_id),
+      analyzeImageFraud(db, ctx.assignment_id),
+      analyzeSmartPortal(db, ctx.assignment_id, request_id),
+      analyzeCompetitiveBenchmark(db, ctx.assignment_id, ctx.organization_id),
+      analyzeMultiCurrency(db, ctx.assignment_id),
+      analyzeInstitutionalMemory(db, ctx.assignment_id),
+      analyzePortfolioHealth(db, ctx.assignment_id),
+      analyzeERPIntegration(db, ctx.assignment_id),
+      analyzeBlockchainNotarization(db, ctx.assignment_id),
     ]);
 
     // ── Knowledge section ──
@@ -267,6 +291,18 @@ serve(async (req) => {
 27. **تقرير الأسطول التنفيذي**: ملخص شامل مع جداول جرد وتوزيع حسب الفئة ومنحنى الإهلاك
 28. **ضبط الجودة الجماعي**: كشف القيم الشاذة (IQR) وفحص الاتساق وتقرير جاهزية الإصدار
 29. **لوحة تحكم الأسطول**: تتبع تقدم التقييم ومراحل الإنجاز والوقت المتبقي
+30. **التقييم التنبؤي**: توقع قيمة الأصل بعد 6/12/36 شهراً بنماذج إحصائية مع نطاق ثقة
+31. **التوأم الرقمي المتقدم**: بصمة رقمية شاملة مع منحنى إهلاك وتقييم حالة وصيانة مطلوبة
+32. **مراجعة الأقران الذكية**: مراجعة مستقلة كمقيّم ثانٍ لكشف التناقضات والثغرات المهنية
+33. **التقاط الحقل الصوتي**: تحويل ملاحظات المعاين إلى بيانات هيكلية
+34. **كشف التلاعب بالصور**: فحص GPS والتواريخ والتكرارات لضمان مصداقية الصور
+35. **بوابة العميل الذكية**: تتبع لحظي بإشعارات ونسب تقدم وتقدير رضا العميل
+36. **المقارنة التنافسية**: مقارنة أداء المنشأة مع متوسطات السوق السعودي
+37. **التقييم متعدد العملات**: عرض القيمة بـ SAR/USD/EUR/GBP مع توثيق سعر الصرف
+38. **الذاكرة المؤسسية**: تذكر كل تقييم سابق للعميل واستخدامه كمرجع مقارن
+39. **مؤشر صحة المحفظة**: كشف الأصول المتقادمة والتوصية بإعادة التقييم
+40. **تكامل أنظمة ERP**: تصدير بيانات التقييم بصيغ SAP/Oracle/CSV
+41. **التوثيق الرقمي**: ختم SHA-256 غير قابل للتلاعب مع رابط تحقق
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
@@ -297,7 +333,7 @@ serve(async (req) => {
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
 ${buildMachineryVisionPrompt()}
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${bulkIntake.section}${smartClustering.section}${multiSite.section}${desktopFleet.section}${fleetReport.section}${bulkQC.section}${fleetDashboard.section}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${bulkIntake.section}${smartClustering.section}${multiSite.section}${desktopFleet.section}${fleetReport.section}${bulkQC.section}${fleetDashboard.section}${predictiveValuation.section}${digitalTwin3D.section}${aiPeerReview.section}${voiceCapture.section}${imageFraud.section}${smartPortal.section}${competitiveBenchmark.section}${multiCurrency.section}${institutionalMemory.section}${portfolioHealth.section}${erpIntegration.section}${blockchainSeal.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
@@ -499,6 +535,44 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         qcReady: bulkQC.readyForIssuance,
         progress: fleetDashboard.progress.progressPercent,
         exportReady: fleetDashboard.exportReady,
+      } : null,
+      predictiveValuationData: predictiveValuation.predictions.length > 0 ? {
+        marketTrend: predictiveValuation.marketTrend,
+        predictions: predictiveValuation.predictions,
+        macroFactors: predictiveValuation.macroFactors,
+      } : null,
+      peerReview: aiPeerReview.findings.length > 0 ? {
+        score: aiPeerReview.overallScore,
+        issuanceReady: aiPeerReview.issuanceReady,
+        findings: aiPeerReview.findings.length,
+        summary: aiPeerReview.reviewSummary,
+      } : null,
+      imageFraudData: imageFraud.totalPhotos > 0 ? {
+        totalPhotos: imageFraud.totalPhotos,
+        flagged: imageFraud.flaggedPhotos,
+        trustScore: imageFraud.overallTrustScore,
+      } : null,
+      clientPortal: smartPortal.milestones.length > 0 ? {
+        progress: smartPortal.overallProgress,
+        daysRemaining: smartPortal.daysRemaining,
+        notifications: smartPortal.notifications,
+        satisfaction: smartPortal.satisfaction,
+      } : null,
+      institutionalMemoryData: institutionalMemory.totalPastValuations > 0 ? {
+        pastValuations: institutionalMemory.totalPastValuations,
+        clientTier: institutionalMemory.clientTier,
+        avgValue: institutionalMemory.avgValuationValue,
+      } : null,
+      portfolioHealthData: portfolioHealth.assets.length > 0 ? {
+        healthScore: portfolioHealth.healthScore,
+        totalValue: portfolioHealth.totalPortfolioValue,
+        staleAssets: portfolioHealth.staleAssets,
+        revaluationNeeded: portfolioHealth.revaluationNeeded,
+      } : null,
+      blockchainData: blockchainSeal.seal ? {
+        hash: blockchainSeal.seal.reportHash,
+        chainRef: blockchainSeal.seal.chainReference,
+        tamperProof: blockchainSeal.tamperProof,
       } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
