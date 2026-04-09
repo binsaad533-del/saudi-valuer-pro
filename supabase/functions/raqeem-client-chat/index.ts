@@ -6,6 +6,10 @@ import { generateMarketInsights, getClientHistory } from "./_shared/financial-ad
 import { generatePredictions } from "./_shared/predictions.ts";
 import { analyzeWorkflowReadiness } from "./_shared/workflow-integration.ts";
 import { checkComplianceStatus } from "./_shared/compliance-advisor.ts";
+import { analyzeSelfLearning } from "./_shared/self-learning.ts";
+import { analyzeMarketTrends } from "./_shared/market-awareness.ts";
+import { analyzeMultiPartyStatus } from "./_shared/multi-party-coordinator.ts";
+import { executeAutonomousLogic } from "./_shared/autonomous-engine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
