@@ -561,7 +561,7 @@ export default function SimplifiedJourney() {
         else if (data.status === "merging") setProcessingStatus("جارٍ إعداد نطاق العمل...");
         else setProcessingStatus("جارٍ تجهيز طلبك...");
 
-        await new Promise(r => setTimeout(r, 2500));
+        await new Promise(r => setTimeout(r, 1000));
       }
     };
 
