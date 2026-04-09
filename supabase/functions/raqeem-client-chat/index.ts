@@ -14,6 +14,13 @@ import { analyzeMachineryDepreciation } from "./_shared/machinery-depreciation.t
 import { classifyAssetBatch, buildMachineryVisionPrompt } from "./_shared/equipment-recognition.ts";
 import { analyzeMachineryMarket } from "./_shared/machinery-market.ts";
 import { analyzeProductionLines } from "./_shared/production-line-analyzer.ts";
+import { analyzeIoTTelemetry } from "./_shared/iot-telemetry.ts";
+import { analyzePredictiveMaintenance } from "./_shared/predictive-maintenance.ts";
+import { analyzeAuctionIntelligence } from "./_shared/auction-intelligence.ts";
+import { analyzeDigitalTwins } from "./_shared/digital-twin.ts";
+import { analyzeFleetPortfolio } from "./_shared/fleet-optimizer.ts";
+import { analyzeRegulatoryCompliance } from "./_shared/regulatory-compliance.ts";
+import { analyzeInsuranceRisk } from "./_shared/insurance-risk.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,7 +50,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -60,6 +67,13 @@ serve(async (req) => {
       analyzeMachineryDepreciation(db, ctx.assignment_id),
       analyzeMachineryMarket(db, ctx.assignment_id, ctx.organization_id),
       analyzeProductionLines(db, ctx.assignment_id),
+      analyzeIoTTelemetry(db, ctx.assignment_id),
+      analyzePredictiveMaintenance(db, ctx.assignment_id),
+      analyzeAuctionIntelligence(db, ctx.assignment_id),
+      analyzeDigitalTwins(db, ctx.assignment_id),
+      analyzeFleetPortfolio(db, ctx.assignment_id),
+      analyzeRegulatoryCompliance(db, ctx.assignment_id),
+      analyzeInsuranceRisk(db, ctx.assignment_id),
     ]);
 
     // ── Knowledge section ──
@@ -214,7 +228,13 @@ serve(async (req) => {
 12. **التعلم الذاتي**: تحليل أنماط الأداء وتحسين دقة التقديرات بناءً على التقييمات السابقة
 13. **الوعي السوقي الحي**: رصد اتجاهات الأسعار والتنبيهات السوقية من الصفقات المسجلة
 14. **التنسيق متعدد الأطراف**: تتبع حالة كل طرف (عميل، معاين، مقيّم) وتصعيد ذكي عند التأخير
-15. **الاستقلالية الذكية**: اقتراح إجراءات تلقائية وكشف التناقضات والتعافي الذاتي
+16. **تحليل بيانات التشغيل (IoT)**: تحليل ساعات التشغيل والحالة الفعلية لحساب الاستهلاك الحقيقي
+17. **الصيانة التنبؤية**: توقع الأعطال وتأثيرها على القيمة وتقدير تكاليف الصيانة المؤجلة
+18. **ذكاء المزادات العالمية**: مقارنة أسعار المعدات مع منصات المزادات العالمية (Ritchie Bros, Mascus)
+19. **التوأم الرقمي**: بصمة رقمية لكل أصل تتتبع دورة حياته وتتنبأ بقيمته المستقبلية
+20. **محسّن الأساطيل**: تحليل العائد على كل معدة وتوصيات البيع/الاستبدال/الإيجار
+21. **الامتثال التنظيمي**: فحص شهادات السلامة والبيئة والمعايرة وأثرها على القيمة
+22. **تقييم التأمين والمخاطر**: حساب قيمة الإحلال وفجوة التأمين وتحليل مخاطر التوقف
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
@@ -245,7 +265,7 @@ serve(async (req) => {
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
 ${buildMachineryVisionPrompt()}
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
