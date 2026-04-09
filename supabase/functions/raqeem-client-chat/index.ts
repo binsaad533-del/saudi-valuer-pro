@@ -272,6 +272,24 @@ ${requestSection}${paymentSection}${documentsSection}${attachmentsSection}${corr
     const reply = aiData.choices?.[0]?.message?.content ||
       "عذراً، لم أتمكن من معالجة سؤالك. يرجى إعادة صياغته أو التواصل معنا على 920015029.";
 
+    // ── Generate proactive suggested actions based on status ──
+    const suggestedActions: { label: string; message: string }[] = [];
+    const status = ctx.status;
+    if (status === "submitted" || status === "under_pricing") {
+      suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
+    } else if (status === "scope_generated") {
+      suggestedActions.push({ label: "📋 شرح النطاق", message: "اشرح لي نطاق العمل بالتفصيل" });
+      suggestedActions.push({ label: "💰 تفاصيل السعر", message: "ما تفاصيل عرض السعر؟" });
+    } else if (status === "data_collection_open") {
+      suggestedActions.push({ label: "📎 ملفات ناقصة", message: "هل هناك ملفات ناقصة في طلبي؟" });
+      suggestedActions.push({ label: "📝 أنواع المستندات", message: "ما أنواع المستندات المقبولة؟" });
+    } else if (status === "draft_report_ready" || status === "client_review") {
+      suggestedActions.push({ label: "📊 ملخص التقرير", message: "أعطني ملخص المسودة" });
+      suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });
+    } else if (status === "issued") {
+      suggestedActions.push({ label: "✅ رمز التحقق", message: "ما هو رمز التحقق من التقرير؟" });
+    }
+
     // ── Save AI reply to request_messages ──
     if (request_id) {
       const insertResult = await db.from("request_messages").insert({
@@ -287,7 +305,7 @@ ${requestSection}${paymentSection}${documentsSection}${attachmentsSection}${corr
       }
     }
 
-    return new Response(JSON.stringify({ reply }), {
+    return new Response(JSON.stringify({ reply, suggestedActions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

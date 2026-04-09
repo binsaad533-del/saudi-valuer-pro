@@ -115,9 +115,18 @@ export default function RequestDetails() {
     return () => { supabase.removeChannel(channel); };
   }, [id, navigate]);
 
-  // Real-time assignment status updates
-  useRealtimeAssignment(request?.assignment_id, (newStatus, oldStatus) => {
-    toast({ title: "تحديث حالة الطلب", description: `تم تغيير الحالة من ${oldStatus} إلى ${newStatus}` });
+  // Real-time assignment status updates — inject system message into chat
+  useRealtimeAssignment(request?.assignment_id, async (newStatus, oldStatus) => {
+    const newLabel = getStatusLabel(newStatus);
+    const oldLabel = getStatusLabel(oldStatus);
+    toast({ title: "تحديث حالة الطلب", description: `تم تغيير الحالة إلى: ${newLabel}` });
+    // Inject a visible system notification into the chat
+    if (id) {
+      await supabase.from("request_messages" as any).insert({
+        request_id: id, sender_type: "system" as any,
+        content: `🔄 تم تحديث حالة الطلب: **${oldLabel}** ← **${newLabel}**`,
+      });
+    }
     loadData();
   });
 
