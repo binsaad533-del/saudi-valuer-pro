@@ -566,9 +566,12 @@ export default function RequestDetails() {
                           </div>
                         )}
                         {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
-                        <p className={`text-[10px] mt-1 ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                          {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className={`text-[10px] ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          {isAI && <MessageRating messageId={msg.id} requestId={id!} />}
+                        </div>
                       </div>
                     </div>
                   );
