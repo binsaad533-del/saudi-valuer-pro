@@ -362,7 +362,7 @@ export default function RaqeemChatPage() {
             messages.map((msg, i) => (
               <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
                 {msg.role === "assistant" && (
-                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1 bg-primary-foreground">
+                  <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-1">
                     <RaqeemIcon size={28} className="text-primary" />
                   </div>
                 )}
