@@ -162,7 +162,7 @@ export default function RequestDetails() {
 
   const buildRequestContext = () => {
     if (!request) return {};
-    const valuationMode = request.inspection_type || request.ai_intake_summary?.valuation_mode || "field";
+    const valuationMode = request.ai_intake_summary?.valuation_mode || request.inspection_type || "field";
     const inv = request.asset_data?.inventory as any[] | undefined;
     const assetCount = inv?.length || 0;
     const assetSummary = inv ? (() => {
@@ -417,7 +417,7 @@ export default function RequestDetails() {
     const clientName = req?.client_name_ar || req?.ai_intake_summary?.client_name || "";
     const greeting = clientName ? `أهلاً ${clientName}` : "أهلاً بك";
     const refNum = req?.reference_number || "";
-    const valuationMode = req?.inspection_type || req?.ai_intake_summary?.valuation_mode || "field";
+    const valuationMode = req?.ai_intake_summary?.valuation_mode || req?.inspection_type || "field";
     const isDesktop = isDesktopValuationMode(valuationMode);
 
     const statusMessages: Record<string, string> = {
@@ -463,7 +463,7 @@ export default function RequestDetails() {
     return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">الطلب غير موجود</p></div>;
   }
 
-  const requestValuationMode = request.inspection_type || request.ai_intake_summary?.valuation_mode || "field";
+  const requestValuationMode = request.ai_intake_summary?.valuation_mode || request.inspection_type || "field";
   const hasUploadedPhotos = documents.some((doc) => doc.mime_type?.startsWith("image/"))
     || request.ai_intake_summary?.files?.some((file: any) => file?.type?.startsWith?.("image/"));
 

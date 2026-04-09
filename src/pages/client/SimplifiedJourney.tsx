@@ -547,6 +547,7 @@ export default function SimplifiedJourney() {
         .insert({
           client_user_id: user.id,
           valuation_type: (scopeData.discipline === "machinery_equipment" ? "machinery" : scopeData.discipline) as any,
+          inspection_type: valuationMode || "field",
           purpose: (purpose || null) as any,
           purpose_ar: purpose === "other" ? purposeOther : null,
           intended_users_ar: usersText,
