@@ -51,6 +51,11 @@ import { analyzeInstitutionalMemory } from "./_shared/institutional-memory.ts";
 import { analyzePortfolioHealth } from "./_shared/portfolio-health.ts";
 import { analyzeERPIntegration } from "./_shared/erp-integration.ts";
 import { analyzeBlockchainNotarization } from "./_shared/blockchain-notarization.ts";
+import { analyzeSeasonalReminders } from "./_shared/seasonal-reminders.ts";
+import { analyzeLoyaltyOffers } from "./_shared/loyalty-engine.ts";
+import { analyzeBehaviorIntelligence } from "./_shared/behavior-intelligence.ts";
+import { analyzeOccasionMessages } from "./_shared/occasion-messages.ts";
+import { analyzeEngagementAnalytics } from "./_shared/engagement-analytics.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -80,7 +85,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal, seasonalReminders, loyaltyOffers, behaviorIntel, occasionMessages, engagementAnalytics] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -123,6 +128,12 @@ serve(async (req) => {
       analyzePortfolioHealth(db, ctx.assignment_id),
       analyzeERPIntegration(db, ctx.assignment_id),
       analyzeBlockchainNotarization(db, ctx.assignment_id),
+      // Levels 61-66: Smart Marketing Engine
+      analyzeSeasonalReminders(db, ctx.assignment_id, ctx.client_user_id),
+      analyzeLoyaltyOffers(db, ctx.assignment_id, ctx.client_user_id),
+      analyzeBehaviorIntelligence(db, ctx.assignment_id, ctx.client_user_id),
+      analyzeOccasionMessages(db, ctx.assignment_id, ctx.client_user_id, ctx.status),
+      analyzeEngagementAnalytics(db, ctx.organization_id),
     ]);
 
     // ── Knowledge section ──
@@ -303,6 +314,11 @@ serve(async (req) => {
 39. **مؤشر صحة المحفظة**: كشف الأصول المتقادمة والتوصية بإعادة التقييم
 40. **تكامل أنظمة ERP**: تصدير بيانات التقييم بصيغ SAP/Oracle/CSV
 41. **التوثيق الرقمي**: ختم SHA-256 غير قابل للتلاعب مع رابط تحقق
+42. **التذكيرات الموسمية**: تذكير تلقائي قبل الميزانية السنوية وانتهاء التقارير وتجديد التأمين
+43. **التسعير التحفيزي**: خصومات ذكية للعملاء المتكررين وحزم إعادة التقييم وذكرى التعامل
+44. **تحليل سلوك العميل**: اكتشاف العملاء الخاملين والبيع المتقاطع وتنبيهات السوق الشخصية
+45. **رسائل المناسبات**: تهنئة بالأعياد (الفطر، الأضحى، اليوم الوطني، يوم التأسيس) ورسائل شكر وتقييم رضا
+46. **التحليلات التسويقية**: تتبع فعالية الحملات ومعدلات التحويل ومؤشرات صحة العلاقة
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
@@ -333,7 +349,7 @@ serve(async (req) => {
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
 ${buildMachineryVisionPrompt()}
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${bulkIntake.section}${smartClustering.section}${multiSite.section}${desktopFleet.section}${fleetReport.section}${bulkQC.section}${fleetDashboard.section}${predictiveValuation.section}${digitalTwin3D.section}${aiPeerReview.section}${voiceCapture.section}${imageFraud.section}${smartPortal.section}${competitiveBenchmark.section}${multiCurrency.section}${institutionalMemory.section}${portfolioHealth.section}${erpIntegration.section}${blockchainSeal.section}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${bulkIntake.section}${smartClustering.section}${multiSite.section}${desktopFleet.section}${fleetReport.section}${bulkQC.section}${fleetDashboard.section}${predictiveValuation.section}${digitalTwin3D.section}${aiPeerReview.section}${voiceCapture.section}${imageFraud.section}${smartPortal.section}${competitiveBenchmark.section}${multiCurrency.section}${institutionalMemory.section}${portfolioHealth.section}${erpIntegration.section}${blockchainSeal.section}${seasonalReminders.section}${loyaltyOffers.section}${behaviorIntel.section}${occasionMessages.section}${engagementAnalytics.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
@@ -574,6 +590,26 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         chainRef: blockchainSeal.seal.chainReference,
         tamperProof: blockchainSeal.tamperProof,
       } : null,
+      smartEngagement: {
+        seasonalReminders: seasonalReminders.reminders.length > 0 ? {
+          activeReminders: seasonalReminders.reminders.length,
+          revaluationsDue: seasonalReminders.revaluationsDue,
+        } : null,
+        loyalty: loyaltyOffers.offers.length > 0 ? {
+          clientTier: loyaltyOffers.clientTier,
+          activeOffers: loyaltyOffers.offers.length,
+          totalRequests: loyaltyOffers.totalRequests,
+        } : null,
+        behavior: behaviorIntel.insights.length > 0 ? {
+          activityStatus: behaviorIntel.activityStatus,
+          engagementScore: behaviorIntel.engagementScore,
+          crossSellOpportunities: behaviorIntel.crossSellOpportunities,
+        } : null,
+        occasions: occasionMessages.activeOccasions.length > 0 ? {
+          activeOccasions: occasionMessages.activeOccasions.length,
+          satisfactionPending: occasionMessages.satisfactionPending,
+        } : null,
+      },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
