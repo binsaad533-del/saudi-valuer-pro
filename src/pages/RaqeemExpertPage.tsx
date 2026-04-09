@@ -17,6 +17,7 @@ const PILLAR_MAP: Record<string, { label: string; icon: React.ElementType; color
   workflow: { label: "سير العمل", icon: Activity, color: "text-purple-500" },
   performance: { label: "الأداء", icon: Zap, color: "text-amber-500" },
   security: { label: "الأمان", icon: Shield, color: "text-red-500" },
+  code_quality: { label: "جودة الكود", icon: FileText, color: "text-cyan-500" },
   reporting: { label: "التقارير", icon: FileText, color: "text-green-500" },
 };
 
@@ -119,7 +120,7 @@ export default function RaqeemExpertPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">رقيم — الخبير التقني المقيم</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            فحص شامل للمنصة: البنية، سير العمل، الأداء، الأمان
+            مفتش تقني ذكي: البنية، سير العمل، الأداء، الأمان، جودة الكود
           </p>
         </div>
         <div className="flex gap-2">
@@ -135,7 +136,7 @@ export default function RaqeemExpertPage() {
       </div>
 
       {/* Health Score Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
         {/* Overall Score */}
         <Card className={`md:col-span-2 bg-gradient-to-br ${getScoreBg(healthScore)} border-0`}>
           <CardContent className="p-6 text-center">
