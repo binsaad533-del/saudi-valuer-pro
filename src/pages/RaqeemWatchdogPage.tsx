@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import {
-  Loader2, RefreshCw, Shield, AlertTriangle, Scale, DollarSign,
+  Loader2, RefreshCw, Shield, Scale, DollarSign,
   Activity, Users, Zap, CheckCircle2, Eye, EyeOff, Clock,
-  TrendingUp, ChevronDown, ChevronUp, XCircle,
+  TrendingUp, ChevronDown, ChevronUp,
 } from "lucide-react";
 
 interface WatchdogFinding {
