@@ -17,6 +17,7 @@ const PILLAR_MAP: Record<string, { label: string; icon: React.ElementType; color
   workflow: { label: "سير العمل", icon: Activity, color: "text-purple-500" },
   performance: { label: "الأداء", icon: Zap, color: "text-amber-500" },
   security: { label: "الأمان", icon: Shield, color: "text-red-500" },
+  code_quality: { label: "جودة الكود", icon: FileText, color: "text-cyan-500" },
   reporting: { label: "التقارير", icon: FileText, color: "text-green-500" },
 };
 
