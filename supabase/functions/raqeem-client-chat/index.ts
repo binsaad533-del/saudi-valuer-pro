@@ -32,6 +32,13 @@ import { generateDisclosureReport } from "./_shared/disclosure-generator.ts";
 import { analyzeMarketMultiples } from "./_shared/market-multiples.ts";
 import { analyzeFinancialRisk } from "./_shared/financial-risk.ts";
 import { analyzeScenarios } from "./_shared/scenario-engine.ts";
+import { analyzeBulkIntake } from "./_shared/bulk-intake-engine.ts";
+import { analyzeSmartClustering } from "./_shared/smart-clustering.ts";
+import { analyzeMultiSite } from "./_shared/multi-site-manager.ts";
+import { analyzeDesktopFleet } from "./_shared/desktop-fleet-valuator.ts";
+import { generateFleetReport } from "./_shared/fleet-report-templates.ts";
+import { analyzeBulkQC } from "./_shared/bulk-qc-engine.ts";
+import { generateFleetDashboard } from "./_shared/fleet-dashboard.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
