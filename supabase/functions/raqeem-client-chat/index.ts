@@ -415,6 +415,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         trend: selfLearning.improvementTrend,
         commonErrors: selfLearning.commonErrors,
       } : null,
+      machineryAnalysis: machineryDepreciation ? {
+        totalOriginalCost: machineryDepreciation.totalOriginalCost,
+        totalCurrentValue: machineryDepreciation.totalCurrentValue,
+        depreciationPercent: machineryDepreciation.overallDepreciationPercent,
+        assetCount: machineryDepreciation.assets.length,
+      } : null,
+      machineryMarketData: machineryMarket.valueGap ? {
+        bookValue: machineryMarket.valueGap.bookValue,
+        marketValue: machineryMarket.valueGap.marketValue,
+        replacementCost: machineryMarket.valueGap.replacementCost,
+        liquidationValue: machineryMarket.valueGap.liquidationValue,
+        gapPercent: machineryMarket.valueGap.gapPercent,
+      } : null,
+      productionLineData: productionLines ? {
+        lineCount: productionLines.lineCount,
+        systemPremium: productionLines.systemPremium,
+        recommendations: productionLines.recommendations,
+      } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
