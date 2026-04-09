@@ -117,6 +117,7 @@ export default function RaqeemChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
