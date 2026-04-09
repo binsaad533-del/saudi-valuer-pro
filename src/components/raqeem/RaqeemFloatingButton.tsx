@@ -28,7 +28,7 @@ export default function RaqeemFloatingButton() {
       </AnimatePresence>
 
       <motion.button
-        onClick={() => navigate("/raqeem")}
+        onClick={() => navigate("/expert")}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         whileHover={{ scale: 1.1 }}
