@@ -1,30 +1,54 @@
-import { CheckCircle, Circle } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { isDesktopValuationMode } from "@/lib/valuation-mode";
 
-// Simplified client-facing milestones (grouped from 19 statuses)
-const CLIENT_MILESTONES = [
-  { key: "request", label: "الطلب", statuses: ["draft", "submitted"] },
-  { key: "scope", label: "النطاق والسعر", statuses: ["scope_generated", "scope_approved"] },
-  { key: "payment1", label: "الدفعة الأولى", statuses: ["first_payment_confirmed"] },
-  { key: "execution", label: "التنفيذ", statuses: ["data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated", "analysis_complete", "professional_review"] },
-  { key: "draft", label: "المسودة", statuses: ["draft_report_ready", "client_review", "draft_approved"] },
-  { key: "final", label: "التقرير النهائي", statuses: ["final_payment_confirmed", "issued", "archived"] },
+const ALL_STAGES = [
+  { key: "submitted", label: "تم التقديم", fieldOnly: false },
+  { key: "payment", label: "الدفع", fieldOnly: false },
+  { key: "assigned", label: "تعيين المقيّم", fieldOnly: false },
+  { key: "inspection", label: "المعاينة", fieldOnly: true },
+  { key: "drafting", label: "إعداد التقرير", fieldOnly: false },
+  { key: "delivered", label: "التسليم", fieldOnly: false },
 ];
+
+const STATUS_TO_STAGE_KEY: Record<string, string> = {
+  draft: "submitted", submitted: "submitted",
+  scope_generated: "payment", scope_approved: "payment",
+  first_payment_confirmed: "assigned",
+  data_collection_open: "assigned", data_collection_complete: "assigned",
+  inspection_pending: "inspection", inspection_completed: "inspection",
+  data_validated: "drafting",
+  analysis_complete: "drafting", professional_review: "drafting",
+  draft_report_ready: "drafting", client_review: "drafting",
+  draft_approved: "drafting",
+  final_payment_confirmed: "delivered",
+  issued: "delivered", archived: "delivered",
+  cancelled: "cancelled",
+  ai_review: "submitted", needs_clarification: "submitted",
+  under_pricing: "submitted", quotation_sent: "payment", quotation_approved: "payment",
+  awaiting_payment: "payment", payment_uploaded: "payment",
+  partially_paid: "payment", fully_paid: "assigned",
+  in_production: "assigned", inspection_scheduled: "inspection",
+  report_drafting: "drafting", draft_report_sent: "drafting", client_comments: "drafting",
+  quality_review: "drafting", final_review: "drafting",
+  final_payment_pending: "drafting", final_payment_uploaded: "drafting", final_payment_approved: "drafting",
+  final_report_ready: "delivered", completed: "delivered",
+};
 
 interface ChatProgressBarProps {
   status: string;
+  valuationMode?: string;
 }
 
-export default function ChatProgressBar({ status }: ChatProgressBarProps) {
-  // Find which milestone the current status belongs to
-  let activeMilestoneIdx = -1;
-  for (let i = 0; i < CLIENT_MILESTONES.length; i++) {
-    if (CLIENT_MILESTONES[i].statuses.includes(status)) {
-      activeMilestoneIdx = i;
-      break;
-    }
-  }
+export default function ChatProgressBar({ status, valuationMode = "field" }: ChatProgressBarProps) {
+  const isDesktop = isDesktopValuationMode(valuationMode);
+  const stages = isDesktop ? ALL_STAGES.filter(s => !s.fieldOnly) : ALL_STAGES;
 
-  if (status === "cancelled") {
+  const stageKey = STATUS_TO_STAGE_KEY[status] ?? "submitted";
+  const effectiveStageKey = isDesktop && stageKey === "inspection" ? "drafting" : stageKey;
+  const currentStage = Math.max(0, stages.findIndex(s => s.key === effectiveStageKey));
+  const isCancelled = status === "cancelled";
+
+  if (isCancelled) {
     return (
       <div className="px-4 py-2 bg-destructive/5 border border-destructive/20 rounded-lg text-center">
         <span className="text-xs text-destructive font-medium">تم إلغاء الطلب</span>
@@ -32,9 +56,8 @@ export default function ChatProgressBar({ status }: ChatProgressBarProps) {
     );
   }
 
-  const completedCount = activeMilestoneIdx + 1;
-  const total = CLIENT_MILESTONES.length;
-  const pct = Math.round((completedCount / total) * 100);
+  const totalStages = stages.length;
+  const pct = Math.round(((currentStage + 1) / totalStages) * 100);
 
   return (
     <div className="space-y-2">
@@ -45,29 +68,42 @@ export default function ChatProgressBar({ status }: ChatProgressBarProps) {
       </div>
 
       {/* Progress bar */}
-      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-        <div
-          className="h-full bg-gradient-to-l from-primary to-primary/70 rounded-full transition-all duration-700 ease-out"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+      <Progress value={pct} className="h-1.5" dir="rtl" />
 
-      {/* Milestones */}
-      <div className="flex justify-between items-center gap-1">
-        {CLIENT_MILESTONES.map((milestone, i) => {
-          const isCompleted = i < activeMilestoneIdx;
-          const isCurrent = i === activeMilestoneIdx;
+      {/* Milestones - matching EnhancedRequestTracker stages */}
+      <div className="flex items-start" dir="rtl">
+        {stages.map((stage, i) => {
+          const isDone = i < currentStage;
+          const isActive = i === currentStage;
+
           return (
-            <div key={milestone.key} className="flex flex-col items-center gap-0.5 flex-1">
-              {isCompleted ? (
-                <CheckCircle className="w-3.5 h-3.5 text-primary" />
-              ) : isCurrent ? (
-                <div className="w-3.5 h-3.5 rounded-full border-2 border-primary bg-primary/20 animate-pulse" />
-              ) : (
-                <Circle className="w-3.5 h-3.5 text-muted-foreground/40" />
+            <div key={stage.key} className="flex-1 flex flex-col items-center text-center relative">
+              {/* Connector lines */}
+              {i < stages.length - 1 && (
+                <div className={`absolute top-[11px] left-0 w-1/2 h-0.5 ${isDone ? "bg-primary" : "bg-border"}`} />
               )}
-              <span className={`text-[9px] text-center leading-tight ${isCurrent ? "text-primary font-bold" : isCompleted ? "text-foreground" : "text-muted-foreground/50"}`}>
-                {milestone.label}
+              {i > 0 && (
+                <div className={`absolute top-[11px] right-0 w-1/2 h-0.5 ${i <= currentStage ? "bg-primary" : "bg-border"}`} />
+              )}
+              {/* Node */}
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 z-10 text-[10px] font-semibold border transition-all ${
+                  isDone
+                    ? "bg-primary/10 text-primary border-primary/20"
+                    : isActive
+                    ? "border-primary border-2 bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground border-transparent"
+                }`}
+              >
+                {isDone ? "✓" : <span dir="ltr" style={{ fontFamily: "system-ui" }}>{i + 1}</span>}
+              </div>
+              {/* Label */}
+              <span
+                className={`text-[9px] mt-1 leading-tight ${
+                  isActive ? "text-primary font-bold" : isDone ? "text-foreground font-medium" : "text-muted-foreground/50"
+                }`}
+              >
+                {stage.label}
               </span>
             </div>
           );
