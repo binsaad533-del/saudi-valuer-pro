@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import {
   FileText, Upload, HelpCircle, Clock, CreditCard,
-  MessageSquare, ClipboardCheck, BarChart3,
+  MessageSquare, ClipboardCheck, BarChart3, Sparkles, Download,
 } from "lucide-react";
 
 interface QuickAction {
@@ -9,6 +9,15 @@ interface QuickAction {
   icon: React.ReactNode;
   message: string;
 }
+
+// "ملخص طلبي" is available on every status
+const SUMMARY_ACTION: QuickAction = {
+  label: "ملخص طلبي", icon: <Sparkles className="w-3.5 h-3.5" />, message: "أعطني ملخصاً شاملاً لطلبي يتضمن: الحالة الحالية، المستندات المرفوعة، المدفوعات، الخطوة التالية، والمدة المتوقعة",
+};
+
+const EXPORT_ACTION: QuickAction = {
+  label: "تصدير المحادثة", icon: <Download className="w-3.5 h-3.5" />, message: "__export_chat__",
+};
 
 const STATUS_ACTIONS: Record<string, QuickAction[]> = {
   submitted: [
@@ -61,7 +70,6 @@ const STATUS_ACTIONS: Record<string, QuickAction[]> = {
   ],
 };
 
-// Default actions for any status not explicitly mapped
 const DEFAULT_ACTIONS: QuickAction[] = [
   { label: "حالة الطلب", icon: <Clock className="w-3.5 h-3.5" />, message: "ما هي حالة طلبي الحالية؟" },
   { label: "استفسار", icon: <HelpCircle className="w-3.5 h-3.5" />, message: "لدي استفسار عام" },
@@ -74,7 +82,8 @@ interface QuickActionButtonsProps {
 }
 
 export default function QuickActionButtons({ status, onAction, disabled }: QuickActionButtonsProps) {
-  const actions = STATUS_ACTIONS[status] || DEFAULT_ACTIONS;
+  const statusActions = STATUS_ACTIONS[status] || DEFAULT_ACTIONS;
+  const actions = [SUMMARY_ACTION, ...statusActions, EXPORT_ACTION];
 
   return (
     <div className="flex flex-wrap gap-1.5 px-1">
@@ -83,7 +92,10 @@ export default function QuickActionButtons({ status, onAction, disabled }: Quick
           key={i}
           variant="outline"
           size="sm"
-          className="text-[11px] h-7 px-2.5 gap-1.5 rounded-full border-primary/20 text-primary hover:bg-primary/5 hover:border-primary/40 transition-all"
+          className={`text-[11px] h-7 px-2.5 gap-1.5 rounded-full border-primary/20 hover:bg-primary/5 hover:border-primary/40 transition-all ${
+            action === SUMMARY_ACTION ? "text-primary font-bold bg-primary/5" : 
+            action === EXPORT_ACTION ? "text-muted-foreground" : "text-primary"
+          }`}
           onClick={() => onAction(action.message)}
           disabled={disabled}
         >
