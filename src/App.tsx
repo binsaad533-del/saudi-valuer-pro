@@ -51,6 +51,7 @@ import AuditLogPage from "@/pages/AuditLogPage";
 import CommercialDashboardPage from "@/pages/CommercialDashboardPage";
 import SystemMonitoringPage from "@/pages/SystemMonitoringPage";
 import SmartMarketingDashboard from "@/pages/admin/SmartMarketingDashboard";
+import RaqeemWatchdogPage from "@/pages/RaqeemWatchdogPage";
 
 import ClientAuth from "@/pages/client/ClientAuth";
 import ForgotPassword from "@/pages/client/ForgotPassword";
@@ -129,6 +130,7 @@ const App = () => (
             <Route path="/commercial" element={<CommercialDashboardPage />} />
             <Route path="/system-monitoring" element={<SystemMonitoringPage />} />
             <Route path="/smart-marketing" element={<SmartMarketingDashboard />} />
+            <Route path="/watchdog" element={<RaqeemWatchdogPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}

@@ -62,6 +62,7 @@ const ownerNavGroups: NavGroup[] = [
       { label: "الإشعارات", icon: Bell, path: "/notifications" },
       { label: "التدقيق", icon: Shield, path: "/audit-log" },
       { label: "المراقبة", icon: Activity, path: "/system-monitoring" },
+      { label: "الحارس الشامل", icon: Search, path: "/watchdog" },
     ],
   },
 ];
