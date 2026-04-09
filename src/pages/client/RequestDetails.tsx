@@ -581,7 +581,28 @@ export default function RequestDetails() {
                     </div>
                   );
                 })}
+                {/* Typing indicator */}
+                {aiTyping && <RaqeemTypingIndicator />}
                 <div ref={chatEndRef} />
+              </div>
+              {/* Persistent Quick Actions */}
+              <div className="px-4 py-2 border-t border-border/50">
+                <QuickActionButtons
+                  status={request.status}
+                  onAction={async (msg) => {
+                    if (!user) return;
+                    setSending(true);
+                    try {
+                      await supabase.from("request_messages" as any).insert({
+                        request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg,
+                      });
+                      callRaqeemAI(msg);
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                  disabled={sending || aiTyping}
+                />
               </div>
               <div className="p-4 border-t border-border bg-card/50">
                 <div className="flex gap-2">
