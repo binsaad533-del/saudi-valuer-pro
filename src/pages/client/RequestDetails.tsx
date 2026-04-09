@@ -162,6 +162,7 @@ export default function RequestDetails() {
   };
 
   const callRaqeemAI = async (clientMessage: string) => {
+    setAiTyping(true);
     try {
       const conversationHistory = messages.slice(-16).map(m => ({
         content: m.content,
@@ -204,6 +205,8 @@ export default function RequestDetails() {
     } catch (e) {
       console.error("Raqeem AI call error:", e);
       toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء تشغيل رقيم.", variant: "destructive" });
+    } finally {
+      setAiTyping(false);
     }
   };
 
