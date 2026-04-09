@@ -12,7 +12,10 @@ export type NotificationType =
   | "new_inspection_assigned" | "inspection_date_update"
   | "overdue_inspection" | "inspection_submission_confirmed"
   // Financial
-  | "new_payment" | "payment_received" | "overdue_payment" | "payment_mismatch";
+  | "new_payment" | "payment_received" | "overdue_payment" | "payment_mismatch"
+  // Smart (AI-generated proactive)
+  | "smart_stale_assignment" | "smart_owner_action_needed"
+  | "smart_overdue_payment" | "smart_overdue_inspection";
 
 export interface SendNotificationParams {
   userId: string;
