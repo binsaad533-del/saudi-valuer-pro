@@ -4022,6 +4022,87 @@ export type Database = {
           },
         ]
       }
+      raqeem_system_metrics: {
+        Row: {
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value: number | null
+          recorded_at: string
+          unit: string | null
+        }
+        Insert: {
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_type: string
+          metric_value?: number | null
+          recorded_at?: string
+          unit?: string | null
+        }
+        Update: {
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_type?: string
+          metric_value?: number | null
+          recorded_at?: string
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      raqeem_tech_findings: {
+        Row: {
+          auto_resolved: boolean | null
+          category: string
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          metadata: Json | null
+          recommendation: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          scan_type: string
+          severity: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          auto_resolved?: boolean | null
+          category: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          recommendation?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          scan_type?: string
+          severity?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          auto_resolved?: boolean | null
+          category?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          metadata?: Json | null
+          recommendation?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          scan_type?: string
+          severity?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       raqeem_test_sessions: {
         Row: {
           accuracy_score: number
