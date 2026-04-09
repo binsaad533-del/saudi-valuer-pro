@@ -488,6 +488,8 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     if (["draft", "submitted", "scope_generated"].includes(status || "")) {
       suggestedActions.push({ label: "❌ إلغاء الطلب", message: "أرغب في إلغاء طلب التقييم" });
     }
+
+    if (status === "submitted" || status === "under_pricing") {
       suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
       suggestedActions.push({ label: "📊 تقدير أولي", message: "هل يمكنك إعطائي تقدير أولي للقيمة؟" });
     } else if (status === "scope_generated") {
