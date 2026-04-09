@@ -80,7 +80,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -111,6 +111,18 @@ serve(async (req) => {
       generateFleetReport(db, ctx.assignment_id),
       analyzeBulkQC(db, ctx.assignment_id),
       generateFleetDashboard(db, ctx.assignment_id),
+      analyzePredictiveValuation(db, ctx.assignment_id),
+      analyzeDigitalTwin3D(db, ctx.assignment_id),
+      analyzeAIPeerReview(db, ctx.assignment_id),
+      analyzeVoiceFieldCapture(db, ctx.assignment_id),
+      analyzeImageFraud(db, ctx.assignment_id),
+      analyzeSmartPortal(db, ctx.assignment_id, request_id),
+      analyzeCompetitiveBenchmark(db, ctx.assignment_id, ctx.organization_id),
+      analyzeMultiCurrency(db, ctx.assignment_id),
+      analyzeInstitutionalMemory(db, ctx.assignment_id),
+      analyzePortfolioHealth(db, ctx.assignment_id),
+      analyzeERPIntegration(db, ctx.assignment_id),
+      analyzeBlockchainNotarization(db, ctx.assignment_id),
     ]);
 
     // ── Knowledge section ──
