@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
+import QuickActionButtons from "@/components/client/chat/QuickActionButtons";
+import ChatProgressBar from "@/components/client/chat/ChatProgressBar";
+import MessageRating from "@/components/client/chat/MessageRating";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -498,6 +501,11 @@ export default function RequestDetails() {
                 </CardTitle>
               </CardHeader>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Progress Bar */}
+                <div className="px-2 pb-2">
+                  <ChatProgressBar status={request.status} />
+                </div>
+
                 {/* Raqeem Welcome — always first */}
                 <div className="flex gap-2">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
@@ -512,6 +520,26 @@ export default function RequestDetails() {
                     </div>
                   </div>
                 </div>
+
+                {/* Quick Actions — after welcome, before messages */}
+                {messages.length === 0 && (
+                  <QuickActionButtons
+                    status={request.status}
+                    onAction={async (msg) => {
+                      if (!user) return;
+                      setSending(true);
+                      try {
+                        await supabase.from("request_messages" as any).insert({
+                          request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg,
+                        });
+                        callRaqeemAI(msg);
+                      } finally {
+                        setSending(false);
+                      }
+                    }}
+                    disabled={sending}
+                  />
+                )}
 
                 {messages.map((msg) => {
                   const isClient = msg.sender_type === "client";
@@ -538,9 +566,12 @@ export default function RequestDetails() {
                           </div>
                         )}
                         {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
-                        <p className={`text-[10px] mt-1 ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                          {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
-                        </p>
+                        <div className="flex items-center justify-between mt-1">
+                          <p className={`text-[10px] ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
+                            {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                          {isAI && <MessageRating messageId={msg.id} requestId={id!} />}
+                        </div>
                       </div>
                     </div>
                   );
