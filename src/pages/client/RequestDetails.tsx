@@ -87,7 +87,25 @@ export default function RequestDetails() {
     const channel = supabase
       .channel(`request-messages-${id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "request_messages", filter: `request_id=eq.${id}` },
-        (payload) => setMessages(prev => [...prev, payload.new]))
+        (payload) => {
+          const newMsg = payload.new as any;
+          setMessages(prev => {
+            // Deduplicate: skip if we already have this DB id OR same content from local-ai optimistic insert
+            const dominated = prev.some(m =>
+              m.id === newMsg.id ||
+              (m.id?.startsWith("local-ai-") && m.sender_type === newMsg.sender_type && m.content === newMsg.content)
+            );
+            if (dominated) {
+              // Replace the local-ai placeholder with the real DB record
+              return prev.map(m =>
+                m.id?.startsWith("local-ai-") && m.sender_type === newMsg.sender_type && m.content === newMsg.content
+                  ? newMsg
+                  : m
+              );
+            }
+            return [...prev, newMsg];
+          });
+        })
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id, navigate]);
