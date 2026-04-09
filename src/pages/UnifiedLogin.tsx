@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -151,6 +152,9 @@ export default function UnifiedLogin() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <RaqeemAnimatedLogo size={96} />
+          </div>
           <img src={logo} alt="جساس" className="w-28 h-auto mx-auto mb-4 object-contain" />
           <h1 className="text-2xl font-extralight text-foreground">جساس للتقييم .. نصنع للأصل قيمة</h1>
         </div>
