@@ -116,7 +116,8 @@ export default function RequestDetails() {
     return () => { supabase.removeChannel(channel); };
   }, [id, navigate]);
 
-  // Real-time assignment status updates — inject system message into chat
+  // Real-time assignment status updates — inject system message + send email
+  const NOTIFIABLE_STATUSES = ["scope_generated", "first_payment_confirmed", "data_collection_open", "inspection_pending", "draft_report_ready", "issued"];
   useRealtimeAssignment(request?.assignment_id, async (newStatus, oldStatus) => {
     const newLabel = getStatusLabel(newStatus);
     const oldLabel = getStatusLabel(oldStatus);
@@ -127,6 +128,22 @@ export default function RequestDetails() {
         request_id: id, sender_type: "system" as any,
         content: `🔄 تم تحديث حالة الطلب: **${oldLabel}** ← **${newLabel}**`,
       });
+    }
+    // Send email notification for key status changes
+    if (NOTIFIABLE_STATUSES.includes(newStatus) && user?.email) {
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "status-update",
+          recipientEmail: user.email,
+          idempotencyKey: `status-${id}-${newStatus}`,
+          templateData: {
+            clientName: request?.client_name_ar || request?.ai_intake_summary?.client_name,
+            requestNumber: request?.reference_number,
+            newStatus,
+            portalUrl: `${window.location.origin}/client/request/${id}`,
+          },
+        },
+      }).catch(e => console.error("Email notification error:", e));
     }
     loadData();
   });
