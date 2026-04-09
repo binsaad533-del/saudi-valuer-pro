@@ -280,6 +280,132 @@ const TOOLS = [
       }
     }
   },
+  // ═══════════════════════════════════════════════════
+  // ADVANCED EXECUTIVE ACTIONS — Phase 2
+  // ═══════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "create_valuation_request",
+      description: "إنشاء طلب تقييم جديد من الدردشة. يحتاج اسم العميل ونوع الأصل على الأقل.",
+      parameters: {
+        type: "object",
+        properties: {
+          client_name: { type: "string", description: "اسم العميل بالعربي" },
+          client_phone: { type: "string", description: "رقم جوال العميل" },
+          client_email: { type: "string", description: "بريد العميل" },
+          property_type: { type: "string", enum: ["residential", "commercial", "land", "industrial", "mixed", "agricultural"], description: "نوع العقار" },
+          valuation_type: { type: "string", enum: ["real_estate", "machinery", "mixed"], description: "نوع التقييم" },
+          purpose: { type: "string", description: "الغرض من التقييم" },
+          city: { type: "string", description: "المدينة" },
+          district: { type: "string", description: "الحي" },
+          description: { type: "string", description: "وصف مختصر" },
+          valuation_mode: { type: "string", enum: ["field", "desktop_with_photos", "desktop_without_photos"], description: "مسار التقييم" }
+        },
+        required: ["client_name", "property_type"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "generate_invoice",
+      description: "إصدار فاتورة لطلب تقييم (دفعة أولى أو نهائية).",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم" },
+          invoice_type: { type: "string", enum: ["first", "final"], description: "نوع الفاتورة" }
+        },
+        required: ["assignment_id", "invoice_type"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "search_assignments",
+      description: "بحث شامل في طلبات التقييم بمعايير متعددة.",
+      parameters: {
+        type: "object",
+        properties: {
+          status: { type: "string", description: "فلترة بالحالة" },
+          city: { type: "string", description: "فلترة بالمدينة" },
+          client_name: { type: "string", description: "بحث باسم العميل" },
+          property_type: { type: "string", description: "نوع العقار" },
+          reference_number: { type: "string", description: "الرقم المرجعي" },
+          date_from: { type: "string", description: "من تاريخ (YYYY-MM-DD)" },
+          date_to: { type: "string", description: "إلى تاريخ (YYYY-MM-DD)" },
+          limit: { type: "number", description: "عدد النتائج" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "reassign_inspector",
+      description: "نقل مهمة معاينة من معاين لآخر.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          new_inspector_user_id: { type: "string", description: "معرّف المعاين الجديد" },
+          reason: { type: "string", description: "سبب النقل" }
+        },
+        required: ["assignment_id", "new_inspector_user_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_notification",
+      description: "إرسال إشعار مخصص لمستخدم.",
+      parameters: {
+        type: "object",
+        properties: {
+          user_id: { type: "string", description: "معرّف المستخدم" },
+          title: { type: "string", description: "عنوان الإشعار" },
+          body: { type: "string", description: "نص الإشعار" },
+          category: { type: "string", enum: ["general", "payment", "inspection", "report", "urgent"], description: "التصنيف" },
+          priority: { type: "string", enum: ["low", "normal", "high", "critical"], description: "الأولوية" },
+          assignment_id: { type: "string", description: "ربط بمهمة (اختياري)" }
+        },
+        required: ["user_id", "title", "body"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_client_summary",
+      description: "ملخص شامل عن عميل: طلباته، مدفوعاته، تاريخه.",
+      parameters: {
+        type: "object",
+        properties: {
+          client_name: { type: "string", description: "اسم العميل للبحث" },
+          client_id: { type: "string", description: "معرّف العميل" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "bulk_status_update",
+      description: "تحديث حالة عدة طلبات دفعة واحدة.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_ids: { type: "array", items: { type: "string" }, description: "قائمة معرّفات المهام" },
+          new_status: { type: "string", description: "الحالة الجديدة" },
+          reason: { type: "string", description: "سبب التحديث الجماعي" }
+        },
+        required: ["assignment_ids", "new_status"]
+      }
+    }
+  },
 ];
 
 async function buildContextualPrompt(supabaseClient: any): Promise<string> {
