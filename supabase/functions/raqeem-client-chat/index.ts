@@ -536,6 +536,44 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         progress: fleetDashboard.progress.progressPercent,
         exportReady: fleetDashboard.exportReady,
       } : null,
+      predictiveValuationData: predictiveValuation.predictions.length > 0 ? {
+        marketTrend: predictiveValuation.marketTrend,
+        predictions: predictiveValuation.predictions,
+        macroFactors: predictiveValuation.macroFactors,
+      } : null,
+      peerReview: aiPeerReview.findings.length > 0 ? {
+        score: aiPeerReview.overallScore,
+        issuanceReady: aiPeerReview.issuanceReady,
+        findings: aiPeerReview.findings.length,
+        summary: aiPeerReview.reviewSummary,
+      } : null,
+      imageFraudData: imageFraud.totalPhotos > 0 ? {
+        totalPhotos: imageFraud.totalPhotos,
+        flagged: imageFraud.flaggedPhotos,
+        trustScore: imageFraud.overallTrustScore,
+      } : null,
+      clientPortal: smartPortal.milestones.length > 0 ? {
+        progress: smartPortal.overallProgress,
+        daysRemaining: smartPortal.daysRemaining,
+        notifications: smartPortal.notifications,
+        satisfaction: smartPortal.satisfaction,
+      } : null,
+      institutionalMemoryData: institutionalMemory.totalPastValuations > 0 ? {
+        pastValuations: institutionalMemory.totalPastValuations,
+        clientTier: institutionalMemory.clientTier,
+        avgValue: institutionalMemory.avgValuationValue,
+      } : null,
+      portfolioHealthData: portfolioHealth.assets.length > 0 ? {
+        healthScore: portfolioHealth.healthScore,
+        totalValue: portfolioHealth.totalPortfolioValue,
+        staleAssets: portfolioHealth.staleAssets,
+        revaluationNeeded: portfolioHealth.revaluationNeeded,
+      } : null,
+      blockchainData: blockchainSeal.seal ? {
+        hash: blockchainSeal.seal.reportHash,
+        chainRef: blockchainSeal.seal.chainReference,
+        tamperProof: blockchainSeal.tamperProof,
+      } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
