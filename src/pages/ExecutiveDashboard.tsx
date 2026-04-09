@@ -17,7 +17,7 @@ import CommandPalette from "@/components/dashboard/CommandPalette";
 import { normalizeStatus, STATUS_LABELS, PIPELINE_PHASES } from "@/lib/workflow-engine";
 import {
   ArrowLeft, Send, MessageSquare, Loader2,
-  User, Bot, Building2, Brain, Shield,
+  User, Bot, Building2, Shield,
   AlertTriangle, ChevronLeft,
 } from "lucide-react";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
