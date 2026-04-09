@@ -4,6 +4,7 @@ import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTrack
 import QuickActionButtons from "@/components/client/chat/QuickActionButtons";
 import ChatProgressBar from "@/components/client/chat/ChatProgressBar";
 import MessageRating from "@/components/client/chat/MessageRating";
+import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicator";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
