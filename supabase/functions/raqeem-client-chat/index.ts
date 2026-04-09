@@ -56,6 +56,7 @@ import { analyzeLoyaltyOffers } from "./_shared/loyalty-engine.ts";
 import { analyzeBehaviorIntelligence } from "./_shared/behavior-intelligence.ts";
 import { analyzeOccasionMessages } from "./_shared/occasion-messages.ts";
 import { analyzeEngagementAnalytics } from "./_shared/engagement-analytics.ts";
+import { getTurnaroundDays, getValuationModeLabel, isDesktopMode } from "./_shared/valuation-mode.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -83,6 +84,7 @@ serve(async (req) => {
     const db = createClient(supabaseUrl, serviceKey);
 
     const ctx = requestContext || {};
+    const isDesktop = isDesktopMode(ctx.valuation_mode);
 
     // ── Parallel data loading ──
     const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal, seasonalReminders, loyaltyOffers, behaviorIntel, occasionMessages, engagementAnalytics] = await Promise.all([
@@ -200,7 +202,7 @@ serve(async (req) => {
     if (ctx.property_type) requestSection += `- نوع الأصل: ${ctx.property_type}\n`;
     if (ctx.property_city) requestSection += `- المدينة: ${ctx.property_city}\n`;
     if (ctx.property_description) requestSection += `- الوصف: ${ctx.property_description}\n`;
-    if (ctx.valuation_mode) requestSection += `- نوع التقييم: ${ctx.valuation_mode === "desktop" ? "مكتبي" : ctx.valuation_mode === "field" ? "ميداني" : ctx.valuation_mode}\n`;
+    if (ctx.valuation_mode) requestSection += `- نوع التقييم: ${getValuationModeLabel(ctx.valuation_mode)}\n`;
     if (ctx.total_fees) requestSection += `- إجمالي الرسوم: ${ctx.total_fees} ر.س\n`;
     if (ctx.amount_paid) requestSection += `- المبلغ المدفوع: ${ctx.amount_paid} ر.س\n`;
     if (ctx.payment_status) requestSection += `- حالة الدفع: ${ctx.payment_status}\n`;
@@ -213,7 +215,7 @@ serve(async (req) => {
     let deadlineAlert = "";
     if (ctx.created_at) {
       const createdDate = new Date(ctx.created_at);
-      const deliveryDays = ctx.valuation_mode === "desktop" ? 5 : 10;
+      const deliveryDays = getTurnaroundDays(ctx.valuation_mode);
       const estimatedDelivery = new Date(createdDate.getTime() + deliveryDays * 86400000);
       const remaining = Math.max(0, Math.ceil((estimatedDelivery.getTime() - Date.now()) / 86400000));
       requestSection += `- التسليم المتوقع: ${estimatedDelivery.toLocaleDateString("ar-SA")} (${remaining > 0 ? `متبقي ${remaining} يوم` : "حان موعد التسليم"})\n`;
@@ -246,6 +248,12 @@ serve(async (req) => {
       archived: "الطلب مؤرشف. التقرير محفوظ لمدة 10 سنوات.",
       cancelled: "الطلب ملغي.",
     };
+
+    if (isDesktop) {
+      statusGuidance.data_collection_complete = "تم استكمال الملف المكتبي وجارٍ التحقق من البيانات قبل التحليل مباشرة دون معاينة ميدانية.";
+      statusGuidance.inspection_pending = "هذا الطلب مكتبي ولا يتطلب معاينة ميدانية. أخبر العميل أن العمل انتقل مباشرة إلى التحليل والمراجعة المكتبية.";
+      statusGuidance.inspection_completed = "هذا الطلب مكتبي، لذا لا توجد معاينة فعلية مطلوبة. اشرح أن التحليل المكتبي جارٍ وفق المستندات والصور المرفوعة.";
+    }
 
     if (ctx.status && statusGuidance[ctx.status]) {
       requestSection += `\n### توجيه الحالة الحالية:\n${statusGuidance[ctx.status]}\n`;
@@ -337,6 +345,9 @@ serve(async (req) => {
 14. **قدّم تقديرات ذكية**: عند توفر بيانات، قدم تنبؤات المدة والقيمة مع التنويه أنها أولية
 15. **راقب الامتثال**: عند سؤال العميل عن الجاهزية، قدم نسبة اكتمال الفحوصات
 16. **وضّح الحقوق**: عند سؤال العميل عن حقوقه أو إجراءاته، أجب بناءً على أنظمة تقييم و IVS
+
+## قواعد مسار الطلب الحالية
+${isDesktop ? "- هذا الطلب مكتبي: ممنوع ذكر معاينة ميدانية أو معاين أو إحالة الأصول للمعاين.\n- اربط كل إجابة بالمراجعة المكتبية، المستندات، الصور، التحليل، والمراجعة المهنية فقط." : "- هذا الطلب ميداني: يمكن ذكر المعاينة الميدانية فقط إذا كانت مرتبطة بالحالة الحالية فعلاً."}
 
 ## قواعد الاستبعاد المهنية
 - أصول غير ملموسة → IVS 210
@@ -448,8 +459,13 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       suggestedActions.push({ label: "📎 ملفات ناقصة", message: "هل هناك ملفات ناقصة في طلبي؟" });
       suggestedActions.push({ label: "📊 نسبة الاكتمال", message: "كم نسبة اكتمال ملف طلبي؟" });
     } else if (status === "inspection_pending" || status === "inspection_completed") {
-      suggestedActions.push({ label: "🔎 تفاصيل المعاينة", message: "ما تفاصيل المعاينة الميدانية؟" });
-      suggestedActions.push({ label: "⚠️ المخاطر", message: "هل هناك مخاطر متوقعة في هذا التقييم؟" });
+      if (isDesktop) {
+        suggestedActions.push({ label: "📋 حالة التحليل", message: "ما وضع التحليل الحالي في طلبي المكتبي؟" });
+        suggestedActions.push({ label: "⚠️ المخاطر", message: "هل توجد مخاطر أو نواقص قد تؤثر على التقييم المكتبي؟" });
+      } else {
+        suggestedActions.push({ label: "🔎 تفاصيل المعاينة", message: "ما تفاصيل المعاينة الميدانية؟" });
+        suggestedActions.push({ label: "⚠️ المخاطر", message: "هل هناك مخاطر متوقعة في هذا التقييم؟" });
+      }
     } else if (status === "professional_review" || status === "analysis_complete") {
       suggestedActions.push({ label: "📋 حالة الامتثال", message: "ما حالة فحوصات الامتثال لطلبي؟" });
       suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });

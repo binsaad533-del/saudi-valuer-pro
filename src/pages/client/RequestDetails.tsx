@@ -32,6 +32,7 @@ import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { STATUS_LABELS as WF_STATUS_LABELS } from "@/lib/workflow-engine";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
 import StatusGuidanceCard from "@/components/client/StatusGuidanceCard";
+import { getTurnaroundDays, getValuationModeLabel, isDesktopValuationMode } from "@/lib/valuation-mode";
 
 // Aligned with the 19-status workflow engine
 const STATUS_ORDER = [
@@ -161,6 +162,7 @@ export default function RequestDetails() {
 
   const buildRequestContext = () => {
     if (!request) return {};
+    const valuationMode = request.inspection_type || request.ai_intake_summary?.valuation_mode || "field";
     const inv = request.asset_data?.inventory as any[] | undefined;
     const assetCount = inv?.length || 0;
     const assetSummary = inv ? (() => {
@@ -177,7 +179,7 @@ export default function RequestDetails() {
       property_type: request.property_type_ar || request.ai_intake_summary?.property_type,
       property_city: request.property_city_ar,
       property_description: request.property_description_ar,
-      valuation_mode: request.ai_intake_summary?.valuation_mode,
+      valuation_mode: valuationMode,
       total_fees: request.total_fees,
       amount_paid: request.amount_paid,
       payment_status: request.payment_status,
@@ -415,16 +417,22 @@ export default function RequestDetails() {
     const clientName = req?.client_name_ar || req?.ai_intake_summary?.client_name || "";
     const greeting = clientName ? `أهلاً ${clientName}` : "أهلاً بك";
     const refNum = req?.reference_number || "";
+    const valuationMode = req?.inspection_type || req?.ai_intake_summary?.valuation_mode || "field";
+    const isDesktop = isDesktopValuationMode(valuationMode);
 
     const statusMessages: Record<string, string> = {
-      submitted: `${greeting} 👋\n\nأنا **رقيم – مساعدك الذكي** لمتابعة طلب التقييم${refNum ? ` رقم **${refNum}**` : ""}.\n\nطلبك قيد المراجعة الآن، وسأُبلغك فور جاهزية نطاق العمل وعرض السعر.\n\nيمكنك سؤالي عن أي شيء أو إرفاق مستندات إضافية.`,
+      submitted: `${greeting} 👋\n\nأنا **رقيم – مساعدك الذكي** لمتابعة طلب التقييم${refNum ? ` رقم **${refNum}**` : ""}.\n\nطلبك قيد المراجعة الآن، وسأُبلغك فور جاهزية نطاق العمل وعرض السعر.${isDesktop ? "\n\nهذا الطلب مكتبي ولن يتضمن معاينة ميدانية." : ""}\n\nيمكنك سؤالي عن أي شيء أو إرفاق مستندات إضافية.`,
       under_pricing: `${greeting}\n\nطلبك بانتظار **إعداد عرض السعر** من فريق التسعير. سأُبلغك فور جاهزيته.\n\nإذا كان لديك أي استفسار، أنا هنا.`,
       scope_generated: `${greeting}\n\nتم إعداد **نطاق العمل وعرض السعر**.\n\nيرجى مراجعة التفاصيل في اللوحة الجانبية والموافقة عليها للمتابعة.`,
-      scope_approved: `${greeting}\n\nتم اعتماد نطاق العمل ✅\n\nالخطوة التالية: **سداد الدفعة الأولى** لبدء التنفيذ.`,
-      first_payment_confirmed: `${greeting}\n\nتم تأكيد الدفعة ✅ بدأنا العمل على طلبك.\n\nسأتابع التطورات وأُبلغك بكل جديد.`,
+      scope_approved: `${greeting}\n\nتم اعتماد نطاق العمل ✅\n\nالخطوة التالية: **سداد الدفعة الأولى** لبدء التنفيذ${isDesktop ? " المكتبي" : ""}.`,
+      first_payment_confirmed: `${greeting}\n\nتم تأكيد الدفعة ✅ بدأنا العمل على طلبك.${isDesktop ? "\n\nسيجري التقييم كمراجعة مكتبية دون معاينة ميدانية." : ""}\n\nسأتابع التطورات وأُبلغك بكل جديد.`,
       data_collection_open: `${greeting}\n\nنحتاج **بيانات ومستندات إضافية** لإتمام التقييم.\n\nيرجى رفع المطلوب من بوابة البيانات أو مباشرة هنا في المحادثة.`,
-      inspection_pending: `${greeting}\n\nتم جدولة **المعاينة الميدانية** وسيتم التنسيق معك قريباً.`,
-      inspection_completed: `${greeting}\n\nتمت المعاينة ✅ جارٍ التحليل وإعداد التقييم.`,
+      inspection_pending: isDesktop
+        ? `${greeting}\n\nطلبك **مكتبي** ولا يتطلب معاينة ميدانية.\n\nنعمل الآن على التحقق من الملف والانتقال للتحليل مباشرة.`
+        : `${greeting}\n\nتم جدولة **المعاينة الميدانية** وسيتم التنسيق معك قريباً.`,
+      inspection_completed: isDesktop
+        ? `${greeting}\n\nالطلب في **مرحلة التحليل المكتبي** الآن، ولا توجد أي معاينة مطلوبة منك.\n\nجارٍ إعداد التقييم.`
+        : `${greeting}\n\nتمت المعاينة ✅ جارٍ التحليل وإعداد التقييم.`,
       draft_report_ready: `${greeting}\n\n**مسودة التقرير** جاهزة لمراجعتك 📋\n\nراجع الأقسام وأرسل أي ملاحظات هنا.`,
       client_review: `${greeting}\n\nالمسودة بانتظار مراجعتك.\n\nأرسل ملاحظاتك هنا وسأنقلها للمقيم المعتمد.`,
       draft_approved: `${greeting}\n\nتم اعتماد المسودة ✅\n\nلإصدار التقرير النهائي، يرجى **سداد الدفعة النهائية**.`,
@@ -454,6 +462,10 @@ export default function RequestDetails() {
   if (!request) {
     return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">الطلب غير موجود</p></div>;
   }
+
+  const requestValuationMode = request.inspection_type || request.ai_intake_summary?.valuation_mode || "field";
+  const hasUploadedPhotos = documents.some((doc) => doc.mime_type?.startsWith("image/"))
+    || request.ai_intake_summary?.files?.some((file: any) => file?.type?.startsWith?.("image/"));
 
   // Visibility flags aligned with 19-status workflow
   const needsPayment = ["scope_approved"].includes(request.status);
@@ -491,7 +503,7 @@ export default function RequestDetails() {
               </Badge>
               {request.ai_intake_summary?.valuation_mode && (
                 <Badge variant="outline" className="text-xs">
-                  {request.ai_intake_summary.valuation_mode === "desktop" ? "تقييم مكتبي" : "تقييم ميداني"}
+                  {getValuationModeLabel(requestValuationMode, hasUploadedPhotos)}
                 </Badge>
               )}
             </div>
@@ -502,14 +514,14 @@ export default function RequestDetails() {
       {/* ── Progress Timeline ── */}
       <div className="bg-card border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-          <EnhancedRequestTracker status={request.status} createdAt={request.created_at} valuationMode={request.ai_intake_summary?.valuation_mode || "field"} />
+          <EnhancedRequestTracker status={request.status} createdAt={request.created_at} valuationMode={requestValuationMode} />
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
 
         {/* ── Status Guidance ── */}
-        <StatusGuidanceCard status={request.status} valuationMode={request.ai_intake_summary?.valuation_mode} />
+        <StatusGuidanceCard status={request.status} valuationMode={requestValuationMode} />
 
         {/* ── Draft Report — Full-width professional workspace ── */}
         {showDraftReport && (
@@ -670,6 +682,7 @@ export default function RequestDetails() {
               <div className="px-4 py-2 border-t border-border/50">
                 <QuickActionButtons
                   status={request.status}
+                  valuationMode={requestValuationMode}
                   onAction={async (msg) => {
                     if (!user) return;
                     // Handle special export action
@@ -732,7 +745,7 @@ export default function RequestDetails() {
                 <div className="flex justify-between"><span className="text-muted-foreground text-xs">تاريخ الطلب:</span><span className="text-xs">{formatDate(request.created_at)}</span></div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground text-xs">التسليم المتوقع:</span>
-                  <span className="text-xs">{(() => { const d = new Date(request.created_at); d.setDate(d.getDate() + (request.ai_intake_summary?.valuation_mode === "desktop" ? 5 : 10)); return formatDate(d.toISOString()); })()}</span>
+                  <span className="text-xs">{(() => { const d = new Date(request.created_at); d.setDate(d.getDate() + getTurnaroundDays(requestValuationMode)); return formatDate(d.toISOString()); })()}</span>
                 </div>
               </CardContent>
             </Card>
@@ -868,8 +881,8 @@ export default function RequestDetails() {
             <DataPortalUploader
               requestId={id!}
               inspectionType={deriveInspectionType(
-                request.inspection_type || request.ai_intake_summary?.valuation_mode || "field",
-                (request.inspection_type === "desktop_with_photos") || undefined
+                requestValuationMode,
+                hasUploadedPhotos || undefined
               )}
               status={request.status}
               onUploadComplete={loadData}

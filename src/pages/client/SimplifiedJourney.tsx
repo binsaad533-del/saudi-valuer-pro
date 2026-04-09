@@ -18,6 +18,7 @@ import JourneyStartStep from "@/components/client/journey/JourneyStartStep";
 import JourneyUploadStep from "@/components/client/journey/JourneyUploadStep";
 import JourneyProcessingStep from "@/components/client/journey/JourneyProcessingStep";
 import JourneyCompleteStep from "@/components/client/journey/JourneyCompleteStep";
+import JourneyRaqeemGuide from "@/components/client/journey/JourneyRaqeemGuide";
 
 // ── Types ──
 interface UploadedFile {
@@ -625,6 +626,12 @@ export default function SimplifiedJourney() {
       />
 
       <div className={`mx-auto px-4 pb-10 ${step === "scope" ? "max-w-5xl" : "max-w-2xl"}`}>
+        <JourneyRaqeemGuide
+          step={step}
+          valuationMode={valuationMode}
+          fileCount={uploadedFiles.length}
+          processingProgress={processingProgress}
+        />
 
         {step === "start" && (
           <JourneyStartStep

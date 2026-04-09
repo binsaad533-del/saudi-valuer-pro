@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle, Clock, FileText, CreditCard, Eye, Shield, AlertCircle } from "lucide-react";
+import { isDesktopValuationMode } from "@/lib/valuation-mode";
 
 interface StatusGuidanceCardProps {
   status: string;
@@ -136,7 +137,32 @@ const STATUS_GUIDANCE: Record<string, { icon: any; title: string; description: s
 };
 
 export default function StatusGuidanceCard({ status, valuationMode }: StatusGuidanceCardProps) {
-  const guidance = STATUS_GUIDANCE[status];
+  const isDesktop = isDesktopValuationMode(valuationMode);
+  const desktopOverrides = {
+    data_collection_complete: {
+      icon: CheckCircle,
+      title: "اكتمل تجهيز الملف المكتبي",
+      description: "تم استلام البيانات المطلوبة لهذا الطلب المكتبي وجارٍ الانتقال للتحليل دون معاينة ميدانية.",
+      nextStep: "سيبدأ التحليل والمراجعة المهنية مباشرة وفق المستندات والصور المرفوعة.",
+      color: "text-success",
+    },
+    inspection_pending: {
+      icon: Eye,
+      title: "الطلب في مسار مكتبي",
+      description: "هذا الطلب لا يتطلب معاينة ميدانية، ويجري التعامل معه كمراجعة مكتبية وفق البيانات المرفوعة.",
+      nextStep: "لا يلزمك أي تنسيق معاينة — سننتقل مباشرة للتحليل ثم المسودة عند اكتمال المراجعة.",
+      color: "text-primary",
+    },
+    inspection_completed: {
+      icon: CheckCircle,
+      title: "التحليل المكتبي جارٍ",
+      description: "تم تجاوز أي خطوة ميدانية لهذا الطلب المكتبي، والعمل الآن على التحليل وإعداد التقييم.",
+      nextStep: "سنوافيك بالمسودة أو أي طلب بيانات إضافية عند الحاجة فقط.",
+      color: "text-success",
+    },
+  };
+
+  const guidance = (isDesktop && desktopOverrides[status as keyof typeof desktopOverrides]) || STATUS_GUIDANCE[status];
   if (!guidance) return null;
 
   const Icon = guidance.icon;

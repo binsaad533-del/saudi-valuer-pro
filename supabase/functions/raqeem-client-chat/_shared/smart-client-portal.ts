@@ -3,6 +3,8 @@
  * Interactive dashboard data for real-time progress with notifications and ETA
  */
 
+import { getTurnaroundDays, isDesktopMode } from "./valuation-mode.ts";
+
 interface MilestoneStatus {
   stage: string;
   label: string;
@@ -61,7 +63,7 @@ export async function analyzeSmartPortal(
     ];
 
     // Skip inspection stages for desktop mode
-    const stages = assignment.valuation_mode === "desktop"
+    const stages = isDesktopMode(assignment.valuation_mode)
       ? allStages.filter((s) => !["inspection_pending", "inspection_completed"].includes(s.stage))
       : allStages;
 
@@ -78,7 +80,7 @@ export async function analyzeSmartPortal(
 
     // ETA calculation
     const createdDate = new Date(assignment.created_at);
-    const deliveryDays = assignment.valuation_mode === "desktop" ? 5 : 10;
+    const deliveryDays = getTurnaroundDays(assignment.valuation_mode);
     const estimatedDelivery = new Date(createdDate.getTime() + deliveryDays * 86400000);
     const daysRemaining = Math.max(0, Math.ceil((estimatedDelivery.getTime() - Date.now()) / 86400000));
 

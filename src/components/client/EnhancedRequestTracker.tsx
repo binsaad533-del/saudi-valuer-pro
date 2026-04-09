@@ -1,4 +1,5 @@
 import { Progress } from "@/components/ui/progress";
+import { isDesktopValuationMode } from "@/lib/valuation-mode";
 
 const ALL_STAGES = [
   { key: "submitted", label: "تم التقديم", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح", durationDays: 1 },
@@ -39,15 +40,16 @@ interface EnhancedRequestTrackerProps {
   status: string;
   createdAt?: string;
   compact?: boolean;
-  valuationMode?: "field" | "desktop";
+  valuationMode?: string;
 }
 
 export function EnhancedRequestTracker({ status, createdAt, compact = false, valuationMode = "field" }: EnhancedRequestTrackerProps) {
-  const isDesktop = valuationMode === "desktop";
+  const isDesktop = isDesktopValuationMode(valuationMode);
   const stages = isDesktop ? ALL_STAGES.filter(s => !s.fieldOnly) : ALL_STAGES;
 
   const stageKey = STATUS_TO_STAGE_KEY[status] ?? "submitted";
-  const currentStage = Math.max(0, stages.findIndex(s => s.key === stageKey));
+  const effectiveStageKey = isDesktop && stageKey === "inspection" ? "drafting" : stageKey;
+  const currentStage = Math.max(0, stages.findIndex(s => s.key === effectiveStageKey));
   const isCancelled = status === "cancelled";
 
   if (isCancelled) {

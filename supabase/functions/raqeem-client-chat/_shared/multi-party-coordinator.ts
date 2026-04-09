@@ -3,6 +3,7 @@
  * إدارة محادثات متوازية وتصعيد ذكي وملخصات موحدة
  */
 import { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isDesktopMode } from "./valuation-mode.ts";
 
 export interface PartyStatus {
   role: string;
@@ -38,13 +39,14 @@ export async function analyzeMultiPartyStatus(
     // Load assignment with related data
     const { data: assignment } = await db
       .from("valuation_assignments")
-      .select("id, status, inspector_id, assigned_valuer_id, client_id, created_at, updated_at")
+      .select("id, status, valuation_mode, inspector_id, assigned_valuer_id, client_id, created_at, updated_at")
       .eq("id", assignmentId)
       .maybeSingle();
 
     if (!assignment) return empty;
 
     const parties: PartyStatus[] = [];
+    const isDesktop = isDesktopMode(assignment.valuation_mode);
 
     // 1. Client status
     if (assignment.client_id) {
@@ -69,7 +71,7 @@ export async function analyzeMultiPartyStatus(
     }
 
     // 2. Inspector status
-    if (assignment.inspector_id) {
+    if (assignment.inspector_id && !isDesktop) {
       const { data: inspection } = await db
         .from("inspections")
         .select("status, inspection_date, completed")
