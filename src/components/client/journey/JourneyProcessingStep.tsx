@@ -1,5 +1,6 @@
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 
 interface JourneyProcessingStepProps {
   processingStatus: string;
@@ -10,7 +11,7 @@ export default function JourneyProcessingStep({ processingStatus, processingProg
   return (
     <div className="mt-8 flex flex-col items-center justify-center py-16">
       <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-6">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <RaqeemAnimatedLogo size={48} />
       </div>
       <h3 className="text-lg font-bold text-foreground mb-2">جارٍ تجهيز طلبك</h3>
       <p className="text-sm text-muted-foreground mb-6 text-center max-w-sm">{processingStatus}</p>
