@@ -366,6 +366,25 @@ export default function RequestDetails() {
     }
   };
 
+  // ── Export chat as text file ──
+  const handleExportChat = () => {
+    const welcomeMsg = getRaqeemWelcome(request.status, request);
+    const lines = [`=== سجل محادثة رقيم ===`, `الرقم المرجعي: ${request.reference_number || "—"}`, `التاريخ: ${new Date().toLocaleDateString("ar-SA")}`, `الحالة: ${getStatusLabel(request.status)}`, `${"=".repeat(40)}`, "", `رقيم: ${welcomeMsg}`, ""];
+    for (const msg of messages) {
+      const time = new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+      const sender = msg.sender_type === "client" ? "العميل" : msg.sender_type === "ai" ? "رقيم" : "النظام";
+      lines.push(`[${time}] ${sender}: ${msg.content}`, "");
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `محادثة-رقيم-${request.reference_number || id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "تم تصدير المحادثة بنجاح" });
+  };
+
   // ── Raqeem proactive welcome message based on status ──
   const getRaqeemWelcome = (status: string, req: any): string => {
     const clientName = req?.client_name_ar || req?.ai_intake_summary?.client_name || "";
@@ -615,6 +634,11 @@ export default function RequestDetails() {
                   status={request.status}
                   onAction={async (msg) => {
                     if (!user) return;
+                    // Handle special export action
+                    if (msg === "__export_chat__") {
+                      handleExportChat();
+                      return;
+                    }
                     setSending(true);
                     try {
                       await supabase.from("request_messages" as any).insert({
