@@ -61,6 +61,7 @@ export default function RequestDetails() {
   const [sending, setSending] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
+  const [paymentType, setPaymentType] = useState("first");
   const [aiTyping, setAiTyping] = useState(false);
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
