@@ -34,10 +34,10 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`
 
 const ROLE_PROMPTS: Record<string, string[]> = {
   owner: [
-    "ما هي حالة الطلبات النشطة؟",
-    "اشرح لي منهجيات التقييم المعتمدة",
-    "ما هي متطلبات تقرير التقييم حسب تقييم؟",
-    "كيف أحسب معدل الرسملة؟",
+    "ما حالة الطلبات المتأخرة؟",
+    "أعطني تقرير أداء هذا الأسبوع",
+    "ما إيرادات هذا الشهر؟",
+    "ما مهام المعاينين اليوم؟",
   ],
   client: [
     "ما هي حالة طلبي الحالي؟",
@@ -54,6 +54,29 @@ const ROLE_PROMPTS: Record<string, string[]> = {
     "ما هي المدفوعات المعلقة؟",
     "عرض ملخص الإيرادات",
     "ما هي الفواتير المتأخرة؟",
+  ],
+};
+
+const ROLE_QUICK_ACTIONS: Record<string, { label: string; icon: string; message: string }[]> = {
+  owner: [
+    { label: "المتأخرات", icon: "⏰", message: "أعطني ملخص الطلبات والمدفوعات المتأخرة" },
+    { label: "الأداء", icon: "📊", message: "أعطني تقرير أداء هذا الأسبوع" },
+    { label: "الإيرادات", icon: "💰", message: "ما إجمالي إيرادات هذا الشهر؟" },
+    { label: "المعاينات", icon: "🔍", message: "ما مهام المعاينين المعلقة؟" },
+  ],
+  client: [
+    { label: "حالة طلبي", icon: "📋", message: "وين وصل طلبي؟" },
+    { label: "المستندات", icon: "📎", message: "هل هناك مستندات ناقصة؟" },
+    { label: "المدة", icon: "⏱️", message: "كم باقي على التسليم؟" },
+  ],
+  inspector: [
+    { label: "مهامي", icon: "📋", message: "ما المعاينات المطلوبة مني اليوم؟" },
+    { label: "رفع صور", icon: "📸", message: "أريد رفع صور المعاينة" },
+  ],
+  financial_manager: [
+    { label: "المتأخرات", icon: "⚠️", message: "ما الفواتير المتأخرة؟" },
+    { label: "الإيرادات", icon: "💰", message: "ملخص إيرادات هذا الشهر" },
+    { label: "تأكيد دفعة", icon: "✅", message: "أريد تأكيد استلام دفعة" },
   ],
 };
 
@@ -97,6 +120,7 @@ export default function RaqeemChatPage() {
     ? "owner" : (role || "client");
 
   const suggestedPrompts = ROLE_PROMPTS[effectiveRole] || ROLE_PROMPTS.client;
+  const quickActions = ROLE_QUICK_ACTIONS[effectiveRole] || ROLE_QUICK_ACTIONS.client;
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -338,14 +362,35 @@ export default function RaqeemChatPage() {
       <ScrollArea className="flex-1" ref={scrollRef}>
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
           {messages.length === 0 ? (
-            <div className="text-center py-16 space-y-6">
+            <div className="text-center py-12 space-y-6">
               <div className="flex items-center justify-center mx-auto">
                 <RaqeemAnimatedLogo size={128} />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا رقيم</h2>
-                <p className="text-sm text-muted-foreground">كيف يمكنني مساعدتك اليوم؟</p>
+                <p className="text-sm text-muted-foreground">
+                  {effectiveRole === "owner" ? "مساعدك التنفيذي — أدير لك العمليات مباشرة" :
+                   effectiveRole === "inspector" ? "مساعدك الميداني — أنسق معاك مهام المعاينة" :
+                   effectiveRole === "financial_manager" ? "مساعدك المالي — أتابع لك المدفوعات والإيرادات" :
+                   "كيف يمكنني مساعدتك اليوم؟"}
+                </p>
               </div>
+
+              {/* Quick Action Buttons */}
+              <div className="flex flex-wrap justify-center gap-2 max-w-lg mx-auto">
+                {quickActions.map((action) => (
+                  <button
+                    key={action.label}
+                    onClick={() => sendMessage(action.message)}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-medium text-primary transition-colors"
+                  >
+                    <span>{action.icon}</span>
+                    <span>{action.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Suggested Prompts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg mx-auto">
                 {suggestedPrompts.map((prompt) => (
                   <button

@@ -30,6 +30,8 @@ const BASE_SYSTEM_PROMPT = `أنت "رقيم" — مساعد ذكاء اصطنا
 
 ## قدرات التنسيق (الأدوات المتاحة)
 عندما يطلب المستخدم تنفيذ إجراء، استخدم الأداة المناسبة:
+
+### أدوات التقييم:
 - **generate_scope**: لتوليد نطاق العمل والتسعير لطلب تقييم
 - **run_valuation**: لتشغيل محرك التقييم وحساب القيمة
 - **generate_report**: لتوليد مسودة التقرير الكامل (11 قسم)
@@ -38,17 +40,29 @@ const BASE_SYSTEM_PROMPT = `أنت "رقيم" — مساعد ذكاء اصطنا
 - **translate_report**: لترجمة التقرير بين العربية والإنجليزية
 - **check_consistency**: لفحص تطابق النسختين العربية والإنجليزية
 
+### أدوات تنفيذية (صلاحيات المالك):
+- **change_assignment_status**: لتغيير حالة الطلب (مثلاً: "حوّل الطلب لمرحلة المراجعة")
+- **assign_inspector**: لتعيين معاين لطلب (مثلاً: "عيّن معاين للطلب الجديد في الرياض")
+- **get_performance_report**: تقرير أداء فوري (مثلاً: "أعطني أداء هذا الأسبوع")
+- **get_overdue_summary**: ملخص المتأخرات (مثلاً: "ما الطلبات المتأخرة؟")
+- **confirm_payment**: تأكيد استلام دفعة (مثلاً: "أكد دفعة الطلب VAL-2025-041")
+- **get_revenue_summary**: ملخص الإيرادات (مثلاً: "كم إيرادات هذا الشهر؟")
+- **get_inspector_tasks**: عرض مهام المعاينين (مثلاً: "ما مهام المعاينين اليوم؟")
+
 ### قواعد استخدام الأدوات:
 1. لا تستخدم أداة إلا إذا طلب المستخدم ذلك بوضوح
 2. اسأل عن رقم الطلب (request_id) أو المهمة (assignment_id) إذا لم يُذكر
 3. بعد تنفيذ الأداة، اعرض النتائج بشكل مهني ومنظم
 4. لا تعتمد أي شيء تلقائياً — اعرض النتائج وانتظر قرار المقيّم
+5. للأوامر التنفيذية (تغيير حالة، تأكيد دفع): تأكد من المستخدم قبل التنفيذ
 
 ## دورك
 - الإجابة على أسئلة التقييم وفقاً للمعايير والقواعد المعرّفة.
 - تنسيق الأنظمة الداخلية عند الطلب.
 - تحليل الوثائق المرفوعة واستخراج المعلومات الرئيسية.
 - تقديم توصيات مهنية بناءً على المعرفة المتاحة.
+- **تنفيذ إجراءات إدارية** بطلب المالك: تغيير حالة، تعيين معاين، تأكيد دفع.
+- **إعداد تقارير فورية** عن الأداء والمتأخرات والإيرادات.
 - أنت مساعد وليس مقيّماً — لا تُصدر أحكام تقييمية نهائية.
 - الإجابة باللغة العربية بشكل افتراضي.`;
 
@@ -58,15 +72,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "generate_scope",
-      description: "توليد نطاق العمل والتسعير لطلب تقييم محدد. يحلل المستندات ويحدد المنهجية والتسعير.",
+      description: "توليد نطاق العمل والتسعير لطلب تقييم محدد.",
       parameters: {
         type: "object",
-        properties: {
-          request_id: {
-            type: "string",
-            description: "معرّف طلب التقييم (UUID)"
-          }
-        },
+        properties: { request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" } },
         required: ["request_id"]
       }
     }
@@ -75,19 +84,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "run_valuation",
-      description: "تشغيل محرك التقييم لحساب القيمة باستخدام المناهج الثلاث (سوقي، دخل، تكلفة) لمهمة تقييم محددة.",
+      description: "تشغيل محرك التقييم لحساب القيمة.",
       parameters: {
         type: "object",
         properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          },
-          step: {
-            type: "string",
-            enum: ["full", "normalize", "market_data", "hbu", "approaches", "adjustments", "reconcile", "report"],
-            description: "الخطوة المطلوبة — 'full' لتشغيل كل الخطوات"
-          }
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          step: { type: "string", enum: ["full", "normalize", "market_data", "hbu", "approaches", "adjustments", "reconcile", "report"], description: "الخطوة المطلوبة" }
         },
         required: ["assignment_id"]
       }
@@ -97,15 +99,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "generate_report",
-      description: "توليد مسودة التقرير الكامل (11 قسم) لمهمة تقييم محددة. يجمع البيانات من 14 جدولاً ويُنتج تقريراً متوافقاً مع IVS 2025.",
+      description: "توليد مسودة التقرير الكامل (11 قسم) لمهمة تقييم.",
       parameters: {
         type: "object",
-        properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          }
-        },
+        properties: { assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" } },
         required: ["assignment_id"]
       }
     }
@@ -114,15 +111,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "check_compliance",
-      description: "فحص امتثال التقرير للمعايير الدولية (IVS 2025) ومعايير تقييم السعودية. يتحقق من اكتمال الأقسام والبيانات الإلزامية.",
+      description: "فحص امتثال التقرير للمعايير.",
       parameters: {
         type: "object",
-        properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          }
-        },
+        properties: { assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" } },
         required: ["assignment_id"]
       }
     }
@@ -131,15 +123,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "extract_documents",
-      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم (صكوك، رخص بناء، عقود إيجار). يحلل الملفات ويستخرج المعلومات الرئيسية.",
+      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم.",
       parameters: {
         type: "object",
-        properties: {
-          request_id: {
-            type: "string",
-            description: "معرّف طلب التقييم (UUID)"
-          }
-        },
+        properties: { request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" } },
         required: ["request_id"]
       }
     }
@@ -148,19 +135,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "translate_report",
-      description: "ترجمة أقسام التقرير بين العربية والإنجليزية باستخدام مصطلحات التقييم المعتمدة (IVS/TAQEEM).",
+      description: "ترجمة أقسام التقرير بين العربية والإنجليزية.",
       parameters: {
         type: "object",
         properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          },
-          target_lang: {
-            type: "string",
-            enum: ["en", "ar"],
-            description: "اللغة المستهدفة — en للإنجليزية، ar للعربية"
-          }
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          target_lang: { type: "string", enum: ["en", "ar"], description: "اللغة المستهدفة" }
         },
         required: ["assignment_id", "target_lang"]
       }
@@ -170,19 +150,115 @@ const TOOLS = [
     type: "function",
     function: {
       name: "check_consistency",
-      description: "فحص تطابق النسختين العربية والإنجليزية من التقرير (القيم والاستنتاجات).",
+      description: "فحص تطابق النسختين العربية والإنجليزية من التقرير.",
+      parameters: {
+        type: "object",
+        properties: { assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" } },
+        required: ["assignment_id"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════
+  // EXECUTIVE ACTIONS — Owner/Appraiser Tools
+  // ═══════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "change_assignment_status",
+      description: "تغيير حالة طلب التقييم إلى مرحلة جديدة. يتبع مصفوفة الانتقالات المعتمدة.",
       parameters: {
         type: "object",
         properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          }
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          new_status: { type: "string", description: "الحالة الجديدة المراد الانتقال إليها" },
+          reason: { type: "string", description: "سبب تغيير الحالة" }
+        },
+        required: ["assignment_id", "new_status"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assign_inspector",
+      description: "تعيين معاين لمهمة تقييم. يختار الأنسب بناءً على الموقع والتوفر.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          inspector_user_id: { type: "string", description: "معرّف المعاين (UUID) — اختياري، إذا لم يُحدد يختار النظام الأنسب" },
+          city: { type: "string", description: "مدينة المعاينة للمساعدة في الاختيار" }
         },
         required: ["assignment_id"]
       }
     }
-  }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_performance_report",
+      description: "تقرير أداء شامل عن العمليات والفريق لفترة محددة.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: { type: "string", enum: ["today", "week", "month", "quarter"], description: "الفترة الزمنية" }
+        },
+        required: ["period"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_overdue_summary",
+      description: "ملخص الطلبات والمدفوعات المتأخرة.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "confirm_payment",
+      description: "تأكيد استلام دفعة لطلب تقييم.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          payment_stage: { type: "string", enum: ["first", "final"], description: "نوع الدفعة: أولى أو نهائية" },
+          amount: { type: "number", description: "المبلغ المدفوع" }
+        },
+        required: ["assignment_id", "payment_stage"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_revenue_summary",
+      description: "ملخص الإيرادات والتحصيل لفترة محددة.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: { type: "string", enum: ["today", "week", "month", "quarter", "year"], description: "الفترة الزمنية" }
+        },
+        required: ["period"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_inspector_tasks",
+      description: "عرض المهام المسندة لمعاين محدد أو كل المعاينين.",
+      parameters: {
+        type: "object",
+        properties: {
+          inspector_user_id: { type: "string", description: "معرّف المعاين — اختياري لعرض الكل" },
+          status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر الحالة" }
+        }
+      }
+    }
+  },
 ];
 
 async function buildContextualPrompt(supabaseClient: any): Promise<string> {
@@ -360,6 +436,188 @@ async function executeTool(
         arabic_value: arReport?.final_value,
         english_value: enReport?.final_value,
       });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // EXECUTIVE ACTIONS
+    // ═══════════════════════════════════════════════════
+    if (toolName === "change_assignment_status") {
+      const { data: result, error } = await db.rpc("update_request_status", {
+        _assignment_id: args.assignment_id,
+        _new_status: args.new_status,
+        _user_id: null,
+        _action_type: "normal",
+        _reason: args.reason || "تغيير عبر رقيم بطلب المالك",
+      });
+      if (error) return { success: false, result: null, error: error.message };
+      return { success: result?.success ?? false, result, error: result?.error };
+    }
+
+    if (toolName === "assign_inspector") {
+      // Find best inspector
+      let inspectorId = args.inspector_user_id;
+      if (!inspectorId) {
+        const query = db.from("inspector_profiles")
+          .select("user_id, availability_status, current_workload, cities_ar, avg_rating")
+          .eq("is_active", true)
+          .eq("availability_status", "available")
+          .order("current_workload", { ascending: true })
+          .order("avg_rating", { ascending: false })
+          .limit(5);
+        
+        const { data: inspectors } = await query;
+        if (!inspectors?.length) return { success: false, result: null, error: "لا يوجد معاينون متاحون حالياً" };
+        
+        // Filter by city if provided
+        if (args.city) {
+          const cityMatch = inspectors.find((i: any) => i.cities_ar?.some((c: string) => c.includes(args.city)));
+          inspectorId = cityMatch?.user_id || inspectors[0].user_id;
+        } else {
+          inspectorId = inspectors[0].user_id;
+        }
+      }
+
+      // Get inspector name
+      const { data: profile } = await db.from("profiles").select("full_name_ar").eq("user_id", inspectorId).single();
+
+      // Create inspection record
+      const { error: inspError } = await db.from("inspections").insert({
+        assignment_id: args.assignment_id,
+        inspector_id: inspectorId,
+        inspection_date: new Date().toISOString().split("T")[0],
+        status: "scheduled",
+      });
+      if (inspError) return { success: false, result: null, error: inspError.message };
+
+      // Update assignment inspector
+      await db.from("valuation_assignments").update({ inspector_id: inspectorId, updated_at: new Date().toISOString() }).eq("id", args.assignment_id);
+
+      return { success: true, result: { inspector_name: profile?.full_name_ar || "معاين", inspector_id: inspectorId, assignment_id: args.assignment_id } };
+    }
+
+    if (toolName === "get_performance_report") {
+      const periodMap: Record<string, number> = { today: 1, week: 7, month: 30, quarter: 90 };
+      const days = periodMap[args.period] || 7;
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+
+      const [assignmentsRes, paymentsRes, inspectionsRes] = await Promise.all([
+        db.from("valuation_assignments").select("id, status, created_at, updated_at").gte("created_at", since),
+        db.from("payments").select("amount, payment_status, created_at").gte("created_at", since),
+        db.from("inspections").select("id, status, completed").gte("created_at", since),
+      ]);
+
+      const assignments = assignmentsRes.data || [];
+      const payments = paymentsRes.data || [];
+      const inspections = inspectionsRes.data || [];
+
+      const statusCounts: Record<string, number> = {};
+      for (const a of assignments) { statusCounts[a.status] = (statusCounts[a.status] || 0) + 1; }
+
+      const totalRevenue = payments.filter((p: any) => p.payment_status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const completedInspections = inspections.filter((i: any) => i.completed || i.status === "completed").length;
+
+      return {
+        success: true,
+        result: {
+          period: args.period,
+          total_assignments: assignments.length,
+          status_breakdown: statusCounts,
+          total_revenue: totalRevenue,
+          total_inspections: inspections.length,
+          completed_inspections: completedInspections,
+          pending_payments: payments.filter((p: any) => p.payment_status === "pending").length,
+        }
+      };
+    }
+
+    if (toolName === "get_overdue_summary") {
+      const now = new Date();
+      const [staleRes, overduePayRes, overdueInspRes] = await Promise.all([
+        db.from("valuation_assignments").select("id, reference_number, status, updated_at").not("status", "in", "(issued,archived,cancelled,draft)").lt("updated_at", new Date(now.getTime() - 48 * 3600000).toISOString()).order("updated_at").limit(20),
+        db.from("invoices").select("id, invoice_number, total_amount, due_date").eq("payment_status", "pending").lt("due_date", now.toISOString()).limit(20),
+        db.from("inspections").select("id, assignment_id, inspection_date, status").in("status", ["scheduled", "pending"]).lt("inspection_date", now.toISOString().split("T")[0]).limit(20),
+      ]);
+
+      return {
+        success: true,
+        result: {
+          stale_assignments: (staleRes.data || []).map((a: any) => ({ ref: a.reference_number, status: a.status, days_stale: Math.floor((now.getTime() - new Date(a.updated_at).getTime()) / 86400000) })),
+          overdue_invoices: (overduePayRes.data || []).map((i: any) => ({ number: i.invoice_number, amount: i.total_amount, days_overdue: Math.floor((now.getTime() - new Date(i.due_date).getTime()) / 86400000) })),
+          overdue_inspections: (overdueInspRes.data || []).map((i: any) => ({ assignment_id: i.assignment_id, date: i.inspection_date })),
+        }
+      };
+    }
+
+    if (toolName === "confirm_payment") {
+      // Find request_id from assignment
+      const { data: req } = await db.from("valuation_requests").select("id").eq("assignment_id", args.assignment_id).single();
+      if (!req) return { success: false, result: null, error: "لم يتم العثور على الطلب المرتبط" };
+
+      const { error: payError } = await db.from("payments").insert({
+        request_id: req.id,
+        assignment_id: args.assignment_id,
+        amount: args.amount || 0,
+        payment_stage: args.payment_stage,
+        payment_status: "paid",
+        payment_type: "bank_transfer",
+        is_mock: false,
+      });
+      if (payError) return { success: false, result: null, error: payError.message };
+
+      return { success: true, result: { message: `تم تأكيد ${args.payment_stage === "first" ? "الدفعة الأولى" : "الدفعة النهائية"} بنجاح`, assignment_id: args.assignment_id } };
+    }
+
+    if (toolName === "get_revenue_summary") {
+      const periodMap: Record<string, number> = { today: 1, week: 7, month: 30, quarter: 90, year: 365 };
+      const days = periodMap[args.period] || 30;
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+
+      const { data: payments } = await db.from("payments").select("amount, payment_status, payment_stage, created_at").gte("created_at", since);
+      const paid = (payments || []).filter((p: any) => p.payment_status === "paid");
+      const pending = (payments || []).filter((p: any) => p.payment_status === "pending");
+
+      return {
+        success: true,
+        result: {
+          period: args.period,
+          total_collected: paid.reduce((s: number, p: any) => s + (p.amount || 0), 0),
+          pending_amount: pending.reduce((s: number, p: any) => s + (p.amount || 0), 0),
+          total_transactions: (payments || []).length,
+          paid_count: paid.length,
+          pending_count: pending.length,
+        }
+      };
+    }
+
+    if (toolName === "get_inspector_tasks") {
+      let query = db.from("inspections").select("id, assignment_id, inspector_id, inspection_date, status, completed, created_at");
+      if (args.inspector_user_id) query = query.eq("inspector_id", args.inspector_user_id);
+      if (args.status_filter === "pending") query = query.in("status", ["scheduled", "pending"]);
+      else if (args.status_filter === "completed") query = query.eq("status", "completed");
+      query = query.order("inspection_date", { ascending: false }).limit(30);
+
+      const { data: tasks } = await query;
+      
+      // Get reference numbers
+      const assignmentIds = [...new Set((tasks || []).map((t: any) => t.assignment_id))];
+      const { data: assignments } = assignmentIds.length > 0 
+        ? await db.from("valuation_assignments").select("id, reference_number").in("id", assignmentIds) 
+        : { data: [] };
+      const refMap: Record<string, string> = {};
+      for (const a of (assignments || [])) refMap[a.id] = a.reference_number;
+
+      return {
+        success: true,
+        result: {
+          total: (tasks || []).length,
+          tasks: (tasks || []).map((t: any) => ({
+            reference: refMap[t.assignment_id] || t.assignment_id,
+            date: t.inspection_date,
+            status: t.status,
+            completed: t.completed,
+          })),
+        }
+      };
     }
 
     return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
