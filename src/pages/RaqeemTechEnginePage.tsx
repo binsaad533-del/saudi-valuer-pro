@@ -133,10 +133,6 @@ export default function RaqeemTechEnginePage() {
             <p className="text-sm text-muted-foreground">15 قدرة ذكية — أمن سيبراني، أتمتة، أداء، تجارة</p>
           </div>
         </div>
-        <Button onClick={() => runAction("full_scan")} disabled={loading} className="gap-2">
-          {loading && activeAction === "full_scan" ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-          مسح شامل
-        </Button>
       </div>
 
       {/* Health Score Card */}
