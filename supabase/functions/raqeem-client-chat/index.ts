@@ -447,12 +447,12 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     if (reply.includes("[ACTION:CANCEL_REQUEST]")) {
       reply = reply.replace("[ACTION:CANCEL_REQUEST]", "").trim();
       const cancellableStatuses = ["draft", "submitted", "scope_generated"];
-      if (ctx.status && cancellableStatuses.includes(ctx.status) && ctx.assignment_id) {
+      if (ctx.status && cancellableStatuses.includes(ctx.status) && ctx.assignment_id && ctx.client_user_id) {
         try {
           const { data: cancelResult } = await db.rpc("update_request_status", {
             _assignment_id: ctx.assignment_id,
             _new_status: "cancelled",
-            _user_id: ctx.client_user_id || null,
+            _user_id: ctx.client_user_id,
             _action_type: "normal",
             _reason: "إلغاء بطلب العميل عبر رقيم",
           });
@@ -461,10 +461,10 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
             reply += "\n\n✅ **تم إلغاء طلبك بنجاح.** يمكنك تقديم طلب جديد في أي وقت.";
           } else {
             reply += "\n\n⚠️ تعذر إلغاء الطلب تلقائياً. يرجى التواصل مع الدعم على 920015029.";
-            console.error("Cancel RPC failed:", cancelResult);
+            console.error("Cancel RPC failed:", cancelResult, "ctx:", ctx);
           }
         } catch (cancelErr) {
-          console.error("Cancel execution error:", cancelErr);
+          console.error("Cancel execution error:", cancelErr, "ctx:", ctx);
           reply += "\n\n⚠️ حدث خطأ أثناء الإلغاء. يرجى التواصل مع الدعم على 920015029.";
         }
       }
