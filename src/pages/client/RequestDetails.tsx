@@ -526,25 +526,7 @@ export default function RequestDetails() {
                   </div>
                 </div>
 
-                {/* Quick Actions — after welcome, before messages */}
-                {messages.length === 0 && (
-                  <QuickActionButtons
-                    status={request.status}
-                    onAction={async (msg) => {
-                      if (!user) return;
-                      setSending(true);
-                      try {
-                        await supabase.from("request_messages" as any).insert({
-                          request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg,
-                        });
-                        callRaqeemAI(msg);
-                      } finally {
-                        setSending(false);
-                      }
-                    }}
-                    disabled={sending}
-                  />
-                )}
+
 
                 {messages.map((msg) => {
                   const isClient = msg.sender_type === "client";
