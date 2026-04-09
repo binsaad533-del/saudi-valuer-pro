@@ -439,8 +439,36 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     }
 
     const aiData = await aiResponse.json();
-    const reply = aiData.choices?.[0]?.message?.content ||
+    let reply = aiData.choices?.[0]?.message?.content ||
       "عذراً، لم أتمكن من معالجة سؤالك. يرجى إعادة صياغته أو التواصل معنا على 920015029.";
+
+    // ── Detect and execute cancellation action ──
+    let cancelExecuted = false;
+    if (reply.includes("[ACTION:CANCEL_REQUEST]")) {
+      reply = reply.replace("[ACTION:CANCEL_REQUEST]", "").trim();
+      const cancellableStatuses = ["draft", "submitted", "scope_generated"];
+      if (ctx.status && cancellableStatuses.includes(ctx.status) && ctx.assignment_id) {
+        try {
+          const { data: cancelResult } = await db.rpc("update_request_status", {
+            _assignment_id: ctx.assignment_id,
+            _new_status: "cancelled",
+            _user_id: ctx.client_user_id || null,
+            _action_type: "normal",
+            _reason: "إلغاء بطلب العميل عبر رقيم",
+          });
+          if (cancelResult?.success) {
+            cancelExecuted = true;
+            reply += "\n\n✅ **تم إلغاء طلبك بنجاح.** يمكنك تقديم طلب جديد في أي وقت.";
+          } else {
+            reply += "\n\n⚠️ تعذر إلغاء الطلب تلقائياً. يرجى التواصل مع الدعم على 920015029.";
+            console.error("Cancel RPC failed:", cancelResult);
+          }
+        } catch (cancelErr) {
+          console.error("Cancel execution error:", cancelErr);
+          reply += "\n\n⚠️ حدث خطأ أثناء الإلغاء. يرجى التواصل مع الدعم على 920015029.";
+        }
+      }
+    }
 
     // ── Update client memory (background, don't await) ──
     if (ctx.client_user_id) {
