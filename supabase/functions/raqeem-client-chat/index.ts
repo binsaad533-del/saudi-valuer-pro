@@ -86,6 +86,34 @@ serve(async (req) => {
     const ctx = requestContext || {};
     const isDesktop = isDesktopMode(ctx.valuation_mode);
 
+    // ── Fetch client name from profiles or auth ──
+    let clientDisplayName = ctx.client_name || "";
+    if (!clientDisplayName && ctx.client_user_id) {
+      try {
+        const { data: profile } = await db
+          .from("profiles")
+          .select("full_name")
+          .eq("id", ctx.client_user_id)
+          .maybeSingle();
+        if (profile?.full_name) {
+          clientDisplayName = profile.full_name;
+        } else {
+          const { data: { user: authUser } } = await db.auth.admin.getUserById(ctx.client_user_id);
+          clientDisplayName = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || "";
+        }
+      } catch (e) {
+        console.error("Failed to fetch client name:", e);
+      }
+    }
+
+    // ── Detect asset type from asset_summary when property_type is missing ──
+    let effectivePropertyType = ctx.property_type || null;
+    if (!effectivePropertyType && ctx.asset_summary) {
+      if (ctx.asset_summary.includes("machinery") || ctx.asset_summary.includes("equipment")) {
+        effectivePropertyType = "machinery_equipment";
+      }
+    }
+
     // ── Parallel data loading ──
     const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal, seasonalReminders, loyaltyOffers, behaviorIntel, occasionMessages, engagementAnalytics] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
