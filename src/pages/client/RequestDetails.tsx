@@ -4,6 +4,7 @@ import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTrack
 import QuickActionButtons from "@/components/client/chat/QuickActionButtons";
 import ChatProgressBar from "@/components/client/chat/ChatProgressBar";
 import MessageRating from "@/components/client/chat/MessageRating";
+import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicator";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,7 @@ export default function RequestDetails() {
   const [user, setUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
   const [paymentType, setPaymentType] = useState("first");
+  const [aiTyping, setAiTyping] = useState(false);
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const loadData = async () => {
@@ -160,6 +162,7 @@ export default function RequestDetails() {
   };
 
   const callRaqeemAI = async (clientMessage: string) => {
+    setAiTyping(true);
     try {
       const conversationHistory = messages.slice(-16).map(m => ({
         content: m.content,
@@ -202,6 +205,8 @@ export default function RequestDetails() {
     } catch (e) {
       console.error("Raqeem AI call error:", e);
       toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء تشغيل رقيم.", variant: "destructive" });
+    } finally {
+      setAiTyping(false);
     }
   };
 
@@ -521,25 +526,7 @@ export default function RequestDetails() {
                   </div>
                 </div>
 
-                {/* Quick Actions — after welcome, before messages */}
-                {messages.length === 0 && (
-                  <QuickActionButtons
-                    status={request.status}
-                    onAction={async (msg) => {
-                      if (!user) return;
-                      setSending(true);
-                      try {
-                        await supabase.from("request_messages" as any).insert({
-                          request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg,
-                        });
-                        callRaqeemAI(msg);
-                      } finally {
-                        setSending(false);
-                      }
-                    }}
-                    disabled={sending}
-                  />
-                )}
+
 
                 {messages.map((msg) => {
                   const isClient = msg.sender_type === "client";
@@ -576,7 +563,28 @@ export default function RequestDetails() {
                     </div>
                   );
                 })}
+                {/* Typing indicator */}
+                {aiTyping && <RaqeemTypingIndicator />}
                 <div ref={chatEndRef} />
+              </div>
+              {/* Persistent Quick Actions */}
+              <div className="px-4 py-2 border-t border-border/50">
+                <QuickActionButtons
+                  status={request.status}
+                  onAction={async (msg) => {
+                    if (!user) return;
+                    setSending(true);
+                    try {
+                      await supabase.from("request_messages" as any).insert({
+                        request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg,
+                      });
+                      callRaqeemAI(msg);
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                  disabled={sending || aiTyping}
+                />
               </div>
               <div className="p-4 border-t border-border bg-card/50">
                 <div className="flex gap-2">
