@@ -1,22 +1,33 @@
 /**
  * RaqeemChatPage — Universal Raqeem chat accessible to all authenticated users.
- * Adapts behavior based on user role via permissions engine.
+ * Supports file/image uploads of all types and sizes.
  */
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Send, ArrowRight, Sparkles } from "lucide-react";
+import { Send, ArrowRight, Paperclip, X, FileText, Image, File } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import ReactMarkdown from "react-markdown";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 
+interface Attachment {
+  name: string;
+  type: string;
+  size: number;
+  url?: string;
+  file?: File;
+  uploading?: boolean;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
+  attachments?: Attachment[];
 }
 
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`;
@@ -46,13 +57,41 @@ const ROLE_PROMPTS: Record<string, string[]> = {
   ],
 };
 
+function sanitizeFileName(name: string): string {
+  return name
+    .normalize("NFKC")
+    .replace(/[\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "")
+    .replace(/[^a-zA-Z0-9\u0600-\u06FF._-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isImageType(type: string): boolean {
+  return type.startsWith("image/");
+}
+
+function getFileIcon(type: string) {
+  if (isImageType(type)) return Image;
+  if (type.includes("pdf") || type.includes("word") || type.includes("document")) return FileText;
+  return File;
+}
+
 export default function RaqeemChatPage() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<Attachment[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const effectiveRole = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer"
     ? "owner" : (role || "client");
@@ -63,15 +102,109 @@ export default function RaqeemChatPage() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isLoading) return;
-    const userMsg: Message = { role: "user", content: text.trim() };
+  const uploadFile = async (file: File): Promise<Attachment | null> => {
+    if (!user) {
+      toast.error("يجب تسجيل الدخول لرفع الملفات");
+      return null;
+    }
+
+    const sanitized = sanitizeFileName(file.name) || `file-${Date.now()}`;
+    const path = `${user.id}/raqeem-chat/${Date.now()}-${sanitized}`;
+
+    const { data, error } = await supabase.storage
+      .from("client-uploads")
+      .upload(path, file, { upsert: false });
+
+    if (error) {
+      console.error("Upload error:", error);
+      toast.error(`فشل رفع: ${file.name}`);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("client-uploads")
+      .getPublicUrl(data.path);
+
+    return {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      url: urlData.publicUrl,
+    };
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const newFiles: Attachment[] = Array.from(files).map((f) => ({
+      name: f.name,
+      type: f.type,
+      size: f.size,
+      file: f,
+      uploading: true,
+    }));
+
+    setAttachedFiles((prev) => [...prev, ...newFiles]);
+
+    // Upload all files in parallel
+    setIsUploading(true);
+    const results = await Promise.all(
+      Array.from(files).map(async (file, idx) => {
+        const result = await uploadFile(file);
+        // Update individual file status
+        setAttachedFiles((prev) =>
+          prev.map((a, i) => {
+            if (i === prev.length - newFiles.length + idx) {
+              return result
+                ? { ...result, uploading: false }
+                : { ...a, uploading: false };
+            }
+            return a;
+          })
+        );
+        return result;
+      })
+    );
+
+    // Remove failed uploads
+    setAttachedFiles((prev) => prev.filter((a) => !a.uploading || a.url));
+    setIsUploading(false);
+
+    const successCount = results.filter(Boolean).length;
+    if (successCount > 0) {
+      toast.success(`تم رفع ${successCount} ملف بنجاح`);
+    }
+
+    // Reset input
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const sendMessage = useCallback(async (text: string, files: Attachment[] = []) => {
+    if ((!text.trim() && files.length === 0) || isLoading) return;
+
+    const attachmentContext = files.length > 0
+      ? `\n\n[مرفقات: ${files.map((f) => `${f.name} (${f.type})`).join("، ")}]`
+      : "";
+
+    const userMsg: Message = {
+      role: "user",
+      content: text.trim() || (files.length > 0 ? `تم إرفاق ${files.length} ملف` : ""),
+      attachments: files.length > 0 ? files : undefined,
+    };
+
     const allMessages = [...messages, userMsg];
     setMessages(allMessages);
     setInput("");
+    setAttachedFiles([]);
     setIsLoading(true);
 
     try {
+      const messageContent = (text.trim() || "") + attachmentContext;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -79,8 +212,12 @@ export default function RaqeemChatPage() {
           Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
-          messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
+          messages: allMessages.map((m) => ({
+            role: m.role,
+            content: m.role === "user" && m === userMsg ? messageContent : m.content,
+          })),
           userRole: effectiveRole,
+          attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
         }),
       });
 
@@ -130,10 +267,14 @@ export default function RaqeemChatPage() {
     }
   }, [messages, isLoading, effectiveRole]);
 
+  const handleSend = () => {
+    sendMessage(input, attachedFiles);
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      sendMessage(input);
+      handleSend();
     }
   };
 
@@ -142,6 +283,38 @@ export default function RaqeemChatPage() {
     if (effectiveRole === "inspector") return "/inspector";
     return "/";
   };
+
+  const renderAttachments = (attachments: Attachment[]) => (
+    <div className="flex flex-wrap gap-2 mt-2">
+      {attachments.map((att, i) => {
+        const Icon = getFileIcon(att.type);
+        if (isImageType(att.type) && att.url) {
+          return (
+            <a key={i} href={att.url} target="_blank" rel="noopener noreferrer" className="block">
+              <img
+                src={att.url}
+                alt={att.name}
+                className="max-w-[200px] max-h-[150px] rounded-lg object-cover border border-border"
+              />
+            </a>
+          );
+        }
+        return (
+          <a
+            key={i}
+            href={att.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-background/50 border border-border text-xs hover:bg-accent transition-colors"
+          >
+            <Icon className="w-4 h-4 shrink-0 text-muted-foreground" />
+            <span className="truncate max-w-[120px]">{att.name}</span>
+            <span className="text-muted-foreground">{formatFileSize(att.size)}</span>
+          </a>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-background" dir="rtl">
@@ -207,6 +380,7 @@ export default function RaqeemChatPage() {
                   ) : (
                     <p className="whitespace-pre-wrap">{msg.content}</p>
                   )}
+                  {msg.attachments && msg.attachments.length > 0 && renderAttachments(msg.attachments)}
                 </div>
               </div>
             ))
@@ -229,23 +403,73 @@ export default function RaqeemChatPage() {
         </div>
       </ScrollArea>
 
+      {/* Attached Files Preview */}
+      {attachedFiles.length > 0 && (
+        <div className="border-t border-border bg-muted/30 px-4 py-2">
+          <div className="max-w-3xl mx-auto flex flex-wrap gap-2">
+            {attachedFiles.map((att, i) => {
+              const Icon = getFileIcon(att.type);
+              return (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-card border border-border text-xs"
+                >
+                  {att.uploading ? (
+                    <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+                  )}
+                  <span className="truncate max-w-[100px]">{att.name}</span>
+                  <span className="text-muted-foreground">{formatFileSize(att.size)}</span>
+                  <button
+                    onClick={() => removeAttachment(i)}
+                    className="text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Input */}
       <div className="border-t border-border bg-card sticky bottom-0">
         <div className="max-w-3xl mx-auto px-4 py-3">
           <div className="flex gap-2 items-end">
+            {/* File Upload Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isLoading || isUploading}
+              className="shrink-0 h-11 w-11 text-muted-foreground hover:text-foreground"
+            >
+              <Paperclip className="w-5 h-5" />
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileSelect}
+              accept="*/*"
+            />
+
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="اكتب رسالتك هنا..."
+              placeholder="اكتب رسالتك هنا أو أرفق ملفات..."
               className="resize-none min-h-[44px] max-h-32 text-sm"
               rows={1}
               disabled={isLoading}
             />
             <Button
               size="icon"
-              onClick={() => sendMessage(input)}
-              disabled={!input.trim() || isLoading}
+              onClick={handleSend}
+              disabled={(!input.trim() && attachedFiles.length === 0) || isLoading || isUploading}
               className="shrink-0 h-11 w-11"
             >
               <Send className="w-4 h-4" />
