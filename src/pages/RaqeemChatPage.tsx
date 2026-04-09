@@ -59,24 +59,28 @@ const ROLE_PROMPTS: Record<string, string[]> = {
 
 const ROLE_QUICK_ACTIONS: Record<string, { label: string; icon: string; message: string }[]> = {
   owner: [
+    { label: "ملخص اليوم", icon: "📊", message: "أعطني ملخص شامل لحالة المنصة اليوم" },
     { label: "المتأخرات", icon: "⏰", message: "أعطني ملخص الطلبات والمدفوعات المتأخرة" },
-    { label: "الأداء", icon: "📊", message: "أعطني تقرير أداء هذا الأسبوع" },
     { label: "الإيرادات", icon: "💰", message: "ما إجمالي إيرادات هذا الشهر؟" },
-    { label: "المعاينات", icon: "🔍", message: "ما مهام المعاينين المعلقة؟" },
+    { label: "الاختناقات", icon: "🔍", message: "وين الاختناقات في سير العمل؟" },
   ],
   client: [
-    { label: "حالة طلبي", icon: "📋", message: "وين وصل طلبي؟" },
-    { label: "المستندات", icon: "📎", message: "هل هناك مستندات ناقصة؟" },
-    { label: "المدة", icon: "⏱️", message: "كم باقي على التسليم؟" },
+    { label: "حالة طلبي", icon: "📋", message: "وريني حالة كل طلباتي" },
+    { label: "المستندات", icon: "📎", message: "هل هناك مستندات أو متطلبات ناقصة؟" },
+    { label: "المدفوعات", icon: "💳", message: "وريني حالة المدفوعات والفواتير" },
+    { label: "موعد التسليم", icon: "⏱️", message: "كم باقي على تسليم التقرير؟" },
   ],
   inspector: [
-    { label: "مهامي", icon: "📋", message: "ما المعاينات المطلوبة مني اليوم؟" },
-    { label: "رفع صور", icon: "📸", message: "أريد رفع صور المعاينة" },
+    { label: "مهامي اليوم", icon: "📋", message: "ما المعاينات المطلوبة مني اليوم؟" },
+    { label: "جدولي", icon: "📅", message: "وريني جدول المعاينات القادمة" },
+    { label: "أدائي", icon: "⭐", message: "كيف أدائي وتقييمي؟" },
+    { label: "إبلاغ", icon: "⚠️", message: "أريد الإبلاغ عن مشكلة ميدانية" },
   ],
   financial_manager: [
-    { label: "المتأخرات", icon: "⚠️", message: "ما الفواتير المتأخرة؟" },
-    { label: "الإيرادات", icon: "💰", message: "ملخص إيرادات هذا الشهر" },
-    { label: "تأكيد دفعة", icon: "✅", message: "أريد تأكيد استلام دفعة" },
+    { label: "مدفوعات معلقة", icon: "⏳", message: "وريني كل المدفوعات بانتظار التأكيد" },
+    { label: "الإيرادات", icon: "💰", message: "تقرير إيرادات هذا الشهر" },
+    { label: "أعمار الديون", icon: "📊", message: "أعطني تقرير أعمار الديون" },
+    { label: "التدفق النقدي", icon: "💵", message: "ملخص التدفق النقدي لليوم" },
   ],
 };
 

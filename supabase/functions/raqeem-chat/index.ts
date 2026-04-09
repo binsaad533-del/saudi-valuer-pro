@@ -597,33 +597,106 @@ const TOOLS = [
   },
 ];
 
-// ═══════════════ أدوات المعاين (Inspector) ═══════════════
-const INSPECTOR_TOOLS = [
+// ═══════════════ أدوات العميل (Client) ═══════════════
+const CLIENT_TOOLS = [
   {
     type: "function",
     function: {
-      name: "get_my_tasks",
-      description: "عرض المعاينات المسندة للمعاين الحالي مع تفاصيلها.",
+      name: "track_my_requests",
+      description: "عرض كل طلبات التقييم الخاصة بالعميل مع حالاتها.",
+      parameters: { type: "object", properties: { status_filter: { type: "string", enum: ["active", "completed", "all"], description: "فلتر الحالة" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_request_status",
+      description: "تفاصيل كاملة عن طلب تقييم محدد: الحالة، التقدم، المعاين، المدة المتبقية.",
+      parameters: { type: "object", properties: { reference_number: { type: "string", description: "الرقم المرجعي (مثل VAL-2025-0041)" }, assignment_id: { type: "string", description: "معرّف المهمة" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_documents",
+      description: "عرض المستندات المرفوعة والمطلوبة لطلب محدد.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_payments",
+      description: "عرض حالة المدفوعات والفواتير الخاصة بالعميل.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة (اختياري — لعرض فواتير طلب محدد)" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_delivery_timeline",
+      description: "عرض الجدول الزمني المتوقع للتسليم مع تفاصيل كل مرحلة.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "submit_draft_feedback",
+      description: "إرسال ملاحظات العميل على مسودة التقرير.",
       parameters: {
         type: "object",
         properties: {
-          status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر حالة المعاينة" }
-        }
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          feedback: { type: "string", description: "ملاحظات العميل على المسودة" },
+          approve: { type: "boolean", description: "هل يوافق العميل على المسودة؟" }
+        },
+        required: ["assignment_id", "feedback"]
       }
     }
   },
   {
     type: "function",
     function: {
+      name: "request_scope_approval",
+      description: "موافقة العميل على نطاق العمل والتسعير.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" }, approved: { type: "boolean", description: "الموافقة" } }, required: ["assignment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_my_request",
+      description: "إلغاء طلب التقييم (فقط في المراحل المبكرة: مسودة، مقدم، نطاق مُعد).",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" }, reason: { type: "string", description: "سبب الإلغاء" } }, required: ["assignment_id", "reason"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_missing_requirements",
+      description: "عرض المتطلبات الناقصة لاستكمال الطلب (مستندات، صور، بيانات).",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
+    }
+  },
+];
+
+// ═══════════════ أدوات المعاين (Inspector) — موسّعة ═══════════════
+const INSPECTOR_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_my_tasks",
+      description: "عرض كل المعاينات المسندة مع تفاصيلها وموقعها.",
+      parameters: { type: "object", properties: { status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر الحالة" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "get_task_details",
-      description: "عرض تفاصيل مهمة معاينة محددة (موقع، عميل، نوع العقار، ملاحظات).",
-      parameters: {
-        type: "object",
-        properties: {
-          assignment_id: { type: "string", description: "معرّف المهمة (UUID)" }
-        },
-        required: ["assignment_id"]
-      }
+      description: "تفاصيل مهمة معاينة: موقع، عميل، نوع، متطلبات، ملاحظات.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
     }
   },
   {
@@ -646,7 +719,7 @@ const INSPECTOR_TOOLS = [
     type: "function",
     function: {
       name: "report_field_issue",
-      description: "الإبلاغ عن مشكلة ميدانية (عدم إتاحة الوصول، عنوان خاطئ، خطر أمني).",
+      description: "الإبلاغ عن مشكلة ميدانية (عدم وصول، عنوان خاطئ، خطر أمني).",
       parameters: {
         type: "object",
         properties: {
@@ -666,21 +739,73 @@ const INSPECTOR_TOOLS = [
       parameters: { type: "object", properties: {} }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "get_inspection_checklist",
+      description: "عرض قائمة التحقق المطلوبة لمعاينة محددة (بنود مطلوبة، مكتملة، ناقصة).",
+      parameters: { type: "object", properties: { inspection_id: { type: "string", description: "معرّف المعاينة" } }, required: ["inspection_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_checklist_item",
+      description: "تحديث بند في قائمة التحقق (مكتمل / غير مكتمل / ملاحظة).",
+      parameters: {
+        type: "object",
+        properties: {
+          item_id: { type: "string", description: "معرّف البند" },
+          is_checked: { type: "boolean", description: "مكتمل أم لا" },
+          value: { type: "string", description: "القيمة أو القراءة" },
+          notes: { type: "string", description: "ملاحظات" }
+        },
+        required: ["item_id", "is_checked"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_photos_status",
+      description: "حالة الصور المرفوعة لمعاينة: عدد الصور، التصنيفات المطلوبة، الناقصة.",
+      parameters: { type: "object", properties: { inspection_id: { type: "string", description: "معرّف المعاينة" } }, required: ["inspection_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_performance",
+      description: "عرض تقييمي وأدائي: عدد مهام مكتملة، معدل التقييم، ملاحظات.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "request_task_postponement",
+      description: "طلب تأجيل معاينة مع ذكر السبب والتاريخ البديل.",
+      parameters: {
+        type: "object",
+        properties: {
+          inspection_id: { type: "string", description: "معرّف المعاينة" },
+          reason: { type: "string", description: "سبب التأجيل" },
+          suggested_date: { type: "string", description: "التاريخ البديل (YYYY-MM-DD)" }
+        },
+        required: ["inspection_id", "reason"]
+      }
+    }
+  },
 ];
 
-// ═══════════════ أدوات المدير المالي (CFO) ═══════════════
+// ═══════════════ أدوات المدير المالي (CFO) — موسّعة ═══════════════
 const CFO_TOOLS = [
   {
     type: "function",
     function: {
       name: "get_pending_payments",
       description: "عرض المدفوعات المعلقة وإثباتات السداد بانتظار المراجعة.",
-      parameters: {
-        type: "object",
-        properties: {
-          stage_filter: { type: "string", enum: ["first", "final", "all"], description: "مرحلة الدفع" }
-        }
-      }
+      parameters: { type: "object", properties: { stage_filter: { type: "string", enum: ["first", "final", "all"], description: "مرحلة الدفع" } } }
     }
   },
   {
@@ -688,14 +813,15 @@ const CFO_TOOLS = [
     function: {
       name: "confirm_payment_receipt",
       description: "تأكيد استلام دفعة وتحريك سير العمل.",
-      parameters: {
-        type: "object",
-        properties: {
-          payment_id: { type: "string", description: "معرّف الدفعة (UUID)" },
-          notes: { type: "string", description: "ملاحظات التأكيد" }
-        },
-        required: ["payment_id"]
-      }
+      parameters: { type: "object", properties: { payment_id: { type: "string", description: "معرّف الدفعة" }, notes: { type: "string", description: "ملاحظات التأكيد" } }, required: ["payment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "reject_payment_proof",
+      description: "رفض إثبات دفع مع ذكر السبب.",
+      parameters: { type: "object", properties: { payment_id: { type: "string", description: "معرّف الدفعة" }, rejection_reason: { type: "string", description: "سبب الرفض" } }, required: ["payment_id", "rejection_reason"] }
     }
   },
   {
@@ -703,12 +829,7 @@ const CFO_TOOLS = [
     function: {
       name: "get_overdue_invoices",
       description: "عرض الفواتير المتأخرة مع تفاصيل العملاء والمبالغ.",
-      parameters: {
-        type: "object",
-        properties: {
-          days_overdue: { type: "number", description: "عدد أيام التأخر (افتراضي 7)" }
-        }
-      }
+      parameters: { type: "object", properties: { days_overdue: { type: "number", description: "عدد أيام التأخر (افتراضي 7)" } } }
     }
   },
   {
@@ -716,12 +837,7 @@ const CFO_TOOLS = [
     function: {
       name: "get_revenue_report",
       description: "تقرير الإيرادات والتحصيل لفترة محددة.",
-      parameters: {
-        type: "object",
-        properties: {
-          period: { type: "string", enum: ["today", "this_week", "this_month", "this_quarter", "this_year"], description: "الفترة الزمنية" }
-        }
-      }
+      parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "this_week", "this_month", "this_quarter", "this_year"], description: "الفترة" } } }
     }
   },
   {
@@ -736,68 +852,134 @@ const CFO_TOOLS = [
     type: "function",
     function: {
       name: "send_payment_reminder",
-      description: "إرسال تذكير دفع لعميل محدد.",
-      parameters: {
-        type: "object",
-        properties: {
-          client_id: { type: "string", description: "معرّف العميل" },
-          invoice_id: { type: "string", description: "معرّف الفاتورة" },
-          message: { type: "string", description: "نص التذكير (اختياري)" }
-        },
-        required: ["client_id"]
-      }
+      description: "إرسال تذكير دفع لعميل.",
+      parameters: { type: "object", properties: { client_id: { type: "string", description: "معرّف العميل" }, invoice_id: { type: "string", description: "معرّف الفاتورة" }, message: { type: "string", description: "نص التذكير (اختياري)" } }, required: ["client_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_aging_report",
+      description: "تقرير أعمار الديون: توزيع المبالغ حسب فترات التأخر (0-30، 31-60، 61-90، 90+).",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_client_payment_history",
+      description: "سجل مدفوعات عميل محدد مع تقييم انضباطه.",
+      parameters: { type: "object", properties: { client_name: { type: "string", description: "اسم العميل" }, client_id: { type: "string", description: "معرّف العميل" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_daily_cash_flow",
+      description: "ملخص التدفق النقدي اليومي: مبالغ محصلة ومتوقعة.",
+      parameters: { type: "object", properties: { date: { type: "string", description: "التاريخ (YYYY-MM-DD) — افتراضي اليوم" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_bulk_payment_reminders",
+      description: "إرسال تذكيرات دفع جماعية لكل العملاء المتأخرين.",
+      parameters: { type: "object", properties: { days_overdue: { type: "number", description: "الحد الأدنى لأيام التأخر (افتراضي 7)" } } }
     }
   },
 ];
 
 // Role-specific system prompt additions
+const CLIENT_SYSTEM_PROMPT = `
+
+## دورك كمساعد العميل
+أنت تساعد العميل في إنجاز مهامه بسلاسة من تقديم الطلب حتى استلام التقرير النهائي:
+- تتبع حالة الطلبات ومعرفة التقدم الفعلي
+- عرض المستندات المطلوبة والمرفوعة
+- متابعة المدفوعات والفواتير
+- مراجعة المسودة وإرسال ملاحظات
+- الموافقة على نطاق العمل
+- معرفة الجدول الزمني والمدة المتبقية
+- إلغاء الطلب في المراحل المبكرة
+
+### أدوات العميل:
+- **track_my_requests**: عرض كل طلباتي وحالاتها
+- **get_request_status**: تفاصيل طلب محدد بالرقم المرجعي
+- **get_my_documents**: المستندات المرفوعة والمطلوبة
+- **get_my_payments**: حالة المدفوعات والفواتير
+- **get_delivery_timeline**: الجدول الزمني المتوقع
+- **submit_draft_feedback**: إرسال ملاحظات على المسودة
+- **request_scope_approval**: الموافقة على نطاق العمل
+- **cancel_my_request**: إلغاء الطلب
+- **get_missing_requirements**: المتطلبات الناقصة
+
+### قيود العميل:
+- يرى فقط طلباته الخاصة
+- لا يصل لبيانات عملاء آخرين
+- لا يصل للبيانات المالية الشاملة
+- لا يصل لأدوات إدارية`;
+
 const INSPECTOR_SYSTEM_PROMPT = `
 
 ## دورك كمساعد المعاين الميداني
-أنت تساعد المعاين في إدارة مهامه الميدانية بكفاءة:
-- عرض المعاينات المسندة وتفاصيلها
+أنت تساعد المعاين في إنجاز كل مهامه الميدانية بكفاءة واحترافية:
+- عرض المعاينات المسندة والمجدولة والتفاصيل الكاملة لكل مهمة
+- إدارة قوائم التحقق (Checklists) وتحديث البنود
 - تحديث حالة المعاينات (بدأت، مكتملة، مؤجلة)
-- الإبلاغ عن مشاكل ميدانية
-- عرض الجدول الزمني
+- متابعة حالة الصور المرفوعة والفئات الناقصة
+- الإبلاغ عن مشاكل ميدانية (وصول، عنوان، أمان)
+- عرض الأداء الشخصي والتقييمات
+- طلب تأجيل مهام مع ذكر البديل
 
 ### أدوات المعاين:
-- **get_my_tasks**: عرض كل المعاينات المسندة لي
-- **get_task_details**: تفاصيل مهمة معاينة محددة
+- **get_my_tasks**: كل المعاينات المسندة لي
+- **get_task_details**: تفاصيل مهمة محددة
 - **submit_inspection_status**: تحديث حالة المعاينة
 - **report_field_issue**: الإبلاغ عن مشكلة ميدانية
 - **get_my_schedule**: جدول المعاينات القادمة
+- **get_inspection_checklist**: قائمة التحقق لمعاينة
+- **update_checklist_item**: تحديث بند في القائمة
+- **get_my_photos_status**: حالة صور المعاينة
+- **get_my_performance**: أدائي وتقييمي
+- **request_task_postponement**: طلب تأجيل مهمة
 
 ### قيود المعاين:
-- لا تصلاحية لتغيير حالة الطلبات
-- لا تصلاحية لعرض البيانات المالية
-- لا تصلاحية لإدارة مستخدمين آخرين
-- ركز فقط على العمل الميداني`;
+- يرى فقط المهام المسندة إليه
+- لا صلاحية لتغيير حالة الطلبات الإدارية
+- لا صلاحية لعرض البيانات المالية
+- لا صلاحية لإدارة مستخدمين آخرين`;
 
 const CFO_SYSTEM_PROMPT = `
 
 ## دورك كمساعد المدير المالي
-أنت تساعد المدير المالي في إدارة العمليات المالية:
-- مراجعة المدفوعات المعلقة وتأكيدها
-- متابعة الفواتير المتأخرة
-- تقارير الإيرادات والتحصيل
-- إرسال تذكيرات الدفع
+أنت تساعد المدير المالي في إدارة العمليات المالية الشاملة:
+- مراجعة وتأكيد أو رفض إثباتات السداد
+- متابعة الفواتير المتأخرة وتقارير أعمار الديون
+- تقارير الإيرادات والتحصيل والتدفق النقدي
+- إرسال تذكيرات دفع فردية وجماعية
+- تحليل سجل مدفوعات العملاء
 
 ### أدوات المدير المالي:
 - **get_pending_payments**: المدفوعات بانتظار المراجعة
 - **confirm_payment_receipt**: تأكيد استلام دفعة
+- **reject_payment_proof**: رفض إثبات دفع
 - **get_overdue_invoices**: الفواتير المتأخرة
 - **get_revenue_report**: تقرير الإيرادات
 - **get_collection_summary**: ملخص التحصيل
-- **send_payment_reminder**: إرسال تذكير دفع
+- **send_payment_reminder**: تذكير دفع فردي
+- **get_aging_report**: تقرير أعمار الديون
+- **get_client_payment_history**: سجل مدفوعات عميل
+- **get_daily_cash_flow**: التدفق النقدي اليومي
+- **send_bulk_payment_reminders**: تذكيرات جماعية
 
 ### قيود المدير المالي:
-- لا صلاحية لتغيير حالة الطلبات (إلا تأكيد الدفع)
-- لا صلاحية لإدارة المعاينين
-- لا صلاحية لتعديل بيانات التقييم
-- ركز فقط على العمليات المالية`;
+- لا صلاحية لتغيير حالة الطلبات (إلا عبر تأكيد الدفع)
+- لا صلاحية لإدارة المعاينين أو بيانات التقييم`;
 
 function getToolsForRole(role: string) {
   switch (role) {
+    case "client": return CLIENT_TOOLS;
     case "inspector": return INSPECTOR_TOOLS;
     case "financial_manager": return CFO_TOOLS;
     default: return TOOLS; // owner gets all tools
@@ -806,6 +988,7 @@ function getToolsForRole(role: string) {
 
 function getRolePromptAddition(role: string): string {
   switch (role) {
+    case "client": return CLIENT_SYSTEM_PROMPT;
     case "inspector": return INSPECTOR_SYSTEM_PROMPT;
     case "financial_manager": return CFO_SYSTEM_PROMPT;
     default: return "";
@@ -2181,6 +2364,484 @@ async function executeTool(
       });
 
       return { success: true, result: { message: `تم إرسال تذكير الدفع للعميل ${client.name_ar}` } };
+    }
+
+    // ═══════════════ CLIENT Tools Execution ═══════════════
+    if (toolName === "track_my_requests") {
+      // Get user from auth context — for now, fetch all recent
+      const { data: requests } = await db.from("valuation_requests")
+        .select("id, assignment_id, status, client_name_ar, property_type, created_at, total_price, amount_paid, payment_status, valuation_assignments(reference_number, status, final_value)")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      const activeStatuses = ["submitted", "scope_generated", "scope_approved", "first_payment_confirmed", "data_collection_open", "data_collection_complete", "inspection_pending", "inspection_completed", "data_validated", "analysis_complete", "professional_review", "draft_report_ready", "client_review", "draft_approved", "final_payment_confirmed"];
+      const completedStatuses = ["issued", "archived"];
+
+      let filtered = requests || [];
+      if (args.status_filter === "active") filtered = filtered.filter((r: any) => activeStatuses.includes(r.valuation_assignments?.status || r.status));
+      if (args.status_filter === "completed") filtered = filtered.filter((r: any) => completedStatuses.includes(r.valuation_assignments?.status || r.status));
+
+      const statusLabels: Record<string, string> = {
+        draft: "مسودة", submitted: "مقدم", scope_generated: "نطاق جاهز", scope_approved: "نطاق معتمد",
+        first_payment_confirmed: "دفعة أولى مؤكدة", data_collection_open: "جمع بيانات", data_collection_complete: "بيانات مكتملة",
+        inspection_pending: "معاينة معلقة", inspection_completed: "معاينة مكتملة", data_validated: "بيانات محققة",
+        analysis_complete: "تحليل مكتمل", professional_review: "مراجعة مهنية", draft_report_ready: "مسودة جاهزة",
+        client_review: "مراجعة العميل", draft_approved: "مسودة معتمدة", final_payment_confirmed: "دفعة نهائية",
+        issued: "صادر", archived: "مؤرشف", cancelled: "ملغي",
+      };
+
+      return {
+        success: true,
+        result: {
+          total: filtered.length,
+          requests: filtered.map((r: any) => ({
+            reference: r.valuation_assignments?.reference_number || "—",
+            status: r.valuation_assignments?.status || r.status,
+            status_label: statusLabels[r.valuation_assignments?.status || r.status] || r.status,
+            property_type: r.property_type,
+            total_price: r.total_price,
+            amount_paid: r.amount_paid || 0,
+            created: new Date(r.created_at).toLocaleDateString("ar-SA"),
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_request_status") {
+      let assignment: any = null;
+      if (args.reference_number) {
+        const { data } = await db.from("valuation_assignments")
+          .select("*, clients(name_ar, phone), subjects(*), valuation_requests(total_price, amount_paid, payment_status, valuation_mode, property_description)")
+          .ilike("reference_number", `%${args.reference_number}%`).limit(1).maybeSingle();
+        assignment = data;
+      } else if (args.assignment_id) {
+        const { data } = await db.from("valuation_assignments")
+          .select("*, clients(name_ar, phone), subjects(*), valuation_requests(total_price, amount_paid, payment_status, valuation_mode, property_description)")
+          .eq("id", args.assignment_id).single();
+        assignment = data;
+      }
+      if (!assignment) return { success: false, result: null, error: "لم يتم العثور على الطلب" };
+
+      const subject = Array.isArray(assignment.subjects) ? assignment.subjects[0] : assignment.subjects;
+      const req = Array.isArray(assignment.valuation_requests) ? assignment.valuation_requests[0] : assignment.valuation_requests;
+
+      // Calculate timeline
+      const createdDate = new Date(assignment.created_at);
+      const modeMap: Record<string, number> = { field: 14, desktop_with_photos: 10, desktop_without_photos: 7 };
+      const deliveryDays = modeMap[req?.valuation_mode || "field"] || 14;
+      const estimatedDelivery = new Date(createdDate.getTime() + deliveryDays * 86400000);
+      const remaining = Math.max(0, Math.ceil((estimatedDelivery.getTime() - Date.now()) / 86400000));
+
+      const statusLabels: Record<string, string> = {
+        draft: "مسودة", submitted: "مقدم وقيد المراجعة", scope_generated: "نطاق العمل جاهز — بانتظار موافقتك",
+        scope_approved: "تمت الموافقة — بانتظار الدفعة الأولى", first_payment_confirmed: "بدأ العمل",
+        data_collection_open: "جمع البيانات جارٍ", inspection_pending: "المعاينة مجدولة",
+        inspection_completed: "تمت المعاينة — جارٍ التحليل", data_validated: "البيانات محققة",
+        analysis_complete: "التحليل مكتمل", professional_review: "مراجعة مهنية من المقيم المعتمد",
+        draft_report_ready: "المسودة جاهزة لمراجعتك", client_review: "بانتظار ملاحظاتك",
+        draft_approved: "المسودة معتمدة — بانتظار الدفعة النهائية", final_payment_confirmed: "جارٍ إصدار التقرير",
+        issued: "التقرير صدر ✅", archived: "مؤرشف",
+      };
+
+      return {
+        success: true,
+        result: {
+          reference: assignment.reference_number,
+          status: assignment.status,
+          status_label: statusLabels[assignment.status] || assignment.status,
+          property_type: assignment.property_type,
+          location: { city: subject?.city_ar, district: subject?.district_ar },
+          description: req?.property_description || "—",
+          financials: { total_price: req?.total_price, paid: req?.amount_paid || 0, remaining: (req?.total_price || 0) - (req?.amount_paid || 0) },
+          timeline: { created: createdDate.toLocaleDateString("ar-SA"), estimated_delivery: estimatedDelivery.toLocaleDateString("ar-SA"), days_remaining: remaining },
+        }
+      };
+    }
+
+    if (toolName === "get_my_documents") {
+      const [attachRes, reqDocRes] = await Promise.all([
+        db.from("attachments").select("file_name, category, mime_type, created_at, file_size").eq("assignment_id", args.assignment_id),
+        db.from("request_documents").select("file_name, mime_type, ai_category, created_at").eq("request_id", args.assignment_id),
+      ]);
+
+      const docs = [...(attachRes.data || []), ...(reqDocRes.data || [])];
+      return {
+        success: true,
+        result: {
+          total: docs.length,
+          documents: docs.map((d: any) => ({
+            name: d.file_name,
+            category: d.category || d.ai_category || "عام",
+            type: d.mime_type,
+            date: new Date(d.created_at).toLocaleDateString("ar-SA"),
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_my_payments") {
+      let query = db.from("payments")
+        .select("id, amount, payment_stage, payment_status, payment_type, created_at, paid_at")
+        .order("created_at", { ascending: false }).limit(20);
+      if (args.assignment_id) query = query.eq("assignment_id", args.assignment_id);
+
+      const { data: payments } = await query;
+      const stageLabels: Record<string, string> = { first: "الدفعة الأولى (50%)", final: "الدفعة النهائية (50%)", full: "دفعة كاملة" };
+      const statusLabels: Record<string, string> = { pending: "بانتظار السداد", proof_uploaded: "إثبات مرفوع — قيد المراجعة", paid: "مدفوع ✅", rejected: "مرفوض" };
+
+      return {
+        success: true,
+        result: {
+          total: payments?.length || 0,
+          payments: (payments || []).map((p: any) => ({
+            amount: p.amount,
+            stage: stageLabels[p.payment_stage] || p.payment_stage,
+            status: statusLabels[p.payment_status] || p.payment_status,
+            type: p.payment_type,
+            date: new Date(p.created_at).toLocaleDateString("ar-SA"),
+            paid_date: p.paid_at ? new Date(p.paid_at).toLocaleDateString("ar-SA") : null,
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_delivery_timeline") {
+      const { data: assignment } = await db.from("valuation_assignments")
+        .select("status, created_at, updated_at, valuation_requests(valuation_mode)")
+        .eq("id", args.assignment_id).single();
+      if (!assignment) return { success: false, result: null, error: "الطلب غير موجود" };
+
+      const req = Array.isArray(assignment.valuation_requests) ? assignment.valuation_requests[0] : assignment.valuation_requests;
+      const mode = req?.valuation_mode || "field";
+      const modeMap: Record<string, number> = { field: 14, desktop_with_photos: 10, desktop_without_photos: 7 };
+      const totalDays = modeMap[mode] || 14;
+      const created = new Date(assignment.created_at);
+      const delivery = new Date(created.getTime() + totalDays * 86400000);
+      const remaining = Math.max(0, Math.ceil((delivery.getTime() - Date.now()) / 86400000));
+
+      const allStatuses = ["submitted", "scope_generated", "scope_approved", "first_payment_confirmed", "data_collection_open", "inspection_pending", "inspection_completed", "analysis_complete", "professional_review", "draft_report_ready", "client_review", "draft_approved", "final_payment_confirmed", "issued"];
+      const currentIdx = allStatuses.indexOf(assignment.status);
+      const progress = currentIdx >= 0 ? Math.round(((currentIdx + 1) / allStatuses.length) * 100) : 0;
+
+      return {
+        success: true,
+        result: {
+          current_status: assignment.status,
+          progress_percentage: progress,
+          total_days: totalDays,
+          days_remaining: remaining,
+          created_date: created.toLocaleDateString("ar-SA"),
+          estimated_delivery: delivery.toLocaleDateString("ar-SA"),
+          on_track: remaining > 0,
+        }
+      };
+    }
+
+    if (toolName === "submit_draft_feedback") {
+      if (args.approve) {
+        const { data: result, error } = await db.rpc("update_request_status", {
+          _assignment_id: args.assignment_id, _new_status: "draft_approved",
+          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر رقيم: ${args.feedback}`,
+        });
+        if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
+        return { success: true, result: { message: "تمت الموافقة على المسودة بنجاح. الخطوة التالية: سداد الدفعة النهائية." } };
+      }
+      // Just feedback without approval
+      await db.from("audit_logs").insert({
+        action: "create", table_name: "client_feedback", record_id: args.assignment_id, assignment_id: args.assignment_id,
+        description: `ملاحظات العميل على المسودة: ${args.feedback}`,
+      });
+      return { success: true, result: { message: "تم إرسال ملاحظاتك بنجاح. سيتم مراجعتها وتحديث المسودة." } };
+    }
+
+    if (toolName === "request_scope_approval") {
+      if (args.approved !== false) {
+        const { data: result, error } = await db.rpc("update_request_status", {
+          _assignment_id: args.assignment_id, _new_status: "scope_approved",
+          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر رقيم",
+        });
+        if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
+        return { success: true, result: { message: "تمت الموافقة على نطاق العمل. الخطوة التالية: سداد الدفعة الأولى (50%)." } };
+      }
+      return { success: true, result: { message: "تم تسجيل رفضك. يرجى توضيح ملاحظاتك ليتم مراجعة النطاق." } };
+    }
+
+    if (toolName === "cancel_my_request") {
+      const { data: result, error } = await db.rpc("update_request_status", {
+        _assignment_id: args.assignment_id, _new_status: "cancelled",
+        _user_id: null, _action_type: "auto", _reason: `إلغاء بطلب العميل: ${args.reason}`,
+      });
+      if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "لا يمكن الإلغاء من الحالة الحالية" };
+      return { success: true, result: { message: `تم إلغاء الطلب بنجاح. السبب: ${args.reason}` } };
+    }
+
+    if (toolName === "get_missing_requirements") {
+      const [subjRes, attachRes, inspRes, compRes, assumRes] = await Promise.all([
+        db.from("subjects").select("id, city_ar, land_area").eq("assignment_id", args.assignment_id),
+        db.from("attachments").select("id, category").eq("assignment_id", args.assignment_id),
+        db.from("inspections").select("id, completed, status").eq("assignment_id", args.assignment_id).limit(1),
+        db.from("assignment_comparables").select("id").eq("assignment_id", args.assignment_id),
+        db.from("assumptions").select("id").eq("assignment_id", args.assignment_id),
+      ]);
+
+      const missing: string[] = [];
+      if (!(subjRes.data?.length)) missing.push("بيانات العقار (موقع، مساحة)");
+      if ((attachRes.data?.length || 0) < 2) missing.push("مستندات داعمة (صك، رخصة، الخ)");
+      const photoCategories = (attachRes.data || []).map((a: any) => a.category);
+      if (!photoCategories.includes("photo")) missing.push("صور العقار");
+      if (!photoCategories.includes("deed")) missing.push("صورة الصك");
+
+      return {
+        success: true,
+        result: {
+          total_missing: missing.length,
+          missing_items: missing,
+          documents_uploaded: attachRes.data?.length || 0,
+          status: missing.length === 0 ? "مكتمل ✅" : `${missing.length} متطلبات ناقصة ⚠️`,
+        }
+      };
+    }
+
+    // ═══════════════ New Inspector Tools ═══════════════
+    if (toolName === "get_inspection_checklist") {
+      const { data: items } = await db.from("inspection_checklist_items")
+        .select("id, category, label_ar, is_checked, is_required, value, notes, sort_order")
+        .eq("inspection_id", args.inspection_id)
+        .order("sort_order", { ascending: true });
+
+      const total = items?.length || 0;
+      const checked = (items || []).filter((i: any) => i.is_checked).length;
+      const required = (items || []).filter((i: any) => i.is_required);
+      const requiredMissing = required.filter((i: any) => !i.is_checked);
+
+      return {
+        success: true,
+        result: {
+          total, checked, remaining: total - checked,
+          required_missing: requiredMissing.length,
+          completion: total > 0 ? Math.round((checked / total) * 100) : 0,
+          items: (items || []).map((i: any) => ({
+            id: i.id, category: i.category, label: i.label_ar,
+            checked: i.is_checked, required: i.is_required, value: i.value, notes: i.notes,
+          })),
+        }
+      };
+    }
+
+    if (toolName === "update_checklist_item") {
+      const updateData: any = { is_checked: args.is_checked };
+      if (args.value) updateData.value = args.value;
+      if (args.notes) updateData.notes = args.notes;
+
+      const { error } = await db.from("inspection_checklist_items").update(updateData).eq("id", args.item_id);
+      if (error) return { success: false, result: null, error: error.message };
+      return { success: true, result: { message: `تم تحديث البند ${args.is_checked ? "✅" : "❌"}` } };
+    }
+
+    if (toolName === "get_my_photos_status") {
+      const { data: photos } = await db.from("inspection_photos")
+        .select("id, category, file_name, created_at")
+        .eq("inspection_id", args.inspection_id);
+
+      const categoryCounts: Record<string, number> = {};
+      for (const p of (photos || [])) categoryCounts[p.category] = (categoryCounts[p.category] || 0) + 1;
+
+      const requiredCategories = ["exterior", "interior", "entrance", "street", "surroundings"];
+      const missingCategories = requiredCategories.filter(c => !categoryCounts[c]);
+
+      return {
+        success: true,
+        result: {
+          total_photos: photos?.length || 0,
+          by_category: categoryCounts,
+          missing_categories: missingCategories,
+          status: missingCategories.length === 0 ? "مكتمل ✅" : `${missingCategories.length} فئات ناقصة`,
+        }
+      };
+    }
+
+    if (toolName === "get_my_performance") {
+      // Need user_id from context — use the auth header
+      const { data: inspections } = await db.from("inspections")
+        .select("id, status, completed, inspection_date, duration_minutes")
+        .order("created_at", { ascending: false }).limit(100);
+
+      const total = inspections?.length || 0;
+      const completed = (inspections || []).filter((i: any) => i.completed).length;
+      const avgDuration = (inspections || [])
+        .filter((i: any) => i.duration_minutes)
+        .reduce((s: number, i: any, _, arr) => s + (i.duration_minutes / arr.length), 0);
+
+      const { data: evals } = await db.from("inspector_evaluations")
+        .select("rating, quality_score, speed_score, notes")
+        .order("created_at", { ascending: false }).limit(10);
+
+      const avgRating = (evals || []).length > 0
+        ? (evals || []).reduce((s: number, e: any) => s + e.rating, 0) / evals!.length : 0;
+
+      return {
+        success: true,
+        result: {
+          total_tasks: total, completed_tasks: completed,
+          completion_rate: total > 0 ? Math.round((completed / total) * 100) : 0,
+          avg_duration_minutes: Math.round(avgDuration),
+          avg_rating: Math.round(avgRating * 10) / 10,
+          recent_evaluations: (evals || []).slice(0, 3).map((e: any) => ({
+            rating: e.rating, quality: e.quality_score, speed: e.speed_score, notes: e.notes,
+          })),
+        }
+      };
+    }
+
+    if (toolName === "request_task_postponement") {
+      const { error } = await db.from("inspections")
+        .update({ status: "postponed", notes_ar: `طلب تأجيل: ${args.reason}${args.suggested_date ? ` | التاريخ البديل: ${args.suggested_date}` : ""}`, updated_at: new Date().toISOString() })
+        .eq("id", args.inspection_id);
+      if (error) return { success: false, result: null, error: error.message };
+
+      // Notify admin
+      await db.from("notifications").insert({
+        user_id: "00000000-0000-0000-0000-000000000000",
+        title_ar: "طلب تأجيل معاينة",
+        body_ar: `معاين يطلب تأجيل معاينة. السبب: ${args.reason}`,
+        category: "inspection", priority: "high",
+        notification_type: "postponement_request", channel: "in_app", delivery_status: "delivered",
+      });
+
+      return { success: true, result: { message: "تم إرسال طلب التأجيل للإدارة" } };
+    }
+
+    // ═══════════════ New CFO Tools ═══════════════
+    if (toolName === "reject_payment_proof") {
+      const { error } = await db.from("payments")
+        .update({ payment_status: "rejected", updated_at: new Date().toISOString() })
+        .eq("id", args.payment_id);
+      if (error) return { success: false, result: null, error: error.message };
+
+      await db.from("audit_logs").insert({
+        action: "status_change", table_name: "payments", record_id: args.payment_id,
+        description: `رفض إثبات دفع — السبب: ${args.rejection_reason}`,
+      });
+
+      return { success: true, result: { message: `تم رفض الإثبات. السبب: ${args.rejection_reason}` } };
+    }
+
+    if (toolName === "get_aging_report") {
+      const { data: invoices } = await db.from("invoices")
+        .select("id, total_amount, due_date, payment_status")
+        .in("payment_status", ["pending", "overdue", "unpaid"])
+        .limit(500);
+
+      const now = Date.now();
+      const buckets = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 };
+      const bucketCounts = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0 };
+
+      for (const inv of (invoices || [])) {
+        const daysLate = Math.max(0, Math.floor((now - new Date(inv.due_date).getTime()) / 86400000));
+        const bucket = daysLate <= 30 ? "0-30" : daysLate <= 60 ? "31-60" : daysLate <= 90 ? "61-90" : "90+";
+        buckets[bucket] += inv.total_amount || 0;
+        bucketCounts[bucket]++;
+      }
+
+      return {
+        success: true,
+        result: {
+          total_outstanding: Object.values(buckets).reduce((s, v) => s + v, 0),
+          total_invoices: invoices?.length || 0,
+          aging: Object.entries(buckets).map(([range, amount]) => ({
+            range: `${range} يوم`,
+            amount,
+            count: bucketCounts[range as keyof typeof bucketCounts],
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_client_payment_history") {
+      let clientQuery = db.from("clients").select("id, name_ar");
+      if (args.client_id) clientQuery = clientQuery.eq("id", args.client_id);
+      else if (args.client_name) clientQuery = clientQuery.ilike("name_ar", `%${args.client_name}%`);
+      const { data: client } = await clientQuery.limit(1).maybeSingle();
+      if (!client) return { success: false, result: null, error: "لم يتم العثور على العميل" };
+
+      const { data: assignments } = await db.from("valuation_assignments").select("id").eq("client_id", client.id);
+      const assignIds = (assignments || []).map((a: any) => a.id);
+
+      let payments: any[] = [];
+      if (assignIds.length > 0) {
+        const { data } = await db.from("payments").select("amount, payment_status, payment_stage, created_at, paid_at").in("assignment_id", assignIds).order("created_at", { ascending: false });
+        payments = data || [];
+      }
+
+      const paid = payments.filter((p: any) => p.payment_status === "paid");
+      const late = payments.filter((p: any) => p.payment_status === "overdue");
+
+      return {
+        success: true,
+        result: {
+          client_name: client.name_ar,
+          total_transactions: payments.length,
+          total_paid: paid.reduce((s: number, p: any) => s + (p.amount || 0), 0),
+          on_time_rate: payments.length > 0 ? Math.round((paid.length / payments.length) * 100) : 0,
+          late_payments: late.length,
+          discipline: late.length === 0 ? "ممتاز ✅" : late.length <= 2 ? "جيد 🟡" : "يحتاج متابعة 🔴",
+        }
+      };
+    }
+
+    if (toolName === "get_daily_cash_flow") {
+      const targetDate = args.date || new Date().toISOString().split("T")[0];
+      const dayStart = `${targetDate}T00:00:00.000Z`;
+      const dayEnd = `${targetDate}T23:59:59.999Z`;
+
+      const { data: dayPayments } = await db.from("payments")
+        .select("amount, payment_status, paid_at")
+        .gte("paid_at", dayStart).lte("paid_at", dayEnd).eq("payment_status", "paid");
+
+      const { data: pendingDue } = await db.from("invoices")
+        .select("total_amount, due_date")
+        .eq("due_date", targetDate).in("payment_status", ["pending", "unpaid"]);
+
+      const collected = (dayPayments || []).reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const expected = (pendingDue || []).reduce((s: number, i: any) => s + (i.total_amount || 0), 0);
+
+      return {
+        success: true,
+        result: {
+          date: targetDate,
+          collected,
+          expected,
+          transactions: dayPayments?.length || 0,
+          pending_invoices: pendingDue?.length || 0,
+        }
+      };
+    }
+
+    if (toolName === "send_bulk_payment_reminders") {
+      const daysMin = args.days_overdue || 7;
+      const cutoff = new Date(Date.now() - daysMin * 86400000).toISOString();
+
+      const { data: overdueInvoices } = await db.from("invoices")
+        .select("id, client_id, total_amount, clients(name_ar, portal_user_id)")
+        .in("payment_status", ["pending", "unpaid", "overdue"])
+        .lt("due_date", cutoff)
+        .limit(50);
+
+      let sentCount = 0;
+      for (const inv of (overdueInvoices || [])) {
+        const userId = inv.clients?.portal_user_id;
+        if (!userId) continue;
+        await db.from("notifications").insert({
+          user_id: userId,
+          title_ar: "تذكير بسداد فاتورة متأخرة",
+          body_ar: `لديك فاتورة بمبلغ ${inv.total_amount} ر.س بانتظار السداد. يرجى المبادرة بالدفع.`,
+          category: "payment", priority: "high",
+          notification_type: "payment_reminder", channel: "in_app", delivery_status: "delivered",
+        });
+        sentCount++;
+      }
+
+      return { success: true, result: { message: `تم إرسال ${sentCount} تذكير دفع`, total_overdue: overdueInvoices?.length || 0, sent: sentCount } };
     }
 
     return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
