@@ -597,33 +597,106 @@ const TOOLS = [
   },
 ];
 
-// ═══════════════ أدوات المعاين (Inspector) ═══════════════
-const INSPECTOR_TOOLS = [
+// ═══════════════ أدوات العميل (Client) ═══════════════
+const CLIENT_TOOLS = [
   {
     type: "function",
     function: {
-      name: "get_my_tasks",
-      description: "عرض المعاينات المسندة للمعاين الحالي مع تفاصيلها.",
+      name: "track_my_requests",
+      description: "عرض كل طلبات التقييم الخاصة بالعميل مع حالاتها.",
+      parameters: { type: "object", properties: { status_filter: { type: "string", enum: ["active", "completed", "all"], description: "فلتر الحالة" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_request_status",
+      description: "تفاصيل كاملة عن طلب تقييم محدد: الحالة، التقدم، المعاين، المدة المتبقية.",
+      parameters: { type: "object", properties: { reference_number: { type: "string", description: "الرقم المرجعي (مثل VAL-2025-0041)" }, assignment_id: { type: "string", description: "معرّف المهمة" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_documents",
+      description: "عرض المستندات المرفوعة والمطلوبة لطلب محدد.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_payments",
+      description: "عرض حالة المدفوعات والفواتير الخاصة بالعميل.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة (اختياري — لعرض فواتير طلب محدد)" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_delivery_timeline",
+      description: "عرض الجدول الزمني المتوقع للتسليم مع تفاصيل كل مرحلة.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "submit_draft_feedback",
+      description: "إرسال ملاحظات العميل على مسودة التقرير.",
       parameters: {
         type: "object",
         properties: {
-          status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر حالة المعاينة" }
-        }
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          feedback: { type: "string", description: "ملاحظات العميل على المسودة" },
+          approve: { type: "boolean", description: "هل يوافق العميل على المسودة؟" }
+        },
+        required: ["assignment_id", "feedback"]
       }
     }
   },
   {
     type: "function",
     function: {
+      name: "request_scope_approval",
+      description: "موافقة العميل على نطاق العمل والتسعير.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" }, approved: { type: "boolean", description: "الموافقة" } }, required: ["assignment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_my_request",
+      description: "إلغاء طلب التقييم (فقط في المراحل المبكرة: مسودة، مقدم، نطاق مُعد).",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" }, reason: { type: "string", description: "سبب الإلغاء" } }, required: ["assignment_id", "reason"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_missing_requirements",
+      description: "عرض المتطلبات الناقصة لاستكمال الطلب (مستندات، صور، بيانات).",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
+    }
+  },
+];
+
+// ═══════════════ أدوات المعاين (Inspector) — موسّعة ═══════════════
+const INSPECTOR_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_my_tasks",
+      description: "عرض كل المعاينات المسندة مع تفاصيلها وموقعها.",
+      parameters: { type: "object", properties: { status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر الحالة" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
       name: "get_task_details",
-      description: "عرض تفاصيل مهمة معاينة محددة (موقع، عميل، نوع العقار، ملاحظات).",
-      parameters: {
-        type: "object",
-        properties: {
-          assignment_id: { type: "string", description: "معرّف المهمة (UUID)" }
-        },
-        required: ["assignment_id"]
-      }
+      description: "تفاصيل مهمة معاينة: موقع، عميل، نوع، متطلبات، ملاحظات.",
+      parameters: { type: "object", properties: { assignment_id: { type: "string", description: "معرّف المهمة" } }, required: ["assignment_id"] }
     }
   },
   {
@@ -646,7 +719,7 @@ const INSPECTOR_TOOLS = [
     type: "function",
     function: {
       name: "report_field_issue",
-      description: "الإبلاغ عن مشكلة ميدانية (عدم إتاحة الوصول، عنوان خاطئ، خطر أمني).",
+      description: "الإبلاغ عن مشكلة ميدانية (عدم وصول، عنوان خاطئ، خطر أمني).",
       parameters: {
         type: "object",
         properties: {
@@ -666,21 +739,73 @@ const INSPECTOR_TOOLS = [
       parameters: { type: "object", properties: {} }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "get_inspection_checklist",
+      description: "عرض قائمة التحقق المطلوبة لمعاينة محددة (بنود مطلوبة، مكتملة، ناقصة).",
+      parameters: { type: "object", properties: { inspection_id: { type: "string", description: "معرّف المعاينة" } }, required: ["inspection_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_checklist_item",
+      description: "تحديث بند في قائمة التحقق (مكتمل / غير مكتمل / ملاحظة).",
+      parameters: {
+        type: "object",
+        properties: {
+          item_id: { type: "string", description: "معرّف البند" },
+          is_checked: { type: "boolean", description: "مكتمل أم لا" },
+          value: { type: "string", description: "القيمة أو القراءة" },
+          notes: { type: "string", description: "ملاحظات" }
+        },
+        required: ["item_id", "is_checked"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_photos_status",
+      description: "حالة الصور المرفوعة لمعاينة: عدد الصور، التصنيفات المطلوبة، الناقصة.",
+      parameters: { type: "object", properties: { inspection_id: { type: "string", description: "معرّف المعاينة" } }, required: ["inspection_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_performance",
+      description: "عرض تقييمي وأدائي: عدد مهام مكتملة، معدل التقييم، ملاحظات.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "request_task_postponement",
+      description: "طلب تأجيل معاينة مع ذكر السبب والتاريخ البديل.",
+      parameters: {
+        type: "object",
+        properties: {
+          inspection_id: { type: "string", description: "معرّف المعاينة" },
+          reason: { type: "string", description: "سبب التأجيل" },
+          suggested_date: { type: "string", description: "التاريخ البديل (YYYY-MM-DD)" }
+        },
+        required: ["inspection_id", "reason"]
+      }
+    }
+  },
 ];
 
-// ═══════════════ أدوات المدير المالي (CFO) ═══════════════
+// ═══════════════ أدوات المدير المالي (CFO) — موسّعة ═══════════════
 const CFO_TOOLS = [
   {
     type: "function",
     function: {
       name: "get_pending_payments",
       description: "عرض المدفوعات المعلقة وإثباتات السداد بانتظار المراجعة.",
-      parameters: {
-        type: "object",
-        properties: {
-          stage_filter: { type: "string", enum: ["first", "final", "all"], description: "مرحلة الدفع" }
-        }
-      }
+      parameters: { type: "object", properties: { stage_filter: { type: "string", enum: ["first", "final", "all"], description: "مرحلة الدفع" } } }
     }
   },
   {
@@ -688,14 +813,15 @@ const CFO_TOOLS = [
     function: {
       name: "confirm_payment_receipt",
       description: "تأكيد استلام دفعة وتحريك سير العمل.",
-      parameters: {
-        type: "object",
-        properties: {
-          payment_id: { type: "string", description: "معرّف الدفعة (UUID)" },
-          notes: { type: "string", description: "ملاحظات التأكيد" }
-        },
-        required: ["payment_id"]
-      }
+      parameters: { type: "object", properties: { payment_id: { type: "string", description: "معرّف الدفعة" }, notes: { type: "string", description: "ملاحظات التأكيد" } }, required: ["payment_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "reject_payment_proof",
+      description: "رفض إثبات دفع مع ذكر السبب.",
+      parameters: { type: "object", properties: { payment_id: { type: "string", description: "معرّف الدفعة" }, rejection_reason: { type: "string", description: "سبب الرفض" } }, required: ["payment_id", "rejection_reason"] }
     }
   },
   {
@@ -703,12 +829,7 @@ const CFO_TOOLS = [
     function: {
       name: "get_overdue_invoices",
       description: "عرض الفواتير المتأخرة مع تفاصيل العملاء والمبالغ.",
-      parameters: {
-        type: "object",
-        properties: {
-          days_overdue: { type: "number", description: "عدد أيام التأخر (افتراضي 7)" }
-        }
-      }
+      parameters: { type: "object", properties: { days_overdue: { type: "number", description: "عدد أيام التأخر (افتراضي 7)" } } }
     }
   },
   {
@@ -716,12 +837,7 @@ const CFO_TOOLS = [
     function: {
       name: "get_revenue_report",
       description: "تقرير الإيرادات والتحصيل لفترة محددة.",
-      parameters: {
-        type: "object",
-        properties: {
-          period: { type: "string", enum: ["today", "this_week", "this_month", "this_quarter", "this_year"], description: "الفترة الزمنية" }
-        }
-      }
+      parameters: { type: "object", properties: { period: { type: "string", enum: ["today", "this_week", "this_month", "this_quarter", "this_year"], description: "الفترة" } } }
     }
   },
   {
@@ -736,68 +852,134 @@ const CFO_TOOLS = [
     type: "function",
     function: {
       name: "send_payment_reminder",
-      description: "إرسال تذكير دفع لعميل محدد.",
-      parameters: {
-        type: "object",
-        properties: {
-          client_id: { type: "string", description: "معرّف العميل" },
-          invoice_id: { type: "string", description: "معرّف الفاتورة" },
-          message: { type: "string", description: "نص التذكير (اختياري)" }
-        },
-        required: ["client_id"]
-      }
+      description: "إرسال تذكير دفع لعميل.",
+      parameters: { type: "object", properties: { client_id: { type: "string", description: "معرّف العميل" }, invoice_id: { type: "string", description: "معرّف الفاتورة" }, message: { type: "string", description: "نص التذكير (اختياري)" } }, required: ["client_id"] }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_aging_report",
+      description: "تقرير أعمار الديون: توزيع المبالغ حسب فترات التأخر (0-30، 31-60، 61-90، 90+).",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_client_payment_history",
+      description: "سجل مدفوعات عميل محدد مع تقييم انضباطه.",
+      parameters: { type: "object", properties: { client_name: { type: "string", description: "اسم العميل" }, client_id: { type: "string", description: "معرّف العميل" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_daily_cash_flow",
+      description: "ملخص التدفق النقدي اليومي: مبالغ محصلة ومتوقعة.",
+      parameters: { type: "object", properties: { date: { type: "string", description: "التاريخ (YYYY-MM-DD) — افتراضي اليوم" } } }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_bulk_payment_reminders",
+      description: "إرسال تذكيرات دفع جماعية لكل العملاء المتأخرين.",
+      parameters: { type: "object", properties: { days_overdue: { type: "number", description: "الحد الأدنى لأيام التأخر (افتراضي 7)" } } }
     }
   },
 ];
 
 // Role-specific system prompt additions
+const CLIENT_SYSTEM_PROMPT = `
+
+## دورك كمساعد العميل
+أنت تساعد العميل في إنجاز مهامه بسلاسة من تقديم الطلب حتى استلام التقرير النهائي:
+- تتبع حالة الطلبات ومعرفة التقدم الفعلي
+- عرض المستندات المطلوبة والمرفوعة
+- متابعة المدفوعات والفواتير
+- مراجعة المسودة وإرسال ملاحظات
+- الموافقة على نطاق العمل
+- معرفة الجدول الزمني والمدة المتبقية
+- إلغاء الطلب في المراحل المبكرة
+
+### أدوات العميل:
+- **track_my_requests**: عرض كل طلباتي وحالاتها
+- **get_request_status**: تفاصيل طلب محدد بالرقم المرجعي
+- **get_my_documents**: المستندات المرفوعة والمطلوبة
+- **get_my_payments**: حالة المدفوعات والفواتير
+- **get_delivery_timeline**: الجدول الزمني المتوقع
+- **submit_draft_feedback**: إرسال ملاحظات على المسودة
+- **request_scope_approval**: الموافقة على نطاق العمل
+- **cancel_my_request**: إلغاء الطلب
+- **get_missing_requirements**: المتطلبات الناقصة
+
+### قيود العميل:
+- يرى فقط طلباته الخاصة
+- لا يصل لبيانات عملاء آخرين
+- لا يصل للبيانات المالية الشاملة
+- لا يصل لأدوات إدارية`;
+
 const INSPECTOR_SYSTEM_PROMPT = `
 
 ## دورك كمساعد المعاين الميداني
-أنت تساعد المعاين في إدارة مهامه الميدانية بكفاءة:
-- عرض المعاينات المسندة وتفاصيلها
+أنت تساعد المعاين في إنجاز كل مهامه الميدانية بكفاءة واحترافية:
+- عرض المعاينات المسندة والمجدولة والتفاصيل الكاملة لكل مهمة
+- إدارة قوائم التحقق (Checklists) وتحديث البنود
 - تحديث حالة المعاينات (بدأت، مكتملة، مؤجلة)
-- الإبلاغ عن مشاكل ميدانية
-- عرض الجدول الزمني
+- متابعة حالة الصور المرفوعة والفئات الناقصة
+- الإبلاغ عن مشاكل ميدانية (وصول، عنوان، أمان)
+- عرض الأداء الشخصي والتقييمات
+- طلب تأجيل مهام مع ذكر البديل
 
 ### أدوات المعاين:
-- **get_my_tasks**: عرض كل المعاينات المسندة لي
-- **get_task_details**: تفاصيل مهمة معاينة محددة
+- **get_my_tasks**: كل المعاينات المسندة لي
+- **get_task_details**: تفاصيل مهمة محددة
 - **submit_inspection_status**: تحديث حالة المعاينة
 - **report_field_issue**: الإبلاغ عن مشكلة ميدانية
 - **get_my_schedule**: جدول المعاينات القادمة
+- **get_inspection_checklist**: قائمة التحقق لمعاينة
+- **update_checklist_item**: تحديث بند في القائمة
+- **get_my_photos_status**: حالة صور المعاينة
+- **get_my_performance**: أدائي وتقييمي
+- **request_task_postponement**: طلب تأجيل مهمة
 
 ### قيود المعاين:
-- لا تصلاحية لتغيير حالة الطلبات
-- لا تصلاحية لعرض البيانات المالية
-- لا تصلاحية لإدارة مستخدمين آخرين
-- ركز فقط على العمل الميداني`;
+- يرى فقط المهام المسندة إليه
+- لا صلاحية لتغيير حالة الطلبات الإدارية
+- لا صلاحية لعرض البيانات المالية
+- لا صلاحية لإدارة مستخدمين آخرين`;
 
 const CFO_SYSTEM_PROMPT = `
 
 ## دورك كمساعد المدير المالي
-أنت تساعد المدير المالي في إدارة العمليات المالية:
-- مراجعة المدفوعات المعلقة وتأكيدها
-- متابعة الفواتير المتأخرة
-- تقارير الإيرادات والتحصيل
-- إرسال تذكيرات الدفع
+أنت تساعد المدير المالي في إدارة العمليات المالية الشاملة:
+- مراجعة وتأكيد أو رفض إثباتات السداد
+- متابعة الفواتير المتأخرة وتقارير أعمار الديون
+- تقارير الإيرادات والتحصيل والتدفق النقدي
+- إرسال تذكيرات دفع فردية وجماعية
+- تحليل سجل مدفوعات العملاء
 
 ### أدوات المدير المالي:
 - **get_pending_payments**: المدفوعات بانتظار المراجعة
 - **confirm_payment_receipt**: تأكيد استلام دفعة
+- **reject_payment_proof**: رفض إثبات دفع
 - **get_overdue_invoices**: الفواتير المتأخرة
 - **get_revenue_report**: تقرير الإيرادات
 - **get_collection_summary**: ملخص التحصيل
-- **send_payment_reminder**: إرسال تذكير دفع
+- **send_payment_reminder**: تذكير دفع فردي
+- **get_aging_report**: تقرير أعمار الديون
+- **get_client_payment_history**: سجل مدفوعات عميل
+- **get_daily_cash_flow**: التدفق النقدي اليومي
+- **send_bulk_payment_reminders**: تذكيرات جماعية
 
 ### قيود المدير المالي:
-- لا صلاحية لتغيير حالة الطلبات (إلا تأكيد الدفع)
-- لا صلاحية لإدارة المعاينين
-- لا صلاحية لتعديل بيانات التقييم
-- ركز فقط على العمليات المالية`;
+- لا صلاحية لتغيير حالة الطلبات (إلا عبر تأكيد الدفع)
+- لا صلاحية لإدارة المعاينين أو بيانات التقييم`;
 
 function getToolsForRole(role: string) {
   switch (role) {
+    case "client": return CLIENT_TOOLS;
     case "inspector": return INSPECTOR_TOOLS;
     case "financial_manager": return CFO_TOOLS;
     default: return TOOLS; // owner gets all tools
@@ -806,6 +988,7 @@ function getToolsForRole(role: string) {
 
 function getRolePromptAddition(role: string): string {
   switch (role) {
+    case "client": return CLIENT_SYSTEM_PROMPT;
     case "inspector": return INSPECTOR_SYSTEM_PROMPT;
     case "financial_manager": return CFO_SYSTEM_PROMPT;
     default: return "";
