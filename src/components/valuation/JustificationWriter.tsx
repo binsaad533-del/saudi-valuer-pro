@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { FileText, RefreshCw, Copy, Check, Sparkles, Download } from "lucide-react";
+import { FileText, RefreshCw, Copy, Check, Download } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import type { RiskContext } from "@/lib/risk-detection";
 
 const SECTIONS = [
@@ -194,7 +195,7 @@ export default function JustificationWriter({
               onClick={generateAll}
               disabled={loading}
             >
-              <Sparkles className="w-4 h-4 ml-1" />
+              <RaqeemIcon size={16} />
               إنشاء الكل
             </Button>
           )}

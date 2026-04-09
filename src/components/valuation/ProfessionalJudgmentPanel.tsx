@@ -13,10 +13,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import {
-  Gavel, AlertTriangle, CheckCircle2, ShieldAlert, Brain,
+  Gavel, AlertTriangle, CheckCircle2, ShieldAlert,
   Loader2, ChevronDown, ChevronUp, TrendingUp, TrendingDown,
   Scale,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import type { InspectionType } from "@/lib/sow-engine";
 
 interface ProfessionalJudgmentPanelProps {
@@ -248,7 +249,7 @@ export default function ProfessionalJudgmentPanel({ request, userId, onStatusCha
                     <div>
                       <label className="text-[10px] text-muted-foreground">اقتراح الذكاء الاصطناعي</label>
                       <div className="flex items-center gap-1 mt-0.5">
-                        <Brain className="w-3 h-3 text-muted-foreground" />
+                        <RaqeemIcon size={12} />
                         <span className="text-xs font-mono text-muted-foreground">{adj.aiSuggested}%</span>
                       </div>
                     </div>

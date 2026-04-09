@@ -13,8 +13,9 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import {
   Loader2, Send, UserPlus, Users, Upload, FileText, Image, File, X,
-  Brain, CheckCircle, Sparkles,
+  CheckCircle,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { buildSafeStorageObject } from "@/lib/storage-path";
 
 interface Props {
@@ -461,7 +462,7 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
               </>
             ) : (
               <>
-                <Brain className="w-4 h-4 ml-2" />
+                <RaqeemIcon size={16} />
                 تحليل الوثائق بالذكاء الاصطناعي
               </>
             )}
@@ -476,7 +477,7 @@ export default function CoordinatorNewRequest({ clients, onCreated }: Props) {
         {aiResult && (
           <div className="p-3 rounded-lg border border-success/30 bg-success/5 space-y-2">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-success" />
+              <RaqeemIcon size={16} />
               <span className="text-sm font-medium text-success">تم استخراج البيانات</span>
               {aiResult.confidence && (
                 <Badge variant="outline" className="text-[10px] h-5 border-success/30 text-success">

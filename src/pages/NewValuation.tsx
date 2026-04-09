@@ -7,10 +7,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   ChevronLeft, ChevronRight, FileText, CheckCircle2,
   AlertTriangle, AlertCircle, Eye, Send, Loader2, Sparkles, X,
-  FolderUp, Brain, FileSearch, Tag, Hash, MapPin,
+  FolderUp, FileSearch, Tag, Hash, MapPin,
   Building2, User, Phone, Mail, Ruler, FileCheck, ShieldCheck,
   Image as ImageIcon, FileSpreadsheet, File,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatTime } from "@/lib/utils";
@@ -594,7 +595,7 @@ export default function NewValuation() {
                   {extracting ? (
                     <><Loader2 className="w-4 h-4 animate-spin" />{extractionPhase || "جارٍ تحليل الوثائق بالذكاء الاصطناعي..."}</>
                   ) : (
-                    <><Brain className="w-4 h-4" />تحليل المحتوى بالذكاء الاصطناعي</>
+                    <><RaqeemIcon size={16} />تحليل المحتوى بالذكاء الاصطناعي</>
                   )}
                 </button>
               )}
@@ -632,7 +633,7 @@ export default function NewValuation() {
               {extracted.notes.length > 0 && (
                 <div className="p-4 rounded-lg bg-accent/50 border border-accent text-sm">
                   <div className="flex items-center gap-2 mb-2 text-accent-foreground font-medium">
-                    <Brain className="w-4 h-4" />
+                    <RaqeemIcon size={16} />
                     <span>ملاحظات الذكاء الاصطناعي</span>
                   </div>
                   <ul className="space-y-1 text-accent-foreground/80">

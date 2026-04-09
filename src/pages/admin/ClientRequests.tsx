@@ -13,8 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, CreditCard, Eye, CheckCircle, XCircle, Send,
-  Building2, Bot, Brain, BarChart3, MessageSquareText,
+  Building2, Bot, BarChart3, MessageSquareText,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import AdminPaymentDashboard from "@/components/payments/AdminPaymentDashboard";
 import ReportRevisionPanel from "@/components/reports/ReportRevisionPanel";
 import { formatDate, formatNumber } from "@/lib/utils";
@@ -451,17 +452,17 @@ export default function ClientRequests() {
                         )}
                         {req.status === "data_validated" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "analysis_complete"); }}>
-                            <Brain className="w-3 h-3 ml-1" />بدء التحليل
+                            <RaqeemIcon size={12} />بدء التحليل
                           </Button>
                         )}
                         {req.status === "analysis_complete" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); moveToStatus(req.id, "professional_review"); }}>
-                            <Brain className="w-3 h-3 ml-1" />إحالة للحكم المهني
+                            <RaqeemIcon size={12} />إحالة للحكم المهني
                           </Button>
                         )}
                         {req.status === "professional_review" && (
                           <Button size="sm" onClick={(e) => { e.stopPropagation(); navigate(`/valuation-production/${req.assignment_id || req.id}`); }}>
-                            <Brain className="w-3 h-3 ml-1" />محرك التقييم
+                            <RaqeemIcon size={12} />محرك التقييم
                           </Button>
                         )}
                         {req.status === "draft_report_ready" && (

@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, MessageSquare, Scale, BarChart3, FlaskConical, Sparkles } from "lucide-react";
+import { BookOpen, MessageSquare, Scale, BarChart3, FlaskConical } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import KnowledgeBaseModule from "@/components/raqeem/KnowledgeBaseModule";
 import CorrectionsModule from "@/components/raqeem/CorrectionsModule";
 import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
@@ -12,7 +13,7 @@ export default function RaqeemTrainingPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-          <Sparkles className="w-6 h-6 text-primary-foreground" />
+          <RaqeemIcon size={24} />
         </div>
         <div>
           <h1 className="text-xl font-bold text-foreground">لوحة تدريب رقيم</h1>

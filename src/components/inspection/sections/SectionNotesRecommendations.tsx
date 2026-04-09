@@ -13,8 +13,9 @@ import {
   MapPin, Camera, ClipboardCheck, Send, ChevronRight, ChevronLeft, ChevronDown,
   Loader2, CheckCircle, AlertTriangle, Navigation, Trash2,
   Info, Building2, Ruler, Wrench, Zap, TrendingUp, ShieldAlert,
-  FileCheck, UserCheck, Home, Upload, LayoutGrid, Sparkles, Copy, Lock,
+  FileCheck, UserCheck, Home, Upload, LayoutGrid, Copy, Lock,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import SectionPhotoUpload, { type SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import AiSuggestionBox from "@/components/inspection/AiSuggestionBox";
 import { Label } from "@/components/ui/label";
@@ -231,7 +232,7 @@ export default function SectionNotesRecommendations({ formData, updateField, sub
         <div className="rounded-lg border-2 border-ai/30 bg-ai-light p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-ai">
-              <Sparkles className="w-5 h-5" />
+              <RaqeemIcon size={20} />
               <span className="text-sm font-bold">✨ ملخص فني جاهز للتقرير</span>
             </div>
             <Button
@@ -240,7 +241,7 @@ export default function SectionNotesRecommendations({ formData, updateField, sub
               disabled={summaryLoading}
               className="h-8 text-xs gap-1.5 bg-ai text-ai-foreground hover:bg-ai/90"
             >
-              {summaryLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              {summaryLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RaqeemIcon size={14} />}
               {summaryLoading ? "جاري التوليد..." : "✨ توليد الملخص"}
             </Button>
           </div>

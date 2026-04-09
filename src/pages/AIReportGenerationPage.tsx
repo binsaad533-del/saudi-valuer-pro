@@ -11,11 +11,12 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import {
-  Sparkles, FileText, Wand2, CheckCircle2, Loader2, Copy, RefreshCw,
+  FileText, Wand2, CheckCircle2, Loader2, Copy, RefreshCw,
   Edit3, ChevronDown, ChevronUp, AlertCircle, Database, Layers,
   FileCheck, Download, Eye, ArrowLeft, ArrowRight, Search, Link2, Send,
   Building2, User, MapPin, ClipboardCheck, BarChart3, Scale, XCircle,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { supabase } from "@/integrations/supabase/client";
 
 import type { PipelineStep, ReportDraft, AggregatedData } from "./ai-report/types";
@@ -237,7 +238,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg shadow-primary/20">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <RaqeemIcon size={20} />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">نظام توليد التقارير الآلي</h1>
@@ -545,7 +546,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
                           {editedSections.has(key) ? (
                             <Badge variant="outline" className="text-[9px] gap-1 border-amber-500/50 text-amber-600 bg-amber-50 dark:bg-amber-500/10"><Edit3 className="w-2.5 h-2.5" /> معدّل يدوياً</Badge>
                           ) : (
-                            <Badge variant="outline" className="text-[9px] gap-1 border-primary/50 text-primary bg-primary/5"><Sparkles className="w-2.5 h-2.5" /> مولّد بالذكاء</Badge>
+                            <Badge variant="outline" className="text-[9px] gap-1 border-primary/50 text-primary bg-primary/5"><RaqeemIcon size={10} /> مولّد بالذكاء</Badge>
                           )}
                           {sec.content_ar && <Badge variant="secondary" className="text-[9px]">{sec.content_ar.length} حرف</Badge>}
                           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -670,7 +671,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
               <CardContent className="py-8 text-center space-y-3">
                 <Eye className="w-10 h-10 text-muted-foreground/40 mx-auto" />
                 <p className="text-sm text-muted-foreground">رقيم سيراجع جميع الأقسام ويفحص الامتثال لمعايير IVS 2025</p>
-                <Button className="gap-2" onClick={handleReviewAll}><Sparkles className="w-4 h-4" /> بدء فحص الجودة</Button>
+                <Button className="gap-2" onClick={handleReviewAll}><RaqeemIcon size={16} /> بدء فحص الجودة</Button>
               </CardContent>
             </Card>
           )}
@@ -678,7 +679,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
             <Card className="border-primary/20">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-primary" /> تقرير الجودة
+                  <RaqeemIcon size={16} /> تقرير الجودة
                   {isReviewing && <Badge variant="secondary" className="gap-1 text-[10px]"><Loader2 className="w-3 h-3 animate-spin" /> جارٍ المراجعة</Badge>}
                 </CardTitle>
               </CardHeader>

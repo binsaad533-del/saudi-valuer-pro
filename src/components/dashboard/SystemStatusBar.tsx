@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Shield, AlertTriangle, Clock, Brain } from "lucide-react";
+import { Shield, AlertTriangle, Clock } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { motion } from "framer-motion";
 
 interface StatusData {
@@ -67,7 +68,7 @@ export default function SystemStatusBar() {
 
         {/* Raqeem */}
         <div className="flex items-center gap-1.5">
-          <Brain className="w-3 h-3 text-primary" />
+          <RaqeemIcon size={14} />
           <span className="text-[11px] text-muted-foreground">رقيم نشط</span>
         </div>
 

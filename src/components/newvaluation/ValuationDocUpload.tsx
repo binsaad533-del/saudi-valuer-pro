@@ -1,9 +1,10 @@
 import { RefObject, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
-  FolderUp, FileText, FileSpreadsheet, File, X, Loader2, Brain,
+  FolderUp, FileText, FileSpreadsheet, File, X, Loader2,
   Image as ImageIcon,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 
 interface UploadedFile {
   file: File;
@@ -109,7 +110,7 @@ export default function ValuationDocUpload({
           {extracting ? (
             <><Loader2 className="w-4 h-4 animate-spin" />{extractionPhase || "جارٍ تحليل الوثائق بالذكاء الاصطناعي..."}</>
           ) : (
-            <><Brain className="w-4 h-4" />تحليل المحتوى بالذكاء الاصطناعي</>
+            <><RaqeemIcon size={16} />تحليل المحتوى بالذكاء الاصطناعي</>
           )}
         </button>
       )}
