@@ -767,6 +767,237 @@ async function executeTool(
       };
     }
 
+    // ═══════════════════════════════════════════════════
+    // PHASE 2 EXECUTIVE ACTIONS
+    // ═══════════════════════════════════════════════════
+    if (toolName === "create_valuation_request") {
+      // Find or create client
+      let clientId: string | null = null;
+      const { data: existingClient } = await db.from("clients")
+        .select("id, name_ar")
+        .or(`name_ar.eq.${args.client_name},phone.eq.${args.client_phone || "NONE"}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (existingClient) {
+        clientId = existingClient.id;
+      } else {
+        // Get org
+        const { data: org } = await db.from("organizations").select("id").limit(1).single();
+        if (!org) return { success: false, result: null, error: "لا توجد منشأة مسجلة" };
+
+        const { data: newClient, error: clientErr } = await db.from("clients").insert({
+          name_ar: args.client_name,
+          phone: args.client_phone || null,
+          email: args.client_email || null,
+          organization_id: org.id,
+          client_type: "individual",
+          client_status: "active",
+        }).select("id").single();
+        if (clientErr) return { success: false, result: null, error: clientErr.message };
+        clientId = newClient.id;
+      }
+
+      // Get org for assignment
+      const { data: orgData } = await db.from("organizations").select("id").limit(1).single();
+      
+      // Create assignment
+      const { data: assignment, error: assignErr } = await db.from("valuation_assignments").insert({
+        organization_id: orgData!.id,
+        client_id: clientId,
+        property_type: args.property_type || "residential",
+        valuation_type: args.valuation_type || "real_estate",
+        valuation_mode: args.valuation_mode || "field",
+        purpose: args.purpose || "sale_purchase",
+        status: "draft",
+        reference_number: "",
+        sequential_number: 0,
+        report_language: "ar",
+        notes: args.description || "طلب مُنشأ عبر رقيم",
+      }).select("id, reference_number").single();
+
+      if (assignErr) return { success: false, result: null, error: assignErr.message };
+
+      return {
+        success: true,
+        result: {
+          message: "تم إنشاء طلب التقييم بنجاح",
+          assignment_id: assignment.id,
+          reference_number: assignment.reference_number,
+          client_name: args.client_name,
+          property_type: args.property_type,
+          city: args.city || "غير محدد",
+        }
+      };
+    }
+
+    if (toolName === "generate_invoice") {
+      // Get assignment + request + pricing
+      const { data: assignment } = await db.from("valuation_assignments")
+        .select("id, reference_number, client_id")
+        .eq("id", args.assignment_id).single();
+      if (!assignment) return { success: false, result: null, error: "لم يتم العثور على المهمة" };
+
+      const { data: req } = await db.from("valuation_requests")
+        .select("id, total_price")
+        .eq("assignment_id", args.assignment_id).maybeSingle();
+
+      const totalPrice = req?.total_price || 5000;
+      const invoiceAmount = args.invoice_type === "first" ? totalPrice * 0.5 : totalPrice * 0.5;
+      const vatAmount = invoiceAmount * 0.15;
+
+      const { data: invoice, error: invErr } = await db.from("invoices").insert({
+        assignment_id: args.assignment_id,
+        request_id: req?.id || null,
+        client_id: assignment.client_id,
+        invoice_number: "",
+        subtotal: invoiceAmount,
+        vat_amount: vatAmount,
+        total_amount: invoiceAmount + vatAmount,
+        payment_status: "pending",
+        payment_stage: args.invoice_type,
+        due_date: new Date(Date.now() + 7 * 86400000).toISOString(),
+        notes: args.invoice_type === "first" ? "الدفعة الأولى (50%)" : "الدفعة النهائية (50%)",
+      }).select("id, invoice_number, total_amount").single();
+
+      if (invErr) return { success: false, result: null, error: invErr.message };
+
+      return {
+        success: true,
+        result: {
+          invoice_number: invoice.invoice_number,
+          amount: invoice.total_amount,
+          type: args.invoice_type === "first" ? "الدفعة الأولى" : "الدفعة النهائية",
+          reference: assignment.reference_number,
+        }
+      };
+    }
+
+    if (toolName === "search_assignments") {
+      let query = db.from("valuation_assignments")
+        .select("id, reference_number, status, property_type, created_at, updated_at, client_id, clients(name_ar)")
+        .order("created_at", { ascending: false })
+        .limit(args.limit || 20);
+
+      if (args.status) query = query.eq("status", args.status);
+      if (args.property_type) query = query.eq("property_type", args.property_type);
+      if (args.reference_number) query = query.ilike("reference_number", `%${args.reference_number}%`);
+      if (args.date_from) query = query.gte("created_at", args.date_from);
+      if (args.date_to) query = query.lte("created_at", args.date_to);
+
+      const { data: results, error: searchErr } = await query;
+      if (searchErr) return { success: false, result: null, error: searchErr.message };
+
+      // Filter by client name if needed
+      let filtered = results || [];
+      if (args.client_name) {
+        filtered = filtered.filter((r: any) => r.clients?.name_ar?.includes(args.client_name));
+      }
+
+      return {
+        success: true,
+        result: {
+          total: filtered.length,
+          assignments: filtered.map((a: any) => ({
+            reference: a.reference_number,
+            status: a.status,
+            type: a.property_type,
+            client: a.clients?.name_ar || "غير محدد",
+            created: new Date(a.created_at).toLocaleDateString("ar-SA"),
+          })),
+        }
+      };
+    }
+
+    if (toolName === "reassign_inspector") {
+      // Get inspector name
+      const { data: profile } = await db.from("profiles").select("full_name_ar").eq("user_id", args.new_inspector_user_id).single();
+
+      // Update assignment
+      const { error: updErr } = await db.from("valuation_assignments")
+        .update({ inspector_id: args.new_inspector_user_id, updated_at: new Date().toISOString() })
+        .eq("id", args.assignment_id);
+      if (updErr) return { success: false, result: null, error: updErr.message };
+
+      // Update active inspection
+      await db.from("inspections")
+        .update({ inspector_id: args.new_inspector_user_id })
+        .eq("assignment_id", args.assignment_id)
+        .in("status", ["scheduled", "pending"]);
+
+      // Log
+      await db.from("audit_logs").insert({
+        action: "update",
+        table_name: "valuation_assignments",
+        record_id: args.assignment_id,
+        assignment_id: args.assignment_id,
+        description: `نقل المعاينة إلى ${profile?.full_name_ar || "معاين جديد"} — السبب: ${args.reason || "بطلب المالك"}`,
+      });
+
+      return { success: true, result: { message: `تم نقل المعاينة إلى ${profile?.full_name_ar || "المعاين الجديد"}`, inspector: profile?.full_name_ar } };
+    }
+
+    if (toolName === "send_notification") {
+      const { error: notifErr } = await db.from("notifications").insert({
+        user_id: args.user_id,
+        title_ar: args.title,
+        body_ar: args.body,
+        category: args.category || "general",
+        priority: args.priority || "normal",
+        notification_type: "custom_from_raqeem",
+        channel: "in_app",
+        delivery_status: "delivered",
+        related_assignment_id: args.assignment_id || null,
+      });
+      if (notifErr) return { success: false, result: null, error: notifErr.message };
+      return { success: true, result: { message: "تم إرسال الإشعار بنجاح" } };
+    }
+
+    if (toolName === "get_client_summary") {
+      let clientQuery = db.from("clients").select("id, name_ar, phone, email, client_type, client_status, created_at");
+      if (args.client_id) clientQuery = clientQuery.eq("id", args.client_id);
+      else if (args.client_name) clientQuery = clientQuery.ilike("name_ar", `%${args.client_name}%`);
+      
+      const { data: clients } = await clientQuery.limit(1).maybeSingle();
+      if (!clients) return { success: false, result: null, error: "لم يتم العثور على العميل" };
+
+      const [assignRes, payRes] = await Promise.all([
+        db.from("valuation_assignments").select("id, reference_number, status, created_at, property_type").eq("client_id", clients.id).order("created_at", { ascending: false }).limit(10),
+        db.from("payments").select("amount, payment_status, payment_stage, created_at").eq("request_id", clients.id),
+      ]);
+
+      const assignments = assignRes.data || [];
+      const payments = payRes.data || [];
+      const totalPaid = payments.filter((p: any) => p.payment_status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+      return {
+        success: true,
+        result: {
+          client: { name: clients.name_ar, phone: clients.phone, email: clients.email, type: clients.client_type, status: clients.client_status, since: new Date(clients.created_at).toLocaleDateString("ar-SA") },
+          total_assignments: assignments.length,
+          active_assignments: assignments.filter((a: any) => !["issued", "archived", "cancelled"].includes(a.status)).length,
+          total_paid: totalPaid,
+          recent_assignments: assignments.slice(0, 5).map((a: any) => ({ ref: a.reference_number, status: a.status, type: a.property_type })),
+        }
+      };
+    }
+
+    if (toolName === "bulk_status_update") {
+      const results: any[] = [];
+      for (const assignId of args.assignment_ids) {
+        const { data: result, error } = await db.rpc("update_request_status", {
+          _assignment_id: assignId,
+          _new_status: args.new_status,
+          _user_id: null,
+          _action_type: "normal",
+          _reason: args.reason || "تحديث جماعي عبر رقيم",
+        });
+        results.push({ assignment_id: assignId, success: !error && result?.success, error: error?.message || result?.error });
+      }
+      const successCount = results.filter(r => r.success).length;
+      return { success: successCount > 0, result: { total: results.length, succeeded: successCount, failed: results.length - successCount, details: results } };
+    }
+
     return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
   } catch (e) {
     console.error(`Tool execution error (${toolName}):`, e);
