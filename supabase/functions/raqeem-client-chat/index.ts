@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { loadClientMemory, updateClientMemory, buildMemorySection } from "./_shared/memory.ts";
 import { analyzeDocumentReadiness } from "./_shared/document-analysis.ts";
 import { generateMarketInsights, getClientHistory } from "./_shared/financial-advisor.ts";
+import { generatePredictions } from "./_shared/predictions.ts";
+import { analyzeWorkflowReadiness } from "./_shared/workflow-integration.ts";
+import { checkComplianceStatus } from "./_shared/compliance-advisor.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
