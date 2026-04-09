@@ -1,5 +1,6 @@
 import { Progress } from "@/components/ui/progress";
-import { Loader2, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 
 interface JourneyProcessingStepProps {
   processingStatus: string;
