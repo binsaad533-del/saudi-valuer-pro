@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +9,7 @@ import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import {
   Loader2, Shield, DollarSign, Activity, Zap, Database,
   TrendingUp, Heart, AlertTriangle, CheckCircle2, RefreshCw,
-  Server, Code, Users, BarChart3, Cpu,
+  Server, Code, BarChart3, Cpu,
 } from "lucide-react";
 
 interface TechFinding {
@@ -168,7 +167,7 @@ export default function RaqeemTechEnginePage() {
       )}
 
       <Tabs defaultValue="actions" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full max-w-md mr-0 ml-auto">
+        <TabsList className="grid grid-cols-3 w-full max-w-md">
           <TabsTrigger value="actions">القدرات</TabsTrigger>
           <TabsTrigger value="findings">الاكتشافات ({findings.length})</TabsTrigger>
           <TabsTrigger value="results">النتائج</TabsTrigger>
