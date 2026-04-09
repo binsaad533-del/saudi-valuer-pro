@@ -3,6 +3,7 @@ import {
   FileText, Upload, HelpCircle, Clock, CreditCard,
   MessageSquare, ClipboardCheck, BarChart3, Sparkles, Download,
 } from "lucide-react";
+import { isDesktopValuationMode } from "@/lib/valuation-mode";
 
 interface QuickAction {
   label: string;
@@ -77,12 +78,20 @@ const DEFAULT_ACTIONS: QuickAction[] = [
 
 interface QuickActionButtonsProps {
   status: string;
+  valuationMode?: string;
   onAction: (message: string) => void;
   disabled?: boolean;
 }
 
-export default function QuickActionButtons({ status, onAction, disabled }: QuickActionButtonsProps) {
-  const statusActions = STATUS_ACTIONS[status] || DEFAULT_ACTIONS;
+export default function QuickActionButtons({ status, valuationMode, onAction, disabled }: QuickActionButtonsProps) {
+  const isDesktop = isDesktopValuationMode(valuationMode);
+  const desktopInspectionActions: QuickAction[] = [
+    { label: "حالة التحليل", icon: <BarChart3 className="w-3.5 h-3.5" />, message: "ما وضع التحليل الحالي في طلبي المكتبي؟" },
+    { label: "المدة المتوقعة", icon: <Clock className="w-3.5 h-3.5" />, message: "كم المدة المتبقية لإنجاز التقييم المكتبي؟" },
+  ];
+  const statusActions = isDesktop && ["inspection_pending", "inspection_completed"].includes(status)
+    ? desktopInspectionActions
+    : STATUS_ACTIONS[status] || DEFAULT_ACTIONS;
   const actions = [SUMMARY_ACTION, ...statusActions, EXPORT_ACTION];
 
   return (
