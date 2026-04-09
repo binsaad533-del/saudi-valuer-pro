@@ -35,13 +35,16 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
       request_id ? analyzeDocumentReadiness(db, request_id, ctx.property_type) : Promise.resolve(null),
       generateMarketInsights(db, ctx.property_type, ctx.property_city, ctx.organization_id),
       ctx.client_user_id ? getClientHistory(db, ctx.client_user_id) : Promise.resolve(""),
+      generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
+      analyzeWorkflowReadiness(db, ctx.assignment_id, ctx.status, request_id),
+      checkComplianceStatus(db, ctx.assignment_id, ctx.status),
     ]);
 
     // ── Knowledge section ──
