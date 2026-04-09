@@ -134,6 +134,7 @@ const App = () => (
             <Route path="/smart-marketing" element={<SmartMarketingDashboard />} />
             <Route path="/watchdog" element={<RaqeemWatchdogPage />} />
             <Route path="/tech-engine" element={<RaqeemTechEnginePage />} />
+            <Route path="/expert" element={<RaqeemExpertPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
