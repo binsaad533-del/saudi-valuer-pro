@@ -242,7 +242,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       }
     }
 
-    messages.push({ role: "user", content: message });
+    // Build user message — support image analysis (multimodal)
+    const imageAttachments = (attachments || []).filter(
+      (a: any) => a.type?.startsWith("image/") && a.url
+    );
+
+    if (imageAttachments.length > 0) {
+      // Multimodal message with images
+      const contentParts: any[] = [{ type: "text", text: message }];
+      for (const img of imageAttachments.slice(0, 3)) {
+        contentParts.push({
+          type: "image_url",
+          image_url: { url: img.url },
+        });
+      }
+      messages.push({ role: "user", content: contentParts } as any);
+    } else {
+      messages.push({ role: "user", content: message });
+    }
 
     // ── Call AI ──
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
