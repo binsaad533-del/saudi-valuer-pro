@@ -1669,7 +1669,8 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, correction } = await req.json();
+    const { messages, correction, userRole } = await req.json();
+    const effectiveRole = (userRole === "admin_coordinator" || userRole === "valuation_manager" || userRole === "valuer") ? "owner" : (userRole || "owner");
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
