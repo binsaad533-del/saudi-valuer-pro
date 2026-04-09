@@ -68,7 +68,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -92,6 +92,13 @@ serve(async (req) => {
       analyzeFleetPortfolio(db, ctx.assignment_id),
       analyzeRegulatoryCompliance(db, ctx.assignment_id),
       analyzeInsuranceRisk(db, ctx.assignment_id),
+      analyzeBulkIntake(db, ctx.assignment_id),
+      analyzeSmartClustering(db, ctx.assignment_id),
+      analyzeMultiSite(db, ctx.assignment_id),
+      analyzeDesktopFleet(db, ctx.assignment_id),
+      generateFleetReport(db, ctx.assignment_id),
+      analyzeBulkQC(db, ctx.assignment_id),
+      generateFleetDashboard(db, ctx.assignment_id),
     ]);
 
     // ── Knowledge section ──
