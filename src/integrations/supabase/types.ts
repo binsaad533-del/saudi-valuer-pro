@@ -3472,6 +3472,57 @@ export type Database = {
         }
         Relationships: []
       }
+      raqeem_client_memory: {
+        Row: {
+          ai_notes: string | null
+          avg_response_satisfaction: number | null
+          client_user_id: string
+          communication_style: string | null
+          completed_requests: number | null
+          created_at: string
+          frequent_questions: string[] | null
+          id: string
+          last_interaction_summary: string | null
+          preferred_cities: string[] | null
+          preferred_property_types: string[] | null
+          topics_of_interest: string[] | null
+          total_requests: number | null
+          updated_at: string
+        }
+        Insert: {
+          ai_notes?: string | null
+          avg_response_satisfaction?: number | null
+          client_user_id: string
+          communication_style?: string | null
+          completed_requests?: number | null
+          created_at?: string
+          frequent_questions?: string[] | null
+          id?: string
+          last_interaction_summary?: string | null
+          preferred_cities?: string[] | null
+          preferred_property_types?: string[] | null
+          topics_of_interest?: string[] | null
+          total_requests?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ai_notes?: string | null
+          avg_response_satisfaction?: number | null
+          client_user_id?: string
+          communication_style?: string | null
+          completed_requests?: number | null
+          created_at?: string
+          frequent_questions?: string[] | null
+          id?: string
+          last_interaction_summary?: string | null
+          preferred_cities?: string[] | null
+          preferred_property_types?: string[] | null
+          topics_of_interest?: string[] | null
+          total_requests?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       raqeem_corrections: {
         Row: {
           category: string | null
