@@ -197,13 +197,12 @@ const App = () => (
           <Route path="/verify" element={<VerifyReport />} />
           <Route path="/verify/:token" element={<VerifyReport />} />
 
-          <RaqeemFloatingButton />
-
           {/* Field Inspection (standalone) */}
           <Route path="/field-inspection" element={<FieldInspectionPage />} />
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <RaqeemFloatingButton />
       </BrowserRouter>
     </TooltipProvider>
     </RaqeemAgentProvider>
