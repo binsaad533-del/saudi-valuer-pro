@@ -293,6 +293,10 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     // ── Generate suggested actions ──
     const suggestedActions: { label: string; message: string }[] = [];
     const status = ctx.status;
+
+    // Universal actions
+    suggestedActions.push({ label: "⏱️ المدة المتوقعة", message: "كم المدة المتوقعة لإنجاز التقييم؟" });
+
     if (status === "submitted" || status === "under_pricing") {
       suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
       suggestedActions.push({ label: "📊 تقدير أولي", message: "هل يمكنك إعطائي تقدير أولي للقيمة؟" });
@@ -302,13 +306,19 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     } else if (status === "data_collection_open") {
       suggestedActions.push({ label: "📎 ملفات ناقصة", message: "هل هناك ملفات ناقصة في طلبي؟" });
       suggestedActions.push({ label: "📊 نسبة الاكتمال", message: "كم نسبة اكتمال ملف طلبي؟" });
+    } else if (status === "inspection_pending" || status === "inspection_completed") {
+      suggestedActions.push({ label: "🔎 تفاصيل المعاينة", message: "ما تفاصيل المعاينة الميدانية؟" });
+      suggestedActions.push({ label: "⚠️ المخاطر", message: "هل هناك مخاطر متوقعة في هذا التقييم؟" });
+    } else if (status === "professional_review" || status === "analysis_complete") {
+      suggestedActions.push({ label: "📋 حالة الامتثال", message: "ما حالة فحوصات الامتثال لطلبي؟" });
+      suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });
     } else if (status === "draft_report_ready" || status === "client_review") {
       suggestedActions.push({ label: "📊 ملخص التقرير", message: "أعطني ملخص المسودة" });
-      suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });
       suggestedActions.push({ label: "📈 مقارنة سوقية", message: "كيف تقارن القيمة مع السوق؟" });
+      suggestedActions.push({ label: "✅ جاهزية الإصدار", message: "ما نسبة جاهزية طلبي للإصدار النهائي؟" });
     } else if (status === "issued") {
       suggestedActions.push({ label: "✅ رمز التحقق", message: "ما هو رمز التحقق من التقرير؟" });
-      suggestedActions.push({ label: "📥 تحميل التقرير", message: "كيف أحمّل التقرير النهائي؟" });
+      suggestedActions.push({ label: "📜 حقوقي", message: "ما هي حقوقي كعميل بعد صدور التقرير؟" });
     }
 
     // Add document readiness indicator
