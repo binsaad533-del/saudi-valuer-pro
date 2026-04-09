@@ -415,6 +415,222 @@ const TOOLS = [
   },
 ];
 
+// ═══════════════ أدوات المعاين (Inspector) ═══════════════
+const INSPECTOR_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_my_tasks",
+      description: "عرض المعاينات المسندة للمعاين الحالي مع تفاصيلها.",
+      parameters: {
+        type: "object",
+        properties: {
+          status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر حالة المعاينة" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_task_details",
+      description: "عرض تفاصيل مهمة معاينة محددة (موقع، عميل، نوع العقار، ملاحظات).",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة (UUID)" }
+        },
+        required: ["assignment_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "submit_inspection_status",
+      description: "تحديث حالة المعاينة (بدأت، مكتملة، مؤجلة) مع ملاحظات.",
+      parameters: {
+        type: "object",
+        properties: {
+          inspection_id: { type: "string", description: "معرّف المعاينة" },
+          new_status: { type: "string", enum: ["in_progress", "completed", "postponed"], description: "الحالة الجديدة" },
+          notes: { type: "string", description: "ملاحظات المعاين" }
+        },
+        required: ["inspection_id", "new_status"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "report_field_issue",
+      description: "الإبلاغ عن مشكلة ميدانية (عدم إتاحة الوصول، عنوان خاطئ، خطر أمني).",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          issue_type: { type: "string", enum: ["access_denied", "wrong_address", "safety_concern", "client_absent", "other"], description: "نوع المشكلة" },
+          description: { type: "string", description: "وصف المشكلة" }
+        },
+        required: ["assignment_id", "issue_type", "description"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_my_schedule",
+      description: "عرض جدول المعاينات القادمة مرتبة بالتاريخ.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+];
+
+// ═══════════════ أدوات المدير المالي (CFO) ═══════════════
+const CFO_TOOLS = [
+  {
+    type: "function",
+    function: {
+      name: "get_pending_payments",
+      description: "عرض المدفوعات المعلقة وإثباتات السداد بانتظار المراجعة.",
+      parameters: {
+        type: "object",
+        properties: {
+          stage_filter: { type: "string", enum: ["first", "final", "all"], description: "مرحلة الدفع" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "confirm_payment_receipt",
+      description: "تأكيد استلام دفعة وتحريك سير العمل.",
+      parameters: {
+        type: "object",
+        properties: {
+          payment_id: { type: "string", description: "معرّف الدفعة (UUID)" },
+          notes: { type: "string", description: "ملاحظات التأكيد" }
+        },
+        required: ["payment_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_overdue_invoices",
+      description: "عرض الفواتير المتأخرة مع تفاصيل العملاء والمبالغ.",
+      parameters: {
+        type: "object",
+        properties: {
+          days_overdue: { type: "number", description: "عدد أيام التأخر (افتراضي 7)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_revenue_report",
+      description: "تقرير الإيرادات والتحصيل لفترة محددة.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: { type: "string", enum: ["today", "this_week", "this_month", "this_quarter", "this_year"], description: "الفترة الزمنية" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_collection_summary",
+      description: "ملخص التحصيل: مدفوع، معلق، متأخر مع النسب.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_payment_reminder",
+      description: "إرسال تذكير دفع لعميل محدد.",
+      parameters: {
+        type: "object",
+        properties: {
+          client_id: { type: "string", description: "معرّف العميل" },
+          invoice_id: { type: "string", description: "معرّف الفاتورة" },
+          message: { type: "string", description: "نص التذكير (اختياري)" }
+        },
+        required: ["client_id"]
+      }
+    }
+  },
+];
+
+// Role-specific system prompt additions
+const INSPECTOR_SYSTEM_PROMPT = `
+
+## دورك كمساعد المعاين الميداني
+أنت تساعد المعاين في إدارة مهامه الميدانية بكفاءة:
+- عرض المعاينات المسندة وتفاصيلها
+- تحديث حالة المعاينات (بدأت، مكتملة، مؤجلة)
+- الإبلاغ عن مشاكل ميدانية
+- عرض الجدول الزمني
+
+### أدوات المعاين:
+- **get_my_tasks**: عرض كل المعاينات المسندة لي
+- **get_task_details**: تفاصيل مهمة معاينة محددة
+- **submit_inspection_status**: تحديث حالة المعاينة
+- **report_field_issue**: الإبلاغ عن مشكلة ميدانية
+- **get_my_schedule**: جدول المعاينات القادمة
+
+### قيود المعاين:
+- لا تصلاحية لتغيير حالة الطلبات
+- لا تصلاحية لعرض البيانات المالية
+- لا تصلاحية لإدارة مستخدمين آخرين
+- ركز فقط على العمل الميداني`;
+
+const CFO_SYSTEM_PROMPT = `
+
+## دورك كمساعد المدير المالي
+أنت تساعد المدير المالي في إدارة العمليات المالية:
+- مراجعة المدفوعات المعلقة وتأكيدها
+- متابعة الفواتير المتأخرة
+- تقارير الإيرادات والتحصيل
+- إرسال تذكيرات الدفع
+
+### أدوات المدير المالي:
+- **get_pending_payments**: المدفوعات بانتظار المراجعة
+- **confirm_payment_receipt**: تأكيد استلام دفعة
+- **get_overdue_invoices**: الفواتير المتأخرة
+- **get_revenue_report**: تقرير الإيرادات
+- **get_collection_summary**: ملخص التحصيل
+- **send_payment_reminder**: إرسال تذكير دفع
+
+### قيود المدير المالي:
+- لا صلاحية لتغيير حالة الطلبات (إلا تأكيد الدفع)
+- لا صلاحية لإدارة المعاينين
+- لا صلاحية لتعديل بيانات التقييم
+- ركز فقط على العمليات المالية`;
+
+function getToolsForRole(role: string) {
+  switch (role) {
+    case "inspector": return INSPECTOR_TOOLS;
+    case "financial_manager": return CFO_TOOLS;
+    default: return TOOLS; // owner gets all tools
+  }
+}
+
+function getRolePromptAddition(role: string): string {
+  switch (role) {
+    case "inspector": return INSPECTOR_SYSTEM_PROMPT;
+    case "financial_manager": return CFO_SYSTEM_PROMPT;
+    default: return "";
+  }
+}
+
+
 async function buildContextualPrompt(supabaseClient: any): Promise<string> {
   const contextSections: string[] = [BASE_SYSTEM_PROMPT];
 
@@ -1005,6 +1221,298 @@ async function executeTool(
       return { success: successCount > 0, result: { total: results.length, succeeded: successCount, failed: results.length - successCount, details: results } };
     }
 
+    // ═══════════════ Inspector Tools Execution ═══════════════
+    if (toolName === "get_my_tasks") {
+      const { data: inspections } = await db.from("inspections")
+        .select("id, assignment_id, inspection_date, status, notes_ar, valuation_assignments(reference_number, property_type, valuation_type, subjects(city_ar, district_ar, address_ar))")
+        .order("inspection_date", { ascending: false })
+        .limit(20);
+
+      const statusFilter = args.status_filter || "all";
+      let filtered = inspections || [];
+      if (statusFilter === "pending") filtered = filtered.filter((i: any) => !["completed", "submitted"].includes(i.status));
+      if (statusFilter === "completed") filtered = filtered.filter((i: any) => ["completed", "submitted"].includes(i.status));
+
+      return {
+        success: true,
+        result: {
+          total: filtered.length,
+          tasks: filtered.map((i: any) => ({
+            inspection_id: i.id,
+            assignment_id: i.assignment_id,
+            reference: i.valuation_assignments?.reference_number || "—",
+            date: i.inspection_date,
+            status: i.status,
+            property_type: i.valuation_assignments?.property_type || "—",
+            location: i.valuation_assignments?.subjects?.[0]?.city_ar || i.valuation_assignments?.subjects?.city_ar || "—",
+            address: i.valuation_assignments?.subjects?.[0]?.address_ar || i.valuation_assignments?.subjects?.address_ar || "—",
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_task_details") {
+      const { data: assignment } = await db.from("valuation_assignments")
+        .select("*, subjects(*), clients(name_ar, phone), valuation_requests(property_description, notes, valuation_mode)")
+        .eq("id", args.assignment_id)
+        .single();
+      if (!assignment) return { success: false, result: null, error: "لم يتم العثور على المهمة" };
+
+      const subject = Array.isArray(assignment.subjects) ? assignment.subjects[0] : assignment.subjects;
+      return {
+        success: true,
+        result: {
+          reference: assignment.reference_number,
+          status: assignment.status,
+          property_type: assignment.property_type,
+          valuation_type: assignment.valuation_type,
+          valuation_mode: assignment.valuation_requests?.valuation_mode || assignment.valuation_mode,
+          client_name: assignment.clients?.name_ar || "—",
+          client_phone: assignment.clients?.phone || "—",
+          location: { city: subject?.city_ar, district: subject?.district_ar, address: subject?.address_ar },
+          description: assignment.valuation_requests?.property_description || "—",
+          notes: assignment.valuation_requests?.notes || assignment.notes || "—",
+        }
+      };
+    }
+
+    if (toolName === "submit_inspection_status") {
+      const statusMap: Record<string, string> = { in_progress: "in_progress", completed: "submitted", postponed: "postponed" };
+      const dbStatus = statusMap[args.new_status] || args.new_status;
+      
+      const updateData: any = { status: dbStatus, updated_at: new Date().toISOString() };
+      if (args.new_status === "completed") {
+        updateData.completed = true;
+        updateData.submitted_at = new Date().toISOString();
+      }
+      if (args.notes) updateData.notes_ar = args.notes;
+
+      const { error } = await db.from("inspections").update(updateData).eq("id", args.inspection_id);
+      if (error) return { success: false, result: null, error: error.message };
+      return { success: true, result: { message: `تم تحديث حالة المعاينة إلى: ${args.new_status}` } };
+    }
+
+    if (toolName === "report_field_issue") {
+      const issueLabels: Record<string, string> = {
+        access_denied: "عدم إتاحة الوصول",
+        wrong_address: "عنوان خاطئ",
+        safety_concern: "خطر أمني",
+        client_absent: "العميل غير موجود",
+        other: "أخرى",
+      };
+
+      // Log as notification to owner
+      await db.from("notifications").insert({
+        user_id: "00000000-0000-0000-0000-000000000000", // placeholder — will need owner lookup
+        title_ar: `⚠️ مشكلة ميدانية: ${issueLabels[args.issue_type] || args.issue_type}`,
+        body_ar: args.description,
+        category: "inspection",
+        priority: "critical",
+        notification_type: "field_issue",
+        channel: "in_app",
+        delivery_status: "delivered",
+        related_assignment_id: args.assignment_id,
+      });
+
+      // Log in audit
+      await db.from("audit_logs").insert({
+        action: "create",
+        table_name: "inspections",
+        record_id: args.assignment_id,
+        assignment_id: args.assignment_id,
+        description: `مشكلة ميدانية: ${issueLabels[args.issue_type]} — ${args.description}`,
+      });
+
+      return { success: true, result: { message: "تم الإبلاغ عن المشكلة الميدانية وإرسال إشعار للإدارة" } };
+    }
+
+    if (toolName === "get_my_schedule") {
+      const { data: upcoming } = await db.from("inspections")
+        .select("id, assignment_id, inspection_date, inspection_time, status, valuation_assignments(reference_number, property_type, subjects(city_ar, address_ar))")
+        .in("status", ["scheduled", "pending", "in_progress"])
+        .gte("inspection_date", new Date().toISOString().split("T")[0])
+        .order("inspection_date", { ascending: true })
+        .limit(15);
+
+      return {
+        success: true,
+        result: {
+          total: upcoming?.length || 0,
+          schedule: (upcoming || []).map((i: any) => ({
+            inspection_id: i.id,
+            reference: i.valuation_assignments?.reference_number || "—",
+            date: i.inspection_date,
+            time: i.inspection_time || "غير محدد",
+            status: i.status,
+            location: i.valuation_assignments?.subjects?.[0]?.city_ar || "—",
+            address: i.valuation_assignments?.subjects?.[0]?.address_ar || "—",
+          })),
+        }
+      };
+    }
+
+    // ═══════════════ CFO Tools Execution ═══════════════
+    if (toolName === "get_pending_payments") {
+      let query = db.from("payments")
+        .select("id, amount, payment_stage, payment_status, payment_type, created_at, request_id, assignment_id, valuation_requests(client_name_ar), valuation_assignments(reference_number)")
+        .in("payment_status", ["pending", "proof_uploaded"])
+        .order("created_at", { ascending: false })
+        .limit(30);
+
+      if (args.stage_filter && args.stage_filter !== "all") {
+        query = query.eq("payment_stage", args.stage_filter);
+      }
+
+      const { data: payments } = await query;
+      return {
+        success: true,
+        result: {
+          total: payments?.length || 0,
+          payments: (payments || []).map((p: any) => ({
+            id: p.id,
+            amount: p.amount,
+            stage: p.payment_stage,
+            status: p.payment_status,
+            type: p.payment_type,
+            date: new Date(p.created_at).toLocaleDateString("ar-SA"),
+            client: p.valuation_requests?.client_name_ar || "—",
+            reference: p.valuation_assignments?.reference_number || "—",
+          })),
+        }
+      };
+    }
+
+    if (toolName === "confirm_payment_receipt") {
+      const { error } = await db.from("payments")
+        .update({
+          payment_status: "paid",
+          paid_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", args.payment_id);
+
+      if (error) return { success: false, result: null, error: error.message };
+
+      await db.from("audit_logs").insert({
+        action: "status_change",
+        table_name: "payments",
+        record_id: args.payment_id,
+        description: `تأكيد استلام دفعة عبر رقيم${args.notes ? ' — ' + args.notes : ''}`,
+      });
+
+      return { success: true, result: { message: "تم تأكيد الدفعة بنجاح وتحريك سير العمل" } };
+    }
+
+    if (toolName === "get_overdue_invoices") {
+      const daysOverdue = args.days_overdue || 7;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - daysOverdue);
+
+      const { data: invoices } = await db.from("invoices")
+        .select("id, invoice_number, total_amount, due_date, status, created_at, assignment_id, valuation_assignments(reference_number, clients(name_ar, phone))")
+        .in("status", ["unpaid", "overdue"])
+        .lt("due_date", new Date().toISOString())
+        .order("due_date", { ascending: true })
+        .limit(30);
+
+      return {
+        success: true,
+        result: {
+          total: invoices?.length || 0,
+          invoices: (invoices || []).map((inv: any) => ({
+            invoice_number: inv.invoice_number,
+            amount: inv.total_amount,
+            due_date: inv.due_date,
+            days_late: Math.floor((Date.now() - new Date(inv.due_date).getTime()) / 86400000),
+            client: inv.valuation_assignments?.clients?.name_ar || "—",
+            phone: inv.valuation_assignments?.clients?.phone || "—",
+            reference: inv.valuation_assignments?.reference_number || "—",
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_revenue_report") {
+      const now = new Date();
+      let startDate: Date;
+      switch (args.period || "this_month") {
+        case "today": startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break;
+        case "this_week": startDate = new Date(now); startDate.setDate(now.getDate() - now.getDay()); break;
+        case "this_quarter": startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1); break;
+        case "this_year": startDate = new Date(now.getFullYear(), 0, 1); break;
+        default: startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      }
+
+      const { data: payments } = await db.from("payments")
+        .select("amount, payment_status, payment_stage, paid_at")
+        .gte("created_at", startDate.toISOString());
+
+      const paid = (payments || []).filter((p: any) => p.payment_status === "paid");
+      const pending = (payments || []).filter((p: any) => p.payment_status !== "paid" && p.payment_status !== "rejected");
+      const totalPaid = paid.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const totalPending = pending.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+      return {
+        success: true,
+        result: {
+          period: args.period || "this_month",
+          total_revenue: totalPaid,
+          pending_amount: totalPending,
+          total_transactions: (payments || []).length,
+          paid_count: paid.length,
+          pending_count: pending.length,
+          collection_rate: (payments || []).length > 0 ? Math.round((paid.length / (payments || []).length) * 100) : 0,
+        }
+      };
+    }
+
+    if (toolName === "get_collection_summary") {
+      const { data: allPayments } = await db.from("payments")
+        .select("amount, payment_status, payment_stage")
+        .limit(1000);
+
+      const paid = (allPayments || []).filter((p: any) => p.payment_status === "paid");
+      const pending = (allPayments || []).filter((p: any) => ["pending", "proof_uploaded"].includes(p.payment_status));
+      const overdue = (allPayments || []).filter((p: any) => p.payment_status === "overdue");
+
+      const totalPaid = paid.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const totalPending = pending.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const totalOverdue = overdue.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const grandTotal = totalPaid + totalPending + totalOverdue;
+
+      return {
+        success: true,
+        result: {
+          total_collected: totalPaid,
+          total_pending: totalPending,
+          total_overdue: totalOverdue,
+          grand_total: grandTotal,
+          collection_rate: grandTotal > 0 ? Math.round((totalPaid / grandTotal) * 100) : 0,
+          counts: { paid: paid.length, pending: pending.length, overdue: overdue.length },
+        }
+      };
+    }
+
+    if (toolName === "send_payment_reminder") {
+      const { data: client } = await db.from("clients").select("name_ar, portal_user_id").eq("id", args.client_id).single();
+      if (!client?.portal_user_id) return { success: false, result: null, error: "العميل غير مسجل في البوابة" };
+
+      const reminderText = args.message || `تذكير: لديك فاتورة بانتظار السداد. يرجى المبادرة بالدفع لتفعيل خدمة التقييم.`;
+
+      await db.from("notifications").insert({
+        user_id: client.portal_user_id,
+        title_ar: "💳 تذكير بالسداد",
+        body_ar: reminderText,
+        category: "payment",
+        priority: "high",
+        notification_type: "payment_reminder",
+        channel: "in_app",
+        delivery_status: "delivered",
+      });
+
+      return { success: true, result: { message: `تم إرسال تذكير الدفع للعميل ${client.name_ar}` } };
+    }
+
     return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
   } catch (e) {
     console.error(`Tool execution error (${toolName}):`, e);
@@ -1161,7 +1669,8 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, correction } = await req.json();
+    const { messages, correction, userRole } = await req.json();
+    const effectiveRole = (userRole === "admin_coordinator" || userRole === "valuation_manager" || userRole === "valuer") ? "owner" : (userRole || "owner");
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(
@@ -1213,8 +1722,10 @@ serve(async (req) => {
       );
     }
 
-    // Build contextual system prompt
-    const systemPrompt = await buildContextualPrompt(supabaseClient);
+    // Build contextual system prompt with role-specific additions
+    const basePrompt = await buildContextualPrompt(supabaseClient);
+    const systemPrompt = basePrompt + getRolePromptAddition(effectiveRole);
+    const roleTools = getToolsForRole(effectiveRole);
 
     // First call: with tools enabled (non-streaming to detect tool calls)
     const firstResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -1229,7 +1740,7 @@ serve(async (req) => {
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        tools: TOOLS,
+        tools: roleTools,
         tool_choice: "auto",
         stream: false,
       }),
