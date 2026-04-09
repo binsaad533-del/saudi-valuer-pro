@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import TopBar from "@/components/layout/TopBar";
+import RaqeemDailySummary from "@/components/dashboard/RaqeemDailySummary";
+import RaqeemExecutiveInsight from "@/components/dashboard/RaqeemExecutiveInsight";
 import ReportDraftGenerator from "@/components/reports/ReportDraftGenerator";
 import FinalIssuancePanel from "@/components/reports/FinalIssuancePanel";
 import SOWGenerator from "@/components/reports/SOWGenerator";
@@ -351,6 +353,14 @@ export default function ExecutiveDashboard() {
             </div>
           </div>
           <span className="text-[9px] text-muted-foreground/50 tabular-nums">{now}</span>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
+            RAQEEM — Daily Summary + Executive Insights
+            ═══════════════════════════════════════════════════════════ */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 mb-6">
+          <RaqeemDailySummary />
+          <RaqeemExecutiveInsight />
         </div>
 
         {/* ═══════════════════════════════════════════════════════════
