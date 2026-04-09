@@ -536,7 +536,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     }
 
     return new Response(JSON.stringify({
-      reply, suggestedActions, documentReadiness,
+      reply, suggestedActions, documentReadiness, cancelExecuted,
       complianceReadiness: complianceStatus.totalChecks > 0 ? {
         percent: complianceStatus.mandatoryTotal > 0 ? Math.round((complianceStatus.mandatoryPassed / complianceStatus.mandatoryTotal) * 100) : 0,
         issuanceReady: complianceStatus.issuanceReady,
