@@ -1,5 +1,5 @@
 import { Progress } from "@/components/ui/progress";
-import { isDesktopValuationMode } from "@/lib/valuation-mode";
+import { isDesktopValuationMode, getTurnaroundDays } from "@/lib/valuation-mode";
 
 const ALL_STAGES = [
   { key: "submitted", label: "تم التقديم", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح", durationDays: 1 },
@@ -77,7 +77,7 @@ export function EnhancedRequestTracker({ status, createdAt, compact = false, val
   const estimatedEnd = startDate
     ? (() => {
         const d = new Date(startDate);
-        d.setDate(d.getDate() + stages.reduce((a, s) => a + s.durationDays, 0));
+        d.setDate(d.getDate() + getTurnaroundDays(valuationMode));
         return d;
       })()
     : null;
