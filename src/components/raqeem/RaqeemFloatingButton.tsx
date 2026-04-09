@@ -9,8 +9,8 @@ export default function RaqeemFloatingButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide on Raqeem page itself
-  if (location.pathname === "/raqeem") return null;
+  // Hide on Raqeem pages
+  if (["/expert", "/tech-engine", "/watchdog"].includes(location.pathname)) return null;
 
   return (
     <div className="fixed bottom-6 left-6 z-50">
