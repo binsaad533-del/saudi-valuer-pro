@@ -34,10 +34,10 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`
 
 const ROLE_PROMPTS: Record<string, string[]> = {
   owner: [
-    "ما هي حالة الطلبات النشطة؟",
-    "اشرح لي منهجيات التقييم المعتمدة",
-    "ما هي متطلبات تقرير التقييم حسب تقييم؟",
-    "كيف أحسب معدل الرسملة؟",
+    "ما حالة الطلبات المتأخرة؟",
+    "أعطني تقرير أداء هذا الأسبوع",
+    "ما إيرادات هذا الشهر؟",
+    "ما مهام المعاينين اليوم؟",
   ],
   client: [
     "ما هي حالة طلبي الحالي؟",
@@ -54,6 +54,29 @@ const ROLE_PROMPTS: Record<string, string[]> = {
     "ما هي المدفوعات المعلقة؟",
     "عرض ملخص الإيرادات",
     "ما هي الفواتير المتأخرة؟",
+  ],
+};
+
+const ROLE_QUICK_ACTIONS: Record<string, { label: string; icon: string; message: string }[]> = {
+  owner: [
+    { label: "المتأخرات", icon: "⏰", message: "أعطني ملخص الطلبات والمدفوعات المتأخرة" },
+    { label: "الأداء", icon: "📊", message: "أعطني تقرير أداء هذا الأسبوع" },
+    { label: "الإيرادات", icon: "💰", message: "ما إجمالي إيرادات هذا الشهر؟" },
+    { label: "المعاينات", icon: "🔍", message: "ما مهام المعاينين المعلقة؟" },
+  ],
+  client: [
+    { label: "حالة طلبي", icon: "📋", message: "وين وصل طلبي؟" },
+    { label: "المستندات", icon: "📎", message: "هل هناك مستندات ناقصة؟" },
+    { label: "المدة", icon: "⏱️", message: "كم باقي على التسليم؟" },
+  ],
+  inspector: [
+    { label: "مهامي", icon: "📋", message: "ما المعاينات المطلوبة مني اليوم؟" },
+    { label: "رفع صور", icon: "📸", message: "أريد رفع صور المعاينة" },
+  ],
+  financial_manager: [
+    { label: "المتأخرات", icon: "⚠️", message: "ما الفواتير المتأخرة؟" },
+    { label: "الإيرادات", icon: "💰", message: "ملخص إيرادات هذا الشهر" },
+    { label: "تأكيد دفعة", icon: "✅", message: "أريد تأكيد استلام دفعة" },
   ],
 };
 
