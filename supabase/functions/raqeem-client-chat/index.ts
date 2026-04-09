@@ -39,6 +39,18 @@ import { analyzeDesktopFleet } from "./_shared/desktop-fleet-valuator.ts";
 import { generateFleetReport } from "./_shared/fleet-report-templates.ts";
 import { analyzeBulkQC } from "./_shared/bulk-qc-engine.ts";
 import { generateFleetDashboard } from "./_shared/fleet-dashboard.ts";
+import { analyzePredictiveValuation } from "./_shared/predictive-valuation.ts";
+import { analyzeDigitalTwin3D } from "./_shared/digital-twin-3d.ts";
+import { analyzeAIPeerReview } from "./_shared/ai-peer-review.ts";
+import { analyzeVoiceFieldCapture } from "./_shared/voice-field-capture.ts";
+import { analyzeImageFraud } from "./_shared/image-fraud-detection.ts";
+import { analyzeSmartPortal } from "./_shared/smart-client-portal.ts";
+import { analyzeCompetitiveBenchmark } from "./_shared/competitive-benchmark.ts";
+import { analyzeMultiCurrency } from "./_shared/multi-currency.ts";
+import { analyzeInstitutionalMemory } from "./_shared/institutional-memory.ts";
+import { analyzePortfolioHealth } from "./_shared/portfolio-health.ts";
+import { analyzeERPIntegration } from "./_shared/erp-integration.ts";
+import { analyzeBlockchainNotarization } from "./_shared/blockchain-notarization.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
