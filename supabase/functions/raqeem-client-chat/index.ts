@@ -14,6 +14,13 @@ import { analyzeMachineryDepreciation } from "./_shared/machinery-depreciation.t
 import { classifyAssetBatch, buildMachineryVisionPrompt } from "./_shared/equipment-recognition.ts";
 import { analyzeMachineryMarket } from "./_shared/machinery-market.ts";
 import { analyzeProductionLines } from "./_shared/production-line-analyzer.ts";
+import { analyzeIoTTelemetry } from "./_shared/iot-telemetry.ts";
+import { analyzePredictiveMaintenance } from "./_shared/predictive-maintenance.ts";
+import { analyzeAuctionIntelligence } from "./_shared/auction-intelligence.ts";
+import { analyzeDigitalTwins } from "./_shared/digital-twin.ts";
+import { analyzeFleetPortfolio } from "./_shared/fleet-optimizer.ts";
+import { analyzeRegulatoryCompliance } from "./_shared/regulatory-compliance.ts";
+import { analyzeInsuranceRisk } from "./_shared/insurance-risk.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
