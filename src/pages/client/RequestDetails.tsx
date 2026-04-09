@@ -501,6 +501,11 @@ export default function RequestDetails() {
                 </CardTitle>
               </CardHeader>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {/* Progress Bar */}
+                <div className="px-2 pb-2">
+                  <ChatProgressBar status={request.status} />
+                </div>
+
                 {/* Raqeem Welcome — always first */}
                 <div className="flex gap-2">
                   <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0">
@@ -515,6 +520,18 @@ export default function RequestDetails() {
                     </div>
                   </div>
                 </div>
+
+                {/* Quick Actions — after welcome, before messages */}
+                {messages.length === 0 && (
+                  <QuickActionButtons
+                    status={request.status}
+                    onAction={(msg) => {
+                      setNewMessage(msg);
+                      setTimeout(() => handleSendMessage(), 100);
+                    }}
+                    disabled={sending}
+                  />
+                )}
 
                 {messages.map((msg) => {
                   const isClient = msg.sender_type === "client";
