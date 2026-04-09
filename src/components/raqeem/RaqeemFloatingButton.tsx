@@ -36,7 +36,7 @@ export default function RaqeemFloatingButton() {
         className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-shadow bg-primary-foreground"
         aria-label="فتح رقيم"
       >
-        <RaqeemIcon size={28} className="text-primary-foreground" />
+        <RaqeemIcon size={56} className="text-primary-foreground" />
       </motion.button>
     </div>
   );
