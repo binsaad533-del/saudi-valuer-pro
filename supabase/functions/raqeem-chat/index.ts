@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { buildMachineryVisionPrompt } from "../raqeem-client-chat/_shared/equipment-recognition.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1002,6 +1003,66 @@ function getRolePromptAddition(role: string): string {
     case "financial_manager": return CFO_SYSTEM_PROMPT;
     default: return "";
   }
+}
+
+type ChatAttachment = {
+  name?: string;
+  type?: string;
+  url?: string;
+};
+
+function isImageAttachment(att: ChatAttachment): boolean {
+  return Boolean(att?.url && att?.type?.startsWith("image/"));
+}
+
+function hasMeaningfulText(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function detectEquipmentSignal(latestUserText: string, attachments: ChatAttachment[]): boolean {
+  const combined = [
+    latestUserText,
+    ...attachments.map((att) => `${att.name || ""} ${att.type || ""}`),
+  ].join(" ").toLowerCase();
+
+  const equipmentKeywords = [
+    "معدات", "معده", "آلة", "آلات", "machinery", "equipment", "heavy equipment",
+    "caterpillar", "cat", "komatsu", "volvo", "loader", "wheel loader", "forklift",
+    "excavator", "generator", "compressor", "crane", "truck", "حفار", "شيول",
+    "لودر", "رافعة", "رافعة شوكية", "كرين", "بوكلين", "مولد", "ضاغط", "شاحنة",
+  ];
+
+  return equipmentKeywords.some((keyword) => combined.includes(keyword));
+}
+
+function buildAttachmentIntelligenceSection(
+  attachments: ChatAttachment[],
+  latestUserText: string,
+): string {
+  if (!attachments.length) return "";
+
+  const hasImages = attachments.some(isImageAttachment);
+  const equipmentSignal = detectEquipmentSignal(latestUserText, attachments);
+
+  let section = `\n\n## مرفقات الرسالة الحالية\n`;
+  attachments.forEach((att, index) => {
+    section += `- ملف ${index + 1}: ${att.name || "بدون اسم"} (${att.type || "غير معروف"})\n`;
+  });
+
+  if (hasImages) {
+    section += `\n### تعليمات تحليل الصور\n`;
+    section += `- الصور المرفقة جزء أساسي من السؤال الحالي ويجب تحليلها بصرياً، لا الاكتفاء باسم الملف.\n`;
+    section += `- إذا أرسل المستخدم صوراً فقط أو نصاً عاماً، فاعتبر أن المطلوب هو تحليل الصور وتحديد نوع الأصل والحالة الظاهرية والخطوة التالية المناسبة.\n`;
+    section += `- قبل أن تسأل أي سؤال، استخرج أولاً كل ما يمكن استنتاجه مباشرة من الصور نفسها.\n`;
+    section += `- لا تطلب من العميل معلومات شخصية أو أرقام طلبات أو بيانات موجودة لديك بالفعل.\n`;
+  }
+
+  if (equipmentSignal) {
+    section += `\n### توجيه المسار\n`;
+    section += `- توجد إشارة قوية أن المرفقات تخص آلات ومعدات؛ طبّق مسار المعدات مباشرة وتجنّب أي متطلبات عقارية.\n`;
+  }
+
+  return section;
 }
 
 
@@ -3009,7 +3070,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, correction, userRole, userId } = await req.json();
+    const { messages, correction, userRole, userId, attachments = [] } = await req.json();
     const effectiveRole = (userRole === "admin_coordinator" || userRole === "valuation_manager" || userRole === "valuer") ? "owner" : (userRole || "owner");
 
     if (!messages || !Array.isArray(messages)) {
@@ -3048,16 +3109,20 @@ serve(async (req) => {
       try {
         const { data: profile } = await supabaseClient
           .from("profiles")
-          .select("full_name")
-          .eq("id", authenticatedUserId)
+          .select("full_name_ar, full_name_en")
+          .or(`user_id.eq.${authenticatedUserId},id.eq.${authenticatedUserId}`)
           .maybeSingle();
-        if (profile?.full_name) userName = profile.full_name;
+        if (profile?.full_name_ar || profile?.full_name_en) {
+          userName = profile.full_name_ar || profile.full_name_en || "";
+        }
         else {
           const { data: { user: authU } } = await supabaseClient.auth.admin.getUserById(authenticatedUserId);
           userName = authU?.user_metadata?.full_name || authU?.user_metadata?.name || "";
         }
       } catch (_e) { /* ignore */ }
     }
+
+    let knownClientName = "";
 
     // Handle correction submission
     if (correction) {
@@ -3103,6 +3168,7 @@ serve(async (req) => {
 
         const clientName = clientRecord?.name_ar || userName || "";
         const clientId = clientRecord?.id;
+        knownClientName = clientName || knownClientName;
 
         clientContextSection = `\n\n## بيانات العميل الحالي`;
         clientContextSection += `\n- اسم العميل: **${clientName || "غير معروف"}**`;
@@ -3148,6 +3214,7 @@ serve(async (req) => {
             .limit(10);
 
           if (requests && requests.length > 0) {
+            knownClientName = requests[0]?.client_name_ar || knownClientName;
             clientContextSection += `\n\n### طلبات العميل (${requests.length} طلب)\n`;
             const statusLabels: Record<string, string> = {
               draft: "مسودة", submitted: "مقدم", scope_generated: "نطاق جاهز", scope_approved: "نطاق معتمد",
@@ -3166,15 +3233,48 @@ serve(async (req) => {
       }
     }
 
+    const latestUserText = [...messages]
+      .reverse()
+      .find((msg: any) => msg?.role === "user" && typeof msg.content === "string")?.content || "";
+    const imageAttachments = (attachments as ChatAttachment[]).filter(isImageAttachment);
+    const attachmentIntelligenceSection = buildAttachmentIntelligenceSection(attachments as ChatAttachment[], latestUserText);
+
     // ── User greeting section for all roles ──
+    const greetingName = userName || knownClientName;
     let greetingInstruction = "";
-    if (userName) {
-      greetingInstruction = `\n\n## المستخدم الحالي\nاسم المستخدم: **${userName}**\n- في أول رسالة: رحّب باسمه. في الرسائل التالية: ادخل مباشرة في الإجابة.\n`;
+    if (greetingName) {
+      greetingInstruction = `\n\n## المستخدم الحالي\nاسم المستخدم: **${greetingName}**\n- في أول رسالة: رحّب باسمه. في الرسائل التالية: ادخل مباشرة في الإجابة.\n`;
     }
+
+    const normalizedMessages = messages.map((msg: any, index: number) => {
+      const isLatestUserMessage = index === messages.length - 1 && msg?.role === "user";
+      if (!isLatestUserMessage || imageAttachments.length === 0) return msg;
+
+      const fallbackPrompt = "حلّل الصور المرفقة بصرياً وحدد نوع الأصل الظاهر والحالة الظاهرية والخطوة التالية المناسبة دون طلب معلومات معروفة مسبقاً.";
+      const baseText = hasMeaningfulText(msg.content) && !/^تم إرفاق\s+\d+\s+ملف/.test(msg.content.trim())
+        ? msg.content
+        : fallbackPrompt;
+
+      return {
+        role: "user",
+        content: [
+          { type: "text", text: baseText },
+          ...imageAttachments.slice(0, 4).map((image) => ({
+            type: "image_url",
+            image_url: { url: image.url! },
+          })),
+        ],
+      };
+    });
 
     // Build contextual system prompt with role-specific additions
     const basePrompt = await buildContextualPrompt(supabaseClient);
-    const systemPrompt = basePrompt + getRolePromptAddition(effectiveRole) + clientContextSection + greetingInstruction;
+    const systemPrompt = basePrompt
+      + getRolePromptAddition(effectiveRole)
+      + clientContextSection
+      + greetingInstruction
+      + attachmentIntelligenceSection
+      + (imageAttachments.length > 0 ? `\n${buildMachineryVisionPrompt()}\n` : "");
     const roleTools = getToolsForRole(effectiveRole);
 
     // First call: with tools enabled (non-streaming to detect tool calls)
@@ -3188,7 +3288,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...normalizedMessages,
         ],
         tools: roleTools,
         tool_choice: "auto",
@@ -3248,7 +3348,7 @@ serve(async (req) => {
           // Second call: AI summarizes tool results (streaming)
           const secondMessages = [
             { role: "system", content: systemPrompt },
-            ...messages,
+            ...normalizedMessages,
             choice.message,
             ...toolResults,
           ];
@@ -3301,7 +3401,7 @@ serve(async (req) => {
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          ...messages,
+          ...normalizedMessages,
         ],
         stream: true,
       }),
