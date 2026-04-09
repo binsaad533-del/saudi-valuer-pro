@@ -54,7 +54,8 @@ import SmartMarketingDashboard from "@/pages/admin/SmartMarketingDashboard";
 import RaqeemWatchdogPage from "@/pages/RaqeemWatchdogPage";
 import RaqeemTechEnginePage from "@/pages/RaqeemTechEnginePage";
 import RaqeemExpertPage from "@/pages/RaqeemExpertPage";
-
+import RaqeemChatPage from "@/pages/RaqeemChatPage";
+import RaqeemFloatingButton from "@/components/raqeem/RaqeemFloatingButton";
 import ClientAuth from "@/pages/client/ClientAuth";
 import ForgotPassword from "@/pages/client/ForgotPassword";
 import RecoveryCallback from "@/pages/client/RecoveryCallback";
@@ -189,6 +190,9 @@ const App = () => (
             <Route path="/client/notification-settings" element={<NotificationSettingsPage />} />
           </Route>
 
+          {/* Raqeem Chat — accessible to all authenticated users */}
+          <Route path="/raqeem-chat" element={<RaqeemChatPage />} />
+
           {/* Public Verification */}
           <Route path="/verify" element={<VerifyReport />} />
           <Route path="/verify/:token" element={<VerifyReport />} />
@@ -198,6 +202,7 @@ const App = () => (
 
           <Route path="*" element={<NotFound />} />
         </Routes>
+        <RaqeemFloatingButton />
       </BrowserRouter>
     </TooltipProvider>
     </RaqeemAgentProvider>

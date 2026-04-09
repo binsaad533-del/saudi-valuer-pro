@@ -9,8 +9,8 @@ export default function RaqeemFloatingButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide on Raqeem pages
-  if (["/expert", "/tech-engine", "/watchdog"].includes(location.pathname)) return null;
+  // Hide on Raqeem chat page and login pages
+  if (["/raqeem-chat", "/login", "/client/auth"].includes(location.pathname)) return null;
 
   return (
     <div className="fixed bottom-6 left-6 z-50">
@@ -28,7 +28,7 @@ export default function RaqeemFloatingButton() {
       </AnimatePresence>
 
       <motion.button
-        onClick={() => navigate("/expert")}
+        onClick={() => navigate("/raqeem-chat")}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         whileHover={{ scale: 1.1 }}

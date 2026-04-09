@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import AppSidebar from "./AppSidebar";
-import RaqeemFloatingButton from "@/components/raqeem/RaqeemFloatingButton";
 
 export default function AppLayout() {
   return (
@@ -17,7 +16,6 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
-      <RaqeemFloatingButton />
     </SidebarProvider>
   );
 }
