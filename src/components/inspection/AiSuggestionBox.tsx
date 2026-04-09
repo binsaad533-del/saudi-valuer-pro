@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Copy, Check } from "lucide-react";
+import { Loader2, Copy, Check } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -67,7 +68,7 @@ export default function AiSuggestionBox({ context, sectionKey, promptHint }: AiS
     <div className="mt-3 rounded-lg border border-ai/30 bg-ai-light p-3 space-y-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-ai">
-          <Sparkles className="w-4 h-4" />
+          <RaqeemIcon size={16} />
           <span className="text-xs font-bold">✨ اقتراحات الذكاء الاصطناعي</span>
         </div>
         <Button
@@ -77,7 +78,7 @@ export default function AiSuggestionBox({ context, sectionKey, promptHint }: AiS
           disabled={loading}
           className="h-7 text-xs gap-1 border-ai/40 bg-ai text-ai-foreground hover:bg-ai/90 hover:text-ai-foreground"
         >
-          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RaqeemIcon size={14} />}
           {loading ? "جاري التحليل..." : "✨ اقتراح"}
         </Button>
       </div>

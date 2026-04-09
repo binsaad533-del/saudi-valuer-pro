@@ -8,10 +8,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   FileText, Loader2, RefreshCw, Lock, Unlock, CheckCircle2,
-  Edit3, Eye, Sparkles, AlertTriangle, BookOpen, Target,
+  Edit3, Eye, AlertTriangle, BookOpen, Target,
   Users, Scale, Calendar, Building2, Search, FileCheck,
   Shield, ListChecks,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 
 interface ScopeSection {
   key: string;
@@ -225,7 +226,7 @@ export default function ScopeOfWorkGenerator({
           {!hasContent && !loading && (
             <div className="text-center py-6 space-y-3">
               <div className="w-12 h-12 mx-auto rounded-xl bg-primary/10 flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-primary" />
+                <RaqeemIcon size={24} />
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">
@@ -236,7 +237,7 @@ export default function ScopeOfWorkGenerator({
                 </p>
               </div>
               <Button onClick={generateScope} className="gap-1.5 text-xs" size="sm">
-                <Sparkles className="w-3.5 h-3.5" />
+                <RaqeemIcon size={14} />
                 توليد نطاق العمل
               </Button>
             </div>
