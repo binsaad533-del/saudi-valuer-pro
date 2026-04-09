@@ -3000,7 +3000,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, correction, userRole } = await req.json();
+    const { messages, correction, userRole, userId } = await req.json();
     const effectiveRole = (userRole === "admin_coordinator" || userRole === "valuation_manager" || userRole === "valuer") ? "owner" : (userRole || "owner");
 
     if (!messages || !Array.isArray(messages)) {
@@ -3017,14 +3017,42 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseClient = createClient(supabaseUrl, supabaseServiceKey);
 
+    // ── Identify user from auth token or userId ──
+    let authenticatedUserId = userId || null;
+    let userName = "";
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (token && !authenticatedUserId) {
+      try {
+        const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
+        const { data: { user: authUser } } = await userClient.auth.getUser(token);
+        if (authUser) {
+          authenticatedUserId = authUser.id;
+          userName = authUser.user_metadata?.full_name || authUser.user_metadata?.name || "";
+        }
+      } catch (_e) { /* ignore */ }
+    }
+
+    // Fetch user name if we have ID but no name
+    if (authenticatedUserId && !userName) {
+      try {
+        const { data: profile } = await supabaseClient
+          .from("profiles")
+          .select("full_name")
+          .eq("id", authenticatedUserId)
+          .maybeSingle();
+        if (profile?.full_name) userName = profile.full_name;
+        else {
+          const { data: { user: authU } } = await supabaseClient.auth.admin.getUserById(authenticatedUserId);
+          userName = authU?.user_metadata?.full_name || authU?.user_metadata?.name || "";
+        }
+      } catch (_e) { /* ignore */ }
+    }
+
     // Handle correction submission
     if (correction) {
-      const authHeader = req.headers.get("authorization");
-      const token = authHeader?.replace("Bearer ", "");
-      const userClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!);
-      const { data: { user } } = await userClient.auth.getUser(token);
-
-      if (!user) {
+      if (!authenticatedUserId) {
         return new Response(
           JSON.stringify({ error: "Authentication required" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -3036,7 +3064,7 @@ serve(async (req) => {
         original_answer: correction.original_answer,
         corrected_answer: correction.corrected_answer,
         correction_reason: correction.reason || null,
-        corrected_by: user.id,
+        corrected_by: authenticatedUserId,
       });
 
       if (error) {
@@ -3053,9 +3081,91 @@ serve(async (req) => {
       );
     }
 
+    // ── Auto-fetch client context (requests, payments) for client role ──
+    let clientContextSection = "";
+    if (effectiveRole === "client" && authenticatedUserId) {
+      try {
+        // Fetch client's requests via portal_user_id linkage
+        const { data: clientRecord } = await supabaseClient
+          .from("clients")
+          .select("id, name_ar, name_en")
+          .eq("portal_user_id", authenticatedUserId)
+          .maybeSingle();
+
+        const clientName = clientRecord?.name_ar || userName || "";
+        const clientId = clientRecord?.id;
+
+        clientContextSection = `\n\n## بيانات العميل الحالي`;
+        clientContextSection += `\n- اسم العميل: **${clientName || "غير معروف"}**`;
+        clientContextSection += `\n- معرّف المستخدم: ${authenticatedUserId}`;
+
+        if (clientId) {
+          // Fetch their active requests
+          const { data: requests } = await supabaseClient
+            .from("valuation_requests")
+            .select("id, assignment_id, status, client_name_ar, property_type, created_at, total_price, amount_paid, payment_status, valuation_assignments(id, reference_number, status, final_value, valuation_mode)")
+            .eq("client_id", clientId)
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+          if (requests && requests.length > 0) {
+            const statusLabels: Record<string, string> = {
+              draft: "مسودة", submitted: "مقدم", scope_generated: "نطاق جاهز", scope_approved: "نطاق معتمد",
+              first_payment_confirmed: "دفعة أولى مؤكدة", data_collection_open: "جمع بيانات",
+              inspection_pending: "معاينة معلقة", inspection_completed: "معاينة مكتملة",
+              analysis_complete: "تحليل مكتمل", professional_review: "مراجعة مهنية",
+              draft_report_ready: "مسودة جاهزة", client_review: "مراجعة العميل",
+              draft_approved: "مسودة معتمدة", final_payment_confirmed: "دفعة نهائية",
+              issued: "صادر ✅", archived: "مؤرشف", cancelled: "ملغي",
+            };
+
+            clientContextSection += `\n\n### طلبات العميل (${requests.length} طلب)\n`;
+            for (const r of requests) {
+              const assignment = Array.isArray(r.valuation_assignments) ? r.valuation_assignments[0] : r.valuation_assignments;
+              const st = assignment?.status || r.status;
+              clientContextSection += `• **${assignment?.reference_number || "—"}** | ${statusLabels[st] || st} | ${r.property_type || "غير محدد"} | ${r.total_price ? r.total_price + " ر.س" : "بدون تسعير"} | ${new Date(r.created_at).toLocaleDateString("ar-SA")}\n`;
+            }
+            clientContextSection += `\n**تعليمات**: عند سؤال العميل عن طلباته، اعرض هذه البيانات مباشرة دون طلب أي رقم مرجعي منه. أنت تعرف كل طلباته.`;
+          } else {
+            clientContextSection += `\n- لا توجد طلبات سابقة لهذا العميل.`;
+          }
+        } else {
+          // Client might not be linked yet — try via client_user_id in requests
+          const { data: requests } = await supabaseClient
+            .from("valuation_requests")
+            .select("id, assignment_id, status, client_name_ar, property_type, created_at, total_price, amount_paid, payment_status, valuation_assignments(id, reference_number, status, final_value)")
+            .eq("client_user_id", authenticatedUserId)
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+          if (requests && requests.length > 0) {
+            clientContextSection += `\n\n### طلبات العميل (${requests.length} طلب)\n`;
+            const statusLabels: Record<string, string> = {
+              draft: "مسودة", submitted: "مقدم", scope_generated: "نطاق جاهز", scope_approved: "نطاق معتمد",
+              first_payment_confirmed: "دفعة أولى مؤكدة", issued: "صادر ✅", cancelled: "ملغي",
+            };
+            for (const r of requests) {
+              const assignment = Array.isArray(r.valuation_assignments) ? r.valuation_assignments[0] : r.valuation_assignments;
+              const st = assignment?.status || r.status;
+              clientContextSection += `• **${assignment?.reference_number || "—"}** | ${statusLabels[st] || st} | ${r.property_type || "غير محدد"} | ${new Date(r.created_at).toLocaleDateString("ar-SA")}\n`;
+            }
+            clientContextSection += `\n**تعليمات**: اعرض هذه البيانات مباشرة دون طلب رقم مرجعي. أنت تعرف العميل وطلباته.`;
+          }
+        }
+      } catch (e) {
+        console.error("Client context fetch error:", e);
+      }
+    }
+
+    // ── User greeting section for all roles ──
+    let greetingInstruction = "";
+    if (userName) {
+      greetingInstruction = `\n\n## المستخدم الحالي\nاسم المستخدم: **${userName}**\n- في أول رسالة: رحّب باسمه. في الرسائل التالية: ادخل مباشرة في الإجابة.\n`;
+    }
+
     // Build contextual system prompt with role-specific additions
     const basePrompt = await buildContextualPrompt(supabaseClient);
-    const systemPrompt = basePrompt + getRolePromptAddition(effectiveRole);
+    const systemPrompt = basePrompt + getRolePromptAddition(effectiveRole) + clientContextSection + greetingInstruction;
     const roleTools = getToolsForRole(effectiveRole);
 
     // First call: with tools enabled (non-streaming to detect tool calls)
