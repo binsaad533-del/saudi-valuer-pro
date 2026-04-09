@@ -265,7 +265,7 @@ serve(async (req) => {
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
 ${buildMachineryVisionPrompt()}
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
