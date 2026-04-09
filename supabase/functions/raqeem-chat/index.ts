@@ -1403,7 +1403,495 @@ async function executeTool(
       return { success: successCount > 0, result: { total: results.length, succeeded: successCount, failed: results.length - successCount, details: results } };
     }
 
-    // ═══════════════ Inspector Tools Execution ═══════════════
+    // ═══════════════════════════════════════════════════
+    // PHASE 3 — Deep Executive Tools (Owner)
+    // ═══════════════════════════════════════════════════
+    if (toolName === "get_dashboard_summary") {
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      const weekAgo = new Date(now.getTime() - 7 * 86400000).toISOString();
+
+      const [assignRes, payRes, inspRes, notifRes, recentRes] = await Promise.all([
+        db.from("valuation_assignments").select("id, status, created_at, updated_at").not("status", "in", "(cancelled)"),
+        db.from("payments").select("amount, payment_status, payment_stage, created_at").gte("created_at", weekAgo),
+        db.from("inspections").select("id, status, completed, inspection_date").gte("created_at", weekAgo),
+        db.from("notifications").select("id, is_read").eq("is_read", false).limit(100),
+        db.from("valuation_assignments").select("id, reference_number, status, created_at, updated_at, clients(name_ar)").order("created_at", { ascending: false }).limit(5),
+      ]);
+
+      const assignments = assignRes.data || [];
+      const statusCounts: Record<string, number> = {};
+      for (const a of assignments) statusCounts[a.status] = (statusCounts[a.status] || 0) + 1;
+
+      const activeCount = assignments.filter((a: any) => !["issued", "archived", "cancelled", "draft"].includes(a.status)).length;
+      const staleCount = assignments.filter((a: any) => {
+        if (["issued", "archived", "cancelled"].includes(a.status)) return false;
+        return (now.getTime() - new Date(a.updated_at).getTime()) > 48 * 3600000;
+      }).length;
+
+      const payments = payRes.data || [];
+      const weekRevenue = payments.filter((p: any) => p.payment_status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const pendingPayments = payments.filter((p: any) => p.payment_status === "pending").length;
+
+      const inspections = inspRes.data || [];
+      const completedInsp = inspections.filter((i: any) => i.completed || i.status === "completed").length;
+      const pendingInsp = inspections.filter((i: any) => ["scheduled", "pending"].includes(i.status)).length;
+
+      return {
+        success: true,
+        result: {
+          platform_health: staleCount === 0 ? "ممتازة 🟢" : staleCount <= 3 ? "جيدة 🟡" : "تحتاج انتباه 🔴",
+          total_assignments: assignments.length,
+          active_in_progress: activeCount,
+          stale_count: staleCount,
+          status_breakdown: statusCounts,
+          week_revenue: weekRevenue,
+          pending_payments: pendingPayments,
+          week_inspections: { total: inspections.length, completed: completedInsp, pending: pendingInsp },
+          unread_notifications: (notifRes.data || []).length,
+          recent_assignments: (recentRes.data || []).map((a: any) => ({
+            ref: a.reference_number, status: a.status, client: a.clients?.name_ar || "—",
+            created: new Date(a.created_at).toLocaleDateString("ar-SA"),
+          })),
+        }
+      };
+    }
+
+    if (toolName === "get_assignment_details") {
+      let query = db.from("valuation_assignments")
+        .select("*, clients(name_ar, phone, email, client_type), subjects(city_ar, district_ar, address_ar, land_area, building_area, property_type, description_ar), valuation_requests(total_price, payment_status, valuation_mode, property_description, notes, purpose)");
+
+      if (args.assignment_id) query = query.eq("id", args.assignment_id);
+      else if (args.reference_number) query = query.ilike("reference_number", `%${args.reference_number}%`);
+      else return { success: false, result: null, error: "يجب تحديد معرّف المهمة أو الرقم المرجعي" };
+
+      const { data: assignment } = await query.single();
+      if (!assignment) return { success: false, result: null, error: "لم يتم العثور على الطلب" };
+
+      // Fetch related data in parallel
+      const [inspRes, payRes, compRes, assumRes, reportRes] = await Promise.all([
+        db.from("inspections").select("id, status, completed, inspection_date, inspector_id").eq("assignment_id", assignment.id).limit(1),
+        db.from("payments").select("id, amount, payment_status, payment_stage, created_at").eq("assignment_id", assignment.id),
+        db.from("assignment_comparables").select("id").eq("assignment_id", assignment.id),
+        db.from("assumptions").select("id").eq("assignment_id", assignment.id),
+        db.from("reports").select("id, status, version, is_final").eq("assignment_id", assignment.id).order("version", { ascending: false }).limit(1),
+      ]);
+
+      const subject = Array.isArray(assignment.subjects) ? assignment.subjects[0] : assignment.subjects;
+      const client = assignment.clients;
+      const req = Array.isArray(assignment.valuation_requests) ? assignment.valuation_requests[0] : assignment.valuation_requests;
+
+      // Get inspector name
+      let inspectorName = "—";
+      if (assignment.inspector_id) {
+        const { data: profile } = await db.from("profiles").select("full_name_ar").eq("user_id", assignment.inspector_id).single();
+        inspectorName = profile?.full_name_ar || "—";
+      }
+
+      const payments = payRes.data || [];
+      const totalPaid = payments.filter((p: any) => p.payment_status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+      return {
+        success: true,
+        result: {
+          reference: assignment.reference_number,
+          status: assignment.status,
+          property_type: assignment.property_type,
+          valuation_type: assignment.valuation_type,
+          valuation_mode: req?.valuation_mode || assignment.valuation_mode || "—",
+          purpose: assignment.purpose || req?.purpose || "—",
+          final_value: assignment.final_value ? Number(assignment.final_value).toLocaleString() + " ر.س" : "غير محددة",
+          client: { name: client?.name_ar, phone: client?.phone, email: client?.email, type: client?.client_type },
+          property: { city: subject?.city_ar, district: subject?.district_ar, address: subject?.address_ar, land_area: subject?.land_area, building_area: subject?.building_area, description: req?.property_description || subject?.description_ar },
+          inspector: { name: inspectorName, inspection_status: inspRes.data?.[0]?.status || "لا معاينة", inspection_date: inspRes.data?.[0]?.inspection_date },
+          financials: { total_price: req?.total_price, total_paid: totalPaid, payment_status: req?.payment_status || "—", payments_count: payments.length },
+          compliance: { comparables_count: compRes.data?.length || 0, assumptions_count: assumRes.data?.length || 0, has_report: !!(reportRes.data?.length) },
+          created_at: new Date(assignment.created_at).toLocaleDateString("ar-SA"),
+          updated_at: new Date(assignment.updated_at).toLocaleDateString("ar-SA"),
+          notes: assignment.notes || req?.notes || "—",
+        }
+      };
+    }
+
+    if (toolName === "get_audit_trail") {
+      let query = db.from("audit_logs")
+        .select("action, table_name, description, user_role, created_at, old_data, new_data")
+        .order("created_at", { ascending: false })
+        .limit(args.limit || 20);
+
+      if (args.assignment_id) query = query.eq("assignment_id", args.assignment_id);
+      if (args.table_name) query = query.eq("table_name", args.table_name);
+
+      const { data: logs } = await query;
+
+      // Also get request_audit_log for workflow transitions
+      let workflowLogs: any[] = [];
+      if (args.assignment_id) {
+        const { data: wfLogs } = await db.from("request_audit_log")
+          .select("old_status, new_status, action_type, reason, user_id, created_at, metadata")
+          .eq("assignment_id", args.assignment_id)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        workflowLogs = wfLogs || [];
+      }
+
+      return {
+        success: true,
+        result: {
+          audit_logs: (logs || []).map((l: any) => ({
+            action: l.action, table: l.table_name, description: l.description, role: l.user_role,
+            date: new Date(l.created_at).toLocaleString("ar-SA"),
+          })),
+          workflow_transitions: workflowLogs.map((w: any) => ({
+            from: w.old_status, to: w.new_status, type: w.action_type, reason: w.reason,
+            date: new Date(w.created_at).toLocaleString("ar-SA"),
+            role: w.metadata?.user_role || "—",
+          })),
+        }
+      };
+    }
+
+    if (toolName === "approve_final_value") {
+      const { error: updateErr } = await db.from("valuation_assignments")
+        .update({ final_value: args.approved_value, updated_at: new Date().toISOString() })
+        .eq("id", args.assignment_id);
+      if (updateErr) return { success: false, result: null, error: updateErr.message };
+
+      await db.from("audit_logs").insert({
+        action: "update",
+        table_name: "valuation_assignments",
+        record_id: args.assignment_id,
+        assignment_id: args.assignment_id,
+        description: `اعتماد القيمة النهائية: ${args.approved_value.toLocaleString()} ر.س${args.justification ? ` | المبرر: ${args.justification}` : ""}`,
+        new_data: { approved_value: args.approved_value, approved_at: new Date().toISOString() },
+      });
+
+      return { success: true, result: { message: `تم اعتماد القيمة النهائية: ${args.approved_value.toLocaleString()} ر.س`, assignment_id: args.assignment_id } };
+    }
+
+    if (toolName === "issue_final_report") {
+      // Run issuance gate checks
+      const checks: { code: string; label: string; passed: boolean; details?: string }[] = [];
+
+      const { data: assignment } = await db.from("valuation_assignments").select("*, subjects(*)").eq("id", args.assignment_id).single();
+      if (!assignment) return { success: false, result: null, error: "المهمة غير موجودة" };
+
+      // Check final value
+      checks.push({ code: "FINAL_VALUE", label: "القيمة النهائية", passed: !!assignment.final_value, details: assignment.final_value ? `${Number(assignment.final_value).toLocaleString()} ر.س` : "غير محددة" });
+
+      // Check report exists
+      const { data: reports } = await db.from("reports").select("id, content_ar").eq("assignment_id", args.assignment_id).order("version", { ascending: false }).limit(1);
+      checks.push({ code: "REPORT", label: "وجود التقرير", passed: !!(reports?.length), details: reports?.length ? "موجود" : "لا يوجد تقرير" });
+      if (reports?.[0]) checks.push({ code: "CONTENT", label: "محتوى التقرير", passed: !!reports[0].content_ar });
+
+      // Check assumptions
+      const { count: assumCount } = await db.from("assumptions").select("id", { count: "exact", head: true }).eq("assignment_id", args.assignment_id);
+      checks.push({ code: "ASSUMPTIONS", label: "الافتراضات", passed: (assumCount || 0) > 0, details: `${assumCount || 0} بند` });
+
+      // Check inspection (unless desktop)
+      if (assignment.valuation_mode !== "desktop") {
+        const { data: insp } = await db.from("inspections").select("completed, status").eq("assignment_id", args.assignment_id).limit(1);
+        const inspDone = insp?.[0]?.completed || insp?.[0]?.status === "completed";
+        checks.push({ code: "INSPECTION", label: "المعاينة", passed: !!inspDone });
+      }
+
+      // Check compliance
+      const { data: compChecks } = await db.from("compliance_checks").select("is_passed, is_mandatory").eq("assignment_id", args.assignment_id);
+      if (compChecks?.length) {
+        const mandatoryFailed = compChecks.filter((c: any) => c.is_mandatory && !c.is_passed);
+        checks.push({ code: "COMPLIANCE", label: "فحوصات الامتثال", passed: mandatoryFailed.length === 0, details: mandatoryFailed.length > 0 ? `${mandatoryFailed.length} فحوصات فاشلة` : "جميعها ناجحة" });
+      }
+
+      // Check payment
+      const { data: linkedReq } = await db.from("valuation_requests").select("id").eq("assignment_id", args.assignment_id).maybeSingle();
+      if (linkedReq) {
+        const { data: finalPay } = await db.from("payments").select("id").eq("request_id", linkedReq.id).eq("payment_stage", "final").eq("payment_status", "paid").limit(1);
+        checks.push({ code: "PAYMENT", label: "الدفعة النهائية", passed: !!(finalPay?.length), details: finalPay?.length ? "مدفوعة" : "غير مدفوعة" });
+      }
+
+      const failedChecks = checks.filter(c => !c.passed);
+      const canIssue = failedChecks.length === 0;
+
+      if (!canIssue && !args.bypass_justification) {
+        return {
+          success: false,
+          result: {
+            can_issue: false,
+            passed: checks.filter(c => c.passed).length,
+            total: checks.length,
+            checks,
+            blocked_reasons: failedChecks.map(c => `${c.label}: ${c.details || "لم يجتز"}`),
+            message: "لا يمكن الإصدار — يوجد بوابات فاشلة. يمكنك تقديم مبرر للتجاوز.",
+          },
+          error: "بوابات فاشلة تمنع الإصدار"
+        };
+      }
+
+      // Issue the report
+      const { data: result, error: statusErr } = await db.rpc("update_request_status", {
+        _assignment_id: args.assignment_id,
+        _new_status: "issued",
+        _user_id: null,
+        _action_type: args.bypass_justification ? "bypass" : "normal",
+        _reason: "إصدار التقرير النهائي عبر رقيم",
+        _bypass_justification: args.bypass_justification || null,
+      });
+
+      if (statusErr || !result?.success) {
+        return { success: false, result: null, error: statusErr?.message || result?.error || "فشل الإصدار" };
+      }
+
+      return {
+        success: true,
+        result: {
+          message: "✅ تم إصدار التقرير النهائي بنجاح",
+          checks_passed: checks.filter(c => c.passed).length,
+          total_checks: checks.length,
+          bypassed: !!args.bypass_justification,
+        }
+      };
+    }
+
+    if (toolName === "cancel_assignment") {
+      const { data: result, error } = await db.rpc("update_request_status", {
+        _assignment_id: args.assignment_id,
+        _new_status: "cancelled",
+        _user_id: null,
+        _action_type: "normal",
+        _reason: args.reason,
+      });
+      if (error) return { success: false, result: null, error: error.message };
+      if (!result?.success) return { success: false, result: null, error: result?.error || "لا يمكن الإلغاء من الحالة الحالية" };
+      return { success: true, result: { message: `تم إلغاء الطلب بنجاح | السبب: ${args.reason}` } };
+    }
+
+    if (toolName === "get_compliance_overview") {
+      const { data: active } = await db.from("valuation_assignments")
+        .select("id, reference_number, status, final_value, methodology, purpose")
+        .not("status", "in", "(issued,archived,cancelled,draft)")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      const overview: any[] = [];
+      for (const a of (active || [])) {
+        const [subjRes, compRes, assumRes, inspRes] = await Promise.all([
+          db.from("subjects").select("id").eq("assignment_id", a.id),
+          db.from("assignment_comparables").select("id").eq("assignment_id", a.id),
+          db.from("assumptions").select("id").eq("assignment_id", a.id),
+          db.from("inspections").select("completed, status").eq("assignment_id", a.id).limit(1),
+        ]);
+
+        const score = [
+          !!(subjRes.data?.length),
+          (compRes.data?.length || 0) >= 3,
+          (assumRes.data?.length || 0) > 0,
+          !!a.final_value,
+          !!a.methodology,
+          inspRes.data?.[0]?.completed || inspRes.data?.[0]?.status === "completed",
+        ].filter(Boolean).length;
+
+        overview.push({
+          ref: a.reference_number, status: a.status,
+          compliance_score: Math.round((score / 6) * 100),
+          missing: [
+            !(subjRes.data?.length) && "بيانات العقار",
+            (compRes.data?.length || 0) < 3 && "مقارنات (≥3)",
+            !(assumRes.data?.length) && "افتراضات",
+            !a.final_value && "القيمة النهائية",
+            !a.methodology && "المنهجية",
+            !(inspRes.data?.[0]?.completed) && !(inspRes.data?.[0]?.status === "completed") && "المعاينة",
+          ].filter(Boolean),
+        });
+      }
+
+      const avgScore = overview.length > 0 ? Math.round(overview.reduce((s, o) => s + o.compliance_score, 0) / overview.length) : 0;
+      return {
+        success: true,
+        result: {
+          total_active: overview.length,
+          average_compliance: avgScore,
+          fully_compliant: overview.filter(o => o.compliance_score === 100).length,
+          needs_attention: overview.filter(o => o.compliance_score < 60).length,
+          assignments: overview,
+        }
+      };
+    }
+
+    if (toolName === "get_team_workload") {
+      const { data: inspectors } = await db.from("inspector_profiles")
+        .select("user_id, is_active, availability_status, current_workload, avg_rating, cities_ar, profiles(full_name_ar)")
+        .eq("is_active", true);
+
+      const workloads: any[] = [];
+      for (const insp of (inspectors || [])) {
+        const [activeRes, completedRes] = await Promise.all([
+          db.from("inspections").select("id").eq("inspector_id", insp.user_id).in("status", ["scheduled", "pending", "in_progress"]),
+          db.from("inspections").select("id").eq("inspector_id", insp.user_id).in("status", ["completed", "submitted"]),
+        ]);
+
+        workloads.push({
+          name: insp.profiles?.full_name_ar || "—",
+          availability: insp.availability_status,
+          active_tasks: activeRes.data?.length || 0,
+          completed_tasks: completedRes.data?.length || 0,
+          workload: insp.current_workload || 0,
+          rating: insp.avg_rating || 0,
+          cities: insp.cities_ar || [],
+        });
+      }
+
+      workloads.sort((a, b) => b.active_tasks - a.active_tasks);
+      return {
+        success: true,
+        result: {
+          total_inspectors: workloads.length,
+          available: workloads.filter(w => w.availability === "available").length,
+          overloaded: workloads.filter(w => w.active_tasks > 5).length,
+          inspectors: workloads,
+        }
+      };
+    }
+
+    if (toolName === "get_workflow_bottlenecks") {
+      const threshold = (args.hours_threshold || 48) * 3600000;
+      const cutoff = new Date(Date.now() - threshold).toISOString();
+
+      const { data: stale } = await db.from("valuation_assignments")
+        .select("id, reference_number, status, updated_at, created_at, clients(name_ar)")
+        .not("status", "in", "(issued,archived,cancelled,draft)")
+        .lt("updated_at", cutoff)
+        .order("updated_at", { ascending: true })
+        .limit(30);
+
+      const bottlenecks: Record<string, any[]> = {};
+      for (const a of (stale || [])) {
+        if (!bottlenecks[a.status]) bottlenecks[a.status] = [];
+        bottlenecks[a.status].push({
+          ref: a.reference_number,
+          client: a.clients?.name_ar || "—",
+          hours_stuck: Math.round((Date.now() - new Date(a.updated_at).getTime()) / 3600000),
+          since: new Date(a.updated_at).toLocaleDateString("ar-SA"),
+        });
+      }
+
+      const stageLabels: Record<string, string> = {
+        submitted: "بانتظار التسعير", scope_generated: "بانتظار موافقة العميل", scope_approved: "بانتظار الدفعة الأولى",
+        first_payment_confirmed: "بانتظار فتح جمع البيانات", data_collection_open: "جمع بيانات جاري",
+        data_collection_complete: "بانتظار المعاينة", inspection_pending: "معاينة معلقة",
+        inspection_completed: "بانتظار التحقق", data_validated: "بانتظار التحليل",
+        analysis_complete: "بانتظار المراجعة المهنية", professional_review: "مراجعة مهنية جارية",
+        draft_report_ready: "بانتظار مراجعة العميل", client_review: "العميل يراجع",
+        draft_approved: "بانتظار الدفعة النهائية", final_payment_confirmed: "بانتظار الإصدار",
+      };
+
+      return {
+        success: true,
+        result: {
+          total_bottlenecks: (stale || []).length,
+          by_stage: Object.entries(bottlenecks).map(([stage, items]) => ({
+            stage, label: stageLabels[stage] || stage, count: items.length, assignments: items,
+          })),
+          recommendation: (stale || []).length === 0
+            ? "لا توجد اختناقات — سير العمل يتحرك بسلاسة ✅"
+            : `يوجد ${(stale || []).length} طلبات عالقة تحتاج تدخل فوري ⚠️`,
+        }
+      };
+    }
+
+    if (toolName === "update_assignment_pricing") {
+      const { data: req } = await db.from("valuation_requests")
+        .select("id, total_price")
+        .eq("assignment_id", args.assignment_id)
+        .maybeSingle();
+
+      const oldPrice = req?.total_price || 0;
+      if (req) {
+        await db.from("valuation_requests")
+          .update({ total_price: args.new_price, updated_at: new Date().toISOString() })
+          .eq("id", req.id);
+      }
+
+      await db.from("audit_logs").insert({
+        action: "update",
+        table_name: "valuation_requests",
+        record_id: req?.id || args.assignment_id,
+        assignment_id: args.assignment_id,
+        description: `تعديل التسعير: ${oldPrice} → ${args.new_price} ر.س | السبب: ${args.reason}`,
+        old_data: { total_price: oldPrice },
+        new_data: { total_price: args.new_price, reason: args.reason },
+      });
+
+      return { success: true, result: { message: `تم تعديل السعر من ${oldPrice.toLocaleString()} إلى ${args.new_price.toLocaleString()} ر.س`, old_price: oldPrice, new_price: args.new_price } };
+    }
+
+    if (toolName === "manage_discount_code") {
+      if (args.action === "create") {
+        let clientId: string | null = null;
+        if (args.client_name) {
+          const { data: client } = await db.from("clients").select("id").ilike("name_ar", `%${args.client_name}%`).limit(1).maybeSingle();
+          clientId = client?.id || null;
+        }
+
+        const { data: dc, error: dcErr } = await db.from("discount_codes").insert({
+          code: args.code.toUpperCase(),
+          discount_percentage: args.discount_percentage || 10,
+          discount_type: "percentage",
+          max_uses: args.max_uses || null,
+          client_id: clientId,
+          is_active: true,
+          expires_at: args.expires_days ? new Date(Date.now() + args.expires_days * 86400000).toISOString() : null,
+        }).select("id, code").single();
+
+        if (dcErr) return { success: false, result: null, error: dcErr.message };
+        return { success: true, result: { message: `تم إنشاء كود الخصم: ${args.code.toUpperCase()}`, discount_id: dc.id } };
+      }
+
+      if (args.action === "deactivate") {
+        const { error } = await db.from("discount_codes").update({ is_active: false }).eq("code", args.code.toUpperCase());
+        if (error) return { success: false, result: null, error: error.message };
+        return { success: true, result: { message: `تم تعطيل كود الخصم: ${args.code.toUpperCase()}` } };
+      }
+
+      return { success: false, result: null, error: "إجراء غير معروف" };
+    }
+
+    if (toolName === "send_bulk_notifications") {
+      let userIds: string[] = args.user_ids || [];
+
+      if (args.target_group === "overdue_clients") {
+        const { data: overdueInv } = await db.from("invoices")
+          .select("client_id, clients(portal_user_id)")
+          .in("status", ["unpaid", "overdue"])
+          .lt("due_date", new Date().toISOString())
+          .limit(100);
+        userIds = (overdueInv || []).map((i: any) => i.clients?.portal_user_id).filter(Boolean);
+      } else if (args.target_group === "active_inspectors") {
+        const { data: inspectors } = await db.from("inspector_profiles").select("user_id").eq("is_active", true);
+        userIds = (inspectors || []).map((i: any) => i.user_id);
+      } else if (args.target_group === "all_clients") {
+        const { data: clients } = await db.from("clients").select("portal_user_id").not("portal_user_id", "is", null).eq("is_active", true).limit(200);
+        userIds = (clients || []).map((c: any) => c.portal_user_id).filter(Boolean);
+      }
+
+      const uniqueIds = [...new Set(userIds)];
+      if (uniqueIds.length === 0) return { success: false, result: null, error: "لم يتم العثور على مستخدمين في المجموعة المستهدفة" };
+
+      const notifications = uniqueIds.map(uid => ({
+        user_id: uid,
+        title_ar: args.title,
+        body_ar: args.body,
+        category: "general",
+        priority: args.priority || "normal",
+        notification_type: "bulk_from_raqeem",
+        channel: "in_app",
+        delivery_status: "delivered",
+      }));
+
+      const { error: bulkErr } = await db.from("notifications").insert(notifications);
+      if (bulkErr) return { success: false, result: null, error: bulkErr.message };
+
+      return { success: true, result: { message: `تم إرسال ${uniqueIds.length} إشعار بنجاح`, recipients_count: uniqueIds.length, target_group: args.target_group } };
+    }
     if (toolName === "get_my_tasks") {
       const { data: inspections } = await db.from("inspections")
         .select("id, assignment_id, inspection_date, status, notes_ar, valuation_assignments(reference_number, property_type, valuation_type, subjects(city_ar, district_ar, address_ar))")
