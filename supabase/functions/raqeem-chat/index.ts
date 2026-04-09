@@ -424,6 +424,188 @@ async function executeTool(
       });
     }
 
+    // ═══════════════════════════════════════════════════
+    // EXECUTIVE ACTIONS
+    // ═══════════════════════════════════════════════════
+    if (toolName === "change_assignment_status") {
+      const { data: result, error } = await db.rpc("update_request_status", {
+        _assignment_id: args.assignment_id,
+        _new_status: args.new_status,
+        _user_id: null,
+        _action_type: "normal",
+        _reason: args.reason || "تغيير عبر رقيم بطلب المالك",
+      });
+      if (error) return { success: false, result: null, error: error.message };
+      return { success: result?.success ?? false, result, error: result?.error };
+    }
+
+    if (toolName === "assign_inspector") {
+      // Find best inspector
+      let inspectorId = args.inspector_user_id;
+      if (!inspectorId) {
+        const query = db.from("inspector_profiles")
+          .select("user_id, availability_status, current_workload, cities_ar, avg_rating")
+          .eq("is_active", true)
+          .eq("availability_status", "available")
+          .order("current_workload", { ascending: true })
+          .order("avg_rating", { ascending: false })
+          .limit(5);
+        
+        const { data: inspectors } = await query;
+        if (!inspectors?.length) return { success: false, result: null, error: "لا يوجد معاينون متاحون حالياً" };
+        
+        // Filter by city if provided
+        if (args.city) {
+          const cityMatch = inspectors.find((i: any) => i.cities_ar?.some((c: string) => c.includes(args.city)));
+          inspectorId = cityMatch?.user_id || inspectors[0].user_id;
+        } else {
+          inspectorId = inspectors[0].user_id;
+        }
+      }
+
+      // Get inspector name
+      const { data: profile } = await db.from("profiles").select("full_name_ar").eq("user_id", inspectorId).single();
+
+      // Create inspection record
+      const { error: inspError } = await db.from("inspections").insert({
+        assignment_id: args.assignment_id,
+        inspector_id: inspectorId,
+        inspection_date: new Date().toISOString().split("T")[0],
+        status: "scheduled",
+      });
+      if (inspError) return { success: false, result: null, error: inspError.message };
+
+      // Update assignment inspector
+      await db.from("valuation_assignments").update({ inspector_id: inspectorId, updated_at: new Date().toISOString() }).eq("id", args.assignment_id);
+
+      return { success: true, result: { inspector_name: profile?.full_name_ar || "معاين", inspector_id: inspectorId, assignment_id: args.assignment_id } };
+    }
+
+    if (toolName === "get_performance_report") {
+      const periodMap: Record<string, number> = { today: 1, week: 7, month: 30, quarter: 90 };
+      const days = periodMap[args.period] || 7;
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+
+      const [assignmentsRes, paymentsRes, inspectionsRes] = await Promise.all([
+        db.from("valuation_assignments").select("id, status, created_at, updated_at").gte("created_at", since),
+        db.from("payments").select("amount, payment_status, created_at").gte("created_at", since),
+        db.from("inspections").select("id, status, completed").gte("created_at", since),
+      ]);
+
+      const assignments = assignmentsRes.data || [];
+      const payments = paymentsRes.data || [];
+      const inspections = inspectionsRes.data || [];
+
+      const statusCounts: Record<string, number> = {};
+      for (const a of assignments) { statusCounts[a.status] = (statusCounts[a.status] || 0) + 1; }
+
+      const totalRevenue = payments.filter((p: any) => p.payment_status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const completedInspections = inspections.filter((i: any) => i.completed || i.status === "completed").length;
+
+      return {
+        success: true,
+        result: {
+          period: args.period,
+          total_assignments: assignments.length,
+          status_breakdown: statusCounts,
+          total_revenue: totalRevenue,
+          total_inspections: inspections.length,
+          completed_inspections: completedInspections,
+          pending_payments: payments.filter((p: any) => p.payment_status === "pending").length,
+        }
+      };
+    }
+
+    if (toolName === "get_overdue_summary") {
+      const now = new Date();
+      const [staleRes, overduePayRes, overdueInspRes] = await Promise.all([
+        db.from("valuation_assignments").select("id, reference_number, status, updated_at").not("status", "in", "(issued,archived,cancelled,draft)").lt("updated_at", new Date(now.getTime() - 48 * 3600000).toISOString()).order("updated_at").limit(20),
+        db.from("invoices").select("id, invoice_number, total_amount, due_date").eq("payment_status", "pending").lt("due_date", now.toISOString()).limit(20),
+        db.from("inspections").select("id, assignment_id, inspection_date, status").in("status", ["scheduled", "pending"]).lt("inspection_date", now.toISOString().split("T")[0]).limit(20),
+      ]);
+
+      return {
+        success: true,
+        result: {
+          stale_assignments: (staleRes.data || []).map((a: any) => ({ ref: a.reference_number, status: a.status, days_stale: Math.floor((now.getTime() - new Date(a.updated_at).getTime()) / 86400000) })),
+          overdue_invoices: (overduePayRes.data || []).map((i: any) => ({ number: i.invoice_number, amount: i.total_amount, days_overdue: Math.floor((now.getTime() - new Date(i.due_date).getTime()) / 86400000) })),
+          overdue_inspections: (overdueInspRes.data || []).map((i: any) => ({ assignment_id: i.assignment_id, date: i.inspection_date })),
+        }
+      };
+    }
+
+    if (toolName === "confirm_payment") {
+      // Find request_id from assignment
+      const { data: req } = await db.from("valuation_requests").select("id").eq("assignment_id", args.assignment_id).single();
+      if (!req) return { success: false, result: null, error: "لم يتم العثور على الطلب المرتبط" };
+
+      const { error: payError } = await db.from("payments").insert({
+        request_id: req.id,
+        assignment_id: args.assignment_id,
+        amount: args.amount || 0,
+        payment_stage: args.payment_stage,
+        payment_status: "paid",
+        payment_type: "bank_transfer",
+        is_mock: false,
+      });
+      if (payError) return { success: false, result: null, error: payError.message };
+
+      return { success: true, result: { message: `تم تأكيد ${args.payment_stage === "first" ? "الدفعة الأولى" : "الدفعة النهائية"} بنجاح`, assignment_id: args.assignment_id } };
+    }
+
+    if (toolName === "get_revenue_summary") {
+      const periodMap: Record<string, number> = { today: 1, week: 7, month: 30, quarter: 90, year: 365 };
+      const days = periodMap[args.period] || 30;
+      const since = new Date(Date.now() - days * 86400000).toISOString();
+
+      const { data: payments } = await db.from("payments").select("amount, payment_status, payment_stage, created_at").gte("created_at", since);
+      const paid = (payments || []).filter((p: any) => p.payment_status === "paid");
+      const pending = (payments || []).filter((p: any) => p.payment_status === "pending");
+
+      return {
+        success: true,
+        result: {
+          period: args.period,
+          total_collected: paid.reduce((s: number, p: any) => s + (p.amount || 0), 0),
+          pending_amount: pending.reduce((s: number, p: any) => s + (p.amount || 0), 0),
+          total_transactions: (payments || []).length,
+          paid_count: paid.length,
+          pending_count: pending.length,
+        }
+      };
+    }
+
+    if (toolName === "get_inspector_tasks") {
+      let query = db.from("inspections").select("id, assignment_id, inspector_id, inspection_date, status, completed, created_at");
+      if (args.inspector_user_id) query = query.eq("inspector_id", args.inspector_user_id);
+      if (args.status_filter === "pending") query = query.in("status", ["scheduled", "pending"]);
+      else if (args.status_filter === "completed") query = query.eq("status", "completed");
+      query = query.order("inspection_date", { ascending: false }).limit(30);
+
+      const { data: tasks } = await query;
+      
+      // Get reference numbers
+      const assignmentIds = [...new Set((tasks || []).map((t: any) => t.assignment_id))];
+      const { data: assignments } = assignmentIds.length > 0 
+        ? await db.from("valuation_assignments").select("id, reference_number").in("id", assignmentIds) 
+        : { data: [] };
+      const refMap: Record<string, string> = {};
+      for (const a of (assignments || [])) refMap[a.id] = a.reference_number;
+
+      return {
+        success: true,
+        result: {
+          total: (tasks || []).length,
+          tasks: (tasks || []).map((t: any) => ({
+            reference: refMap[t.assignment_id] || t.assignment_id,
+            date: t.inspection_date,
+            status: t.status,
+            completed: t.completed,
+          })),
+        }
+      };
+    }
+
     return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
   } catch (e) {
     console.error(`Tool execution error (${toolName}):`, e);
