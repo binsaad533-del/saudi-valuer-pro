@@ -86,12 +86,40 @@ serve(async (req) => {
     const ctx = requestContext || {};
     const isDesktop = isDesktopMode(ctx.valuation_mode);
 
+    // ── Fetch client name from profiles or auth ──
+    let clientDisplayName = ctx.client_name || "";
+    if (!clientDisplayName && ctx.client_user_id) {
+      try {
+        const { data: profile } = await db
+          .from("profiles")
+          .select("full_name")
+          .eq("id", ctx.client_user_id)
+          .maybeSingle();
+        if (profile?.full_name) {
+          clientDisplayName = profile.full_name;
+        } else {
+          const { data: { user: authUser } } = await db.auth.admin.getUserById(ctx.client_user_id);
+          clientDisplayName = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || "";
+        }
+      } catch (e) {
+        console.error("Failed to fetch client name:", e);
+      }
+    }
+
+    // ── Detect asset type from asset_summary when property_type is missing ──
+    let effectivePropertyType = ctx.property_type || null;
+    if (!effectivePropertyType && ctx.asset_summary) {
+      if (ctx.asset_summary.includes("machinery") || ctx.asset_summary.includes("equipment")) {
+        effectivePropertyType = "machinery_equipment";
+      }
+    }
+
     // ── Parallel data loading ──
     const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal, seasonalReminders, loyaltyOffers, behaviorIntel, occasionMessages, engagementAnalytics] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
-      request_id ? analyzeDocumentReadiness(db, request_id, ctx.property_type) : Promise.resolve(null),
+      request_id ? analyzeDocumentReadiness(db, request_id, effectivePropertyType) : Promise.resolve(null),
       generateMarketInsights(db, ctx.property_type, ctx.property_city, ctx.organization_id),
       ctx.client_user_id ? getClientHistory(db, ctx.client_user_id) : Promise.resolve(""),
       generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
@@ -198,7 +226,7 @@ serve(async (req) => {
     if (ctx.reference_number) requestSection += `- الرقم المرجعي: ${ctx.reference_number}\n`;
     if (ctx.status) requestSection += `- الحالة الحالية: ${ctx.status}\n`;
     if (ctx.status_label) requestSection += `- وصف الحالة: ${ctx.status_label}\n`;
-    if (ctx.client_name) requestSection += `- اسم العميل: ${ctx.client_name}\n`;
+    if (clientDisplayName) requestSection += `- اسم العميل: ${clientDisplayName}\n`;
     if (ctx.property_type) requestSection += `- نوع الأصل: ${ctx.property_type}\n`;
     if (ctx.property_city) requestSection += `- المدينة: ${ctx.property_city}\n`;
     if (ctx.property_description) requestSection += `- الوصف: ${ctx.property_description}\n`;
@@ -346,6 +374,10 @@ serve(async (req) => {
 45. **رسائل المناسبات**: تهنئة بالأعياد (الفطر، الأضحى، اليوم الوطني، يوم التأسيس) ورسائل شكر وتقييم رضا
 46. **التحليلات التسويقية**: تتبع فعالية الحملات ومعدلات التحويل ومؤشرات صحة العلاقة
 
+## اسم العميل
+${clientDisplayName ? `اسم العميل: **${clientDisplayName}**\n- في أول رسالة: رحّب به باسمه: "مرحباً ${clientDisplayName}، ..."` : "- لم يتوفر اسم العميل. رحّب ترحيباً عاماً."}
+- في الرسائل اللاحقة: لا تكرر الترحيب — ادخل مباشرة في الإجابة
+
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
 2. **أجب بدقة**: أجب على السؤال المطروح فقط — لا تكرر معلومات لم تُطلب
@@ -365,6 +397,7 @@ serve(async (req) => {
 16. **وضّح الحقوق**: عند سؤال العميل عن حقوقه أو إجراءاته، أجب بناءً على أنظمة تقييم و IVS
 
 ## قواعد مسار الطلب الحالية
+${effectivePropertyType === "machinery_equipment" ? "- هذا الطلب لتقييم **آلات ومعدات**: لا تطلب مستندات عقارية (صك ملكية، رخصة بناء، مخطط معماري). المستندات المطلوبة: قائمة الأصول، فواتير الشراء، سجلات الصيانة، صور المعدات.\n- استخدم مصطلحات الآلات والمعدات (إهلاك، عمر تشغيلي، حالة ميكانيكية) وليس مصطلحات العقارات." : ""}
 ${isDesktop ? "- هذا الطلب مكتبي: ممنوع ذكر معاينة ميدانية أو معاين أو إحالة الأصول للمعاين.\n- اربط كل إجابة بالمراجعة المكتبية، المستندات، الصور، التحليل، والمراجعة المهنية فقط." : "- هذا الطلب ميداني: يمكن ذكر المعاينة الميدانية فقط إذا كانت مرتبطة بالحالة الحالية فعلاً."}
 
 ## إجراءات تنفيذية عبر الدردشة
