@@ -122,13 +122,21 @@ serve(async (req) => {
     if (ctx.has_photos) requestSection += `- صور مرفقة: نعم\n`;
     if (ctx.created_at) requestSection += `- تاريخ الإنشاء: ${ctx.created_at}\n`;
 
-    // Calculate estimated delivery
+    // Calculate estimated delivery & deadline alerts
+    let deadlineAlert = "";
     if (ctx.created_at) {
       const createdDate = new Date(ctx.created_at);
       const deliveryDays = ctx.valuation_mode === "desktop" ? 5 : 10;
       const estimatedDelivery = new Date(createdDate.getTime() + deliveryDays * 24 * 60 * 60 * 1000);
       const remaining = Math.max(0, Math.ceil((estimatedDelivery.getTime() - Date.now()) / (24 * 60 * 60 * 1000)));
       requestSection += `- التسليم المتوقع: ${estimatedDelivery.toLocaleDateString("ar-SA")} (${remaining > 0 ? `متبقي ${remaining} يوم` : "حان موعد التسليم"})\n`;
+      
+      // Deadline intelligence
+      if (remaining === 0) {
+        deadlineAlert = "\n⚠️ **تنبيه مُدد**: حان موعد التسليم المتوقع. إذا سأل العميل عن التأخير، اعتذر ووضح أن الفريق يعمل على الإنجاز بأقصى سرعة.\n";
+      } else if (remaining <= 2) {
+        deadlineAlert = `\n⏰ **تنبيه مُدد**: متبقي ${remaining} يوم فقط على موعد التسليم. كن استباقياً وأخبر العميل بالتقدم المحرز.\n`;
+      }
     }
 
     // Status-specific guidance for Raqeem
@@ -214,7 +222,7 @@ serve(async (req) => {
 1. **منهجية التكلفة (Cost Approach)**: تُستخدم للعقارات الجديدة والأصول المتخصصة. تعتمد على تكلفة الإحلال ناقص الإهلاك
 2. **منهجية المقارنة (Market Approach)**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل (Income Approach)**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
-${requestSection}${paymentSection}${documentsSection}${attachmentsSection}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${attachmentsSection}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [

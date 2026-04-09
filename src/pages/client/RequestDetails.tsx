@@ -116,7 +116,8 @@ export default function RequestDetails() {
     return () => { supabase.removeChannel(channel); };
   }, [id, navigate]);
 
-  // Real-time assignment status updates — inject system message into chat
+  // Real-time assignment status updates — inject system message + send email
+  const NOTIFIABLE_STATUSES = ["scope_generated", "first_payment_confirmed", "data_collection_open", "inspection_pending", "draft_report_ready", "issued"];
   useRealtimeAssignment(request?.assignment_id, async (newStatus, oldStatus) => {
     const newLabel = getStatusLabel(newStatus);
     const oldLabel = getStatusLabel(oldStatus);
@@ -127,6 +128,22 @@ export default function RequestDetails() {
         request_id: id, sender_type: "system" as any,
         content: `🔄 تم تحديث حالة الطلب: **${oldLabel}** ← **${newLabel}**`,
       });
+    }
+    // Send email notification for key status changes
+    if (NOTIFIABLE_STATUSES.includes(newStatus) && user?.email) {
+      supabase.functions.invoke("send-transactional-email", {
+        body: {
+          templateName: "status-update",
+          recipientEmail: user.email,
+          idempotencyKey: `status-${id}-${newStatus}`,
+          templateData: {
+            clientName: request?.client_name_ar || request?.ai_intake_summary?.client_name,
+            requestNumber: request?.reference_number,
+            newStatus,
+            portalUrl: `${window.location.origin}/client/request/${id}`,
+          },
+        },
+      }).catch(e => console.error("Email notification error:", e));
     }
     loadData();
   });
@@ -364,6 +381,25 @@ export default function RequestDetails() {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  // ── Export chat as text file ──
+  const handleExportChat = () => {
+    const welcomeMsg = getRaqeemWelcome(request.status, request);
+    const lines = [`=== سجل محادثة رقيم ===`, `الرقم المرجعي: ${request.reference_number || "—"}`, `التاريخ: ${new Date().toLocaleDateString("ar-SA")}`, `الحالة: ${getStatusLabel(request.status)}`, `${"=".repeat(40)}`, "", `رقيم: ${welcomeMsg}`, ""];
+    for (const msg of messages) {
+      const time = new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
+      const sender = msg.sender_type === "client" ? "العميل" : msg.sender_type === "ai" ? "رقيم" : "النظام";
+      lines.push(`[${time}] ${sender}: ${msg.content}`, "");
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `محادثة-رقيم-${request.reference_number || id}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast({ title: "تم تصدير المحادثة بنجاح" });
   };
 
   // ── Raqeem proactive welcome message based on status ──
@@ -615,6 +651,11 @@ export default function RequestDetails() {
                   status={request.status}
                   onAction={async (msg) => {
                     if (!user) return;
+                    // Handle special export action
+                    if (msg === "__export_chat__") {
+                      handleExportChat();
+                      return;
+                    }
                     setSending(true);
                     try {
                       await supabase.from("request_messages" as any).insert({
