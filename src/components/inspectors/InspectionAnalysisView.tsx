@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import {
-  Brain, AlertTriangle, Shield, TrendingDown, Eye,
+  AlertTriangle, Shield, TrendingDown, Eye,
   Pencil, Save, RotateCcw, Loader2,
 } from "lucide-react";
 import { triggerInspectionAnalysis, overrideAnalysis } from "@/lib/inspection-analysis-api";
@@ -123,14 +123,14 @@ export function InspectionAnalysisView({ inspectionId, isAdmin = false }: Props)
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            <Brain className="w-5 h-5 text-primary" />
+            <RaqeemIcon size={20} />
             تحليل المعاينة بالذكاء الاصطناعي
           </CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">لم يتم تحليل المعاينة بعد</p>
           <Button onClick={runAnalysis} disabled={analyzing} className="gap-2">
-            {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
+            {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RaqeemIcon size={16} />}
             {analyzing ? "جاري التحليل..." : "تشغيل التحليل"}
           </Button>
         </CardContent>
@@ -149,7 +149,7 @@ export function InspectionAnalysisView({ inspectionId, isAdmin = false }: Props)
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2">
-              <Brain className="w-5 h-5 text-primary" />
+              <RaqeemIcon size={20} />
               نتائج تحليل المعاينة
             </CardTitle>
             <div className="flex items-center gap-2">

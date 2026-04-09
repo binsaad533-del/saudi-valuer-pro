@@ -1,8 +1,9 @@
 import { useState } from "react";
 import {
-  Brain, Loader2, CheckCircle2, TrendingUp,
+  Loader2, CheckCircle2, TrendingUp,
   MapPin, BarChart3, Scale, ChevronDown, ChevronUp, Info,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -89,7 +90,7 @@ export default function ComparableSelectionEngine({
       <div className="bg-card rounded-xl border border-border p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Brain className="w-5 h-5 text-primary" />
+            <RaqeemIcon size={20} />
             <div>
               <h3 className="text-sm font-semibold text-foreground">محرك اختيار المقارنات الذكي</h3>
               <p className="text-[10px] text-muted-foreground">
@@ -106,7 +107,7 @@ export default function ComparableSelectionEngine({
             {loading ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Brain className="w-3.5 h-3.5" />
+              <RaqeemIcon size={14} />
             )}
             {loading ? "جاري التحليل..." : "تشغيل المحرك"}
           </Button>
