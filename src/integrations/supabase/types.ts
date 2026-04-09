@@ -4064,6 +4064,162 @@ export type Database = {
         }
         Relationships: []
       }
+      raqeem_watchdog_findings: {
+        Row: {
+          auto_resolved: boolean | null
+          category: Database["public"]["Enums"]["watchdog_category"]
+          created_at: string
+          description: string
+          details: Json | null
+          detection_count: number
+          fingerprint: string
+          first_detected_at: string
+          id: string
+          last_detected_at: string
+          recommendation: string | null
+          related_entity_id: string | null
+          related_entity_type: string | null
+          related_user_id: string | null
+          resolution_notes: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: Database["public"]["Enums"]["watchdog_severity"]
+          status: Database["public"]["Enums"]["watchdog_finding_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          auto_resolved?: boolean | null
+          category: Database["public"]["Enums"]["watchdog_category"]
+          created_at?: string
+          description: string
+          details?: Json | null
+          detection_count?: number
+          fingerprint: string
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          recommendation?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          related_user_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["watchdog_severity"]
+          status?: Database["public"]["Enums"]["watchdog_finding_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          auto_resolved?: boolean | null
+          category?: Database["public"]["Enums"]["watchdog_category"]
+          created_at?: string
+          description?: string
+          details?: Json | null
+          detection_count?: number
+          fingerprint?: string
+          first_detected_at?: string
+          id?: string
+          last_detected_at?: string
+          recommendation?: string | null
+          related_entity_id?: string | null
+          related_entity_type?: string | null
+          related_user_id?: string | null
+          resolution_notes?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: Database["public"]["Enums"]["watchdog_severity"]
+          status?: Database["public"]["Enums"]["watchdog_finding_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      raqeem_watchdog_scans: {
+        Row: {
+          categories_scanned: string[] | null
+          completed_at: string | null
+          duration_ms: number | null
+          errors: Json | null
+          findings_auto_resolved: number | null
+          findings_created: number | null
+          findings_updated: number | null
+          id: string
+          metadata: Json | null
+          scan_type: string
+          started_at: string
+        }
+        Insert: {
+          categories_scanned?: string[] | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: Json | null
+          findings_auto_resolved?: number | null
+          findings_created?: number | null
+          findings_updated?: number | null
+          id?: string
+          metadata?: Json | null
+          scan_type?: string
+          started_at?: string
+        }
+        Update: {
+          categories_scanned?: string[] | null
+          completed_at?: string | null
+          duration_ms?: number | null
+          errors?: Json | null
+          findings_auto_resolved?: number | null
+          findings_created?: number | null
+          findings_updated?: number | null
+          id?: string
+          metadata?: Json | null
+          scan_type?: string
+          started_at?: string
+        }
+        Relationships: []
+      }
+      raqeem_watchdog_settings: {
+        Row: {
+          alert_severity_threshold:
+            | Database["public"]["Enums"]["watchdog_severity"]
+            | null
+          categories_enabled:
+            | Database["public"]["Enums"]["watchdog_category"][]
+            | null
+          daily_digest_enabled: boolean | null
+          id: number
+          instant_alerts_enabled: boolean | null
+          scan_interval_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          alert_severity_threshold?:
+            | Database["public"]["Enums"]["watchdog_severity"]
+            | null
+          categories_enabled?:
+            | Database["public"]["Enums"]["watchdog_category"][]
+            | null
+          daily_digest_enabled?: boolean | null
+          id?: number
+          instant_alerts_enabled?: boolean | null
+          scan_interval_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          alert_severity_threshold?:
+            | Database["public"]["Enums"]["watchdog_severity"]
+            | null
+          categories_enabled?:
+            | Database["public"]["Enums"]["watchdog_category"][]
+            | null
+          daily_digest_enabled?: boolean | null
+          id?: number
+          instant_alerts_enabled?: boolean | null
+          scan_interval_minutes?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       reconciliation_results: {
         Row: {
           assignment_id: string
@@ -6509,6 +6665,21 @@ export type Database = {
         | "regulatory"
         | "other"
       valuation_type: "real_estate" | "machinery" | "mixed"
+      watchdog_category:
+        | "technical"
+        | "security"
+        | "workflow"
+        | "legal"
+        | "financial"
+        | "user_behavior"
+        | "performance"
+      watchdog_finding_status:
+        | "open"
+        | "acknowledged"
+        | "resolved"
+        | "ignored"
+        | "escalated"
+      watchdog_severity: "critical" | "high" | "medium" | "low" | "info"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -6848,6 +7019,23 @@ export const Constants = {
         "other",
       ],
       valuation_type: ["real_estate", "machinery", "mixed"],
+      watchdog_category: [
+        "technical",
+        "security",
+        "workflow",
+        "legal",
+        "financial",
+        "user_behavior",
+        "performance",
+      ],
+      watchdog_finding_status: [
+        "open",
+        "acknowledged",
+        "resolved",
+        "ignored",
+        "escalated",
+      ],
+      watchdog_severity: ["critical", "high", "medium", "low", "info"],
     },
   },
 } as const
