@@ -51,6 +51,11 @@ import { analyzeInstitutionalMemory } from "./_shared/institutional-memory.ts";
 import { analyzePortfolioHealth } from "./_shared/portfolio-health.ts";
 import { analyzeERPIntegration } from "./_shared/erp-integration.ts";
 import { analyzeBlockchainNotarization } from "./_shared/blockchain-notarization.ts";
+import { analyzeSeasonalReminders } from "./_shared/seasonal-reminders.ts";
+import { analyzeLoyaltyOffers } from "./_shared/loyalty-engine.ts";
+import { analyzeBehaviorIntelligence } from "./_shared/behavior-intelligence.ts";
+import { analyzeOccasionMessages } from "./_shared/occasion-messages.ts";
+import { analyzeEngagementAnalytics } from "./_shared/engagement-analytics.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
