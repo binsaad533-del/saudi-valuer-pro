@@ -440,6 +440,22 @@ export default function RaqeemChatPage() {
             ))
           )}
 
+          {/* Persistent Quick Actions after conversation starts */}
+          {messages.length > 0 && !isLoading && (
+            <div className="flex flex-wrap justify-center gap-2 pt-2 pb-1">
+              {quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => sendMessage(action.message)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-full border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-medium text-primary transition-colors"
+                >
+                  <span>{action.icon}</span>
+                  <span>{action.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           {isLoading && messages[messages.length - 1]?.role === "user" && (
             <div className="flex gap-3">
               <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
