@@ -1722,8 +1722,10 @@ serve(async (req) => {
       );
     }
 
-    // Build contextual system prompt
-    const systemPrompt = await buildContextualPrompt(supabaseClient);
+    // Build contextual system prompt with role-specific additions
+    const basePrompt = await buildContextualPrompt(supabaseClient);
+    const systemPrompt = basePrompt + getRolePromptAddition(effectiveRole);
+    const roleTools = getToolsForRole(effectiveRole);
 
     // First call: with tools enabled (non-streaming to detect tool calls)
     const firstResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -1738,7 +1740,7 @@ serve(async (req) => {
           { role: "system", content: systemPrompt },
           ...messages,
         ],
-        tools: TOOLS,
+        tools: roleTools,
         tool_choice: "auto",
         stream: false,
       }),
