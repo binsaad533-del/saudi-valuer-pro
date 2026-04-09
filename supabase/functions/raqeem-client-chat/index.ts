@@ -3,6 +3,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { loadClientMemory, updateClientMemory, buildMemorySection } from "./_shared/memory.ts";
 import { analyzeDocumentReadiness } from "./_shared/document-analysis.ts";
 import { generateMarketInsights, getClientHistory } from "./_shared/financial-advisor.ts";
+import { generatePredictions } from "./_shared/predictions.ts";
+import { analyzeWorkflowReadiness } from "./_shared/workflow-integration.ts";
+import { checkComplianceStatus } from "./_shared/compliance-advisor.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -32,13 +35,16 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
       request_id ? analyzeDocumentReadiness(db, request_id, ctx.property_type) : Promise.resolve(null),
       generateMarketInsights(db, ctx.property_type, ctx.property_city, ctx.organization_id),
       ctx.client_user_id ? getClientHistory(db, ctx.client_user_id) : Promise.resolve(""),
+      generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
+      analyzeWorkflowReadiness(db, ctx.assignment_id, ctx.status, request_id),
+      checkComplianceStatus(db, ctx.assignment_id, ctx.status),
     ]);
 
     // ── Knowledge section ──
@@ -186,22 +192,28 @@ serve(async (req) => {
 5. **تحليل الجاهزية**: كشف المستندات المفقودة ونسبة اكتمال الملف
 6. **رؤى سوقية**: تقديم مقارنات سوقية وتقديرات أولية من قاعدة البيانات
 7. **ذاكرة العميل**: تذكر تفضيلات العميل وتخصيص الردود بناءً على تاريخه
+8. **التنبؤ الذكي**: توقع مدة التقييم والقيمة التقديرية بناءً على البيانات التاريخية
+9. **مراقبة سير العمل**: تحليل جاهزية الانتقال بين المراحل واكتشاف المعوقات
+10. **تحليل الصور**: عند إرسال صور، تحليل نوع المبنى وحالته والعمر التقديري
+11. **المستشار التنظيمي**: فحص الامتثال لمعايير IVS 2025 وتقييم وإرشادات حقوق العميل
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
 2. **أجب بدقة**: أجب على السؤال المطروح فقط — لا تكرر معلومات لم تُطلب
-3. **كن استباقياً**: إذا لاحظت نقصاً في البيانات أو الملفات، اطلبها بذكاء
+3. **كن استباقياً**: إذا لاحظت نقصاً في البيانات أو الملفات أو معوقات، اطلبها بذكاء
 4. **اربط إجابتك بالحالة**: دائماً اشرح للعميل أين وصل طلبه وما المطلوب منه
 5. **كن مختصراً**: 2-5 جمل كحد أقصى. لا تُطوّل بلا داعٍ
 6. **لا تخترع**: إذا لم تجد المعلومة، قل "سأتحقق من الفريق وأعود لك"
 7. **لا تكرر التعريف**: عرّفت نفسك أول مرة. لا تعيد التعريف إلا إذا سُئلت
 8. **افهم العامية السعودية**: "وين وصل طلبي" = أين وصل طلبي؟ "ايش المطلوب" = ما المطلوب؟
-9. **تعامل مع المرفقات**: عند رفع ملفات، أكّد الاستلام ووضّح كيف ستُستخدم
+9. **تعامل مع المرفقات**: عند رفع ملفات أو صور، أكّد الاستلام ووضّح كيف ستُستخدم
 10. **لا ترسل رسائل ترحيبية فارغة**: كل رد يجب أن يحمل قيمة ومعلومة
 11. **استخدم التنسيق**: استخدم **عناوين بارزة** و• نقاط عند الحاجة
 12. **قدّم خطوات واضحة**: عند شرح إجراء، رقّم الخطوات بوضوح
 13. **خصّص الرد**: استخدم ذاكرة العميل لتقديم تجربة مخصصة دون ذكر ذلك صراحة
-14. **قدّم تقديرات سوقية**: عند توفر بيانات، قدم نطاقاً تقديرياً مع التنويه أنه أولي
+14. **قدّم تقديرات ذكية**: عند توفر بيانات، قدم تنبؤات المدة والقيمة مع التنويه أنها أولية
+15. **راقب الامتثال**: عند سؤال العميل عن الجاهزية، قدم نسبة اكتمال الفحوصات
+16. **وضّح الحقوق**: عند سؤال العميل عن حقوقه أو إجراءاته، أجب بناءً على أنظمة تقييم و IVS
 
 ## قواعد الاستبعاد المهنية
 - أصول غير ملموسة → IVS 210
@@ -213,7 +225,7 @@ serve(async (req) => {
 1. **منهجية التكلفة**: تُستخدم للعقارات الجديدة والأصول المتخصصة. تعتمد على تكلفة الإحلال ناقص الإهلاك
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
@@ -230,7 +242,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       }
     }
 
-    messages.push({ role: "user", content: message });
+    // Build user message — support image analysis (multimodal)
+    const imageAttachments = (attachments || []).filter(
+      (a: any) => a.type?.startsWith("image/") && a.url
+    );
+
+    if (imageAttachments.length > 0) {
+      // Multimodal message with images
+      const contentParts: any[] = [{ type: "text", text: message }];
+      for (const img of imageAttachments.slice(0, 3)) {
+        contentParts.push({
+          type: "image_url",
+          image_url: { url: img.url },
+        });
+      }
+      messages.push({ role: "user", content: contentParts } as any);
+    } else {
+      messages.push({ role: "user", content: message });
+    }
 
     // ── Call AI ──
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -281,6 +310,10 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     // ── Generate suggested actions ──
     const suggestedActions: { label: string; message: string }[] = [];
     const status = ctx.status;
+
+    // Universal actions
+    suggestedActions.push({ label: "⏱️ المدة المتوقعة", message: "كم المدة المتوقعة لإنجاز التقييم؟" });
+
     if (status === "submitted" || status === "under_pricing") {
       suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
       suggestedActions.push({ label: "📊 تقدير أولي", message: "هل يمكنك إعطائي تقدير أولي للقيمة؟" });
@@ -290,13 +323,19 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     } else if (status === "data_collection_open") {
       suggestedActions.push({ label: "📎 ملفات ناقصة", message: "هل هناك ملفات ناقصة في طلبي؟" });
       suggestedActions.push({ label: "📊 نسبة الاكتمال", message: "كم نسبة اكتمال ملف طلبي؟" });
+    } else if (status === "inspection_pending" || status === "inspection_completed") {
+      suggestedActions.push({ label: "🔎 تفاصيل المعاينة", message: "ما تفاصيل المعاينة الميدانية؟" });
+      suggestedActions.push({ label: "⚠️ المخاطر", message: "هل هناك مخاطر متوقعة في هذا التقييم؟" });
+    } else if (status === "professional_review" || status === "analysis_complete") {
+      suggestedActions.push({ label: "📋 حالة الامتثال", message: "ما حالة فحوصات الامتثال لطلبي؟" });
+      suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });
     } else if (status === "draft_report_ready" || status === "client_review") {
       suggestedActions.push({ label: "📊 ملخص التقرير", message: "أعطني ملخص المسودة" });
-      suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });
       suggestedActions.push({ label: "📈 مقارنة سوقية", message: "كيف تقارن القيمة مع السوق؟" });
+      suggestedActions.push({ label: "✅ جاهزية الإصدار", message: "ما نسبة جاهزية طلبي للإصدار النهائي؟" });
     } else if (status === "issued") {
       suggestedActions.push({ label: "✅ رمز التحقق", message: "ما هو رمز التحقق من التقرير؟" });
-      suggestedActions.push({ label: "📥 تحميل التقرير", message: "كيف أحمّل التقرير النهائي؟" });
+      suggestedActions.push({ label: "📜 حقوقي", message: "ما هي حقوقي كعميل بعد صدور التقرير؟" });
     }
 
     // Add document readiness indicator
@@ -318,7 +357,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       }
     }
 
-    return new Response(JSON.stringify({ reply, suggestedActions, documentReadiness }), {
+    return new Response(JSON.stringify({
+      reply, suggestedActions, documentReadiness,
+      complianceReadiness: complianceStatus.totalChecks > 0 ? {
+        percent: complianceStatus.mandatoryTotal > 0 ? Math.round((complianceStatus.mandatoryPassed / complianceStatus.mandatoryTotal) * 100) : 0,
+        issuanceReady: complianceStatus.issuanceReady,
+        failedMandatory: complianceStatus.failedMandatory,
+      } : null,
+      predictions: predictions.estimatedDays ? {
+        estimatedDays: predictions.estimatedDays,
+        valueRange: predictions.valueRange,
+        riskFlags: predictions.riskFlags,
+      } : null,
+      workflowReadiness: workflowStatus.nextStatus ? {
+        canAdvance: workflowStatus.canAdvance,
+        nextStatus: workflowStatus.nextStatus,
+        blockers: workflowStatus.blockers,
+      } : null,
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

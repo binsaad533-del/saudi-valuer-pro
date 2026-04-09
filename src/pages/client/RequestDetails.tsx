@@ -188,6 +188,7 @@ export default function RequestDetails() {
       created_at: request.created_at,
       client_user_id: user?.id,
       organization_id: request.organization_id,
+      assignment_id: request.assignment_id,
     };
   };
 
