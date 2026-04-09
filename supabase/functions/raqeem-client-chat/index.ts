@@ -460,8 +460,12 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     let reply = aiData.choices?.[0]?.message?.content ||
       "عذراً، لم أتمكن من معالجة سؤالك. يرجى إعادة صياغته أو التواصل معنا على 920015029.";
 
-    // ── Detect and execute cancellation action ──
+    // ── Detect and execute action tokens ──
     let cancelExecuted = false;
+    let draftApproved = false;
+    const executedActions: string[] = [];
+
+    // Cancel Request
     if (reply.includes("[ACTION:CANCEL_REQUEST]")) {
       reply = reply.replace("[ACTION:CANCEL_REQUEST]", "").trim();
       const cancellableStatuses = ["draft", "submitted", "scope_generated"];
@@ -476,16 +480,60 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
           });
           if (cancelResult?.success) {
             cancelExecuted = true;
+            executedActions.push("cancel");
             reply += "\n\n✅ **تم إلغاء طلبك بنجاح.** يمكنك تقديم طلب جديد في أي وقت.";
           } else {
             reply += "\n\n⚠️ تعذر إلغاء الطلب تلقائياً. يرجى التواصل مع الدعم على 920015029.";
-            console.error("Cancel RPC failed:", cancelResult, "ctx:", ctx);
           }
         } catch (cancelErr) {
-          console.error("Cancel execution error:", cancelErr, "ctx:", ctx);
+          console.error("Cancel execution error:", cancelErr);
           reply += "\n\n⚠️ حدث خطأ أثناء الإلغاء. يرجى التواصل مع الدعم على 920015029.";
         }
       }
+    }
+
+    // Approve Draft
+    if (reply.includes("[ACTION:APPROVE_DRAFT]")) {
+      reply = reply.replace("[ACTION:APPROVE_DRAFT]", "").trim();
+      if (ctx.status === "client_review" && ctx.assignment_id && ctx.client_user_id) {
+        try {
+          const { data: approveResult } = await db.rpc("update_request_status", {
+            _assignment_id: ctx.assignment_id,
+            _new_status: "draft_approved",
+            _user_id: ctx.client_user_id,
+            _action_type: "normal",
+            _reason: "اعتماد المسودة بواسطة العميل عبر رقيم",
+          });
+          if (approveResult?.success) {
+            draftApproved = true;
+            executedActions.push("approve_draft");
+            reply += "\n\n✅ **تم اعتماد المسودة بنجاح.** الخطوة التالية: سداد الدفعة النهائية لإصدار التقرير.";
+          } else {
+            reply += "\n\n⚠️ تعذر اعتماد المسودة. " + (approveResult?.error || "يرجى التواصل مع الدعم.");
+          }
+        } catch (err) {
+          console.error("Approve draft error:", err);
+          reply += "\n\n⚠️ حدث خطأ أثناء الاعتماد. يرجى التواصل مع الدعم على 920015029.";
+        }
+      }
+    }
+
+    // Request Edit — just flag it, no status change
+    if (reply.includes("[ACTION:REQUEST_EDIT]")) {
+      reply = reply.replace("[ACTION:REQUEST_EDIT]", "").trim();
+      executedActions.push("request_edit");
+    }
+
+    // Upload Prompt — just flag it
+    if (reply.includes("[ACTION:UPLOAD_PROMPT]")) {
+      reply = reply.replace("[ACTION:UPLOAD_PROMPT]", "").trim();
+      executedActions.push("upload_prompt");
+    }
+
+    // Pay Invoice — just flag it
+    if (reply.includes("[ACTION:PAY_INVOICE]")) {
+      reply = reply.replace("[ACTION:PAY_INVOICE]", "").trim();
+      executedActions.push("pay_invoice");
     }
 
     // ── Update client memory (background, don't await) ──
