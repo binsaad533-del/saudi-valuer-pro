@@ -10,6 +10,10 @@ import { analyzeSelfLearning } from "./_shared/self-learning.ts";
 import { analyzeMarketTrends } from "./_shared/market-awareness.ts";
 import { analyzeMultiPartyStatus } from "./_shared/multi-party-coordinator.ts";
 import { executeAutonomousLogic } from "./_shared/autonomous-engine.ts";
+import { analyzeMachineryDepreciation } from "./_shared/machinery-depreciation.ts";
+import { classifyAssetBatch, buildMachineryVisionPrompt } from "./_shared/equipment-recognition.ts";
+import { analyzeMachineryMarket } from "./_shared/machinery-market.ts";
+import { analyzeProductionLines } from "./_shared/production-line-analyzer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
