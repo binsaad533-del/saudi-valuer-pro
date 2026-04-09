@@ -13,6 +13,7 @@ import {
   AlertTriangle, Shield, TrendingDown, Eye,
   Pencil, Save, RotateCcw, Loader2,
 } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { triggerInspectionAnalysis, overrideAnalysis } from "@/lib/inspection-analysis-api";
 
 interface Props {
