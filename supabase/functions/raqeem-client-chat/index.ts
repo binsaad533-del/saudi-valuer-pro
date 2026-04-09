@@ -260,6 +260,13 @@ serve(async (req) => {
 20. **محسّن الأساطيل**: تحليل العائد على كل معدة وتوصيات البيع/الاستبدال/الإيجار
 21. **الامتثال التنظيمي**: فحص شهادات السلامة والبيئة والمعايرة وأثرها على القيمة
 22. **تقييم التأمين والمخاطر**: حساب قيمة الإحلال وفجوة التأمين وتحليل مخاطر التوقف
+23. **الاستيعاب الجماعي**: استيراد آلاف الأصول دفعة واحدة مع كشف التكرارات والتصنيف التلقائي
+24. **التجميع الذكي**: تجميع الأصول المتشابهة وتقييم العينة الممثلة لتوفير 70-80% من وقت التقييم
+25. **إدارة المواقع المتعددة**: تحليل توزيع الأصول جغرافياً مع معاملات تعديل إقليمية وتعيين معاينين
+26. **التقييم المكتبي للأساطيل**: نماذج إحصائية متخصصة مع علاوة مخاطر (3% بصور / 7% بدون) وافتراضات IVS
+27. **تقرير الأسطول التنفيذي**: ملخص شامل مع جداول جرد وتوزيع حسب الفئة ومنحنى الإهلاك
+28. **ضبط الجودة الجماعي**: كشف القيم الشاذة (IQR) وفحص الاتساق وتقرير جاهزية الإصدار
+29. **لوحة تحكم الأسطول**: تتبع تقدم التقييم ومراحل الإنجاز والوقت المتبقي
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
@@ -290,7 +297,7 @@ serve(async (req) => {
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
 ${buildMachineryVisionPrompt()}
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${iotTelemetry.section}${predictiveMaintenance.section}${auctionIntel.section}${digitalTwins.section}${fleetPortfolio.section}${regulatoryCompliance.section}${insuranceRisk.section}${bulkIntake.section}${smartClustering.section}${multiSite.section}${desktopFleet.section}${fleetReport.section}${bulkQC.section}${fleetDashboard.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
