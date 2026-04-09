@@ -33,7 +33,7 @@ export default function RaqeemFloatingButton() {
         onMouseLeave={() => setIsHovered(false)}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        className="w-14 h-14 rounded-full bg-primary shadow-lg hover:shadow-xl flex items-center justify-center transition-shadow"
+        className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-shadow bg-primary-foreground"
         aria-label="فتح رقيم"
       >
         <RaqeemIcon size={28} className="text-primary-foreground" />
