@@ -324,7 +324,7 @@ export default function RaqeemChatPage() {
           <Button variant="ghost" size="icon" onClick={() => navigate(getBackPath())}>
             <ArrowRight className="w-5 h-5" />
           </Button>
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary-foreground">
             <RaqeemIcon size={20} className="text-primary-foreground" />
           </div>
           <div>
