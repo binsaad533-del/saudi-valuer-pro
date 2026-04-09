@@ -590,6 +590,26 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         chainRef: blockchainSeal.seal.chainReference,
         tamperProof: blockchainSeal.tamperProof,
       } : null,
+      smartEngagement: {
+        seasonalReminders: seasonalReminders.reminders.length > 0 ? {
+          activeReminders: seasonalReminders.reminders.length,
+          revaluationsDue: seasonalReminders.revaluationsDue,
+        } : null,
+        loyalty: loyaltyOffers.offers.length > 0 ? {
+          clientTier: loyaltyOffers.clientTier,
+          activeOffers: loyaltyOffers.offers.length,
+          totalRequests: loyaltyOffers.totalRequests,
+        } : null,
+        behavior: behaviorIntel.insights.length > 0 ? {
+          activityStatus: behaviorIntel.activityStatus,
+          engagementScore: behaviorIntel.engagementScore,
+          crossSellOpportunities: behaviorIntel.crossSellOpportunities,
+        } : null,
+        occasions: occasionMessages.activeOccasions.length > 0 ? {
+          activeOccasions: occasionMessages.activeOccasions.length,
+          satisfactionPending: occasionMessages.satisfactionPending,
+        } : null,
+      },
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
