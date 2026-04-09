@@ -231,6 +231,12 @@ export default function RequestDetails() {
         setDocReadiness(functionData.documentReadiness);
       }
 
+      // Handle cancellation executed by Raqeem
+      if (functionData?.cancelExecuted) {
+        toast({ title: "تم إلغاء الطلب بنجاح" });
+        setTimeout(() => window.location.reload(), 2000);
+      }
+
       setMessages(prev => {
         const alreadyExists = prev.some(m => m.sender_type === "ai" && m.content === reply);
         if (alreadyExists) return prev;

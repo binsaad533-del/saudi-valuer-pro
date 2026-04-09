@@ -349,6 +349,13 @@ serve(async (req) => {
 ## قواعد مسار الطلب الحالية
 ${isDesktop ? "- هذا الطلب مكتبي: ممنوع ذكر معاينة ميدانية أو معاين أو إحالة الأصول للمعاين.\n- اربط كل إجابة بالمراجعة المكتبية، المستندات، الصور، التحليل، والمراجعة المهنية فقط." : "- هذا الطلب ميداني: يمكن ذكر المعاينة الميدانية فقط إذا كانت مرتبطة بالحالة الحالية فعلاً."}
 
+## إلغاء الطلب
+- يمكن للعميل طلب إلغاء طلبه إذا كانت الحالة الحالية: draft أو submitted أو scope_generated فقط.
+- الحالة الحالية: ${ctx.status || "غير محددة"}
+- إذا طلب العميل الإلغاء/الحذف وكانت الحالة مؤهلة: اسأله "هل أنت متأكد من رغبتك في إلغاء الطلب؟ هذا الإجراء لا يمكن التراجع عنه." ثم إذا أكد، أضف في نهاية ردك بالضبط: [ACTION:CANCEL_REQUEST]
+- إذا طلب الإلغاء والحالة غير مؤهلة (بعد الدفع أو التقييم): اعتذر بلطف ووضح أنه لا يمكن إلغاء الطلب بعد هذه المرحلة، وأرشده للتواصل مع الدعم على 920015029 لمناقشة الخيارات.
+- لا تنفذ الإلغاء تلقائياً دون تأكيد صريح من العميل.
+
 ## قواعد الاستبعاد المهنية
 - أصول غير ملموسة → IVS 210
 - حقوق تعاقدية → IVS 105
@@ -432,8 +439,36 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     }
 
     const aiData = await aiResponse.json();
-    const reply = aiData.choices?.[0]?.message?.content ||
+    let reply = aiData.choices?.[0]?.message?.content ||
       "عذراً، لم أتمكن من معالجة سؤالك. يرجى إعادة صياغته أو التواصل معنا على 920015029.";
+
+    // ── Detect and execute cancellation action ──
+    let cancelExecuted = false;
+    if (reply.includes("[ACTION:CANCEL_REQUEST]")) {
+      reply = reply.replace("[ACTION:CANCEL_REQUEST]", "").trim();
+      const cancellableStatuses = ["draft", "submitted", "scope_generated"];
+      if (ctx.status && cancellableStatuses.includes(ctx.status) && ctx.assignment_id) {
+        try {
+          const { data: cancelResult } = await db.rpc("update_request_status", {
+            _assignment_id: ctx.assignment_id,
+            _new_status: "cancelled",
+            _user_id: ctx.client_user_id || null,
+            _action_type: "normal",
+            _reason: "إلغاء بطلب العميل عبر رقيم",
+          });
+          if (cancelResult?.success) {
+            cancelExecuted = true;
+            reply += "\n\n✅ **تم إلغاء طلبك بنجاح.** يمكنك تقديم طلب جديد في أي وقت.";
+          } else {
+            reply += "\n\n⚠️ تعذر إلغاء الطلب تلقائياً. يرجى التواصل مع الدعم على 920015029.";
+            console.error("Cancel RPC failed:", cancelResult);
+          }
+        } catch (cancelErr) {
+          console.error("Cancel execution error:", cancelErr);
+          reply += "\n\n⚠️ حدث خطأ أثناء الإلغاء. يرجى التواصل مع الدعم على 920015029.";
+        }
+      }
+    }
 
     // ── Update client memory (background, don't await) ──
     if (ctx.client_user_id) {
@@ -448,6 +483,11 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
 
     // Universal actions
     suggestedActions.push({ label: "⏱️ المدة المتوقعة", message: "كم المدة المتوقعة لإنجاز التقييم؟" });
+
+    // Cancellation action for eligible statuses
+    if (["draft", "submitted", "scope_generated"].includes(status || "")) {
+      suggestedActions.push({ label: "❌ إلغاء الطلب", message: "أرغب في إلغاء طلب التقييم" });
+    }
 
     if (status === "submitted" || status === "under_pricing") {
       suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
@@ -498,7 +538,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     }
 
     return new Response(JSON.stringify({
-      reply, suggestedActions, documentReadiness,
+      reply, suggestedActions, documentReadiness, cancelExecuted,
       complianceReadiness: complianceStatus.totalChecks > 0 ? {
         percent: complianceStatus.mandatoryTotal > 0 ? Math.round((complianceStatus.mandatoryPassed / complianceStatus.mandatoryTotal) * 100) : 0,
         issuanceReady: complianceStatus.issuanceReady,
