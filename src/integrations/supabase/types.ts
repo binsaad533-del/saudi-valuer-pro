@@ -3861,6 +3861,105 @@ export type Database = {
         }
         Relationships: []
       }
+      raqeem_expert_findings: {
+        Row: {
+          code_snippet: string | null
+          created_at: string
+          description_ar: string
+          difficulty: string | null
+          file_path: string | null
+          fix_suggestion_ar: string | null
+          id: string
+          metadata: Json | null
+          pillar: string
+          scan_batch_id: string | null
+          severity: string
+          status: string
+          title_ar: string
+          updated_at: string
+        }
+        Insert: {
+          code_snippet?: string | null
+          created_at?: string
+          description_ar: string
+          difficulty?: string | null
+          file_path?: string | null
+          fix_suggestion_ar?: string | null
+          id?: string
+          metadata?: Json | null
+          pillar: string
+          scan_batch_id?: string | null
+          severity: string
+          status?: string
+          title_ar: string
+          updated_at?: string
+        }
+        Update: {
+          code_snippet?: string | null
+          created_at?: string
+          description_ar?: string
+          difficulty?: string | null
+          file_path?: string | null
+          fix_suggestion_ar?: string | null
+          id?: string
+          metadata?: Json | null
+          pillar?: string
+          scan_batch_id?: string | null
+          severity?: string
+          status?: string
+          title_ar?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      raqeem_expert_scans: {
+        Row: {
+          created_at: string
+          critical_count: number | null
+          duration_ms: number | null
+          health_score: number | null
+          healthy_count: number | null
+          id: string
+          info_count: number | null
+          pillar_scores: Json | null
+          scan_type: string
+          summary_ar: string | null
+          total_findings: number | null
+          triggered_by: string | null
+          warning_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          critical_count?: number | null
+          duration_ms?: number | null
+          health_score?: number | null
+          healthy_count?: number | null
+          id?: string
+          info_count?: number | null
+          pillar_scores?: Json | null
+          scan_type?: string
+          summary_ar?: string | null
+          total_findings?: number | null
+          triggered_by?: string | null
+          warning_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          critical_count?: number | null
+          duration_ms?: number | null
+          health_score?: number | null
+          healthy_count?: number | null
+          id?: string
+          info_count?: number | null
+          pillar_scores?: Json | null
+          scan_type?: string
+          summary_ar?: string | null
+          total_findings?: number | null
+          triggered_by?: string | null
+          warning_count?: number | null
+        }
+        Relationships: []
+      }
       raqeem_knowledge: {
         Row: {
           category: string
