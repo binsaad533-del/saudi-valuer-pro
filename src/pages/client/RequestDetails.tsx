@@ -64,6 +64,7 @@ export default function RequestDetails() {
   const [paymentType, setPaymentType] = useState("first");
   const [aiTyping, setAiTyping] = useState(false);
   const [aiSuggestedActions, setAiSuggestedActions] = useState<{ label: string; message: string }[]>([]);
+  const [docReadiness, setDocReadiness] = useState<{ percent: number; missing: string[]; total: number } | null>(null);
   const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const loadData = async () => {
@@ -221,6 +222,10 @@ export default function RequestDetails() {
       // Update suggested actions from AI
       if (functionData?.suggestedActions && Array.isArray(functionData.suggestedActions)) {
         setAiSuggestedActions(functionData.suggestedActions);
+      }
+      // Update document readiness
+      if (functionData?.documentReadiness) {
+        setDocReadiness(functionData.documentReadiness);
       }
 
       setMessages(prev => {
