@@ -427,6 +427,174 @@ const TOOLS = [
       }
     }
   },
+  // ═══════════════════════════════════════════════════
+  // PHASE 3 — Deep Executive Tools
+  // ═══════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "get_dashboard_summary",
+      description: "نظرة شاملة فورية على حالة المنصة: طلبات نشطة، متعثرة، إيرادات، معاينات، امتثال.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_assignment_details",
+      description: "تفاصيل كاملة لطلب تقييم: بيانات العميل، العقار، المعاين، الحالة، المدفوعات، التاريخ.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة (UUID)" },
+          reference_number: { type: "string", description: "الرقم المرجعي (مثل VAL-2025-0041)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_audit_trail",
+      description: "سجل التدقيق الكامل لطلب أو جدول محدد.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          table_name: { type: "string", description: "اسم الجدول (اختياري)" },
+          limit: { type: "number", description: "عدد السجلات (افتراضي 20)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "approve_final_value",
+      description: "اعتماد القيمة النهائية لمهمة تقييم مع تسجيل المبرر في سجل التدقيق.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          approved_value: { type: "number", description: "القيمة المعتمدة بالريال" },
+          justification: { type: "string", description: "مبرر الاعتماد" }
+        },
+        required: ["assignment_id", "approved_value"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "issue_final_report",
+      description: "إصدار التقرير النهائي بعد فحص جميع البوابات التقنية والامتثال.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          bypass_justification: { type: "string", description: "مبرر التجاوز إن وُجدت بوابات فاشلة (اختياري)" }
+        },
+        required: ["assignment_id"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "cancel_assignment",
+      description: "إلغاء طلب تقييم مع تسجيل السبب والتدقيق.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          reason: { type: "string", description: "سبب الإلغاء (إلزامي)" }
+        },
+        required: ["assignment_id", "reason"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_compliance_overview",
+      description: "نظرة شاملة على مستوى الامتثال لكافة الطلبات النشطة.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_team_workload",
+      description: "توزيع أحمال العمل بين المعاينين: مهام نشطة، مكتملة، متوسط التقييم.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_workflow_bottlenecks",
+      description: "اكتشاف الاختناقات: طلبات عالقة أكثر من 48 ساعة بدون تقدم.",
+      parameters: {
+        type: "object",
+        properties: {
+          hours_threshold: { type: "number", description: "عتبة الساعات (افتراضي 48)" }
+        }
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_assignment_pricing",
+      description: "تعديل تسعير طلب تقييم مع تسجيل السبب.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          new_price: { type: "number", description: "السعر الجديد بالريال (بدون ضريبة)" },
+          reason: { type: "string", description: "سبب التعديل" }
+        },
+        required: ["assignment_id", "new_price", "reason"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "manage_discount_code",
+      description: "إنشاء أو تعطيل كود خصم.",
+      parameters: {
+        type: "object",
+        properties: {
+          action: { type: "string", enum: ["create", "deactivate"], description: "الإجراء" },
+          code: { type: "string", description: "رمز الكود" },
+          discount_percentage: { type: "number", description: "نسبة الخصم %" },
+          max_uses: { type: "number", description: "الحد الأقصى للاستخدام" },
+          client_name: { type: "string", description: "تخصيص لعميل (اختياري)" },
+          expires_days: { type: "number", description: "صلاحية بالأيام (اختياري)" }
+        },
+        required: ["action", "code"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "send_bulk_notifications",
+      description: "إرسال إشعارات جماعية لمجموعة مستخدمين (عملاء بفواتير متأخرة، معاينين بمهام، الخ).",
+      parameters: {
+        type: "object",
+        properties: {
+          target_group: { type: "string", enum: ["overdue_clients", "active_inspectors", "all_clients", "custom"], description: "المجموعة المستهدفة" },
+          title: { type: "string", description: "عنوان الإشعار" },
+          body: { type: "string", description: "نص الإشعار" },
+          user_ids: { type: "array", items: { type: "string" }, description: "قائمة المستخدمين (لـ custom فقط)" },
+          priority: { type: "string", enum: ["low", "normal", "high", "critical"], description: "الأولوية" }
+        },
+        required: ["target_group", "title", "body"]
+      }
+    }
+  },
 ];
 
 // ═══════════════ أدوات المعاين (Inspector) ═══════════════
