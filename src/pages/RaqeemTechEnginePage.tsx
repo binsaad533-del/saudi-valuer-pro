@@ -187,7 +187,7 @@ export default function RaqeemTechEnginePage() {
               return (
                 <Card key={action.key} className="border-border/50 hover:border-primary/30 transition-colors cursor-pointer group"
                   onClick={() => !loading && runAction(action.key)}>
-                  <CardContent className="p-4 flex items-center gap-3">
+                  <CardContent className="p-4 flex flex-row-reverse items-center gap-3 justify-end">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
                       {isRunning ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <Icon className="h-5 w-5 text-primary" />}
                     </div>
