@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import ReactMarkdown from "react-markdown";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 
 interface Message {
   role: "user" | "assistant";
@@ -165,8 +166,8 @@ export default function RaqeemChatPage() {
         <div className="max-w-3xl mx-auto px-4 py-6 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center py-16 space-y-6">
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                <RaqeemIcon size={32} className="text-primary" />
+              <div className="flex items-center justify-center mx-auto">
+                <RaqeemAnimatedLogo size={128} />
               </div>
               <div>
                 <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا رقيم</h2>
