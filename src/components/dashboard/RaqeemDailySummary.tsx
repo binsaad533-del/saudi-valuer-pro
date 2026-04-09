@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { STATUS_LABELS } from "@/lib/workflow-engine";
 
 interface DailySummary {
@@ -101,7 +102,7 @@ export default function RaqeemDailySummary() {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-primary" />
+            <RaqeemIcon size={18} />
             ملخص رقيم اليومي
           </CardTitle>
           <div className="flex items-center gap-2">

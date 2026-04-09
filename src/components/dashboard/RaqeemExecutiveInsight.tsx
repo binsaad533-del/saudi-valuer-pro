@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
-import { Brain, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { Button } from "@/components/ui/button";
 import { STATUS_LABELS } from "@/lib/workflow-engine";
 
@@ -85,7 +86,7 @@ export default function RaqeemExecutiveInsight() {
     >
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <Brain className="w-3.5 h-3.5 text-primary" />
+          <RaqeemIcon size={16} />
           <span className="text-xs font-bold text-foreground">رقيم التنفيذي</span>
         </div>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => analyze()} disabled={loading}>

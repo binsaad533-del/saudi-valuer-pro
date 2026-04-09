@@ -1,11 +1,11 @@
-import { Brain } from "lucide-react";
+import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import { Link } from "react-router-dom";
 
 export default function ValuationProductionList() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Brain className="w-8 h-8 text-primary" />
+        <RaqeemIcon size={32} />
         <h1 className="text-2xl font-bold text-foreground">محرك التقييم</h1>
       </div>
       <div className="rounded-xl border border-border bg-card p-8 text-center">
