@@ -1,6 +1,9 @@
 import { useEffect, useState, useRef } from "react";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
+import QuickActionButtons from "@/components/client/chat/QuickActionButtons";
+import ChatProgressBar from "@/components/client/chat/ChatProgressBar";
+import MessageRating from "@/components/client/chat/MessageRating";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
