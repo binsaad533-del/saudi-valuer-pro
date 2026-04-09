@@ -524,7 +524,7 @@ export default function RequestDetails() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6 lg:min-h-[calc(100vh-220px)]">
 
         {/* ── Status Guidance ── */}
         <StatusGuidanceCard status={request.status} valuationMode={requestValuationMode} />
@@ -572,10 +572,10 @@ export default function RequestDetails() {
         )}
 
         {/* ── Main 3-column grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:min-h-[calc(100vh-260px)] lg:items-stretch">
           {/* ── Chat (2 cols) ── */}
-          <div className="lg:col-span-2">
-            <Card className="shadow-sm flex flex-col" style={{ height: 'calc(100vh - 100px)', minHeight: '600px' }}>
+          <div className="lg:col-span-2 lg:h-full">
+            <Card className="shadow-sm flex min-h-[600px] flex-col lg:h-full lg:min-h-[calc(100vh-260px)]">
               <CardHeader className="pb-3 border-b border-border">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm flex items-center gap-2">
