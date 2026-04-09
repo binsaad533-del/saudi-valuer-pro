@@ -1,6 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { buildMachineryVisionPrompt } from "../raqeem-client-chat/_shared/equipment-recognition.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1063,6 +1062,27 @@ function buildAttachmentIntelligenceSection(
   }
 
   return section;
+}
+
+function buildMachineryVisionPromptLocal(): string {
+  return `
+## تحليل صور المعدات (عند استلام صور)
+عند تحليل صورة معدة أو آلة، قدّم المعلومات التالية:
+
+1. **النوع والفئة**: حدد نوع المعدة (ثقيلة، خفيفة، إنتاجية، كهربائية...)
+2. **الشركة المصنعة**: حدد الشركة إن ظهر الشعار أو اللون المميز
+3. **الموديل التقريبي**: قدّر الموديل من الشكل والمواصفات المرئية
+4. **الحالة الظاهرية**: (ممتاز/جيد/متوسط/سيء) بناءً على:
+   - الصدأ والتآكل
+   - حالة الطلاء
+   - الأجزاء المفقودة أو التالفة
+   - نظافة المعدة
+5. **العمر التقديري**: قدّر عمر المعدة من مظهرها
+6. **لوحة البيانات**: إذا ظهرت لوحة البيانات، استخرج الرقم التسلسلي وسنة الصنع والمواصفات الفنية
+7. **ملاحظات تقييمية**: أي ملاحظات تؤثر على القيمة
+
+⚠️ نوّه دائماً أن التحليل البصري أولي ويحتاج تأكيد ميداني أو مستندي حسب مسار الطلب.
+`;
 }
 
 
@@ -3274,7 +3294,7 @@ serve(async (req) => {
       + clientContextSection
       + greetingInstruction
       + attachmentIntelligenceSection
-      + (imageAttachments.length > 0 ? `\n${buildMachineryVisionPrompt()}\n` : "");
+      + (imageAttachments.length > 0 ? `\n${buildMachineryVisionPromptLocal()}\n` : "");
     const roleTools = getToolsForRole(effectiveRole);
 
     // First call: with tools enabled (non-streaming to detect tool calls)
