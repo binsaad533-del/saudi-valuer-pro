@@ -119,7 +119,7 @@ serve(async (req) => {
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
-      request_id ? analyzeDocumentReadiness(db, request_id, ctx.property_type) : Promise.resolve(null),
+      request_id ? analyzeDocumentReadiness(db, request_id, effectivePropertyType) : Promise.resolve(null),
       generateMarketInsights(db, ctx.property_type, ctx.property_city, ctx.organization_id),
       ctx.client_user_id ? getClientHistory(db, ctx.client_user_id) : Promise.resolve(""),
       generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
@@ -373,6 +373,10 @@ serve(async (req) => {
 44. **تحليل سلوك العميل**: اكتشاف العملاء الخاملين والبيع المتقاطع وتنبيهات السوق الشخصية
 45. **رسائل المناسبات**: تهنئة بالأعياد (الفطر، الأضحى، اليوم الوطني، يوم التأسيس) ورسائل شكر وتقييم رضا
 46. **التحليلات التسويقية**: تتبع فعالية الحملات ومعدلات التحويل ومؤشرات صحة العلاقة
+
+## اسم العميل
+${clientDisplayName ? `اسم العميل: **${clientDisplayName}**\n- في أول رسالة: رحّب به باسمه: "مرحباً ${clientDisplayName}، ..."` : "- لم يتوفر اسم العميل. رحّب ترحيباً عاماً."}
+- في الرسائل اللاحقة: لا تكرر الترحيب — ادخل مباشرة في الإجابة
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
