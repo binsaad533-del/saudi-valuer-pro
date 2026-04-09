@@ -233,11 +233,15 @@ export default function RaqeemChatPage() {
 
     try {
       const messageContent = (text.trim() || "") + attachmentContext;
+      // Get user's session token for proper identification
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authToken = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${authToken}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
         body: JSON.stringify({
           messages: allMessages.map((m) => ({
@@ -245,6 +249,7 @@ export default function RaqeemChatPage() {
             content: m.role === "user" && m === userMsg ? messageContent : m.content,
           })),
           userRole: effectiveRole,
+          userId: user?.id,
           attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
         }),
       });
