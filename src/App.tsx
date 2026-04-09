@@ -53,6 +53,7 @@ import SystemMonitoringPage from "@/pages/SystemMonitoringPage";
 import SmartMarketingDashboard from "@/pages/admin/SmartMarketingDashboard";
 import RaqeemWatchdogPage from "@/pages/RaqeemWatchdogPage";
 import RaqeemTechEnginePage from "@/pages/RaqeemTechEnginePage";
+import RaqeemExpertPage from "@/pages/RaqeemExpertPage";
 
 import ClientAuth from "@/pages/client/ClientAuth";
 import ForgotPassword from "@/pages/client/ForgotPassword";
@@ -133,6 +134,7 @@ const App = () => (
             <Route path="/smart-marketing" element={<SmartMarketingDashboard />} />
             <Route path="/watchdog" element={<RaqeemWatchdogPage />} />
             <Route path="/tech-engine" element={<RaqeemTechEnginePage />} />
+            <Route path="/expert" element={<RaqeemExpertPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
