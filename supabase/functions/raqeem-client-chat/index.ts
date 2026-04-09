@@ -21,6 +21,17 @@ import { analyzeDigitalTwins } from "./_shared/digital-twin.ts";
 import { analyzeFleetPortfolio } from "./_shared/fleet-optimizer.ts";
 import { analyzeRegulatoryCompliance } from "./_shared/regulatory-compliance.ts";
 import { analyzeInsuranceRisk } from "./_shared/insurance-risk.ts";
+import { analyzeREIT } from "./_shared/reit-analyzer.ts";
+import { analyzePortfolioValuation } from "./_shared/portfolio-valuation.ts";
+import { analyzeDCF } from "./_shared/dcf-analyzer.ts";
+import { analyzePPA } from "./_shared/ppa-engine.ts";
+import { analyzeImpairment } from "./_shared/impairment-testing.ts";
+import { analyzeFairValue } from "./_shared/fair-value-engine.ts";
+import { analyzeCMACompliance } from "./_shared/cma-compliance.ts";
+import { generateDisclosureReport } from "./_shared/disclosure-generator.ts";
+import { analyzeMarketMultiples } from "./_shared/market-multiples.ts";
+import { analyzeFinancialRisk } from "./_shared/financial-risk.ts";
+import { analyzeScenarios } from "./_shared/scenario-engine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
