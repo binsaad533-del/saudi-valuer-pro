@@ -13,7 +13,6 @@ import { useAuth } from "@/hooks/useAuth";
 import ReactMarkdown from "react-markdown";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
-import RaqeemIcon from "@/components/ui/RaqeemIcon";
 
 interface Message {
   role: "user" | "assistant";
