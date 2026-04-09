@@ -558,10 +558,23 @@ export default function RequestDetails() {
           <div className="lg:col-span-2">
             <Card className="shadow-sm h-[calc(100vh-300px)] flex flex-col">
               <CardHeader className="pb-3 border-b border-border">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <RaqeemAnimatedLogo size={24} />
-                  <span>رقيم – مساعدك الذكي</span>
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <RaqeemAnimatedLogo size={24} />
+                    <span>رقيم – مساعدك الذكي</span>
+                  </CardTitle>
+                  {docReadiness && (
+                    <div className="flex items-center gap-2 text-xs" dir="rtl">
+                      <div className="w-20 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${docReadiness.percent >= 100 ? "bg-green-500" : docReadiness.percent >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+                          style={{ width: `${docReadiness.percent}%` }}
+                        />
+                      </div>
+                      <span className="text-muted-foreground">جاهزية الملف {docReadiness.percent}%</span>
+                    </div>
+                  )}
+                </div>
               </CardHeader>
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {/* Progress Bar */}
