@@ -10,6 +10,10 @@ import { analyzeSelfLearning } from "./_shared/self-learning.ts";
 import { analyzeMarketTrends } from "./_shared/market-awareness.ts";
 import { analyzeMultiPartyStatus } from "./_shared/multi-party-coordinator.ts";
 import { executeAutonomousLogic } from "./_shared/autonomous-engine.ts";
+import { analyzeMachineryDepreciation } from "./_shared/machinery-depreciation.ts";
+import { classifyAssetBatch, buildMachineryVisionPrompt } from "./_shared/equipment-recognition.ts";
+import { analyzeMachineryMarket } from "./_shared/machinery-market.ts";
+import { analyzeProductionLines } from "./_shared/production-line-analyzer.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -39,7 +43,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -53,6 +57,9 @@ serve(async (req) => {
       analyzeMarketTrends(db, ctx.property_type, ctx.property_city, ctx.organization_id),
       analyzeMultiPartyStatus(db, ctx.assignment_id, ctx.status),
       executeAutonomousLogic(db, ctx.assignment_id, ctx.status, request_id, ctx.organization_id),
+      analyzeMachineryDepreciation(db, ctx.assignment_id),
+      analyzeMachineryMarket(db, ctx.assignment_id, ctx.organization_id),
+      analyzeProductionLines(db, ctx.assignment_id),
     ]);
 
     // ── Knowledge section ──
@@ -237,7 +244,8 @@ serve(async (req) => {
 1. **منهجية التكلفة**: تُستخدم للعقارات الجديدة والأصول المتخصصة. تعتمد على تكلفة الإحلال ناقص الإهلاك
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${correctionsSection}${knowledgeSection}`;
+${buildMachineryVisionPrompt()}
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${machineryDepreciation?.section || ""}${machineryMarket.section}${productionLines?.section || ""}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
@@ -406,6 +414,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         totalCompleted: selfLearning.totalPredictions,
         trend: selfLearning.improvementTrend,
         commonErrors: selfLearning.commonErrors,
+      } : null,
+      machineryAnalysis: machineryDepreciation ? {
+        totalOriginalCost: machineryDepreciation.totalOriginalCost,
+        totalCurrentValue: machineryDepreciation.totalCurrentValue,
+        depreciationPercent: machineryDepreciation.overallDepreciationPercent,
+        assetCount: machineryDepreciation.assets.length,
+      } : null,
+      machineryMarketData: machineryMarket.valueGap ? {
+        bookValue: machineryMarket.valueGap.bookValue,
+        marketValue: machineryMarket.valueGap.marketValue,
+        replacementCost: machineryMarket.valueGap.replacementCost,
+        liquidationValue: machineryMarket.valueGap.liquidationValue,
+        gapPercent: machineryMarket.valueGap.gapPercent,
+      } : null,
+      productionLineData: productionLines ? {
+        lineCount: productionLines.lineCount,
+        systemPremium: productionLines.systemPremium,
+        recommendations: productionLines.recommendations,
       } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
