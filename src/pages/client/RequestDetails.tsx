@@ -598,7 +598,7 @@ export default function RequestDetails() {
               <div className="flex-1 overflow-y-auto p-4 space-y-3">
                 {/* Progress Bar */}
                 <div className="px-2 pb-2">
-                  <ChatProgressBar status={request.status} />
+                  <ChatProgressBar status={request.status} valuationMode={requestValuationMode} />
                 </div>
 
                 {/* Raqeem Welcome — always first */}
