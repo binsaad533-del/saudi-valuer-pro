@@ -484,7 +484,10 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     // Universal actions
     suggestedActions.push({ label: "⏱️ المدة المتوقعة", message: "كم المدة المتوقعة لإنجاز التقييم؟" });
 
-    if (status === "submitted" || status === "under_pricing") {
+    // Cancellation action for eligible statuses
+    if (["draft", "submitted", "scope_generated"].includes(status || "")) {
+      suggestedActions.push({ label: "❌ إلغاء الطلب", message: "أرغب في إلغاء طلب التقييم" });
+    }
       suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
       suggestedActions.push({ label: "📊 تقدير أولي", message: "هل يمكنك إعطائي تقدير أولي للقيمة؟" });
     } else if (status === "scope_generated") {
