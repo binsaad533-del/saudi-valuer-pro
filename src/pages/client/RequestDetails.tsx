@@ -172,6 +172,9 @@ export default function RequestDetails() {
     })() : "";
     const imgDocs = documents.filter(d => d.mime_type?.startsWith("image/"));
     return {
+      assignment_id: request.assignment_id,
+      client_user_id: request.client_user_id || user?.id,
+      organization_id: request.organization_id,
       reference_number: request.reference_number,
       status: request.status,
       status_label: getStatusLabel(request.status),
@@ -188,9 +191,6 @@ export default function RequestDetails() {
       documents_count: documents.length,
       has_photos: imgDocs.length > 0,
       created_at: request.created_at,
-      client_user_id: user?.id,
-      organization_id: request.organization_id,
-      assignment_id: request.assignment_id,
     };
   };
 
