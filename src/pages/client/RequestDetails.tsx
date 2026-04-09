@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
