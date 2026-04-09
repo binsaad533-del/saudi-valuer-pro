@@ -6,6 +6,10 @@ import { generateMarketInsights, getClientHistory } from "./_shared/financial-ad
 import { generatePredictions } from "./_shared/predictions.ts";
 import { analyzeWorkflowReadiness } from "./_shared/workflow-integration.ts";
 import { checkComplianceStatus } from "./_shared/compliance-advisor.ts";
+import { analyzeSelfLearning } from "./_shared/self-learning.ts";
+import { analyzeMarketTrends } from "./_shared/market-awareness.ts";
+import { analyzeMultiPartyStatus } from "./_shared/multi-party-coordinator.ts";
+import { executeAutonomousLogic } from "./_shared/autonomous-engine.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +39,7 @@ serve(async (req) => {
     const ctx = requestContext || {};
 
     // ── Parallel data loading ──
-    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus] = await Promise.all([
+    const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult] = await Promise.all([
       db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
       db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
       ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
@@ -45,6 +49,10 @@ serve(async (req) => {
       generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
       analyzeWorkflowReadiness(db, ctx.assignment_id, ctx.status, request_id),
       checkComplianceStatus(db, ctx.assignment_id, ctx.status),
+      analyzeSelfLearning(db, ctx.organization_id),
+      analyzeMarketTrends(db, ctx.property_type, ctx.property_city, ctx.organization_id),
+      analyzeMultiPartyStatus(db, ctx.assignment_id, ctx.status),
+      executeAutonomousLogic(db, ctx.assignment_id, ctx.status, request_id, ctx.organization_id),
     ]);
 
     // ── Knowledge section ──
@@ -196,6 +204,10 @@ serve(async (req) => {
 9. **مراقبة سير العمل**: تحليل جاهزية الانتقال بين المراحل واكتشاف المعوقات
 10. **تحليل الصور**: عند إرسال صور، تحليل نوع المبنى وحالته والعمر التقديري
 11. **المستشار التنظيمي**: فحص الامتثال لمعايير IVS 2025 وتقييم وإرشادات حقوق العميل
+12. **التعلم الذاتي**: تحليل أنماط الأداء وتحسين دقة التقديرات بناءً على التقييمات السابقة
+13. **الوعي السوقي الحي**: رصد اتجاهات الأسعار والتنبيهات السوقية من الصفقات المسجلة
+14. **التنسيق متعدد الأطراف**: تتبع حالة كل طرف (عميل، معاين، مقيّم) وتصعيد ذكي عند التأخير
+15. **الاستقلالية الذكية**: اقتراح إجراءات تلقائية وكشف التناقضات والتعافي الذاتي
 
 ## أسلوبك (إلزامي)
 1. **افهم السياق**: اقرأ حالة الطلب ومرحلته وذاكرة العميل قبل الإجابة
@@ -225,7 +237,7 @@ serve(async (req) => {
 1. **منهجية التكلفة**: تُستخدم للعقارات الجديدة والأصول المتخصصة. تعتمد على تكلفة الإحلال ناقص الإهلاك
 2. **منهجية المقارنة**: تُستخدم للعقارات السكنية والتجارية. تعتمد على بيانات صفقات مماثلة
 3. **منهجية الدخل**: تُستخدم للعقارات المدرّة للدخل. تعتمد على رسملة صافي الدخل التشغيلي
-${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${correctionsSection}${knowledgeSection}`;
+${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadiness ? docReadiness.section : ""}${attachmentsSection}${buildMemorySection(clientMemory)}${clientHistory}${marketInsights.section}${predictions.section}${workflowStatus.section}${complianceStatus.section}${selfLearning.section}${marketTrends.section}${partyStatus.section}${autonomousResult.section}${correctionsSection}${knowledgeSection}`;
 
     // ── Build messages ──
     const messages: { role: string; content: string }[] = [
@@ -373,6 +385,27 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         canAdvance: workflowStatus.canAdvance,
         nextStatus: workflowStatus.nextStatus,
         blockers: workflowStatus.blockers,
+      } : null,
+      marketTrends: marketTrends.trends.length > 0 ? {
+        trends: marketTrends.trends,
+        alerts: marketTrends.alerts,
+        recentTransactions: marketTrends.recentTransactions,
+      } : null,
+      partyCoordination: partyStatus.parties.length > 0 ? {
+        parties: partyStatus.parties,
+        escalationNeeded: partyStatus.escalationNeeded,
+        escalationReason: partyStatus.escalationReason,
+        summary: partyStatus.unifiedSummary,
+      } : null,
+      autonomousActions: autonomousResult.actions.length > 0 ? {
+        actions: autonomousResult.actions,
+        decisions: autonomousResult.decisionsAvailable,
+        selfHealAttempts: autonomousResult.selfHealAttempts,
+      } : null,
+      performanceInsights: selfLearning.totalPredictions > 0 ? {
+        totalCompleted: selfLearning.totalPredictions,
+        trend: selfLearning.improvementTrend,
+        commonErrors: selfLearning.commonErrors,
       } : null,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
