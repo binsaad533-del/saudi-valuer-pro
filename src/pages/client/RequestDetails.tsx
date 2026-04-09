@@ -185,6 +185,8 @@ export default function RequestDetails() {
       documents_count: documents.length,
       has_photos: imgDocs.length > 0,
       created_at: request.created_at,
+      client_user_id: user?.id,
+      organization_id: request.organization_id,
     };
   };
 
