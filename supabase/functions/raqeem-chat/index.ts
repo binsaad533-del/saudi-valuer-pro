@@ -58,15 +58,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "generate_scope",
-      description: "توليد نطاق العمل والتسعير لطلب تقييم محدد. يحلل المستندات ويحدد المنهجية والتسعير.",
+      description: "توليد نطاق العمل والتسعير لطلب تقييم محدد.",
       parameters: {
         type: "object",
-        properties: {
-          request_id: {
-            type: "string",
-            description: "معرّف طلب التقييم (UUID)"
-          }
-        },
+        properties: { request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" } },
         required: ["request_id"]
       }
     }
@@ -75,19 +70,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "run_valuation",
-      description: "تشغيل محرك التقييم لحساب القيمة باستخدام المناهج الثلاث (سوقي، دخل، تكلفة) لمهمة تقييم محددة.",
+      description: "تشغيل محرك التقييم لحساب القيمة.",
       parameters: {
         type: "object",
         properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          },
-          step: {
-            type: "string",
-            enum: ["full", "normalize", "market_data", "hbu", "approaches", "adjustments", "reconcile", "report"],
-            description: "الخطوة المطلوبة — 'full' لتشغيل كل الخطوات"
-          }
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          step: { type: "string", enum: ["full", "normalize", "market_data", "hbu", "approaches", "adjustments", "reconcile", "report"], description: "الخطوة المطلوبة" }
         },
         required: ["assignment_id"]
       }
@@ -97,15 +85,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "generate_report",
-      description: "توليد مسودة التقرير الكامل (11 قسم) لمهمة تقييم محددة. يجمع البيانات من 14 جدولاً ويُنتج تقريراً متوافقاً مع IVS 2025.",
+      description: "توليد مسودة التقرير الكامل (11 قسم) لمهمة تقييم.",
       parameters: {
         type: "object",
-        properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          }
-        },
+        properties: { assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" } },
         required: ["assignment_id"]
       }
     }
@@ -114,15 +97,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "check_compliance",
-      description: "فحص امتثال التقرير للمعايير الدولية (IVS 2025) ومعايير تقييم السعودية. يتحقق من اكتمال الأقسام والبيانات الإلزامية.",
+      description: "فحص امتثال التقرير للمعايير.",
       parameters: {
         type: "object",
-        properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          }
-        },
+        properties: { assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" } },
         required: ["assignment_id"]
       }
     }
@@ -131,15 +109,10 @@ const TOOLS = [
     type: "function",
     function: {
       name: "extract_documents",
-      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم (صكوك، رخص بناء، عقود إيجار). يحلل الملفات ويستخرج المعلومات الرئيسية.",
+      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم.",
       parameters: {
         type: "object",
-        properties: {
-          request_id: {
-            type: "string",
-            description: "معرّف طلب التقييم (UUID)"
-          }
-        },
+        properties: { request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" } },
         required: ["request_id"]
       }
     }
@@ -148,19 +121,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "translate_report",
-      description: "ترجمة أقسام التقرير بين العربية والإنجليزية باستخدام مصطلحات التقييم المعتمدة (IVS/TAQEEM).",
+      description: "ترجمة أقسام التقرير بين العربية والإنجليزية.",
       parameters: {
         type: "object",
         properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          },
-          target_lang: {
-            type: "string",
-            enum: ["en", "ar"],
-            description: "اللغة المستهدفة — en للإنجليزية، ar للعربية"
-          }
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          target_lang: { type: "string", enum: ["en", "ar"], description: "اللغة المستهدفة" }
         },
         required: ["assignment_id", "target_lang"]
       }
@@ -170,19 +136,115 @@ const TOOLS = [
     type: "function",
     function: {
       name: "check_consistency",
-      description: "فحص تطابق النسختين العربية والإنجليزية من التقرير (القيم والاستنتاجات).",
+      description: "فحص تطابق النسختين العربية والإنجليزية من التقرير.",
+      parameters: {
+        type: "object",
+        properties: { assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" } },
+        required: ["assignment_id"]
+      }
+    }
+  },
+  // ═══════════════════════════════════════════════════
+  // EXECUTIVE ACTIONS — Owner/Appraiser Tools
+  // ═══════════════════════════════════════════════════
+  {
+    type: "function",
+    function: {
+      name: "change_assignment_status",
+      description: "تغيير حالة طلب التقييم إلى مرحلة جديدة. يتبع مصفوفة الانتقالات المعتمدة.",
       parameters: {
         type: "object",
         properties: {
-          assignment_id: {
-            type: "string",
-            description: "معرّف مهمة التقييم (UUID)"
-          }
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          new_status: { type: "string", description: "الحالة الجديدة المراد الانتقال إليها" },
+          reason: { type: "string", description: "سبب تغيير الحالة" }
+        },
+        required: ["assignment_id", "new_status"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "assign_inspector",
+      description: "تعيين معاين لمهمة تقييم. يختار الأنسب بناءً على الموقع والتوفر.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          inspector_user_id: { type: "string", description: "معرّف المعاين (UUID) — اختياري، إذا لم يُحدد يختار النظام الأنسب" },
+          city: { type: "string", description: "مدينة المعاينة للمساعدة في الاختيار" }
         },
         required: ["assignment_id"]
       }
     }
-  }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_performance_report",
+      description: "تقرير أداء شامل عن العمليات والفريق لفترة محددة.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: { type: "string", enum: ["today", "week", "month", "quarter"], description: "الفترة الزمنية" }
+        },
+        required: ["period"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_overdue_summary",
+      description: "ملخص الطلبات والمدفوعات المتأخرة.",
+      parameters: { type: "object", properties: {} }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "confirm_payment",
+      description: "تأكيد استلام دفعة لطلب تقييم.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          payment_stage: { type: "string", enum: ["first", "final"], description: "نوع الدفعة: أولى أو نهائية" },
+          amount: { type: "number", description: "المبلغ المدفوع" }
+        },
+        required: ["assignment_id", "payment_stage"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_revenue_summary",
+      description: "ملخص الإيرادات والتحصيل لفترة محددة.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: { type: "string", enum: ["today", "week", "month", "quarter", "year"], description: "الفترة الزمنية" }
+        },
+        required: ["period"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_inspector_tasks",
+      description: "عرض المهام المسندة لمعاين محدد أو كل المعاينين.",
+      parameters: {
+        type: "object",
+        properties: {
+          inspector_user_id: { type: "string", description: "معرّف المعاين — اختياري لعرض الكل" },
+          status_filter: { type: "string", enum: ["pending", "completed", "all"], description: "فلتر الحالة" }
+        }
+      }
+    }
+  },
 ];
 
 async function buildContextualPrompt(supabaseClient: any): Promise<string> {
