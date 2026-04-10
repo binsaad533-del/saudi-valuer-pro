@@ -10,7 +10,7 @@ import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
 import {
   CheckCircle, XCircle, Clock, Loader2, Eye,
-  FileText, ImageIcon, Download,
+  FileText, ImageIcon, Download, AlertTriangle,
 } from "lucide-react";
 
 export default function PaymentProofReview() {
@@ -50,8 +50,20 @@ export default function PaymentProofReview() {
     }
   };
 
+
+  const selectedHasProof = selected?.payment_proof_path?.trim();
+
   const handleDecision = async (decision: "paid" | "rejected") => {
     if (!selected) return;
+    // HARD GATE: prevent confirmation without proof
+    if (decision === "paid" && !selectedHasProof) {
+      toast({
+        title: "إثبات السداد مطلوب",
+        description: "لا يمكن تأكيد الدفعة بدون إثبات سداد مرفق.",
+        variant: "destructive",
+      });
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase.functions.invoke("process-payment", {
@@ -112,9 +124,14 @@ export default function PaymentProofReview() {
                   <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
                     {pay.bank_transfer_ref && <span>مرجع: {pay.bank_transfer_ref}</span>}
                     <span>{formatDate(pay.created_at)}</span>
-                    {pay.payment_proof_path && (
-                      <span className="text-primary">📎 إيصال مرفق</span>
-                    )}
+              {pay.payment_proof_path ? (
+                <span className="text-primary">📎 إيصال مرفق</span>
+              ) : (
+                <span className="text-destructive flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  لا يوجد إثبات
+                </span>
+              )}
                   </div>
                   {pay.client_notes && (
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
@@ -196,6 +213,14 @@ export default function PaymentProofReview() {
                 </div>
               ) : null}
 
+              {/* Hard Gate Warning */}
+              {!selectedHasProof && (
+                <div className="flex items-center gap-2 p-3 bg-destructive/10 border border-destructive/20 rounded-lg text-xs text-destructive font-medium">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  إثبات السداد مطلوب قبل التأكيد — لا يمكن اعتماد الدفعة بدون مرفق.
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">ملاحظات المراجعة</label>
                 <Textarea
@@ -216,7 +241,7 @@ export default function PaymentProofReview() {
               {saving ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <XCircle className="w-4 h-4 ml-1" />}
               رفض
             </Button>
-            <Button onClick={() => handleDecision("paid")} disabled={saving}>
+            <Button onClick={() => handleDecision("paid")} disabled={saving || !selectedHasProof}>
               {saving ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <CheckCircle className="w-4 h-4 ml-1" />}
               تأكيد الدفع
             </Button>
