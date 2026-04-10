@@ -89,7 +89,16 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 12;
+const TOTAL_PAGES = 13;
+
+/* ── Company & Valuer Identity (read-only) ── */
+const COMPANY_IDENTITY = {
+  companyName: "جساس للتقييم",
+  valuerName: "أحمد سعد أحمد المالكي",
+  licenseNumber: "4306",
+  memberships: ["4210000041", "1210001217"],
+  crNumber: "7016803038",
+} as const;
 
 const TOC = [
   { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
@@ -103,6 +112,7 @@ const TOC = [
   { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
   { id: "final-value", num: 10, title: "النتيجة النهائية" },
   { id: "disclosures", num: 11, title: "الإفصاحات" },
+  { id: "accreditation", num: 12, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -184,8 +194,8 @@ function PageHeader({ versionNum, mode }: { versionNum: number; mode: "draft" | 
 function PageFooter({ pageNum }: { pageNum: number }) {
   return (
     <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-3 mt-4 border-t border-border/40">
-      <span>شركة جساس للتقييم — Jassas Valuation Co.</span>
-      <span>{pageNum} / {TOTAL_PAGES}</span>
+      <span>{COMPANY_IDENTITY.companyName} | {COMPANY_IDENTITY.crNumber}</span>
+      <span>Page {pageNum} / {TOTAL_PAGES}</span>
     </div>
   );
 }
