@@ -10,6 +10,7 @@ import OfficialStamp from "./OfficialStamp";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
 import { AlertTriangle } from "lucide-react";
+import ReportQualitySection from "./ReportQualitySection";
 
 
 interface ReportPreviewProfessionalProps {
@@ -163,6 +164,9 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
           </div>
         </div>
       )}
+
+      {/* Report Quality Assessment */}
+      <ReportQualitySection />
 
       <Separator className="mx-6 my-6" />
 
