@@ -307,6 +307,24 @@ ${financialSummary}`;
           } else if (assignment.status !== "draft_approved") {
             cleanReply += `\n\n⚠️ الطلب ${refNum} ليس في مرحلة انتظار الدفعة النهائية.`;
           } else {
+            // HARD GATE: Check proof exists for final payment
+            const proofExists = await hasPaymentProof(assignment.id, "final");
+            if (!proofExists) {
+              const fullProofExists = await hasPaymentProof(assignment.id, "full");
+              if (!fullProofExists) {
+                cleanReply += `\n\n🚫 ${PROOF_REQUIRED_MSG}`;
+                await db.from("audit_logs").insert({
+                  user_id: cfoId, action: "status_change" as any,
+                  table_name: "payments", record_id: assignment.id,
+                  assignment_id: assignment.id,
+                  description: `رفض تأكيد الدفعة النهائية — لا يوجد إثبات سداد | الطلب: ${refNum}`,
+                  new_data: { rejected: true, reason: "no_proof", ref: refNum },
+                  user_name: cfoName, user_role: "financial_manager",
+                } as any).catch(() => {});
+                return { cleanReply, executedActions };
+              }
+            }
+
             const result = await db.rpc("update_request_status", {
               _assignment_id: assignment.id,
               _new_status: "final_payment_confirmed",
