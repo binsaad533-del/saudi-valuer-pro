@@ -181,7 +181,7 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 18;
+const TOTAL_PAGES = 20;
 
 /* ── Company & Valuer Identity (read-only — sourced from shared identity) ── */
 import { JSAAS_IDENTITY, getReportFooterText } from "@/lib/company-identity";
