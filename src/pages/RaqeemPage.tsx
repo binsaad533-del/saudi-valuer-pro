@@ -168,20 +168,26 @@ export default function RaqeemPage() {
       });
     };
 
-    /** Strip any leaked JSON fragments from streamed content */
+    /** Strip any leaked JSON fragments or metadata from streamed content */
     const sanitizeContent = (text: string): string => {
-      return text
-        // Remove standalone JSON-like fragments that leak from tool results
-        .replace(/\{"?success"?\s*:\s*(true|false)\s*,\s*"?result"?\s*:/g, "")
-        .replace(/,?\s*"?_format"?\s*:\s*"[^"]*"\s*\}?/g, "")
-        .replace(/\{"?success"?\s*:\s*(true|false)\s*\}/g, "")
-        .replace(/\{"?error"?\s*:\s*"[^"]*"\s*\}/g, "")
-        // Remove orphan JSON braces from tool result leaks
-        .replace(/^\s*\}\s*\{/gm, "")
-        .replace(/^\s*\}\s*$/gm, "")
-        // Clean up multiple consecutive newlines
-        .replace(/\n{3,}/g, "\n\n")
-        .trim();
+      if (!text) return "";
+      let cleaned = text
+        // Remove explicit JSON metadata fields
+        .replace(/"success"\s*:\s*true/gi, "")
+        .replace(/"success"\s*:\s*false/gi, "")
+        .replace(/"result"\s*:/gi, "")
+        .replace(/"_format"\s*:\s*".*?"/gi, "")
+        .replace(/"error"\s*:\s*"[^"]*"/gi, "")
+        // Remove JSON blocks that are clearly internal (high density of : and ")
+        .replace(/\{[\s\S]*?\}/g, (m) => {
+          const score = (m.match(/[:"]/g) || []).length;
+          return score > 4 ? "" : m;
+        })
+        // Remove bad concatenation artifacts
+        .replace(/\}\s*\{/g, " ")
+        // Clean up multiple newlines
+        .replace(/\n{3,}/g, "\n\n");
+      return cleaned.trim();
     };
 
     const upsert = (chunk: string) => {
