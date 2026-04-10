@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Shield, CheckCircle, Lock, Send,
-  FileText, Archive, AlertTriangle, XCircle, Info, Lightbulb,
+  FileText, Archive, AlertTriangle, XCircle, Lightbulb,
 } from "lucide-react";
 
 interface Props {
