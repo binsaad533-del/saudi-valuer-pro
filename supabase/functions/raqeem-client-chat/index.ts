@@ -71,7 +71,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, request_id, conversationHistory, requestContext, attachments, client_user_id: directClientUserId, is_global_chat } = await req.json();
+    const { message, request_id, conversationHistory, requestContext, attachments, client_user_id: directClientUserId, is_global_chat, fast_intent } = await req.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: "الرسالة مطلوبة" }), {
@@ -85,12 +85,101 @@ serve(async (req) => {
     const db = createClient(supabaseUrl, serviceKey);
 
     const ctx = requestContext || {};
-    // Allow direct client_user_id for global chat mode
     if (directClientUserId && !ctx.client_user_id) {
       ctx.client_user_id = directClientUserId;
     }
     const isDesktop = isDesktopMode(ctx.valuation_mode);
     const isGlobalChat = is_global_chat === true || !request_id;
+    const isFastPath = !!fast_intent && isGlobalChat;
+
+    // ── FAST PATH: minimal DB + small prompt + nano model ──
+    if (isFastPath && ctx.client_user_id) {
+      try {
+        // Only fetch requests summary — skip ALL heavy queries
+        const { data: clientReqs } = await db
+          .from("valuation_requests")
+          .select("id, status, reference_number, property_description_ar, property_type, property_city_ar, valuation_type, created_at, total_fees, amount_paid, payment_status, purpose")
+          .eq("client_user_id", ctx.client_user_id)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        // Fetch client name
+        let clientName = "";
+        const { data: prof } = await db.from("profiles").select("full_name_ar").eq("user_id", ctx.client_user_id).maybeSingle();
+        clientName = prof?.full_name_ar || "";
+
+        const statusLabels: Record<string, string> = {
+          draft: "مسودة", submitted: "مقدم", scope_generated: "عرض السعر جاهز",
+          scope_approved: "تمت الموافقة", first_payment_confirmed: "جارٍ العمل",
+          data_collection_open: "جمع البيانات", inspection_pending: "بانتظار المعاينة",
+          inspection_completed: "تمت المعاينة", analysis_complete: "اكتمل التحليل",
+          professional_review: "مراجعة مهنية", draft_report_ready: "المسودة جاهزة",
+          client_review: "بانتظار مراجعتك", draft_approved: "تم اعتماد المسودة",
+          issued: "التقرير صدر", archived: "مؤرشف", cancelled: "ملغي",
+        };
+
+        let summary = "";
+        const reqs = clientReqs || [];
+        if (reqs.length > 0) {
+          summary = `لدى العميل ${reqs.length} طلب.\n`;
+          for (const r of reqs.slice(0, 5)) {
+            const label = r.reference_number || "طلب";
+            summary += `- ${label}: ${statusLabels[r.status] || r.status}`;
+            if (r.property_city_ar) summary += ` | ${r.property_city_ar}`;
+            if (r.payment_status) summary += ` | دفع: ${r.payment_status}`;
+            summary += "\n";
+          }
+        } else {
+          summary = "لا توجد طلبات.\n";
+        }
+
+        const fastPrompt = `أنت "${AI.name}" مساعد جسّاس للتقييم. أجب بإيجاز (3-5 جمل). لا تعرض UUIDs. استخدم الأرقام المرجعية فقط.
+${clientName ? `اسم العميل: ${clientName}` : ""}
+ملخص الطلبات:\n${summary}
+النية: ${fast_intent}
+الرسالة: ${message}`;
+
+        const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+        if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+
+        const fastHistory = (conversationHistory || []).slice(-4).map((m: any) => ({
+          role: m.sender_type === "client" ? "user" : "assistant",
+          content: m.content,
+        }));
+
+        const aiResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${LOVABLE_API_KEY}` },
+          body: JSON.stringify({
+            model: "openai/gpt-5-nano",
+            messages: [
+              { role: "system", content: fastPrompt },
+              ...fastHistory,
+              { role: "user", content: message },
+            ],
+          }),
+        });
+
+        if (aiResp.ok) {
+          const aiData = await aiResp.json();
+          const reply = aiData.choices?.[0]?.message?.content || "عذراً، يرجى المحاولة مرة أخرى.";
+
+          // Generate quick suggested actions
+          const suggestedActions: any[] = [];
+          if (reqs.length > 0) {
+            suggestedActions.push({ label: "📊 حالة طلباتي", message: "أعطني ملخص حالة كل طلباتي" });
+            suggestedActions.push({ label: "🆕 طلب جديد", message: "أريد تقديم طلب تقييم جديد" });
+          }
+
+          return new Response(JSON.stringify({ reply, suggestedActions, isGlobalChat: true, clientRequestsCount: reqs.length }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        // If fast path AI fails, fall through to full path
+      } catch (e) {
+        console.error("Fast path error, falling through:", e);
+      }
+    }
 
     // ── Global Chat: Fetch ALL client requests for comprehensive context ──
     let allClientRequests: any[] = [];
