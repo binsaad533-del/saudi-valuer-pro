@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { RaqeemAgentProvider } from "@/contexts/RaqeemAgentContext";
+import SecurityWatermark from "@/components/security/SecurityWatermark";
 import AppLayout from "@/components/layout/AppLayout";
 import ClientLayout from "@/components/layout/ClientLayout";
 import ProtectedRoute from "@/components/layout/ProtectedRoute";
