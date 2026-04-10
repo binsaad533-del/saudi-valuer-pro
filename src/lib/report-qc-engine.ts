@@ -12,7 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   IVS_STANDARDS,
   getItemSeverity, getApplicableItems, getGrade,
-  type IVSStandardCode, type QCGrade,
+  type IVSStandard, type IVSCheckItem, type IVSStandardCode, type QCGrade,
 } from "./ivs-quality-standards";
 
 /* ─── Types ─── */
