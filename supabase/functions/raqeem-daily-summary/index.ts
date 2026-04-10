@@ -288,7 +288,7 @@ serve(async (req) => {
     let aiMessage = "";
     if (LOVABLE_API_KEY && summaryData.insights && summaryData.insights.length > 0) {
       try {
-        const aiPrompt = `أنت "رقيم"، المساعد الذكي لمنصة تقييم سعودية. اكتب ملخصاً يومياً موجزاً (3-5 أسطر) بالعربية بأسلوب مهني ودي.
+        const aiPrompt = `أنت "ChatGPT"، المساعد الذكي لمنصة تقييم سعودية. اكتب ملخصاً يومياً موجزاً (3-5 أسطر) بالعربية بأسلوب مهني ودي.
 الدور: ${summaryData.role === "owner" ? "المالك/المقيّم المعتمد" : summaryData.role === "inspector" ? "المعاين" : summaryData.role === "client" ? "العميل" : "المدير المالي"}
 البيانات: ${JSON.stringify(summaryData.stats)}
 النقاط: ${summaryData.insights.join(" | ")}

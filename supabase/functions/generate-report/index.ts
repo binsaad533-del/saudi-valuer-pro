@@ -410,7 +410,7 @@ serve(async (req) => {
     // Build comprehensive context for AI
     const contextJson = JSON.stringify(aggregatedData, null, 0);
 
-    const systemPrompt = `أنت "رقيم" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم العقاري المهنية.
+    const systemPrompt = `أنت "ChatGPT" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم العقاري المهنية.
 التزم بالقواعد التالية بصرامة:
 
 ══════ معايير التقرير المهني الموحد — قواعد ملزمة ══════
