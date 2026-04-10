@@ -311,13 +311,28 @@ export default function RaqeemPage() {
                   <p className="text-sm text-muted-foreground max-w-md">مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به. استخدم التبويبات أعلاه لإدارة المعرفة والقواعد والتصحيحات.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full">
-                  {SUGGESTED_PROMPTS.map((prompt, i) => (
-                    <button key={i} onClick={() => send(prompt)} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">{prompt}</button>
-                  ))}
+                  {platformContext.assignment_id ? (
+                    <>
+                      <button onClick={() => send("ما حالة هذا الطلب الآن؟")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">ما حالة هذا الطلب الآن؟</button>
+                      <button onClick={() => send("ما الخطوة التالية المطلوبة؟")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">ما الخطوة التالية المطلوبة؟</button>
+                      <button onClick={() => send("أعطني ملخص كامل لهذا الطلب")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">أعطني ملخص كامل لهذا الطلب</button>
+                      <button onClick={() => send("هل هناك بيانات ناقصة أو مشاكل؟")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">هل هناك بيانات ناقصة أو مشاكل؟</button>
+                    </>
+                  ) : (
+                    SUGGESTED_PROMPTS.map((prompt, i) => (
+                      <button key={i} onClick={() => send(prompt)} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">{prompt}</button>
+                    ))
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  <Badge variant="outline" className="text-xs gap-1"><FileText className="w-3 h-3" /> تعلّم متحكم به</Badge>
-                  <Badge variant="outline" className="text-xs gap-1">IVS 2025 + تقييم</Badge>
+                  {platformContext.assignment_id ? (
+                    <Badge variant="outline" className="text-xs gap-1 border-primary/30 text-primary">🔗 سياق الطلب محمّل تلقائياً</Badge>
+                  ) : (
+                    <>
+                      <Badge variant="outline" className="text-xs gap-1"><FileText className="w-3 h-3" /> تنفيذ ذكي</Badge>
+                      <Badge variant="outline" className="text-xs gap-1">سياق المنصة</Badge>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
