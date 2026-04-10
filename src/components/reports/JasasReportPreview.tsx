@@ -1046,8 +1046,9 @@ function AccreditationPage() {
 export default function JasasReportPreview() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mode, setMode] = useState<"draft" | "final">("draft");
-  const [versionNum] = useState(3); // Sample: version 3
+  const [versionNum] = useState(3);
   const [isLocked] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const versions = [
     { num: 1, date: "2026-03-28", mode: "draft" as const, locked: true },
@@ -1059,6 +1060,42 @@ export default function JasasReportPreview() {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
+
+  const handleDownloadPdf = useCallback(async () => {
+    if (!containerRef.current || isExporting) return;
+    setIsExporting(true);
+    try {
+      const pages = containerRef.current.querySelectorAll<HTMLElement>(":scope > div");
+      if (pages.length === 0) return;
+
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdfW = 210;
+      const pdfH = 297;
+
+      for (let i = 0; i < pages.length; i++) {
+        const page = pages[i];
+        const canvas = await html2canvas(page, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.92);
+        const imgRatio = canvas.height / canvas.width;
+        const finalH = Math.min(pdfW * imgRatio, pdfH);
+
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, 0, pdfW, finalH);
+      }
+
+      pdf.save(`${SAMPLE.reportNumber}_${mode === "draft" ? "مسودة" : "نهائي"}.pdf`);
+    } catch (err) {
+      console.error("PDF export failed:", err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, [mode, isExporting]);
 
   return (
     <div className="max-w-2xl mx-auto py-8 space-y-6" dir="rtl">
