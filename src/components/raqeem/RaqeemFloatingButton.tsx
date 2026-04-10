@@ -3,13 +3,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
+import { AI } from "@/config/assistantIdentity";
 
 export default function RaqeemFloatingButton() {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Hide on Raqeem chat page and login pages
   if (["/raqeem-chat", "/login", "/client/auth"].includes(location.pathname)) return null;
 
   return (
@@ -22,7 +22,7 @@ export default function RaqeemFloatingButton() {
             exit={{ opacity: 0, y: 8, scale: 0.9 }}
             className="absolute bottom-16 left-0 bg-card border border-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap"
           >
-            <span className="text-xs font-medium text-foreground">ChatGPT — مساعدك الذكي</span>
+            <span className="text-xs font-medium text-foreground">{AI.title}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -34,7 +34,7 @@ export default function RaqeemFloatingButton() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-shadow bg-primary-foreground"
-        aria-label="فتح ChatGPT"
+        aria-label={`فتح ${AI.name}`}
       >
         <RaqeemIcon size={56} className="text-primary-foreground" />
       </motion.button>

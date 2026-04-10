@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI } from "../_shared/assistantIdentity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const BASE_SYSTEM_PROMPT = `أنت "ChatGPT" — مساعد ذكاء اصطناعي متخصص في التقييم العقاري والآلات والمعدات.
+const BASE_SYSTEM_PROMPT = `أنت "${AI.name}" — مساعد ذكاء اصطناعي متخصص في التقييم العقاري والآلات والمعدات.
 أنت أيضاً **المنسّق الذكي** لكل أنظمة منصة جساس. يمكنك تنفيذ إجراءات حقيقية عبر أدوات متخصصة.
 
 ## قيود صارمة — التعلم المتحكم به
@@ -1272,7 +1273,7 @@ async function executeTool(
         _new_status: args.new_status,
         _user_id: null,
         _action_type: "normal",
-        _reason: args.reason || "تغيير عبر ChatGPT بطلب المالك",
+        _reason: args.reason || AI.actionVia("تغيير بطلب المالك"),
       });
       if (error) return { success: false, result: null, error: error.message };
       return { success: result?.success ?? false, result, error: result?.error };
@@ -1491,7 +1492,7 @@ async function executeTool(
         reference_number: "",
         sequential_number: 0,
         report_language: "ar",
-        notes: args.description || "طلب مُنشأ عبر ChatGPT",
+        notes: args.description || AI.actionVia("طلب مُنشأ"),
       }).select("id, reference_number").single();
 
       if (assignErr) return { success: false, result: null, error: assignErr.message };
@@ -1668,7 +1669,7 @@ async function executeTool(
           _new_status: args.new_status,
           _user_id: null,
           _action_type: "normal",
-          _reason: args.reason || "تحديث جماعي عبر ChatGPT",
+          _reason: args.reason || AI.actionVia("تحديث جماعي"),
         });
         results.push({ assignment_id: assignId, success: !error && result?.success, error: error?.message || result?.error });
       }
@@ -1906,7 +1907,7 @@ async function executeTool(
         _new_status: "issued",
         _user_id: null,
         _action_type: args.bypass_justification ? "bypass" : "normal",
-        _reason: "إصدار التقرير النهائي عبر ChatGPT",
+        _reason: AI.actionVia("إصدار التقرير النهائي"),
         _bypass_justification: args.bypass_justification || null,
       });
 
@@ -2340,7 +2341,7 @@ async function executeTool(
         action: "status_change",
         table_name: "payments",
         record_id: args.payment_id,
-        description: `تأكيد استلام دفعة عبر ChatGPT${args.notes ? ' — ' + args.notes : ''}`,
+        description: `تأكيد استلام دفعة عبر ${AI.name}${args.notes ? ' — ' + args.notes : ''}`,
       });
 
       return { success: true, result: { message: "تم تأكيد الدفعة بنجاح وتحريك سير العمل" } };
@@ -2631,7 +2632,7 @@ async function executeTool(
       if (args.approve) {
         const { data: result, error } = await db.rpc("update_request_status", {
           _assignment_id: args.assignment_id, _new_status: "draft_approved",
-          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر ChatGPT: ${args.feedback}`,
+          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر ${AI.name}: ${args.feedback}`,
         });
         if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
         return { success: true, result: { message: "تمت الموافقة على المسودة بنجاح. الخطوة التالية: سداد الدفعة النهائية." } };
@@ -2648,7 +2649,7 @@ async function executeTool(
       if (args.approved !== false) {
         const { data: result, error } = await db.rpc("update_request_status", {
           _assignment_id: args.assignment_id, _new_status: "scope_approved",
-          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر ChatGPT",
+          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر ${AI.name}",
         });
         if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
         return { success: true, result: { message: "تمت الموافقة على نطاق العمل. الخطوة التالية: سداد الدفعة الأولى (50%)." } };
