@@ -1059,11 +1059,17 @@ function CombinedValuePage() {
           subtext={SAMPLE.combinedTotalText}
         />
 
-        <div className="border border-border rounded-lg px-4 py-3 space-y-1">
-          <p className="text-xs font-semibold text-foreground">ملاحظة مهنية</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            تم تقييم كل تخصص بشكل مستقل وفقاً للمعايير الدولية المعتمدة (IVS 300 للآلات وIVS 400 للعقار)،
-            مع فصل كامل للافتراضات والمنهجيات. القيمة الإجمالية تمثل مجموع التقييمين دون أي تعديل محفظة.
+        <div className="border-2 border-primary/20 bg-primary/5 rounded-lg px-5 py-4 space-y-3">
+          <p className="text-sm font-bold text-foreground">بيان مهني</p>
+          <p className="text-xs text-foreground leading-relaxed">
+            تم تقييم كل فئة من الأصول بشكل مستقل وفقاً للمعايير الدولية:
+          </p>
+          <ul className="text-xs text-foreground list-disc list-inside space-y-1 pr-2">
+            <li><span className="font-semibold">IVS 400</span> للعقار</li>
+            <li><span className="font-semibold">IVS 300</span> للآلات والمعدات</li>
+          </ul>
+          <p className="text-xs text-foreground leading-relaxed">
+            ولا تعكس القيمة الإجمالية أي خصم أو علاوة محفظة إلا إذا تم النص على ذلك صراحة في نطاق العمل.
           </p>
         </div>
       </div>
