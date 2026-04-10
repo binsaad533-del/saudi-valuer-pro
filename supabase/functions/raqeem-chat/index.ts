@@ -3328,11 +3328,63 @@ serve(async (req) => {
       };
     });
 
+    // ── Build Platform Context Section ──
+    let platformContextSection = "";
+    if (platformContext && typeof platformContext === "object") {
+      const pc = platformContext;
+      if (pc.assignment_id || pc.request_id || pc.reference_number) {
+        platformContextSection = `\n\n## 🔗 سياق المنصة الحالي (محمّل تلقائياً)`;
+        if (pc.reference_number) platformContextSection += `\n- رقم الطلب: **${pc.reference_number}**`;
+        if (pc.assignment_id) platformContextSection += `\n- معرّف المهمة: ${pc.assignment_id}`;
+        if (pc.request_id) platformContextSection += `\n- معرّف الطلب: ${pc.request_id}`;
+        if (pc.current_status) {
+          const statusLabels: Record<string, string> = {
+            draft: "مسودة", submitted: "مقدم", scope_generated: "نطاق جاهز", scope_approved: "نطاق معتمد",
+            first_payment_confirmed: "دفعة أولى مؤكدة", data_collection_open: "جمع بيانات",
+            data_collection_complete: "جمع بيانات مكتمل", inspection_pending: "معاينة معلقة",
+            inspection_completed: "معاينة مكتملة", data_validated: "بيانات مُعتمدة",
+            analysis_complete: "تحليل مكتمل", professional_review: "مراجعة مهنية",
+            draft_report_ready: "مسودة جاهزة", client_review: "مراجعة العميل",
+            draft_approved: "مسودة معتمدة", final_payment_confirmed: "دفعة نهائية",
+            issued: "صادر ✅", archived: "مؤرشف", cancelled: "ملغي",
+          };
+          platformContextSection += `\n- المرحلة الحالية: **${statusLabels[pc.current_status] || pc.current_status}**`;
+        }
+        if (pc.property_type) platformContextSection += `\n- نوع العقار: ${pc.property_type}`;
+        if (pc.client_name) platformContextSection += `\n- العميل: ${pc.client_name}`;
+        if (pc.source_page) platformContextSection += `\n- مصدر الانتقال: ${pc.source_page}`;
+
+        // Fetch full assignment details for deep context
+        if (pc.assignment_id) {
+          try {
+            const { data: fullAssignment } = await supabaseClient
+              .from("valuation_assignments")
+              .select("id, reference_number, status, property_type, purpose, basis_of_value, valuation_type, valuation_mode, final_value, notes, inspector_id, created_at, updated_at, clients(name_ar, phone, email)")
+              .eq("id", pc.assignment_id)
+              .maybeSingle();
+            if (fullAssignment) {
+              if (!pc.reference_number && fullAssignment.reference_number) platformContextSection += `\n- رقم الطلب: **${fullAssignment.reference_number}**`;
+              if (fullAssignment.purpose) platformContextSection += `\n- الغرض: ${fullAssignment.purpose}`;
+              if (fullAssignment.valuation_mode) platformContextSection += `\n- نمط التقييم: ${fullAssignment.valuation_mode}`;
+              if (fullAssignment.final_value) platformContextSection += `\n- القيمة النهائية: ${fullAssignment.final_value} ر.س`;
+              if (fullAssignment.notes) platformContextSection += `\n- ملاحظات: ${fullAssignment.notes}`;
+            }
+          } catch (e) { console.error("Platform context fetch error:", e); }
+        }
+
+        platformContextSection += `\n\n**⚠️ تعليمات السياق:**`;
+        platformContextSection += `\n- هذا الطلب محمّل تلقائياً — لا تطلب رقمه من المستخدم`;
+        platformContextSection += `\n- عند طلب إجراء (حالة، ملاحظة، تفاصيل)، استخدم المعرّفات أعلاه مباشرة`;
+        platformContextSection += `\n- إذا طلب المستخدم "حالة الطلب" أو "تفاصيل الطلب" بدون تحديد رقم، يُقصد هذا الطلب المحمّل`;
+      }
+    }
+
     // Build contextual system prompt with role-specific additions
     const basePrompt = await buildContextualPrompt(supabaseClient);
     const systemPrompt = basePrompt
       + getRolePromptAddition(effectiveRole)
       + memoryProfileSection
+      + platformContextSection
       + clientContextSection
       + greetingInstruction
       + attachmentIntelligenceSection
