@@ -77,6 +77,7 @@ import CFOChatPage from "@/pages/cfo/CFOChatPage";
 
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
+import SecureDownloadPage from "@/pages/SecureDownloadPage";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
@@ -101,7 +102,7 @@ const App = () => (
           <Route path="/login" element={<UnifiedLogin />} />
           <Route path="/client/login" element={<UnifiedLogin />} />
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
-
+          <Route path="/download/:token" element={<SecureDownloadPage />} />
           {/* Admin Routes - Protected */}
           <Route element={
             <ProtectedRoute allowedRoles={ADMIN_ROLES}>
