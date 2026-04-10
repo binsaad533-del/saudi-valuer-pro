@@ -971,53 +971,71 @@ function DisclosuresPage() {
 function AccreditationPage() {
   return (
     <PageShell pageNum={16}>
-      <div className="space-y-6">
+      <div className="space-y-5">
         <SectionTitle id="accreditation" num={15} title="الاعتماد والتوقيع" />
 
-        {/* Company */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-bold text-foreground">بيانات شركة التقييم</h3>
-          <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
-            <span className="text-muted-foreground">اسم الشركة</span>
-            <span className="font-semibold text-foreground">{COMPANY_IDENTITY.companyName}</span>
-            <span className="text-muted-foreground">السجل التجاري</span>
-            <span className="font-semibold text-foreground" dir="ltr">{COMPANY_IDENTITY.crNumber}</span>
-          </div>
+        {/* Company info */}
+        <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
+          <span className="text-muted-foreground">شركة التقييم</span>
+          <span className="font-semibold text-foreground">{COMPANY_IDENTITY.companyName}</span>
+          <span className="text-muted-foreground">السجل التجاري</span>
+          <span className="font-semibold text-foreground" dir="ltr">{COMPANY_IDENTITY.crNumber}</span>
         </div>
 
-        {/* Valuer */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-bold text-foreground">بيانات المقيّم المعتمد</h3>
-          <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
-            <span className="text-muted-foreground">الاسم</span>
-            <span className="font-semibold text-foreground">{COMPANY_IDENTITY.valuerName}</span>
-            <span className="text-muted-foreground">رقم الترخيص</span>
-            <span className="font-semibold text-foreground" dir="ltr">{COMPANY_IDENTITY.licenseNumber}</span>
-            <span className="text-muted-foreground">العضويات</span>
-            <div className="space-y-0.5">
-              {COMPANY_IDENTITY.memberships.map((m) => (
-                <span key={m} className="block font-semibold text-foreground" dir="ltr">{m}</span>
-              ))}
+        {/* Valuer info */}
+        <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
+          <span className="text-muted-foreground">المقيّم المعتمد</span>
+          <span className="font-semibold text-foreground">{COMPANY_IDENTITY.valuerName}</span>
+          <span className="text-muted-foreground">رقم الترخيص</span>
+          <span className="font-semibold text-foreground" dir="ltr">{COMPANY_IDENTITY.licenseNumber}</span>
+          <span className="text-muted-foreground">العضويات</span>
+          <div className="flex gap-2">
+            {COMPANY_IDENTITY.memberships.map((m) => (
+              <span key={m} className="text-xs font-semibold text-foreground px-2 py-0.5 rounded bg-muted" dir="ltr">{m}</span>
+            ))}
+          </div>
+          <span className="text-muted-foreground">الجهة المانحة</span>
+          <span className="font-semibold text-foreground">الهيئة السعودية للمقيمين المعتمدين (تقييم)</span>
+        </div>
+
+        {/* Professional signature block */}
+        <div className="border-2 border-primary/20 rounded-lg overflow-hidden">
+          <div className="bg-primary/5 px-5 py-2.5 border-b border-primary/15">
+            <p className="text-xs font-bold text-foreground">التوقيع والاعتماد</p>
+          </div>
+          <div className="p-5 flex items-start justify-between gap-6">
+            {/* Valuer details */}
+            <div className="space-y-2 flex-1">
+              <p className="text-sm font-bold text-foreground">{COMPANY_IDENTITY.valuerName}</p>
+              <div className="space-y-0.5 text-xs text-muted-foreground">
+                <p>مقيّم معتمد — ترخيص رقم {COMPANY_IDENTITY.licenseNumber}</p>
+                <p>{COMPANY_IDENTITY.companyName} — س.ت {COMPANY_IDENTITY.crNumber}</p>
+              </div>
+              <Separator className="my-2" />
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span>تاريخ الإصدار: {SAMPLE.issueDate}</span>
+                <span>تاريخ التقييم: {SAMPLE.valuationDate}</span>
+              </div>
+            </div>
+            {/* Signature area */}
+            <div className="shrink-0 text-center space-y-1">
+              <div className="w-[160px] h-[70px] border-2 border-dashed border-border/50 rounded-lg flex items-center justify-center bg-muted/20">
+                <span className="text-[10px] text-muted-foreground/60">التوقيع الإلكتروني</span>
+              </div>
+              <p className="text-[9px] text-muted-foreground">معتمد إلكترونياً</p>
             </div>
           </div>
-        </div>
-
-        {/* Signature placeholder */}
-        <div className="border-2 border-dashed border-border/60 rounded-lg p-6 flex items-center justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-bold text-foreground">{COMPANY_IDENTITY.valuerName}</p>
-            <p className="text-xs text-muted-foreground">ترخيص رقم {COMPANY_IDENTITY.licenseNumber}</p>
-            <p className="text-xs text-muted-foreground">التاريخ: {SAMPLE.issueDate}</p>
-          </div>
-          <div className="w-[140px] h-[60px] border border-border/40 rounded flex items-center justify-center">
-            <span className="text-[10px] text-muted-foreground">التوقيع</span>
+          {/* Stamp line */}
+          <div className="bg-primary/5 px-5 py-2 border-t border-primary/15 flex items-center justify-center gap-2">
+            <ShieldCheck className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[10px] font-medium text-primary">تقرير معتمد — صادر وفقاً لمعايير IVS 2025 ومتطلبات تقييم</span>
           </div>
         </div>
 
         {/* QR + Security */}
-        <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/40">
+        <div className="flex items-end justify-between pt-3 border-t border-border/40">
           <VerificationQR size={72} />
-          <div className="text-left space-y-1" dir="ltr">
+          <div className="text-left space-y-0.5" dir="ltr">
             <p className="text-[9px] text-muted-foreground">Print: Disabled</p>
             <p className="text-[9px] text-muted-foreground">Edit: Disabled</p>
             <p className="text-[9px] text-muted-foreground">Copy: Disabled</p>
@@ -1026,7 +1044,7 @@ function AccreditationPage() {
           </div>
         </div>
 
-        <div className="border border-border rounded px-4 py-3">
+        <div className="border border-border rounded px-4 py-2">
           <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
             هذا القسم يُولَّد تلقائياً ولا يمكن تعديله — البيانات مأخوذة من سجلات الشركة الرسمية
           </p>
