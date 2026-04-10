@@ -3940,6 +3940,81 @@ export type Database = {
           },
         ]
       }
+      quality_gate_results: {
+        Row: {
+          assignment_id: string
+          blocked_reasons: Json | null
+          can_issue: boolean
+          checks: Json
+          created_at: string
+          enhancement_suggestions: Json | null
+          failed_enhancement: number
+          failed_mandatory: number
+          failed_quality: number
+          has_warnings: boolean
+          id: string
+          overall_passed: boolean
+          passed_checks: number
+          run_by: string
+          score: number
+          total_checks: number
+          warning_reasons: Json | null
+        }
+        Insert: {
+          assignment_id: string
+          blocked_reasons?: Json | null
+          can_issue?: boolean
+          checks?: Json
+          created_at?: string
+          enhancement_suggestions?: Json | null
+          failed_enhancement?: number
+          failed_mandatory?: number
+          failed_quality?: number
+          has_warnings?: boolean
+          id?: string
+          overall_passed?: boolean
+          passed_checks?: number
+          run_by: string
+          score?: number
+          total_checks?: number
+          warning_reasons?: Json | null
+        }
+        Update: {
+          assignment_id?: string
+          blocked_reasons?: Json | null
+          can_issue?: boolean
+          checks?: Json
+          created_at?: string
+          enhancement_suggestions?: Json | null
+          failed_enhancement?: number
+          failed_mandatory?: number
+          failed_quality?: number
+          has_warnings?: boolean
+          id?: string
+          overall_passed?: boolean
+          passed_checks?: number
+          run_by?: string
+          score?: number
+          total_checks?: number
+          warning_reasons?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quality_gate_results_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quality_gate_results_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       raqeem_agent_context: {
         Row: {
           assignment_id: string

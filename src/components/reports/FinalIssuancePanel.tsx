@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Shield, CheckCircle, Lock, Send,
-  FileText, Archive, AlertTriangle,
+  FileText, Archive, AlertTriangle, XCircle, Lightbulb,
 } from "lucide-react";
 
 interface Props {
@@ -255,20 +255,23 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
         {/* QC Section — before issuance */}
         {!isIssued && (
           <div className="space-y-2">
+            {/* QC Trigger */}
             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${qcResult?.passed ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${qcResult?.passed ? "bg-green-100 dark:bg-green-900/30" : qcResult && !qcResult.passed ? "bg-red-100 dark:bg-red-900/30" : "bg-muted"}`}>
                 {qcResult?.passed
                   ? <CheckCircle className="w-4 h-4 text-green-600" />
-                  : <Shield className="w-4 h-4 text-muted-foreground" />}
+                  : qcResult && !qcResult.passed
+                    ? <XCircle className="w-4 h-4 text-red-600" />
+                    : <Shield className="w-4 h-4 text-muted-foreground" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-foreground">تدقيق جودة التقرير</p>
+                <p className="text-xs font-semibold text-foreground">بوابة الجودة</p>
                 <p className="text-[10px] text-muted-foreground">
                   {qcResult
                     ? qcResult.passed
-                      ? `اجتاز التدقيق — ${qcResult.score}% (${qcResult.passed_checks}/${qcResult.total_checks})`
-                      : `${qcResult.failed_mandatory} متطلبات لم تتحقق`
-                    : "يجب تشغيل تدقيق الجودة قبل الإصدار"}
+                      ? `اجتاز — ${qcResult.score}% (${qcResult.passed_checks}/${qcResult.total_checks})`
+                      : `التقرير غير مكتمل حسب معايير الجودة`
+                    : "يجب تشغيل بوابة الجودة قبل الإصدار"}
                 </p>
               </div>
               <Button
@@ -279,18 +282,53 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
                 className="gap-1 shrink-0"
               >
                 {runningQC ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shield className="w-3 h-3" />}
-                {qcResult ? "إعادة التدقيق" : "تدقيق الجودة"}
+                {qcResult ? "إعادة الفحص" : "فحص الجودة"}
               </Button>
             </div>
 
-            {/* QC failures detail */}
+            {/* Score bar */}
+            {qcResult && (
+              <div className="px-3">
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
+                  <span>نتيجة الجودة</span>
+                  <span className={`font-bold ${qcResult.score >= 80 ? "text-green-600" : qcResult.score >= 50 ? "text-amber-600" : "text-red-600"}`}>
+                    {qcResult.score}%
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${qcResult.score >= 80 ? "bg-green-500" : qcResult.score >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+                    style={{ width: `${qcResult.score}%` }}
+                  />
+                </div>
+                <div className="flex gap-3 mt-1.5 text-[9px]">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />
+                    إلزامي: {qcResult.failed_mandatory > 0 ? `${qcResult.failed_mandatory} فشل` : "✓"}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    جودة: {(qcResult as any).failed_quality > 0 ? `${(qcResult as any).failed_quality} ملاحظة` : "✓"}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    تحسين: {(qcResult as any).failed_enhancement > 0 ? `${(qcResult as any).failed_enhancement} اقتراح` : "✓"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* TIER 1: Mandatory failures — blocks issuance */}
             {qcResult && !qcResult.passed && (
               <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1.5">
-                <p className="text-xs font-semibold text-destructive">لا يمكن إصدار التقرير لعدم اكتمال المتطلبات:</p>
-                <ul className="space-y-1">
-                  {qcResult.checks.filter(c => !c.passed && c.mandatory).map(c => (
+                <p className="text-xs font-semibold text-destructive flex items-center gap-1.5">
+                  <XCircle className="w-3.5 h-3.5" />
+                  التقرير غير مكتمل حسب معايير الجودة — الإصدار محظور
+                </p>
+                <ul className="space-y-1 mr-5">
+                  {qcResult.checks.filter(c => c.severity === "mandatory" && !c.passed).map(c => (
                     <li key={c.code} className="text-[10px] text-destructive/80 flex items-start gap-1.5">
-                      <span className="mt-0.5 shrink-0">-</span>
+                      <span className="mt-0.5 shrink-0">●</span>
                       <span>{c.details_ar || c.label_ar}</span>
                     </li>
                   ))}
@@ -298,11 +336,56 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
               </div>
             )}
 
-            {/* QC success detail */}
-            {qcResult?.passed && (
+            {/* TIER 2: Quality warnings — allows issuance with warning */}
+            {qcResult && (qcResult as any).has_warnings && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 space-y-1.5">
+                <p className="text-xs font-semibold text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  ملاحظات جودة — يُسمح بالإصدار مع التنبيه
+                </p>
+                <ul className="space-y-1 mr-5">
+                  {qcResult.checks.filter(c => c.severity === "quality" && !c.passed).map(c => (
+                    <li key={c.code} className="text-[10px] text-amber-600 dark:text-amber-400 flex items-start gap-1.5">
+                      <span className="mt-0.5 shrink-0">▲</span>
+                      <span>{c.details_ar || c.label_ar}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* TIER 3: Enhancement suggestions */}
+            {qcResult && (qcResult as any).failed_enhancement > 0 && (
+              <div className="p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 space-y-1.5">
+                <p className="text-xs font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+                  <Lightbulb className="w-3.5 h-3.5" />
+                  اقتراحات تحسين
+                </p>
+                <ul className="space-y-1 mr-5">
+                  {qcResult.checks.filter(c => c.severity === "enhancement" && !c.passed).map(c => (
+                    <li key={c.code} className="text-[10px] text-blue-600 dark:text-blue-400 flex items-start gap-1.5">
+                      <span className="mt-0.5 shrink-0">◆</span>
+                      <span>{c.details_ar || c.label_ar}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Full pass */}
+            {qcResult?.passed && !(qcResult as any).has_warnings && (
               <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
                 <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
                   جميع المتطلبات مستوفاة — التقرير جاهز للإصدار
+                </p>
+              </div>
+            )}
+
+            {/* Pass with warnings */}
+            {qcResult?.passed && (qcResult as any).has_warnings && (
+              <div className="p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
+                <p className="text-[10px] text-amber-700 dark:text-amber-300 text-center">
+                  يُسمح بالإصدار — مع وجود ملاحظات جودة يُنصح بمعالجتها
                 </p>
               </div>
             )}
