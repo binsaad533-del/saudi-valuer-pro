@@ -113,7 +113,39 @@ const TOC = [
 /* ══════════════════════════════════════════════
    Watermark
    ══════════════════════════════════════════════ */
-function WatermarkOverlay() {
+function WatermarkOverlay({ mode }: { mode: "draft" | "final" }) {
+  const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+
+  if (mode === "final") return null; // No watermark on final version
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10" aria-hidden="true">
+      {/* Large diagonal DRAFT watermark */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span
+          className="text-[72px] font-black tracking-[0.3em] -rotate-[35deg] select-none whitespace-nowrap"
+          style={{ color: "hsl(var(--destructive) / 0.08)" }}
+        >
+          مسودة
+        </span>
+      </div>
+      {/* Subtle user + date repeating pattern */}
+      <div className="absolute inset-0 flex flex-col justify-around">
+        {Array.from({ length: 4 }).map((_, row) => (
+          <div key={row} className="flex justify-around -rotate-[25deg] origin-center">
+            {Array.from({ length: 2 }).map((_, col) => (
+              <span key={col} className="text-[9px] whitespace-nowrap select-none" style={{ color: "hsl(var(--muted-foreground) / 0.06)" }}>
+                {`مسودة — ${SAMPLE.recipient.name} — ${now}`}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ConfidentialWatermark() {
   const now = new Date().toISOString().slice(0, 16).replace("T", " ");
   const text = `CONFIDENTIAL — ${SAMPLE.recipient.name} — ${now}`;
   return (
@@ -137,10 +169,18 @@ function WatermarkOverlay() {
    Shared Components
    ══════════════════════════════════════════════ */
 
-function PageHeader() {
+function PageHeader({ versionNum, mode }: { versionNum: number; mode: "draft" | "final" }) {
   return (
     <div className="flex items-center justify-between pb-3 mb-4 border-b border-border/40">
-      <span className="text-[10px] text-muted-foreground font-medium">{SAMPLE.reportNumber}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-muted-foreground font-medium">{SAMPLE.reportNumber}</span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{
+          background: mode === "draft" ? "hsl(var(--destructive) / 0.1)" : "hsl(var(--primary) / 0.1)",
+          color: mode === "draft" ? "hsl(var(--destructive))" : "hsl(var(--primary))",
+        }}>
+          {mode === "draft" ? `مسودة v${versionNum}` : `نهائي v${versionNum}`}
+        </span>
+      </div>
       <img src={jasasLogo} alt="جساس للتقييم" className="h-8 w-auto object-contain" />
     </div>
   );
@@ -155,12 +195,14 @@ function PageFooter({ pageNum }: { pageNum: number }) {
   );
 }
 
-function PageShell({ children, pageNum, noHeader }: { children: React.ReactNode; pageNum: number; noHeader?: boolean }) {
+function PageShell({ children, pageNum, noHeader, mode = "draft", versionNum = 1 }: {
+  children: React.ReactNode; pageNum: number; noHeader?: boolean; mode?: "draft" | "final"; versionNum?: number;
+}) {
   return (
     <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden relative" style={{ aspectRatio: "210/297" }}>
-      <WatermarkOverlay />
+      {mode === "draft" ? <WatermarkOverlay mode="draft" /> : <ConfidentialWatermark />}
       <div className="h-full flex flex-col justify-between p-10 relative z-20">
-        {!noHeader && <PageHeader />}
+        {!noHeader && <PageHeader versionNum={versionNum} mode={mode} />}
         <div className="flex-1 overflow-hidden">{children}</div>
         <PageFooter pageNum={pageNum} />
       </div>
