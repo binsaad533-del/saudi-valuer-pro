@@ -1974,11 +1974,33 @@ serve(async (req) => {
           for (const tc of resolvedToolCalls) {
             const args = tc.resolvedArgs;
             const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey, platformContext);
+            
+            // Sanitize tool result: extract only the meaningful content for the AI
+            // Never pass raw {success, result, error, _format} wrapper to the model
+            let sanitizedContent: string;
+            if (!result.success) {
+              sanitizedContent = result.error || "فشل تنفيذ الأداة";
+            } else {
+              const inner = result.result;
+              if (inner === null || inner === undefined) {
+                sanitizedContent = "تم التنفيذ بنجاح";
+              } else if (typeof inner === "string") {
+                sanitizedContent = inner;
+              } else {
+                // Convert object to clean Arabic-friendly text, strip internal fields
+                const cleaned = { ...inner };
+                delete cleaned._format;
+                delete cleaned.success;
+                delete cleaned.error;
+                sanitizedContent = JSON.stringify(cleaned, null, 2);
+              }
+            }
+            
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
               name: tc.function.name,
-              content: JSON.stringify(result),
+              content: sanitizedContent,
             });
 
             // Send tool completion status
