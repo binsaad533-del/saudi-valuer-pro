@@ -705,12 +705,83 @@ function AssetTablePage() {
   );
 }
 
+/* ── Data Sources Transparency ── */
+function DataSourcesPage() {
+  const reliabilityStyle = (r: string) => {
+    if (r === "مؤكد") return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
+    if (r === "تقديري") return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+    return "bg-destructive/10 text-destructive";
+  };
+  const sourceTypeStyle = (s: string) => {
+    if (s === "مرفق") return "text-primary";
+    if (s === "سوق") return "text-blue-600 dark:text-blue-400";
+    if (s === "عميل") return "text-amber-600 dark:text-amber-400";
+    return "text-muted-foreground";
+  };
+
+  const confirmed = SAMPLE.dataSources.filter(d => d.reliability === "مؤكد").length;
+  const estimated = SAMPLE.dataSources.filter(d => d.reliability === "تقديري").length;
+  const incomplete = SAMPLE.dataSources.filter(d => d.reliability === "غير مكتمل").length;
+
+  return (
+    <PageShell pageNum={12}>
+      <div className="space-y-4">
+        <SectionTitle id="data-sources" num={11} title="مصادر البيانات" />
+
+        {/* Summary bar */}
+        <div className="flex gap-3 text-xs">
+          <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">مؤكد: {confirmed}</span>
+          <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-medium">تقديري: {estimated}</span>
+          {incomplete > 0 && (
+            <span className="px-2 py-1 rounded bg-destructive/10 text-destructive font-medium">غير مكتمل: {incomplete}</span>
+          )}
+        </div>
+
+        {/* Table */}
+        <table className="w-full text-xs border border-border rounded overflow-hidden">
+          <thead>
+            <tr className="bg-muted/40 border-b border-border">
+              <th className="text-right py-2 px-2 font-semibold text-foreground">البيان</th>
+              <th className="text-right py-2 px-2 font-semibold text-foreground w-24">القيمة</th>
+              <th className="text-right py-2 px-2 font-semibold text-foreground">المصدر</th>
+              <th className="text-center py-2 px-2 font-semibold text-foreground w-16">النوع</th>
+              <th className="text-center py-2 px-2 font-semibold text-foreground w-20">الاعتماد</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SAMPLE.dataSources.map((d, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="py-2 px-2 text-foreground font-medium">{d.dataPoint}</td>
+                <td className="py-2 px-2 text-muted-foreground" dir="ltr">{d.value}</td>
+                <td className="py-2 px-2 text-muted-foreground">{d.source}</td>
+                <td className={`py-2 px-2 text-center font-medium ${sourceTypeStyle(d.sourceType)}`}>{d.sourceType}</td>
+                <td className="py-2 px-2 text-center">
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${reliabilityStyle(d.reliability)}`}>
+                    {d.reliability}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="border border-border rounded px-4 py-3 space-y-1.5">
+          <p className="text-[11px] font-bold text-foreground">ملاحظة الشفافية</p>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            جميع الأرقام الواردة في هذا التقرير مرتبطة بمصادرها الموثقة أعلاه. البيانات المصنفة "تقديري" تعتمد على الحكم المهني للمقيّم وفقاً لـ IVS 105. البيانات "غير المكتملة" تم الإشارة إليها بوضوح وقد تؤثر على دقة التقدير النهائي.
+          </p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={12}>
+    <PageShell pageNum={13}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={11} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={12} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
