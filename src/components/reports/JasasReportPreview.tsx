@@ -1127,6 +1127,18 @@ export default function JasasReportPreview() {
             >
               نهائي
             </button>
+            <button
+              onClick={handleDownloadPdf}
+              disabled={isExporting}
+              className="px-3 py-1.5 rounded text-xs font-medium transition-colors bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {isExporting ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Download className="h-3 w-3" />
+              )}
+              {isExporting ? "جاري التحميل..." : "تحميل PDF"}
+            </button>
           </div>
         </div>
 
