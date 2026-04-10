@@ -263,51 +263,108 @@ export default function ClientChatPage() {
     });
 
     try {
-      const history = messagesRef.current.slice(-6).map((m) => ({
+      const history = messagesRef.current.slice(-4).map((m) => ({
         content: m.content,
         sender_type: m.role === "user" ? "client" : "ai",
       }));
 
-      // Detect fast intent
       const fastIntent = detectFastIntent(trimmedText);
 
-      const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
-        body: {
+      // Use streaming for real-time response
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const { data: { session } } = await supabase.auth.getSession();
+      const authToken = session?.access_token || supabaseKey;
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/raqeem-client-chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`,
+          "apikey": supabaseKey,
+        },
+        body: JSON.stringify({
           message: trimmedText,
           is_global_chat: true,
           conversationHistory: history,
           requestContext: { client_user_id: userId },
           fast_intent: fastIntent,
-        },
+          stream: true,
+        }),
       });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
-      const reply = data?.reply?.trim();
-      if (reply) {
-        const aiMsg: ChatMessage = {
-          id: `ai-${Date.now()}`,
-          role: "assistant",
-          content: reply,
-          timestamp: new Date().toISOString(),
-          feedback: null,
+      const contentType = response.headers.get("content-type") || "";
+
+      if (contentType.includes("text/event-stream") && response.body) {
+        // Streaming mode — render chunks in real-time
+        const aiMsgId = `ai-${Date.now()}`;
+        const aiTimestamp = new Date().toISOString();
+        let fullContent = "";
+
+        // Add empty AI message immediately
+        const streamMsg: ChatMessage = {
+          id: aiMsgId, role: "assistant", content: "", timestamp: aiTimestamp, feedback: null,
         };
-        appendMessage(aiMsg);
+        appendMessage(streamMsg);
 
-        // Persist AI message
-        persistMessage(aiMsg).then(dbId => {
-          if (dbId) {
-            replaceMessages(messagesRef.current.map(m =>
-              m.id === aiMsg.id ? { ...m, dbId } : m
-            ));
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split("\n");
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const raw = line.slice(6).trim();
+            if (!raw) continue;
+            try {
+              const parsed = JSON.parse(raw);
+              if (parsed.delta) {
+                fullContent += parsed.delta;
+                // Update message content in-place
+                replaceMessages(messagesRef.current.map(m =>
+                  m.id === aiMsgId ? { ...m, content: fullContent } : m
+                ));
+              }
+              if (parsed.done) {
+                if (parsed.suggestedActions) setSuggestedActions(parsed.suggestedActions);
+              }
+            } catch {}
           }
-        });
-      }
+        }
 
-      if (data?.newRequestTriggered) navigate("/client/new-request");
-      if (data?.switchedRequestId) navigate(`/client/request/${data.switchedRequestId}`);
-      if (data?.suggestedActions) setSuggestedActions(data.suggestedActions);
-      if (data?.scopeApproved) toast({ title: "تم اعتماد نطاق العمل بنجاح" });
+        // Persist final AI message
+        if (fullContent.trim()) {
+          persistMessage({ id: aiMsgId, role: "assistant", content: fullContent, timestamp: aiTimestamp }).then(dbId => {
+            if (dbId) {
+              replaceMessages(messagesRef.current.map(m =>
+                m.id === aiMsgId ? { ...m, dbId } : m
+              ));
+            }
+          });
+        }
+      } else {
+        // Fallback: non-streaming JSON response
+        const data = await response.json();
+        const reply = data?.reply?.trim();
+        if (reply) {
+          const aiMsg: ChatMessage = {
+            id: `ai-${Date.now()}`, role: "assistant", content: reply,
+            timestamp: new Date().toISOString(), feedback: null,
+          };
+          appendMessage(aiMsg);
+          persistMessage(aiMsg).then(dbId => {
+            if (dbId) replaceMessages(messagesRef.current.map(m => m.id === aiMsg.id ? { ...m, dbId } : m));
+          });
+        }
+        if (data?.suggestedActions) setSuggestedActions(data.suggestedActions);
+        if (data?.scopeApproved) toast({ title: "تم اعتماد نطاق العمل بنجاح" });
+      }
     } catch (err) {
       console.error("Chat error:", err);
       appendMessage({
