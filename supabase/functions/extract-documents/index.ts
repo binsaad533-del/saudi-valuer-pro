@@ -510,7 +510,7 @@ serve(async (req) => {
           headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
           signal: controller.signal,
           body: JSON.stringify({
-            model: "google/gemini-2.5-pro",
+            model: "openai/gpt-5",
             messages: [{ role: "system", content: SYSTEM_PROMPT }, { role: "user", content: userContent }],
             tools: [EXTRACTION_TOOL],
             tool_choice: { type: "function", function: { name: "extract_valuation_data" } },

@@ -558,7 +558,7 @@ ${sectionsInstructions}
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
+          model: "openai/gpt-5",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
@@ -616,7 +616,7 @@ ${sectionsInstructions}
         report_draft: reportDraft,
         aggregated_data: aggregatedData,
         generated_at: new Date().toISOString(),
-        ai_model: "google/gemini-2.5-flash",
+        ai_model: "openai/gpt-5",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

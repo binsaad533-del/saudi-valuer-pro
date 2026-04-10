@@ -393,7 +393,7 @@ async function callAI(systemPrompt: string, userPrompt: string, tools?: any[], t
     : systemPrompt;
 
   const body: any = {
-    model: "google/gemini-2.5-flash",
+    model: "openai/gpt-5",
     messages: [
       { role: "system", content: enrichedSystemPrompt },
       { role: "user", content: userPrompt },

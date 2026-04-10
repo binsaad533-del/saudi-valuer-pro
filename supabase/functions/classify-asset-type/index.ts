@@ -48,7 +48,7 @@ Respond ONLY with a JSON object: {"asset_type": "real_estate" | "machinery_equip
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5-mini",
         messages: [
           { role: "system", content: "You classify uploaded files for a valuation firm. Respond only with valid JSON." },
           { role: "user", content: prompt },
