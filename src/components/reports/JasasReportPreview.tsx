@@ -1,17 +1,41 @@
+import { useRef, useCallback } from "react";
 import { Separator } from "@/components/ui/separator";
 import logo from "@/assets/logo.png";
 
-/* ── Sample data for preview ── */
+/* ══════════════════════════════════════════════
+   Sample Data
+   ══════════════════════════════════════════════ */
 const SAMPLE = {
   reportNumber: "JV-2026-0412",
   valuationDate: "2026-04-01",
   issueDate: "2026-04-10",
-  objective: "تحديد القيمة السوقية العادلة للآلات والمعدات المملوكة للعميل وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين.",
-  scope: "يشمل نطاق العمل جميع الآلات والمعدات الثابتة والمتحركة الموجودة في موقع العميل، بما في ذلك خطوط الإنتاج والمعدات المساندة.",
-  methodology: "تم اعتماد أسلوب التكلفة (Cost Approach) كمنهج رئيسي مع الاستئناس بأسلوب السوق (Market Approach) للتحقق من معقولية النتائج.",
-  estimatedValue: "12,750,000",
-  estimatedValueText: "اثنا عشر مليوناً وسبعمائة وخمسون ألف ريال سعودي",
-  currency: "SAR",
+  objective:
+    "تحديد القيمة السوقية العادلة للآلات والمعدات المملوكة للعميل وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين.",
+  scope:
+    "يشمل نطاق العمل جميع الآلات والمعدات الثابتة والمتحركة الموجودة في موقع العميل، بما في ذلك خطوط الإنتاج والمعدات المساندة. تم إجراء معاينة ميدانية شاملة للموقع بتاريخ 2026-03-25.",
+  assetDefinition:
+    "تشمل الأصول المقيّمة جميع الآلات والمعدات الصناعية المملوكة للعميل والمتواجدة في المصنع الرئيسي بالمنطقة الصناعية الثانية بالرياض. تم تصنيف الأصول إلى خمس فئات رئيسية حسب طبيعة الاستخدام والعمر الإنتاجي.",
+  documents: [
+    "صك ملكية المصنع — صادر بتاريخ 2020-06-15",
+    "فواتير شراء المعدات الأصلية",
+    "عقود الصيانة السارية",
+    "تقارير الفحص الفني السابقة",
+    "شهادات المطابقة والجودة",
+  ],
+  inspectionNotes:
+    "تمت المعاينة الميدانية بتاريخ 2026-03-25 بحضور ممثل العميل. تم التحقق من وجود جميع الأصول المدرجة وفحص حالتها التشغيلية العامة. لوحظ أن المعدات في حالة جيدة مع صيانة دورية منتظمة.",
+  inspectionPhotos: [
+    { caption: "خط الإنتاج الرئيسي — المنظر العام" },
+    { caption: "المولدات الكهربائية — الوحدة 1" },
+    { caption: "الرافعات الصناعية — منطقة التخزين" },
+    { caption: "أنظمة التبريد المركزية" },
+    { caption: "لوحة التحكم الرئيسية" },
+    { caption: "المعدات المساندة — ورشة الصيانة" },
+  ],
+  analysis:
+    "تم تحليل الأصول بناءً على عمرها الإنتاجي المتبقي، حالتها الفعلية، ومعدلات الإهلاك المطبقة. أظهر التحليل أن متوسط العمر الإنتاجي المتبقي للأصول يبلغ 12 عاماً، مع معدل إهلاك مرجّح قدره 35%. تم الأخذ بعين الاعتبار تكاليف الاستبدال الحالية وأسعار السوق المحلي والدولي للمعدات المماثلة.",
+  methodology:
+    "تم اعتماد أسلوب التكلفة (Cost Approach) كمنهج رئيسي لتحديد تكلفة الاستبدال الجديدة مع خصم الإهلاك التراكمي. كما تم الاستئناس بأسلوب السوق (Market Approach) من خلال مقارنة أسعار معدات مماثلة في السوق للتحقق من معقولية النتائج. لم يتم تطبيق أسلوب الدخل لعدم توفر بيانات تدفقات نقدية منفصلة للأصول.",
   assumptions: [
     "جميع الآلات في حالة تشغيلية وقت المعاينة",
     "لا توجد التزامات مالية أو رهونات على الأصول المقيّمة",
@@ -21,6 +45,12 @@ const SAMPLE = {
     "لم يتم إجراء فحص فني تفصيلي للأجزاء الداخلية للآلات",
     "التقييم لا يشمل الأصول غير الملموسة أو المخزون",
   ],
+  disclosures: [
+    "لا توجد علاقة مالية أو شخصية بين المقيّم والعميل تؤثر على استقلالية التقييم",
+    "تم إعداد هذا التقرير وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين (تقييم)",
+    "المقيّم يمتلك الخبرة والتأهيل الكافي لإجراء هذا النوع من التقييمات",
+    "هذا التقرير معدّ حصرياً للجهة المستلمة ولا يجوز تداوله أو الاعتماد عليه من قبل أطراف أخرى دون موافقة خطية مسبقة",
+  ],
   assets: [
     { type: "خطوط إنتاج", qty: 3, value: "7,200,000" },
     { type: "مولدات كهربائية", qty: 5, value: "1,850,000" },
@@ -28,150 +58,327 @@ const SAMPLE = {
     { type: "أنظمة تبريد", qty: 4, value: "980,000" },
     { type: "معدات مساندة", qty: 12, value: "1,320,000" },
   ],
+  estimatedValue: "12,750,000",
+  estimatedValueText: "اثنا عشر مليوناً وسبعمائة وخمسون ألف ريال سعودي",
+  currency: "SAR",
 };
 
-/* ── Shared page shell ── */
-function PageShell({ children, pageNum }: { children: React.ReactNode; pageNum: number }) {
+/* ══════════════════════════════════════════════
+   TOC definition — drives section ordering
+   ══════════════════════════════════════════════ */
+const TOC = [
+  { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
+  { id: "scope", num: 2, title: "نطاق العمل" },
+  { id: "asset-def", num: 3, title: "تعريف الأصل" },
+  { id: "documents", num: 4, title: "المستندات" },
+  { id: "inspection", num: 5, title: "المعاينة" },
+  { id: "analysis", num: 6, title: "التحليل" },
+  { id: "methodology", num: 7, title: "المنهجية" },
+  { id: "assumptions", num: 8, title: "الافتراضات والقيود" },
+  { id: "final-value", num: 9, title: "النتيجة النهائية" },
+  { id: "disclosures", num: 10, title: "الإفصاحات" },
+];
+
+/* ══════════════════════════════════════════════
+   Shared Components
+   ══════════════════════════════════════════════ */
+
+function PageHeader() {
+  return (
+    <div className="flex items-center justify-between pb-3 mb-4 border-b border-border/40">
+      <img src={logo} alt="جساس" className="w-7 h-7 object-contain" />
+      <span className="text-[10px] text-muted-foreground font-medium">{SAMPLE.reportNumber}</span>
+    </div>
+  );
+}
+
+function PageFooter({ pageNum }: { pageNum: number }) {
+  return (
+    <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-3 mt-4 border-t border-border/40">
+      <span>شركة جساس للتقييم — Jassas Valuation Co.</span>
+      <span>{pageNum}</span>
+    </div>
+  );
+}
+
+function PageShell({ children, pageNum, noHeader }: { children: React.ReactNode; pageNum: number; noHeader?: boolean }) {
   return (
     <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden" style={{ aspectRatio: "210/297" }}>
       <div className="h-full flex flex-col justify-between p-10">
-        <div className="flex-1">{children}</div>
-        <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-4 border-t border-border/50">
-          <span>شركة جساس للتقييم — Jassas Valuation Co.</span>
-          <span>{pageNum}</span>
-        </div>
+        {!noHeader && <PageHeader />}
+        <div className="flex-1 overflow-hidden">{children}</div>
+        <PageFooter pageNum={pageNum} />
       </div>
     </div>
   );
 }
 
-/* ── Page 1: Cover ── */
+function SectionTitle({ id, num, title }: { id: string; num: number; title: string }) {
+  return (
+    <div id={id} className="scroll-mt-8">
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-xs font-bold text-primary">{num}.</span>
+        <h2 className="text-base font-bold text-foreground">{title}</h2>
+      </div>
+      <Separator />
+    </div>
+  );
+}
+
+function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
+function Paragraph({ text }: { text: string }) {
+  return <p className="text-sm text-muted-foreground leading-[1.85]">{text}</p>;
+}
+
+function NumberedList({ items }: { items: string[] }) {
+  return (
+    <ul className="space-y-1.5">
+      {items.map((item, i) => (
+        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+          <span className="text-primary font-bold shrink-0">{i + 1}.</span>
+          <span className="leading-relaxed">{item}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/* ══════════════════════════════════════════════
+   Pages
+   ══════════════════════════════════════════════ */
+
+/* ── Cover (no header) ── */
 function CoverPage() {
   return (
-    <PageShell pageNum={1}>
+    <PageShell pageNum={1} noHeader>
       <div className="flex flex-col h-full justify-between">
-        {/* Top: Logo + Confidential */}
         <div className="flex items-start justify-between">
           <img src={logo} alt="جساس" className="w-14 h-14 object-contain" />
           <div className="text-left" dir="ltr">
             <p className="text-[10px] text-muted-foreground font-medium">Jassas Valuation Co.</p>
           </div>
         </div>
-
-        {/* Center: Title block */}
         <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
           <div className="space-y-2">
             <h1 className="text-3xl font-bold text-foreground tracking-tight">تقرير تقييم</h1>
             <h2 className="text-xl font-semibold text-primary">الآلات والمعدات</h2>
           </div>
-
           <Separator className="w-24 mx-auto" />
-
           <div className="space-y-3 text-sm text-muted-foreground">
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-foreground font-medium">{SAMPLE.reportNumber}</span>
-              <span>رقم التقرير</span>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-foreground font-medium">{SAMPLE.valuationDate}</span>
-              <span>تاريخ التقييم</span>
-            </div>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-foreground font-medium">{SAMPLE.issueDate}</span>
-              <span>تاريخ الإصدار</span>
-            </div>
+            <Row label="رقم التقرير" value={SAMPLE.reportNumber} />
+            <Row label="تاريخ التقييم" value={SAMPLE.valuationDate} />
+            <Row label="تاريخ الإصدار" value={SAMPLE.issueDate} />
           </div>
         </div>
-
-        {/* Bottom: Copy + Confidential */}
         <div className="space-y-3 text-center">
           <div className="inline-block border border-border rounded px-4 py-1.5">
             <span className="text-xs text-muted-foreground">نسخة: </span>
             <span className="text-xs font-semibold text-foreground">عميل</span>
           </div>
-          <p className="text-[11px] text-destructive/80 font-medium">
-            سري — للاستخدام الحصري للمستلم
-          </p>
+          <p className="text-[11px] text-destructive/80 font-medium">سري — للاستخدام الحصري للمستلم</p>
         </div>
       </div>
     </PageShell>
   );
 }
 
-/* ── Page 2: Executive Summary ── */
-function ExecutiveSummaryPage() {
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <span className="text-foreground font-medium">{value}</span>
+      <span>{label}</span>
+    </div>
+  );
+}
+
+/* ── TOC ── */
+function TOCPage({ onNavigate }: { onNavigate: (id: string) => void }) {
   return (
     <PageShell pageNum={2}>
       <div className="space-y-6">
         <div>
-          <h2 className="text-lg font-bold text-foreground mb-1">الملخص التنفيذي</h2>
+          <h2 className="text-lg font-bold text-foreground mb-1">فهرس المحتويات</h2>
           <Separator />
         </div>
-
-        {/* Objective */}
-        <Section title="الهدف">
-          <p className="text-sm text-muted-foreground leading-relaxed">{SAMPLE.objective}</p>
-        </Section>
-
-        {/* Scope */}
-        <Section title="النطاق">
-          <p className="text-sm text-muted-foreground leading-relaxed">{SAMPLE.scope}</p>
-        </Section>
-
-        {/* Methodology */}
-        <Section title="المنهج">
-          <p className="text-sm text-muted-foreground leading-relaxed">{SAMPLE.methodology}</p>
-        </Section>
-
-        {/* Estimated Value */}
-        <Section title="القيمة التقديرية">
-          <div className="bg-primary/5 border border-primary/10 rounded px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-primary">{SAMPLE.estimatedValue} {SAMPLE.currency}</p>
-          </div>
-        </Section>
-
-        {/* Assumptions */}
-        <Section title="الافتراضات">
-          <ul className="space-y-1.5">
-            {SAMPLE.assumptions.map((a, i) => (
-              <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                <span className="text-primary font-bold shrink-0">{i + 1}.</span>
-                <span className="leading-relaxed">{a}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-
-        {/* Limitations */}
-        <Section title="القيود">
-          <ul className="space-y-1.5">
-            {SAMPLE.limitations.map((l, i) => (
-              <li key={i} className="text-sm text-muted-foreground flex gap-2">
-                <span className="text-primary font-bold shrink-0">{i + 1}.</span>
-                <span className="leading-relaxed">{l}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
+        <div className="space-y-0">
+          {TOC.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => onNavigate(item.id)}
+              className="w-full flex items-center justify-between py-2.5 border-b border-dashed border-border/50 last:border-0 text-sm hover:bg-muted/30 transition-colors rounded px-2 -mx-2 group cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-primary font-bold w-5 text-center">{item.num}</span>
+                <span className="text-foreground group-hover:text-primary transition-colors">{item.title}</span>
+              </div>
+              <span className="text-muted-foreground text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                انتقال
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </PageShell>
   );
 }
 
-/* ── Page 3: Asset Table ── */
-function AssetTablePage() {
-  const total = SAMPLE.assets.reduce(
-    (sum, a) => sum + Number(a.value.replace(/,/g, "")),
-    0
-  ).toLocaleString("en-US");
-
+/* ── Executive Summary ── */
+function ExecSummaryPage() {
   return (
     <PageShell pageNum={3}>
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-lg font-bold text-foreground mb-1">جدول الأصول المقيّمة</h2>
-          <Separator />
+      <div className="space-y-5">
+        <SectionTitle id="exec-summary" num={1} title="الملخص التنفيذي" />
+        <SubSection title="الهدف">
+          <Paragraph text={SAMPLE.objective} />
+        </SubSection>
+        <SubSection title="النطاق">
+          <Paragraph text={SAMPLE.scope} />
+        </SubSection>
+        <SubSection title="المنهج">
+          <Paragraph text={SAMPLE.methodology} />
+        </SubSection>
+        <SubSection title="القيمة التقديرية">
+          <div className="bg-primary/5 border border-primary/10 rounded px-4 py-3 text-center">
+            <p className="text-2xl font-bold text-primary">
+              {SAMPLE.estimatedValue} {SAMPLE.currency}
+            </p>
+          </div>
+        </SubSection>
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Scope ── */
+function ScopePage() {
+  return (
+    <PageShell pageNum={4}>
+      <div className="space-y-5">
+        <SectionTitle id="scope" num={2} title="نطاق العمل" />
+        <Paragraph text={SAMPLE.scope} />
+
+        <SectionTitle id="asset-def" num={3} title="تعريف الأصل" />
+        <Paragraph text={SAMPLE.assetDefinition} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Documents ── */
+function DocumentsPage() {
+  return (
+    <PageShell pageNum={5}>
+      <div className="space-y-5">
+        <SectionTitle id="documents" num={4} title="المستندات" />
+        <Paragraph text="تم الاعتماد على المستندات التالية المقدمة من العميل في إعداد هذا التقرير:" />
+        <NumberedList items={SAMPLE.documents} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Inspection ── */
+function InspectionPage() {
+  return (
+    <PageShell pageNum={6}>
+      <div className="space-y-5">
+        <SectionTitle id="inspection" num={5} title="المعاينة" />
+        <Paragraph text={SAMPLE.inspectionNotes} />
+
+        {/* Photo Grid */}
+        <div className="grid grid-cols-3 gap-3 mt-4">
+          {SAMPLE.inspectionPhotos.map((photo, i) => (
+            <div key={i} className="space-y-1.5">
+              <div className="aspect-[4/3] bg-muted/40 border border-border/50 rounded flex items-center justify-center">
+                <span className="text-[10px] text-muted-foreground/50">صورة {i + 1}</span>
+              </div>
+              <p className="text-[10px] text-muted-foreground leading-snug text-center">{photo.caption}</p>
+            </div>
+          ))}
         </div>
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Analysis + Methodology ── */
+function AnalysisPage() {
+  return (
+    <PageShell pageNum={7}>
+      <div className="space-y-5">
+        <SectionTitle id="analysis" num={6} title="التحليل" />
+        <Paragraph text={SAMPLE.analysis} />
+
+        <SectionTitle id="methodology" num={7} title="المنهجية" />
+        <Paragraph text={SAMPLE.methodology} />
+
+        {/* Method comparison table */}
+        <table className="w-full text-sm mt-2">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-right py-2 font-semibold text-foreground">الأسلوب</th>
+              <th className="text-center py-2 font-semibold text-foreground">الحالة</th>
+              <th className="text-right py-2 font-semibold text-foreground">الملاحظة</th>
+            </tr>
+          </thead>
+          <tbody className="text-muted-foreground">
+            <tr className="border-b border-border/50">
+              <td className="py-2">أسلوب التكلفة</td>
+              <td className="py-2 text-center text-primary font-medium">رئيسي</td>
+              <td className="py-2">تكلفة الاستبدال مخصوماً منها الإهلاك</td>
+            </tr>
+            <tr className="border-b border-border/50">
+              <td className="py-2">أسلوب السوق</td>
+              <td className="py-2 text-center">مساند</td>
+              <td className="py-2">مقارنة أسعار معدات مماثلة</td>
+            </tr>
+            <tr className="border-b border-border/50">
+              <td className="py-2">أسلوب الدخل</td>
+              <td className="py-2 text-center text-muted-foreground/60">غير مطبق</td>
+              <td className="py-2">عدم توفر بيانات تدفقات نقدية منفصلة</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Assumptions ── */
+function AssumptionsPage() {
+  return (
+    <PageShell pageNum={8}>
+      <div className="space-y-5">
+        <SectionTitle id="assumptions" num={8} title="الافتراضات والقيود" />
+        <SubSection title="الافتراضات">
+          <NumberedList items={SAMPLE.assumptions} />
+        </SubSection>
+        <SubSection title="القيود">
+          <NumberedList items={SAMPLE.limitations} />
+        </SubSection>
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Asset Table + Final Value ── */
+function AssetTablePage() {
+  const total = SAMPLE.assets
+    .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
+    .toLocaleString("en-US");
+
+  return (
+    <PageShell pageNum={9}>
+      <div className="space-y-5">
+        <SectionTitle id="final-value" num={9} title="النتيجة النهائية" />
 
         <table className="w-full text-sm">
           <thead>
@@ -200,59 +407,61 @@ function AssetTablePage() {
             </tr>
           </tfoot>
         </table>
-      </div>
-    </PageShell>
-  );
-}
 
-/* ── Page 4: Final Value ── */
-function FinalValuePage() {
-  return (
-    <PageShell pageNum={4}>
-      <div className="flex flex-col h-full items-center justify-center text-center gap-8">
-        <div className="space-y-2">
-          <h2 className="text-lg font-bold text-foreground">النتيجة النهائية للتقييم</h2>
-          <Separator className="w-20 mx-auto" />
-        </div>
-
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">القيمة السوقية العادلة</p>
-          <p className="text-4xl font-bold text-primary tracking-tight">
-            {SAMPLE.estimatedValue} <span className="text-2xl">SAR</span>
+        {/* Final value box */}
+        <div className="bg-primary/5 border border-primary/10 rounded px-6 py-5 text-center space-y-2 mt-4">
+          <p className="text-xs text-muted-foreground">القيمة السوقية العادلة</p>
+          <p className="text-3xl font-bold text-primary tracking-tight">
+            {SAMPLE.estimatedValue} <span className="text-lg">SAR</span>
           </p>
-          <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-            {SAMPLE.estimatedValueText}
-          </p>
-        </div>
-
-        <div className="border border-border rounded px-6 py-4 max-w-sm space-y-2 mt-4">
-          <p className="text-xs text-muted-foreground">
-            تمثل هذه القيمة رأي المقيّم المعتمد بناءً على المعلومات المتاحة وقت التقييم، وفقاً لمعايير التقييم الدولية IVS 2025.
-          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{SAMPLE.estimatedValueText}</p>
         </div>
       </div>
     </PageShell>
   );
 }
 
-/* ── Helpers ── */
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/* ── Disclosures ── */
+function DisclosuresPage() {
   return (
-    <div className="space-y-1.5">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      {children}
-    </div>
+    <PageShell pageNum={10}>
+      <div className="space-y-5">
+        <SectionTitle id="disclosures" num={10} title="الإفصاحات" />
+        <NumberedList items={SAMPLE.disclosures} />
+
+        <div className="border border-border rounded px-5 py-4 mt-6 space-y-2">
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            تمثل هذه القيمة رأي المقيّم المعتمد بناءً على المعلومات المتاحة وقت التقييم، وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين (تقييم).
+          </p>
+        </div>
+      </div>
+    </PageShell>
   );
 }
 
-/* ── Main Export ── */
+/* ══════════════════════════════════════════════
+   Main Export
+   ══════════════════════════════════════════════ */
 export default function JasasReportPreview() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToSection = useCallback((id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
   return (
-    <div className="max-w-2xl mx-auto space-y-8 py-8" dir="rtl">
+    <div ref={containerRef} className="max-w-2xl mx-auto space-y-8 py-8" dir="rtl">
       <CoverPage />
-      <ExecutiveSummaryPage />
+      <TOCPage onNavigate={scrollToSection} />
+      <ExecSummaryPage />
+      <ScopePage />
+      <DocumentsPage />
+      <InspectionPage />
+      <AnalysisPage />
+      <AssumptionsPage />
       <AssetTablePage />
-      <FinalValuePage />
+      <DisclosuresPage />
     </div>
   );
 }
