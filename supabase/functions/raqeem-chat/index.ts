@@ -3725,7 +3725,7 @@ serve(async (req) => {
 
     const latestUserPlainText = typeof latestUserText === "string" ? latestUserText.trim() : "";
     const hasBoundContext = !!(platformContext && typeof platformContext === "object" && ((platformContext as any).assignment_id || (platformContext as any).request_id));
-    const wantsCurrentRequestStatus = hasBoundContext && /(?:حالة|وضع|تفاصيل).*(?:هذا الطلب|الطلب الحالي)|(?:اعرض|ورني|هات).*(?:حالة|تفاصيل).*(?:هذا الطلب|الطلب الحالي)/.test(latestUserPlainText);
+    const wantsCurrentRequestStatus = hasBoundContext && /حالة|وضع|تفاصيل|ملخص|الطلب|بالتفصيل|status|details/.test(latestUserPlainText);
     const wantsPriorityUpdate = hasBoundContext && /(?:أولوية المتابعة|الأولوية).*(?:حدّث|تحديث|نفّذ|ارفع|عدّل)|(?:نفّذ|حدث|حدّث|ارفع|عدّل).*(?:أولوية المتابعة|الأولوية)/.test(latestUserPlainText);
 
     let preflightToolCalls: any[] = [];
