@@ -165,6 +165,9 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
         </div>
       )}
 
+      {/* Report Quality Assessment */}
+      <ReportQualitySection />
+
       <Separator className="mx-6 my-6" />
 
       {/* Signature Block */}
