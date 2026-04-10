@@ -72,6 +72,7 @@ export default function RaqeemPage() {
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState("chat");
   const [platformContext, setPlatformContext] = useState<PlatformContext>({});
+  const platformContextRef = useRef<PlatformContext>({});
   const [correctionDialog, setCorrectionDialog] = useState<{
     open: boolean; msgIndex: number; correctedAnswer: string; reason: string;
   }>({ open: false, msgIndex: -1, correctedAnswer: "", reason: "" });
@@ -103,6 +104,7 @@ export default function RaqeemPage() {
 
     // Set context IMMEDIATELY so it's available for early messages
     setPlatformContext({ ...ctx });
+    platformContextRef.current = { ...ctx };
 
     // Then enrich with DB data asynchronously
     if (ctx.assignment_id) {
@@ -119,6 +121,7 @@ export default function RaqeemPage() {
             ctx.client_name = (data.clients as any)?.name_ar || undefined;
           }
           setPlatformContext({ ...ctx });
+          platformContextRef.current = { ...ctx };
         });
     }
   }, [location.pathname, location.state, searchParams, role]);
@@ -137,9 +140,9 @@ export default function RaqeemPage() {
       },
       body: JSON.stringify({
         messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
-        userRole: platformContext.user_role || role || "owner",
+        userRole: platformContextRef.current.user_role || role || "owner",
         userId: user?.id,
-        platformContext: Object.keys(platformContext).length > 0 ? platformContext : undefined,
+        platformContext: (platformContextRef.current.assignment_id || platformContextRef.current.request_id) ? platformContextRef.current : undefined,
       }),
     });
     if (!resp.ok) {
@@ -217,7 +220,7 @@ export default function RaqeemPage() {
         processLine(raw);
       }
     }
-  }, [platformContext, user, role]);
+  }, [user, role]);
 
   const send = async (text?: string) => {
     const messageText = text || input.trim();
