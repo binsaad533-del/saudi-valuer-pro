@@ -17,7 +17,7 @@ async function callAI(systemPrompt: string, userPrompt: string, tools: any[], to
     method: "POST",
     headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "openai/gpt-5",
       messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
       tools, tool_choice: toolChoice,
     }),
@@ -249,7 +249,7 @@ ${JSON.stringify(checklistSummary, null, 2)}`;
       inspector_notes_summary: inspection.notes_ar || null,
       ai_reasoning_ar: aiResult.reasoning_ar,
       ai_reasoning_en: aiResult.reasoning_en || null,
-      ai_model_used: "google/gemini-2.5-flash",
+      ai_model_used: "openai/gpt-5",
       ai_confidence: 0.8,
       physical_depreciation_pct: aiResult.physical_depreciation_pct,
       functional_obsolescence_pct: aiResult.functional_obsolescence_pct,

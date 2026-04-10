@@ -106,7 +106,7 @@ ${chunk}`;
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
-              model: "google/gemini-2.5-flash",
+              model: "openai/gpt-5-mini",
               messages: [
                 { role: "system", content: "You extract structured, context-aware valuation rules from professional documents. Always respond via the tool call." },
                 { role: "user", content: prompt },
