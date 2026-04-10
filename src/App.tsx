@@ -93,6 +93,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <SecurityWatermark />
       <BrowserRouter>
         <Routes>
           {/* Unified Login */}
