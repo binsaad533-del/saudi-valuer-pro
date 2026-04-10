@@ -147,7 +147,7 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 16;
+const TOTAL_PAGES = 17;
 
 /* ── Company & Valuer Identity (read-only) ── */
 const COMPANY_IDENTITY = {
@@ -159,21 +159,22 @@ const COMPANY_IDENTITY = {
 } as const;
 
 const TOC = [
-  { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
-  { id: "scope", num: 2, title: "نطاق العمل" },
-  { id: "asset-def", num: 3, title: "تعريف الأصل" },
-  { id: "documents", num: 4, title: "المستندات" },
-  { id: "attachment-intel", num: 5, title: "تحليل المرفقات" },
-  { id: "inspection", num: 6, title: "المعاينة" },
-  { id: "analysis", num: 7, title: "التحليل" },
-  { id: "methodology", num: 8, title: "المنهجية" },
-  { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
-  { id: "assumption-impact", num: 10, title: "تحليل تأثير الافتراضات" },
-  { id: "final-value", num: 11, title: "النتيجة النهائية" },
-  { id: "data-sources", num: 12, title: "مصادر البيانات" },
-  { id: "risk-statement", num: 13, title: "بيان المخاطر" },
-  { id: "disclosures", num: 14, title: "الإفصاحات" },
-  { id: "accreditation", num: 15, title: "الاعتماد والتوقيع" },
+  { id: "client-summary", num: 1, title: "ملخص العميل" },
+  { id: "exec-summary", num: 2, title: "الملخص التنفيذي" },
+  { id: "scope", num: 3, title: "نطاق العمل" },
+  { id: "asset-def", num: 4, title: "تعريف الأصل" },
+  { id: "documents", num: 5, title: "المستندات" },
+  { id: "attachment-intel", num: 6, title: "تحليل المرفقات" },
+  { id: "inspection", num: 7, title: "المعاينة" },
+  { id: "analysis", num: 8, title: "التحليل" },
+  { id: "methodology", num: 9, title: "المنهجية" },
+  { id: "assumptions", num: 10, title: "الافتراضات والقيود" },
+  { id: "assumption-impact", num: 11, title: "تحليل تأثير الافتراضات" },
+  { id: "final-value", num: 12, title: "النتيجة النهائية" },
+  { id: "data-sources", num: 13, title: "مصادر البيانات" },
+  { id: "risk-statement", num: 14, title: "بيان المخاطر" },
+  { id: "disclosures", num: 15, title: "الإفصاحات" },
+  { id: "accreditation", num: 16, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -427,12 +428,58 @@ function TOCPage({ onNavigate }: { onNavigate: (id: string) => void }) {
   );
 }
 
+/* ── Client Summary — Single page, non-technical ── */
+function ClientSummaryPage() {
+  return (
+    <PageShell pageNum={3}>
+      <div className="space-y-6">
+        <SectionTitle id="client-summary" num={1} title="ملخص العميل" />
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-primary">ما تم تقييمه</p>
+            <p className="text-sm text-foreground leading-relaxed">
+              جميع الآلات والمعدات الصناعية في المصنع الرئيسي بالمنطقة الصناعية الثانية — الرياض، وتشمل {SAMPLE.assets.length} فئات بإجمالي {SAMPLE.assets.reduce((s, a) => s + a.qty, 0)} وحدة.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-primary">الغرض من التقييم</p>
+            <p className="text-sm text-foreground leading-relaxed">
+              تحديد القيمة السوقية العادلة للأصول بغرض إعداد القوائم المالية واتخاذ القرارات الاستثمارية، وفقاً للمعايير الدولية المعتمدة.
+            </p>
+          </div>
+        </div>
+
+        <ValueBox
+          label="القيمة السوقية العادلة"
+          value={SAMPLE.estimatedValue}
+          subtext={SAMPLE.estimatedValueText}
+        />
+
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg px-5 py-4">
+          <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-1">أهم ملاحظة</p>
+          <p className="text-sm text-amber-900 dark:text-amber-300 leading-relaxed">
+            3 معدات تجاوزت 70% من عمرها الإنتاجي وتتطلب مراقبة قريبة. يُنصح بجدولة صيانة وقائية أو تخطيط للاستبدال خلال 12-18 شهراً للحفاظ على القيمة التشغيلية.
+          </p>
+        </div>
+
+        <div className="border border-border rounded px-4 py-2.5 text-center">
+          <p className="text-[10px] text-muted-foreground">
+            للتفاصيل التقنية والمنهجية الكاملة، يُرجى مراجعة الأقسام التالية من التقرير
+          </p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Executive Summary — Half page max, numbers-first ── */
 function ExecSummaryPage() {
   return (
-    <PageShell pageNum={3}>
+    <PageShell pageNum={4}>
       <div className="space-y-4">
-        <SectionTitle id="exec-summary" num={1} title="الملخص التنفيذي" />
+        <SectionTitle id="exec-summary" num={2} title="الملخص التنفيذي" />
 
         <ValueBox
           label="القيمة السوقية العادلة"
@@ -461,9 +508,9 @@ function ExecSummaryPage() {
 /* ── Scope + Asset Definition — with clear boundaries ── */
 function ScopePage() {
   return (
-    <PageShell pageNum={4}>
+    <PageShell pageNum={5}>
       <div className="space-y-4">
-        <SectionTitle id="scope" num={2} title="نطاق العمل" />
+        <SectionTitle id="scope" num={3} title="نطاق العمل" />
 
         {/* What was evaluated */}
         <div className="space-y-1.5">
@@ -497,7 +544,7 @@ function ScopePage() {
           </p>
         </div>
 
-        <SectionTitle id="asset-def" num={3} title="تعريف الأصل" />
+        <SectionTitle id="asset-def" num={4} title="تعريف الأصل" />
         <div className="space-y-1">
           <Bullet>الموقع: المنطقة الصناعية الثانية — الرياض</Bullet>
           <Bullet>المالك: العميل المحدد في نطاق العمل</Bullet>
@@ -512,9 +559,9 @@ function ScopePage() {
 /* ── Documents ── */
 function DocumentsPage() {
   return (
-    <PageShell pageNum={5}>
+    <PageShell pageNum={6}>
       <div className="space-y-5">
-        <SectionTitle id="documents" num={4} title="المستندات" />
+        <SectionTitle id="documents" num={5} title="المستندات" />
         <p className="text-xs text-muted-foreground">المستندات المعتمدة في التقييم:</p>
         <NumberedList items={SAMPLE.documents} />
       </div>
@@ -529,9 +576,9 @@ function AttachmentIntelPage1() {
     s === "good" ? "text-emerald-600" : s === "warning" ? "text-amber-600" : "text-foreground";
 
   return (
-    <PageShell pageNum={6}>
+    <PageShell pageNum={7}>
       <div className="space-y-4">
-        <SectionTitle id="attachment-intel" num={5} title="تحليل المرفقات" />
+        <SectionTitle id="attachment-intel" num={6} title="تحليل المرفقات" />
 
         <p className="text-xs font-semibold text-foreground">المؤشرات المالية المستخلصة:</p>
         <table className="w-full text-sm">
@@ -580,7 +627,7 @@ function AttachmentIntelPage1() {
 function AttachmentIntelPage2() {
   const ai = SAMPLE.attachmentIntelligence;
   return (
-    <PageShell pageNum={7}>
+    <PageShell pageNum={8}>
       <div className="space-y-5">
         <div>
           <p className="text-xs font-semibold text-foreground mb-1">المرفقات المُستخدمة في التقييم:</p>
@@ -630,9 +677,9 @@ function AttachmentIntelPage2() {
 /* ── Inspection — Grid + brief notes ── */
 function InspectionPage() {
   return (
-    <PageShell pageNum={8}>
+    <PageShell pageNum={9}>
       <div className="space-y-4">
-        <SectionTitle id="inspection" num={6} title="المعاينة" />
+        <SectionTitle id="inspection" num={7} title="المعاينة" />
 
         <div className="space-y-1">
           <MetricRow label="تاريخ المعاينة" value="2026-03-25" />
@@ -659,9 +706,9 @@ function InspectionPage() {
 /* ── Analysis + Methodology ── */
 function AnalysisPage() {
   return (
-    <PageShell pageNum={9}>
+    <PageShell pageNum={10}>
       <div className="space-y-5">
-        <SectionTitle id="analysis" num={7} title="التحليل" />
+        <SectionTitle id="analysis" num={8} title="التحليل" />
 
         <div className="space-y-1">
           <MetricRow label="متوسط العمر الإنتاجي المتبقي" value="12 عاماً" />
@@ -670,7 +717,7 @@ function AnalysisPage() {
           <MetricRow label="مصادر السوق" value="سوق محلي + دولي" />
         </div>
 
-        <SectionTitle id="methodology" num={8} title="المنهجية" />
+        <SectionTitle id="methodology" num={9} title="المنهجية" />
 
         <table className="w-full text-sm">
           <thead>
@@ -713,9 +760,9 @@ function AnalysisPage() {
 /* ── Assumptions ── */
 function AssumptionsPage() {
   return (
-    <PageShell pageNum={10}>
+    <PageShell pageNum={11}>
       <div className="space-y-5">
-        <SectionTitle id="assumptions" num={9} title="الافتراضات والقيود" />
+        <SectionTitle id="assumptions" num={10} title="الافتراضات والقيود" />
 
         <div className="space-y-1">
           <p className="text-xs font-semibold text-foreground mb-1">الافتراضات:</p>
@@ -735,9 +782,9 @@ function AssumptionsPage() {
 function AssumptionImpactPage() {
   const { topAssumptions, valueRange } = SAMPLE.assumptionImpact;
   return (
-    <PageShell pageNum={11}>
+    <PageShell pageNum={12}>
       <div className="space-y-4">
-        <SectionTitle id="assumption-impact" num={10} title="تحليل تأثير الافتراضات" />
+        <SectionTitle id="assumption-impact" num={11} title="تحليل تأثير الافتراضات" />
 
         <p className="text-xs text-muted-foreground leading-relaxed">
           يوضح هذا القسم أهم الافتراضات المؤثرة على القيمة النهائية ومدى حساسية النتيجة لتغيّر كل افتراض.
@@ -801,9 +848,9 @@ function AssetTablePage() {
     .toLocaleString("en-US");
 
   return (
-    <PageShell pageNum={12}>
+    <PageShell pageNum={13}>
       <div className="space-y-5">
-        <SectionTitle id="final-value" num={11} title="النتيجة النهائية" />
+        <SectionTitle id="final-value" num={12} title="النتيجة النهائية" />
 
         <table className="w-full text-sm">
           <thead>
@@ -862,9 +909,9 @@ function DataSourcesPage() {
   const incomplete = SAMPLE.dataSources.filter(d => d.reliability === "غير مكتمل").length;
 
   return (
-    <PageShell pageNum={13}>
+    <PageShell pageNum={14}>
       <div className="space-y-4">
-        <SectionTitle id="data-sources" num={12} title="مصادر البيانات" />
+        <SectionTitle id="data-sources" num={13} title="مصادر البيانات" />
 
         {/* Summary bar */}
         <div className="flex gap-3 text-xs">
@@ -925,9 +972,9 @@ function RiskStatementPage() {
   ];
 
   return (
-    <PageShell pageNum={14}>
+    <PageShell pageNum={15}>
       <div className="space-y-4">
-        <SectionTitle id="risk-statement" num={13} title="بيان المخاطر" />
+        <SectionTitle id="risk-statement" num={14} title="بيان المخاطر" />
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           يوضح هذا القسم المخاطر المرتبطة بنتيجة التقييم والتي يجب أخذها بعين الاعتبار عند اتخاذ القرار.
         </p>
@@ -952,9 +999,9 @@ function RiskStatementPage() {
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={15}>
+    <PageShell pageNum={16}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={14} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={15} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -970,9 +1017,9 @@ function DisclosuresPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={16}>
+    <PageShell pageNum={17}>
       <div className="space-y-5">
-        <SectionTitle id="accreditation" num={15} title="الاعتماد والتوقيع" />
+        <SectionTitle id="accreditation" num={16} title="الاعتماد والتوقيع" />
 
         {/* Company info */}
         <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
@@ -1155,6 +1202,7 @@ export default function JasasReportPreview() {
       <div ref={containerRef} className="space-y-8">
         <CoverPage mode={mode} versionNum={versionNum} />
         <TOCPage onNavigate={scrollToSection} />
+        <ClientSummaryPage />
         <ExecSummaryPage />
         <ScopePage />
         <DocumentsPage />
