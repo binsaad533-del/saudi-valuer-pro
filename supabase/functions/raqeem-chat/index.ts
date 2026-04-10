@@ -119,11 +119,14 @@ const TOOLS = [
     type: "function",
     function: {
       name: "generate_scope",
-      description: "توليد نطاق العمل والتسعير لطلب تقييم محدد.",
+      description: "توليد نطاق العمل والتسعير لطلب تقييم محدد. يمكن تمرير request_id مباشرة أو الاعتماد على سياق المنصة الحالي إذا كان الطلب مفتوحاً من داخل صفحة مرتبطة.",
       parameters: {
         type: "object",
-        properties: { request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" } },
-        required: ["request_id"]
+        properties: {
+          request_id: { type: "string", description: "معرّف طلب التقييم (UUID) — اختياري إذا كان سياق المنصة الحالي يحتوي assignment_id أو request_id" },
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID) — يستخدم تلقائياً لاستخراج request_id عند توفره" },
+          reference_number: { type: "string", description: "الرقم المرجعي — اختياري للمطابقة عند الحاجة" }
+        }
       }
     }
   },
@@ -170,11 +173,14 @@ const TOOLS = [
     type: "function",
     function: {
       name: "extract_documents",
-      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم.",
+      description: "استخراج البيانات من المستندات المرفوعة لطلب تقييم. يمكن الاعتماد على سياق المنصة الحالي إذا كان الطلب/المهمة محمّلاً تلقائياً.",
       parameters: {
         type: "object",
-        properties: { request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" } },
-        required: ["request_id"]
+        properties: {
+          request_id: { type: "string", description: "معرّف طلب التقييم (UUID) — اختياري إذا كان السياق الحالي يحتوي assignment_id أو request_id" },
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID) — يستخدم تلقائياً لاستخراج request_id عند توفره" },
+          reference_number: { type: "string", description: "الرقم المرجعي — اختياري للمطابقة عند الحاجة" }
+        }
       }
     }
   },
@@ -1185,16 +1191,84 @@ async function buildContextualPrompt(supabaseClient: any): Promise<string> {
 }
 
 // Execute tool calls by invoking internal edge functions
+async function resolveIdsFromContext(
+  db: ReturnType<typeof createClient>,
+  platformContext: any,
+  rawArgs: any,
+): Promise<any> {
+  const args = { ...(rawArgs || {}) };
+  const pc = platformContext && typeof platformContext === "object" ? platformContext : {};
+
+  if (!args.assignment_id && pc.assignment_id) args.assignment_id = pc.assignment_id;
+  if (!args.request_id && pc.request_id) args.request_id = pc.request_id;
+  if (!args.reference_number && pc.reference_number) args.reference_number = pc.reference_number;
+
+  if (!args.request_id && args.assignment_id) {
+    const { data: requestLink } = await db
+      .from("valuation_requests")
+      .select("id")
+      .eq("assignment_id", args.assignment_id)
+      .maybeSingle();
+    if (requestLink?.id) args.request_id = requestLink.id;
+  }
+
+  if (!args.assignment_id && args.request_id) {
+    const { data: assignmentLink } = await db
+      .from("valuation_requests")
+      .select("assignment_id")
+      .eq("id", args.request_id)
+      .maybeSingle();
+    if (assignmentLink?.assignment_id) args.assignment_id = assignmentLink.assignment_id;
+  }
+
+  if (!args.assignment_id && args.reference_number) {
+    const { data: assignmentByRef } = await db
+      .from("valuation_assignments")
+      .select("id, reference_number")
+      .ilike("reference_number", `%${args.reference_number}%`)
+      .maybeSingle();
+    if (assignmentByRef?.id) {
+      args.assignment_id = assignmentByRef.id;
+      args.reference_number = assignmentByRef.reference_number || args.reference_number;
+    }
+  }
+
+  if (!args.request_id && args.assignment_id) {
+    const { data: requestLink } = await db
+      .from("valuation_requests")
+      .select("id")
+      .eq("assignment_id", args.assignment_id)
+      .maybeSingle();
+    if (requestLink?.id) args.request_id = requestLink.id;
+  }
+
+  if (!args.reference_number && args.assignment_id) {
+    const { data: assignmentMeta } = await db
+      .from("valuation_assignments")
+      .select("reference_number")
+      .eq("id", args.assignment_id)
+      .maybeSingle();
+    if (assignmentMeta?.reference_number) args.reference_number = assignmentMeta.reference_number;
+  }
+
+  return args;
+}
+
 async function executeTool(
   toolName: string,
   args: any,
   supabaseUrl: string,
-  serviceKey: string
+  serviceKey: string,
+  platformContext?: any,
 ): Promise<{ success: boolean; result: any; error?: string }> {
   try {
     const db = createClient(supabaseUrl, serviceKey);
+    args = await resolveIdsFromContext(db, platformContext, args);
 
     if (toolName === "generate_scope") {
+      if (!args.request_id) {
+        return { success: false, result: null, error: "تعذر تحديد request_id من السياق الحالي أو المعرفات المتاحة" };
+      }
       return await callInternalFunction(supabaseUrl, serviceKey, "generate-scope-pricing", { requestId: args.request_id });
     }
     
@@ -1203,7 +1277,6 @@ async function executeTool(
     }
 
     if (toolName === "generate_report") {
-      // Build context from DB for report generation
       const context = await buildReportContext(db, args.assignment_id);
       if (!context) {
         return { success: false, result: null, error: "لم يتم العثور على مهمة التقييم" };
@@ -1220,24 +1293,33 @@ async function executeTool(
     }
 
     if (toolName === "extract_documents") {
-      // Fetch attachments for the request and call extract-documents
-      const { data: attachments } = await db
-        .from("attachments")
-        .select("file_name, file_path, mime_type, description_ar")
-        .or(`assignment_id.eq.${args.request_id},subject_id.eq.${args.request_id}`)
-        .limit(20);
+      if (!args.request_id && !args.assignment_id) {
+        return { success: false, result: null, error: "تعذر تحديد الطلب الحالي لاستخراج المستندات" };
+      }
 
-      // Also try via valuation_assignments → request
-      let requestId = args.request_id;
-      const { data: assignment } = await db.from("valuation_assignments").select("request_id").eq("id", args.request_id).single();
-      if (assignment?.request_id) requestId = assignment.request_id;
+      const requestId = args.request_id;
+      const assignmentId = args.assignment_id;
 
-      const { data: requestAttachments } = await db
-        .from("attachments")
-        .select("file_name, file_path, mime_type, description_ar")
-        .eq("assignment_id", args.request_id);
+      const attachmentQueries = [];
+      if (assignmentId) {
+        attachmentQueries.push(
+          db.from("attachments")
+            .select("file_name, file_path, mime_type, description_ar")
+            .eq("assignment_id", assignmentId)
+            .limit(20)
+        );
+      }
+      if (requestId) {
+        attachmentQueries.push(
+          db.from("attachments")
+            .select("file_name, file_path, mime_type, description_ar")
+            .or(`subject_id.eq.${requestId},assignment_id.eq.${requestId}`)
+            .limit(20)
+        );
+      }
 
-      const allAttachments = [...(attachments || []), ...(requestAttachments || [])];
+      const attachmentResults = await Promise.all(attachmentQueries);
+      const allAttachments = attachmentResults.flatMap((res: any) => res.data || []);
       const uniqueAttachments = allAttachments.filter((a, i, arr) => arr.findIndex(x => x.file_path === a.file_path) === i);
 
       if (uniqueAttachments.length === 0) {
@@ -3496,31 +3578,76 @@ serve(async (req) => {
       + (imageAttachments.length > 0 ? `\n${buildMachineryVisionPromptLocal()}\n` : "");
     const roleTools = getToolsForRole(effectiveRole);
 
-    // First call: with tools enabled (non-streaming to detect tool calls)
-    const firstResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...normalizedMessages,
-        ],
-        tools: roleTools,
-        tool_choice: "auto",
-        stream: false,
-      }),
-    });
+    const latestUserPlainText = typeof latestUserText === "string" ? latestUserText.trim() : "";
+    const hasBoundContext = !!(platformContext && typeof platformContext === "object" && ((platformContext as any).assignment_id || (platformContext as any).request_id));
+    const wantsCurrentRequestStatus = hasBoundContext && /(?:حالة|وضع|تفاصيل).*(?:هذا الطلب|الطلب الحالي)|(?:اعرض|ورني|هات).*(?:حالة|تفاصيل).*(?:هذا الطلب|الطلب الحالي)/.test(latestUserPlainText);
+    const wantsPriorityUpdate = hasBoundContext && /(?:أولوية المتابعة|الأولوية).*(?:حدّث|تحديث|نفّذ|ارفع|عدّل)|(?:نفّذ|حدث|حدّث|ارفع|عدّل).*(?:أولوية المتابعة|الأولوية)/.test(latestUserPlainText);
 
-    if (!firstResponse.ok) {
-      return handleAIError(firstResponse);
+    let preflightToolCalls: any[] = [];
+    if (wantsCurrentRequestStatus) {
+      preflightToolCalls.push({
+        id: "preflight_get_assignment_details",
+        type: "function",
+        function: { name: "get_assignment_details", arguments: JSON.stringify({}) },
+      });
+    }
+    if (wantsPriorityUpdate) {
+      const priorityMatch = latestUserPlainText.match(/(urgent|critical|high|normal|low|عاجل(?:ة)?|حرج(?:ة)?|عالي(?:ة)?|متوسط(?:ة)?|منخفض(?:ة)?)/i);
+      const priorityMap: Record<string, string> = {
+        urgent: "urgent", critical: "critical", high: "high", normal: "normal", low: "low",
+        "عاجل": "urgent", "عاجلة": "urgent", "حرج": "critical", "حرجة": "critical",
+        "عالي": "high", "عالية": "high", "متوسط": "normal", "متوسطة": "normal",
+        "منخفض": "low", "منخفضة": "low",
+      };
+      preflightToolCalls.push({
+        id: "preflight_update_follow_up_priority",
+        type: "function",
+        function: {
+          name: "update_follow_up_priority",
+          arguments: JSON.stringify({
+            priority: priorityMap[(priorityMatch?.[0] || "high").toLowerCase()] || "high",
+            reason: "طلب مباشر من المستخدم داخل سياق الطلب الحالي",
+          }),
+        },
+      });
     }
 
-    const firstData = await firstResponse.json();
-    const choice = firstData.choices?.[0];
+    let choice: any;
+    if (preflightToolCalls.length > 0) {
+      choice = {
+        finish_reason: "tool_calls",
+        message: {
+          role: "assistant",
+          content: null,
+          tool_calls: preflightToolCalls,
+        },
+      };
+    } else {
+      const firstResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-5",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...normalizedMessages,
+          ],
+          tools: roleTools,
+          tool_choice: "auto",
+          stream: false,
+        }),
+      });
+
+      if (!firstResponse.ok) {
+        return handleAIError(firstResponse);
+      }
+
+      const firstData = await firstResponse.json();
+      choice = firstData.choices?.[0];
+    }
 
     // Check if AI wants to call tools
     if (choice?.finish_reason === "tool_calls" || choice?.message?.tool_calls?.length > 0) {
@@ -3532,33 +3659,10 @@ serve(async (req) => {
       const stream = new ReadableStream({
         async start(controller) {
           const db = createClient(supabaseUrl, supabaseServiceKey);
-          const resolveToolArgs = async (rawArgs: any) => {
-            const args = { ...(rawArgs || {}) };
-
-            if (platformContext && typeof platformContext === "object") {
-              const pc = platformContext as any;
-              if (!args.assignment_id && pc.assignment_id) args.assignment_id = pc.assignment_id;
-              if (!args.request_id && pc.request_id) args.request_id = pc.request_id;
-              if (!args.reference_number && pc.reference_number) args.reference_number = pc.reference_number;
-            }
-
-            if (!args.request_id && args.assignment_id) {
-              const { data: reqLink } = await db.from("valuation_requests").select("id").eq("assignment_id", args.assignment_id).maybeSingle();
-              if (reqLink?.id) args.request_id = reqLink.id;
-            }
-
-            if (!args.assignment_id && args.request_id) {
-              const { data: reqLink } = await db.from("valuation_requests").select("assignment_id, reference_number").eq("id", args.request_id).maybeSingle();
-              if (reqLink?.assignment_id) args.assignment_id = reqLink.assignment_id;
-              if (!args.reference_number && reqLink?.reference_number) args.reference_number = reqLink.reference_number;
-            }
-
-            return args;
-          };
 
           const resolvedToolCalls = [];
           for (const tc of toolCalls) {
-            const resolvedArgs = await resolveToolArgs(JSON.parse(tc.function.arguments || "{}"));
+            const resolvedArgs = await resolveIdsFromContext(db, platformContext, JSON.parse(tc.function.arguments || "{}"));
             resolvedToolCalls.push({ ...tc, resolvedArgs });
           }
 
@@ -3572,10 +3676,9 @@ serve(async (req) => {
           };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "" }, orchestration: statusEvent }] })}\n\n`));
 
-          // Execute all tool calls — auto-inject platformContext IDs
           for (const tc of resolvedToolCalls) {
             const args = tc.resolvedArgs;
-            const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey);
+            const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey, platformContext);
             toolResults.push({
               tool_call_id: tc.id,
               role: "tool",
