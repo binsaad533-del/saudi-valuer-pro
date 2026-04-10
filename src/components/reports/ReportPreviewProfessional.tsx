@@ -10,6 +10,7 @@ import OfficialStamp from "./OfficialStamp";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
 import { AlertTriangle } from "lucide-react";
+import ReportQualitySection from "./ReportQualitySection";
 
 
 interface ReportPreviewProfessionalProps {
