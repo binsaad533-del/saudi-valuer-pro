@@ -616,7 +616,6 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       body: JSON.stringify({
         model: "openai/gpt-5",
         messages,
-        temperature: 0.4,
       }),
     });
 
