@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicator";
+import { getGlobalChatInit } from "@/components/client/chat/globalChatInit";
 import { AI } from "@/config/assistantIdentity";
 import {
   Send, Paperclip, Plus, FileText, Clock, CreditCard,
@@ -58,6 +59,31 @@ export default function ClientChatPage() {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initCalledRef = useRef(false);
+  const messagesRef = useRef<ChatMessage[]>([]);
+  const sendingRef = useRef(false);
+
+  const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
+    messagesRef.current = nextMessages;
+    setMessages(nextMessages);
+  }, []);
+
+  const appendMessage = useCallback((message: ChatMessage) => {
+    const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+    if (
+      message.role === "assistant" &&
+      lastMessage?.role === "assistant" &&
+      lastMessage.content.trim() === message.content.trim()
+    ) {
+      return;
+    }
+
+    replaceMessages([...messagesRef.current, message]);
+  }, [replaceMessages]);
+
+  const seedInitialMessage = useCallback((message: ChatMessage) => {
+    if (messagesRef.current.length > 0) return;
+    replaceMessages([message]);
+  }, [replaceMessages]);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -84,74 +110,64 @@ export default function ClientChatPage() {
 
       // Send proactive first message
       try {
-        const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
-          body: {
-            message: "__init_global_chat__",
-            is_global_chat: true,
-            conversationHistory: [],
-            requestContext: { client_user_id: user.id },
-          },
-        });
+        const data = await getGlobalChatInit(user.id);
 
-        if (!error && data?.reply) {
-          setMessages([{
+        if (data?.reply) {
+          seedInitialMessage({
             id: `ai-${Date.now()}`,
             role: "assistant",
             content: data.reply,
             timestamp: new Date().toISOString(),
-          }]);
+          });
           if (data.suggestedActions) setSuggestedActions(data.suggestedActions);
         } else {
           // Fallback welcome
-          setMessages([{
+          seedInitialMessage({
             id: `welcome-${Date.now()}`,
             role: "assistant",
             content: AI.welcomeGreeting(name) + "\n\nكيف يمكنني مساعدتك اليوم؟",
             timestamp: new Date().toISOString(),
-          }]);
+          });
         }
       } catch {
-        setMessages([{
+        seedInitialMessage({
           id: `welcome-${Date.now()}`,
           role: "assistant",
           content: AI.welcomeGreeting(name) + "\n\nكيف يمكنني مساعدتك اليوم؟",
           timestamp: new Date().toISOString(),
-        }]);
+        });
       }
       setInitialized(true);
     };
     init();
-  }, [navigate]);
+  }, [navigate, seedInitialMessage]);
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || sending) return;
+    const trimmedText = text.trim();
+    if (!trimmedText || sendingRef.current) return;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
-      content: text,
+      content: trimmedText,
       timestamp: new Date().toISOString(),
     };
-    setMessages(prev => [...prev, userMsg]);
+    appendMessage(userMsg);
     setInput("");
+    sendingRef.current = true;
     setSending(true);
 
     try {
-      // Build history from current state snapshot via functional approach
-      let history: { content: string; sender_type: string }[] = [];
-      setMessages(prev => {
-        history = prev.slice(-20).map(m => ({
-          content: m.content,
-          sender_type: m.role === "user" ? "client" : "ai",
-        }));
-        return prev; // no mutation
-      });
+      const history = messagesRef.current.slice(-20).map((message) => ({
+        content: message.content,
+        sender_type: message.role === "user" ? "client" : "ai",
+      }));
 
       const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
-          message: text,
+          message: trimmedText,
           is_global_chat: true,
-          conversationHistory: [...history, { content: text, sender_type: "client" }],
+          conversationHistory: history,
           requestContext: { client_user_id: userId },
         },
       });
@@ -160,12 +176,12 @@ export default function ClientChatPage() {
 
       const reply = data?.reply?.trim();
       if (reply) {
-        setMessages(prev => [...prev, {
+        appendMessage({
           id: `ai-${Date.now()}`,
           role: "assistant",
           content: reply,
           timestamp: new Date().toISOString(),
-        }]);
+        });
       }
 
       // Handle action tokens
@@ -183,16 +199,17 @@ export default function ClientChatPage() {
       }
     } catch (err) {
       console.error("Chat error:", err);
-      setMessages(prev => [...prev, {
+      appendMessage({
         id: `err-${Date.now()}`,
         role: "assistant",
         content: AI.errorMessage,
         timestamp: new Date().toISOString(),
-      }]);
+      });
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
-  }, [sending, userId, navigate, toast]);
+  }, [userId, navigate, toast, appendMessage]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
