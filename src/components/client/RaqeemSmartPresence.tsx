@@ -29,7 +29,6 @@ export default function RaqeemSmartPresence() {
     location.pathname.startsWith(p)
   );
 
-  // Show intro bubble once on first visit
   useEffect(() => {
     if (isRaqeemPage || bubbleShown) return;
     const t = setTimeout(() => {
@@ -51,43 +50,32 @@ export default function RaqeemSmartPresence() {
   if (isRaqeemPage) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-50">
-      {/* Intro bubble — once only */}
+    <div className="relative">
       <AnimatePresence>
         {showBubble && (
           <motion.div
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 4 }}
+            exit={{ opacity: 0, y: -4 }}
             transition={{ duration: 0.3 }}
-            className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap
+            className="absolute top-full mt-1 right-1/2 translate-x-1/2 whitespace-nowrap
               text-[11px] font-medium px-3 py-1.5 rounded-lg
-              bg-primary/10 text-primary border border-primary/15"
+              bg-primary/10 text-primary border border-primary/15 z-50"
           >
             رقيم ينفذ طلبك
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Pulse ring */}
-      <motion.span
-        className="absolute inset-0 rounded-full pointer-events-none"
-        style={{ border: "2px solid hsl(var(--primary)/0.15)" }}
-        animate={{ scale: [1, 1.35, 1.35], opacity: [0.4, 0, 0] }}
-        transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 12, ease: "easeOut" }}
-      />
-
-      {/* Logo button */}
       <motion.button
         onClick={handleClick}
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className="relative w-14 h-14 flex items-center justify-center rounded-full
-          bg-card border border-border shadow-md cursor-pointer
-          transition-shadow duration-200 hover:shadow-lg"
+        className="relative w-10 h-10 flex items-center justify-center rounded-full
+          hover:bg-muted/60 cursor-pointer transition-colors"
         aria-label="رقيم"
       >
-        <RaqeemAnimatedLogo size={36} />
+        <RaqeemAnimatedLogo size={32} />
       </motion.button>
     </div>
   );
