@@ -458,17 +458,43 @@ function ExecSummaryPage() {
   );
 }
 
-/* ── Scope + Asset Definition — Bullets only ── */
+/* ── Scope + Asset Definition — with clear boundaries ── */
 function ScopePage() {
   return (
     <PageShell pageNum={4}>
-      <div className="space-y-5">
+      <div className="space-y-4">
         <SectionTitle id="scope" num={2} title="نطاق العمل" />
-        <div className="space-y-1">
+
+        {/* What was evaluated */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-primary">ما تم تقييمه:</p>
           <Bullet>جميع الآلات والمعدات الثابتة والمتحركة في موقع العميل</Bullet>
           <Bullet>خطوط الإنتاج والمعدات المساندة</Bullet>
           <Bullet>معاينة ميدانية شاملة بتاريخ 2026-03-25</Bullet>
           <Bullet>تحديد القيمة السوقية العادلة وفقاً لـ IVS 2025</Bullet>
+        </div>
+
+        {/* What was NOT evaluated */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-destructive">ما لم يتم تقييمه:</p>
+          <Bullet>الأصول غير الملموسة (العلامة التجارية، الشهرة، براءات الاختراع)</Bullet>
+          <Bullet>المخزون والمواد الخام</Bullet>
+          <Bullet>الأثاث المكتبي والتجهيزات الإدارية</Bullet>
+          <Bullet>المركبات والمعدات خارج موقع المصنع الرئيسي</Bullet>
+        </div>
+
+        {/* Outside license */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-muted-foreground">خارج نطاق الترخيص:</p>
+          <Bullet>التقييم العقاري للأرض والمباني (يتطلب ترخيص تقييم عقاري منفصل)</Bullet>
+          <Bullet>التقييمات البيئية أو الصحية المتعلقة بالموقع</Bullet>
+          <Bullet>الفحص الهندسي الإنشائي أو الكهربائي التخصصي</Bullet>
+        </div>
+
+        <div className="border border-border rounded px-4 py-2.5 mt-1">
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            أي استخدام لهذا التقرير خارج النطاق المحدد أعلاه يُعد مسؤولية المستخدم بالكامل. الترخيص رقم {COMPANY_IDENTITY.licenseNumber} يغطي تقييم الآلات والمعدات فقط.
+          </p>
         </div>
 
         <SectionTitle id="asset-def" num={3} title="تعريف الأصل" />
@@ -477,7 +503,6 @@ function ScopePage() {
           <Bullet>المالك: العميل المحدد في نطاق العمل</Bullet>
           <Bullet>التصنيف: 5 فئات حسب طبيعة الاستخدام والعمر الإنتاجي</Bullet>
           <Bullet>الشمول: جميع المعدات الصناعية المملوكة في المصنع الرئيسي</Bullet>
-          <Bullet>الاستثناء: الأصول غير الملموسة والمخزون</Bullet>
         </div>
       </div>
     </PageShell>
