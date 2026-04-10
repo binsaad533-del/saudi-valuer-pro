@@ -38,8 +38,6 @@ export function addVisibleWatermark(doc: jsPDF, recipient: PdfRecipientInfo) {
     }
 
     // Bottom strip with recipient info
-    doc.setFillColor(0, 0, 0);
-    doc.setGlobalAlpha?.(0.05);
     doc.setFontSize(6);
     doc.setTextColor(150, 150, 150);
     doc.text(
@@ -82,7 +80,7 @@ export function addForensicWatermark(doc: jsPDF, recipient: PdfRecipientInfo) {
 
   // Embed forensic ID in PDF metadata
   doc.setProperties({
-    title: doc.getProperties?.()?.title || "Valuation Report",
+    title: "Valuation Report",
     subject: `Licensed copy: ${recipient.email}`,
     author: "Jassas Valuation",
     keywords: forensicId,
