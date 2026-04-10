@@ -445,20 +445,29 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
               </div>
             )}
 
-            {/* Full pass */}
-            {qcResult?.passed && !(qcResult as any).has_warnings && (
-              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
-                  جميع المتطلبات مستوفاة — التقرير جاهز للإصدار
+            {/* Score below 80 warning */}
+            {qcResult?.passed && qcResult.score < 80 && (
+              <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <p className="text-[10px] text-amber-700 dark:text-amber-300 text-center">
+                  النتيجة {qcResult.score}% — يجب تجاوز 80% للإصدار النهائي. يمكن حفظه كمسودة (Draft) فقط.
                 </p>
               </div>
             )}
 
-            {/* Pass with warnings */}
-            {qcResult?.passed && (qcResult as any).has_warnings && (
+            {/* Full pass >= 80 */}
+            {qcResult?.passed && !(qcResult as any).has_warnings && qcResult.score >= 80 && (
+              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
+                  جميع المتطلبات مستوفاة — التقرير جاهز للإصدار النهائي ({qcResult.score}%)
+                </p>
+              </div>
+            )}
+
+            {/* Pass with warnings >= 80 */}
+            {qcResult?.passed && (qcResult as any).has_warnings && qcResult.score >= 80 && (
               <div className="p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
                 <p className="text-[10px] text-amber-700 dark:text-amber-300 text-center">
-                  يُسمح بالإصدار — مع وجود ملاحظات جودة يُنصح بمعالجتها
+                  يُسمح بالإصدار ({qcResult.score}%) — مع وجود ملاحظات جودة يُنصح بمعالجتها
                 </p>
               </div>
             )}
