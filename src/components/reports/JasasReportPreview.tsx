@@ -718,6 +718,15 @@ function DisclosuresPage() {
    ══════════════════════════════════════════════ */
 export default function JasasReportPreview() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mode, setMode] = useState<"draft" | "final">("draft");
+  const [versionNum] = useState(3); // Sample: version 3
+  const [isLocked] = useState(false);
+
+  const versions = [
+    { num: 1, date: "2026-03-28", mode: "draft" as const, locked: true },
+    { num: 2, date: "2026-04-05", mode: "draft" as const, locked: true },
+    { num: 3, date: "2026-04-10", mode: mode, locked: isLocked },
+  ];
 
   const scrollToSection = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -725,19 +734,97 @@ export default function JasasReportPreview() {
   }, []);
 
   return (
-    <div ref={containerRef} className="max-w-2xl mx-auto space-y-8 py-8" dir="rtl">
-      <CoverPage />
-      <TOCPage onNavigate={scrollToSection} />
-      <ExecSummaryPage />
-      <ScopePage />
-      <DocumentsPage />
-      <AttachmentIntelPage1 />
-      <AttachmentIntelPage2 />
-      <InspectionPage />
-      <AnalysisPage />
-      <AssumptionsPage />
-      <AssetTablePage />
-      <DisclosuresPage />
+    <div className="max-w-2xl mx-auto py-8 space-y-6" dir="rtl">
+      {/* ── Version Control Toolbar ── */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-4 sticky top-0 z-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">التحكم في نسخ التقرير</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMode("draft")}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                mode === "draft"
+                  ? "bg-destructive/10 text-destructive border border-destructive/30"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              مسودة
+            </button>
+            <button
+              onClick={() => setMode("final")}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                mode === "final"
+                  ? "bg-primary/10 text-primary border border-primary/30"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              نهائي
+            </button>
+          </div>
+        </div>
+
+        {/* Version history */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {versions.map((v) => (
+            <div
+              key={v.num}
+              className={`flex items-center gap-2 px-3 py-2 rounded border text-xs shrink-0 ${
+                v.num === versionNum
+                  ? "border-primary/40 bg-primary/5"
+                  : "border-border/50 bg-muted/20"
+              }`}
+            >
+              {v.locked && <Lock className="h-3 w-3 text-muted-foreground/60" />}
+              <span className="font-medium text-foreground">v{v.num}</span>
+              <span className="text-muted-foreground">{v.date}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                v.mode === "final"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-destructive/10 text-destructive"
+              }`}>
+                {v.mode === "final" ? "نهائي" : "مسودة"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Status bar */}
+        <div className="flex items-center gap-4 text-[11px] text-muted-foreground border-t border-border/40 pt-3">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>آخر تعديل: {SAMPLE.issueDate}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <ShieldCheck className="h-3 w-3" />
+            <span>{mode === "final" ? "مقفل — لا يمكن التعديل" : "قابل للتعديل"}</span>
+          </div>
+          {mode === "final" && (
+            <div className="flex items-center gap-1 text-primary">
+              <Lock className="h-3 w-3" />
+              <span className="font-medium">محمي من التعديل</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Report Pages ── */}
+      <div ref={containerRef} className="space-y-8">
+        <CoverPage mode={mode} versionNum={versionNum} />
+        <TOCPage onNavigate={scrollToSection} />
+        <ExecSummaryPage />
+        <ScopePage />
+        <DocumentsPage />
+        <AttachmentIntelPage1 />
+        <AttachmentIntelPage2 />
+        <InspectionPage />
+        <AnalysisPage />
+        <AssumptionsPage />
+        <AssetTablePage />
+        <DisclosuresPage />
+      </div>
     </div>
   );
 }
