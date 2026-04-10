@@ -71,7 +71,7 @@ serve(async (req) => {
   }
 
   try {
-    const { message, request_id, conversationHistory, requestContext, attachments } = await req.json();
+    const { message, request_id, conversationHistory, requestContext, attachments, client_user_id: directClientUserId, is_global_chat } = await req.json();
 
     if (!message) {
       return new Response(JSON.stringify({ error: "الرسالة مطلوبة" }), {
@@ -85,7 +85,83 @@ serve(async (req) => {
     const db = createClient(supabaseUrl, serviceKey);
 
     const ctx = requestContext || {};
+    // Allow direct client_user_id for global chat mode
+    if (directClientUserId && !ctx.client_user_id) {
+      ctx.client_user_id = directClientUserId;
+    }
     const isDesktop = isDesktopMode(ctx.valuation_mode);
+    const isGlobalChat = is_global_chat === true || !request_id;
+
+    // ── Global Chat: Fetch ALL client requests for comprehensive context ──
+    let allClientRequests: any[] = [];
+    let globalStatusSummary = "";
+    let activeRequestForAction: any = null;
+
+    if (isGlobalChat && ctx.client_user_id) {
+      const { data: clientRequests } = await db
+        .from("valuation_requests")
+        .select("id, status, reference_number, property_description_ar, property_type, property_city_ar, valuation_type, valuation_mode, created_at, updated_at, assignment_id, total_fees, amount_paid, payment_status, purpose, ai_intake_summary")
+        .eq("client_user_id", ctx.client_user_id)
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      allClientRequests = clientRequests || [];
+
+      if (allClientRequests.length > 0) {
+        // Build comprehensive status summary
+        const statusLabels: Record<string, string> = {
+          draft: "مسودة", submitted: "مقدم", scope_generated: "عرض السعر جاهز",
+          scope_approved: "تمت الموافقة على النطاق", first_payment_confirmed: "تم السداد - جارٍ العمل",
+          data_collection_open: "جمع البيانات", data_collection_complete: "اكتمل جمع البيانات",
+          inspection_pending: "بانتظار المعاينة", inspection_completed: "تمت المعاينة",
+          data_validated: "تم التحقق من البيانات", analysis_complete: "اكتمل التحليل",
+          professional_review: "مراجعة مهنية", draft_report_ready: "المسودة جاهزة",
+          client_review: "بانتظار مراجعتك", draft_approved: "تم اعتماد المسودة",
+          final_payment_confirmed: "تم السداد النهائي", issued: "التقرير صدر",
+          archived: "مؤرشف", cancelled: "ملغي",
+        };
+
+        globalStatusSummary = "\n\n## 📋 ملخص طلبات العميل الشامل\n";
+        globalStatusSummary += `- **إجمالي الطلبات**: ${allClientRequests.length}\n`;
+
+        const activeReqs = allClientRequests.filter(r => !["cancelled", "archived"].includes(r.status));
+        const needsAction = allClientRequests.filter(r => ["scope_generated", "client_review", "draft_approved"].includes(r.status));
+
+        globalStatusSummary += `- **طلبات نشطة**: ${activeReqs.length}\n`;
+        globalStatusSummary += `- **تحتاج إجراء منك**: ${needsAction.length}\n\n`;
+
+        // Detail each request
+        for (const req of allClientRequests.slice(0, 10)) {
+          const statusLabel = statusLabels[req.status] || req.status;
+          globalStatusSummary += `### طلب ${req.reference_number || req.id.substring(0, 8)}\n`;
+          globalStatusSummary += `- الحالة: **${statusLabel}**\n`;
+          if (req.property_description_ar) globalStatusSummary += `- الوصف: ${req.property_description_ar}\n`;
+          if (req.property_city_ar) globalStatusSummary += `- المدينة: ${req.property_city_ar}\n`;
+          globalStatusSummary += `- التاريخ: ${new Date(req.created_at).toLocaleDateString("ar-SA")}\n`;
+
+          // What client needs to do
+          const actionNeeded: Record<string, string> = {
+            scope_generated: "⚡ **مطلوب منك**: مراجعة عرض السعر والموافقة عليه",
+            scope_approved: "💳 **مطلوب منك**: سداد الدفعة الأولى (50%)",
+            data_collection_open: "📎 **مطلوب منك**: رفع أي مستندات إضافية",
+            client_review: "📝 **مطلوب منك**: مراجعة المسودة واعتمادها",
+            draft_approved: "💳 **مطلوب منك**: سداد الدفعة النهائية",
+            issued: "✅ التقرير جاهز للتحميل",
+          };
+          if (actionNeeded[req.status]) globalStatusSummary += `- ${actionNeeded[req.status]}\n`;
+          globalStatusSummary += `- assignment_id: ${req.assignment_id || "غير متاح"}\n\n`;
+        }
+
+        // Set active request for action (most recent non-completed)
+        activeRequestForAction = activeReqs[0] || null;
+        if (activeRequestForAction && !ctx.assignment_id) {
+          ctx.assignment_id = activeRequestForAction.assignment_id;
+          ctx.status = activeRequestForAction.status;
+        }
+      } else {
+        globalStatusSummary = "\n\n## 📋 حالة العميل\n- لا توجد طلبات تقييم سابقة.\n- العميل جديد ويمكنه بدء طلب تقييم عبر الدردشة.\n";
+      }
+    }
 
     // ── Fetch client name from profiles or auth ──
     let clientDisplayName = ctx.client_name || "";
