@@ -13,7 +13,7 @@ export type IVSStandardCode =
   | "IVS101" | "IVS102" | "IVS103" | "IVS104"
   | "IVS105" | "IVS106" | "IVS400" | "IVS410";
 
-export type QCGrade = "excellent" | "very_good" | "good" | "acceptable" | "poor";
+export type QCGrade = "excellent" | "very_good" | "good" | "poor";
 
 export interface IVSCheckItem {
   ref: string;           // e.g. "20.1(أ)"
