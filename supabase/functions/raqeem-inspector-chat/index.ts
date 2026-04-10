@@ -168,7 +168,7 @@ ${inspectionsSummary}${currentInspectionSection}`;
 
     aiMessages.push({ role: "user", content: message });
 
-    const model = "openai/gpt-5-nano";
+    const model = "google/gemini-2.5-flash-lite";
 
     // ── Helper: process action tokens ──
     async function processActions(reply: string) {
@@ -226,9 +226,8 @@ ${inspectionsSummary}${currentInspectionSection}`;
     // ── Post-processing: sanitize Arabic output ──
     function sanitizeArabicReply(text: string): string {
       let clean = text;
-      // Remove orphan single-character fragments that aren't valid Arabic words
-      clean = clean.replace(/(?<!\S)[^\s\d\w\u0600-\u06FF](?!\S)/g, "");
-      // Fix common AI glitches
+
+      // 1) Fix known AI glitch phrases
       const fixes: [RegExp, string][] = [
         [/لا يوجد حالة/g, "لا توجد معاينات حالية"],
         [/لا توجد أيينات/g, "لا توجد معاينات"],
@@ -236,21 +235,48 @@ ${inspectionsSummary}${currentInspectionSection}`;
         [/موقع جار المعاينة/g, "لا توجد معاينة جارية حالياً"],
         [/لا يوجد معاينات/g, "لا توجد معاينات"],
         [/لا يوجد مهام/g, "لا توجد مهام"],
-        [/أبدأ المعاينة/g, "أبدأ المعاينة"],
         [/تم بدء المعاينة/g, "تم تسجيل بدء المعاينة"],
+        [/الإجراءوب/g, "الإجراء"],
+        [/وسأسجّلاغ/g, "وسأسجّل"],
       ];
       for (const [pattern, replacement] of fixes) {
         clean = clean.replace(pattern, replacement);
       }
-      // Remove lines that are too short to be meaningful (likely broken fragments)
+
+      // 2) Remove words with garbled Arabic (mixed valid+invalid sequences at word boundaries)
+      // Detect words that end or start with orphan Arabic letters glued to non-Arabic chars
+      clean = clean.replace(/[\u0600-\u06FF]{1,2}(?=[^\s\u0600-\u06FF\d.,،:؛؟!)\]}>»"'])/g, "");
+      clean = clean.replace(/(?<=[^\s\u0600-\u06FF\d.,،:؛؟!(\[{<«"'])[\u0600-\u06FF]{1,2}/g, "");
+
+      // 3) Remove words that look like broken Arabic tokens (very short fragments surrounded by spaces)
+      clean = clean.split(/\s+/).map(word => {
+        // Keep non-Arabic words, numbers, punctuation, markdown, emoji
+        if (!/[\u0600-\u06FF]/.test(word)) return word;
+        // Keep Arabic words that are at least 2 real chars (excluding diacritics)
+        const stripped = word.replace(/[\u064B-\u065F\u0670]/g, "");
+        if (stripped.length >= 2) return word;
+        return "";
+      }).filter(Boolean).join(" ");
+
+      // 4) Fix sentences that end mid-word (trailing incomplete Arabic)
+      clean = clean.replace(/[\u0600-\u06FF][\u064B-\u065F\u0670]*$/gm, (match) => {
+        // If trailing fragment is very short, remove it
+        const stripped = match.replace(/[\u064B-\u065F\u0670]/g, "");
+        return stripped.length >= 3 ? match : "";
+      });
+
+      // 5) Remove lines that are too short to be meaningful
       clean = clean.split("\n").filter(line => {
         const trimmed = line.trim();
-        if (trimmed.length === 0) return true; // keep empty lines
-        if (trimmed.length <= 2 && !/^[-•*#>]/.test(trimmed) && !/^\d+$/.test(trimmed)) return false;
+        if (trimmed.length === 0) return true;
+        if (trimmed.length <= 2 && !/^[-•*#>✅⚠️📋📍▶️📸❓]/.test(trimmed) && !/^\d+$/.test(trimmed)) return false;
         return true;
       }).join("\n");
-      // Collapse excessive newlines
+
+      // 6) Collapse excessive whitespace
       clean = clean.replace(/\n{4,}/g, "\n\n\n");
+      clean = clean.replace(/ {2,}/g, " ");
+
       return clean.trim();
     }
 
