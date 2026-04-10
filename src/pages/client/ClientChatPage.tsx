@@ -3,9 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
@@ -13,16 +12,17 @@ import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicato
 import { getGlobalChatInit } from "@/components/client/chat/globalChatInit";
 import { AI } from "@/config/assistantIdentity";
 import {
-  Send, Paperclip, Plus, FileText, Clock, CreditCard,
-  ClipboardCheck, HelpCircle, Upload, Sparkles, MessageSquare,
-  ArrowRight,
+  Send, Paperclip, Plus, FileText, CreditCard,
+  Sparkles, MessageSquare, ArrowRight, ThumbsUp, ThumbsDown,
 } from "lucide-react";
 
 interface ChatMessage {
   id: string;
+  dbId?: string; // DB UUID for feedback
   role: "user" | "assistant" | "system";
   content: string;
   timestamp: string;
+  feedback?: "thumbs_up" | "thumbs_down" | null;
 }
 
 interface SuggestedAction {
@@ -46,6 +46,39 @@ const ACTION_ICONS: Record<string, React.ReactNode> = {
   "الخطوة التالية": <ArrowRight className="w-3.5 h-3.5" />,
 };
 
+// ── Fast-path intent detection (client-side) ──
+const FAST_INTENTS: { pattern: RegExp; intent: string }[] = [
+  { pattern: /ملخص|حالة.*طلب|وين.*وصل|ايش.*اخر|آخر.*تطور/i, intent: "status_summary" },
+  { pattern: /نواقص|ناقص|مطلوب.*من/i, intent: "missing_items" },
+  { pattern: /خطوة.*تالي|المطلوب.*مني|ايش.*اسوي/i, intent: "next_step" },
+  { pattern: /طلب.*جديد|تقييم.*جديد|أريد.*تقديم/i, intent: "new_request" },
+  { pattern: /عرض.*سعر|تسعير|كم.*تكلف/i, intent: "pricing" },
+  { pattern: /دفع|سداد|تحويل|فاتور/i, intent: "payment" },
+  { pattern: /مدة|كم.*يوم|متى.*جاهز|وقت/i, intent: "timeline" },
+];
+
+function detectFastIntent(text: string): string | null {
+  for (const { pattern, intent } of FAST_INTENTS) {
+    if (pattern.test(text)) return intent;
+  }
+  return null;
+}
+
+function formatTime(iso: string): string {
+  const d = new Date(iso);
+  return d.toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit", hour12: true });
+}
+
+// ── Session ID (per browser session) ──
+function getSessionId(): string {
+  let sid = sessionStorage.getItem("chat_session_id");
+  if (!sid) {
+    sid = crypto.randomUUID();
+    sessionStorage.setItem("chat_session_id", sid);
+  }
+  return sid;
+}
+
 export default function ClientChatPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -56,14 +89,15 @@ export default function ClientChatPage() {
   const [userId, setUserId] = useState("");
   const [initialized, setInitialized] = useState(false);
   const [suggestedActions, setSuggestedActions] = useState<SuggestedAction[]>(GLOBAL_QUICK_ACTIONS);
-  const chatEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initCalledRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
   const sendingRef = useRef(false);
   const shouldAutoScrollRef = useRef(true);
   const scrollBehaviorRef = useRef<ScrollBehavior>("auto");
+  const sessionId = useRef(getSessionId());
 
   const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
     messagesRef.current = nextMessages;
@@ -76,10 +110,7 @@ export default function ClientChatPage() {
       message.role === "assistant" &&
       lastMessage?.role === "assistant" &&
       lastMessage.content.trim() === message.content.trim()
-    ) {
-      return;
-    }
-
+    ) return;
     replaceMessages([...messagesRef.current, message]);
   }, [replaceMessages]);
 
@@ -88,6 +119,22 @@ export default function ClientChatPage() {
     replaceMessages([message]);
   }, [replaceMessages]);
 
+  // ── Persist message to DB ──
+  const persistMessage = useCallback(async (msg: ChatMessage): Promise<string | null> => {
+    if (!userId) return null;
+    try {
+      const { data, error } = await supabase.from("client_chat_messages" as any).insert({
+        user_id: userId,
+        session_id: sessionId.current,
+        role: msg.role,
+        content: msg.content,
+        metadata: {},
+      } as any).select("id").single();
+      if (error) { console.error("Persist msg error:", error); return null; }
+      return (data as any)?.id || null;
+    } catch { return null; }
+  }, [userId]);
+
   const getScrollViewport = useCallback(() => {
     return scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]") as HTMLDivElement | null;
   }, []);
@@ -95,37 +142,29 @@ export default function ClientChatPage() {
   const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
     const viewport = getScrollViewport();
     if (!viewport) return;
-
-    viewport.scrollTo({
-      top: viewport.scrollHeight,
-      behavior,
-    });
+    viewport.scrollTo({ top: viewport.scrollHeight, behavior });
   }, [getScrollViewport]);
 
   useEffect(() => {
     const viewport = getScrollViewport();
     if (!viewport) return;
-
     const handleScroll = () => {
-      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
-      shouldAutoScrollRef.current = distanceFromBottom < 120;
+      const dist = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      shouldAutoScrollRef.current = dist < 120;
     };
-
     handleScroll();
     viewport.addEventListener("scroll", handleScroll);
-
     return () => viewport.removeEventListener("scroll", handleScroll);
   }, [getScrollViewport, initialized]);
 
   useEffect(() => {
     if (!messages.length || !shouldAutoScrollRef.current) return;
-
     const behavior = scrollBehaviorRef.current;
     requestAnimationFrame(() => scrollToBottom(behavior));
     scrollBehaviorRef.current = "auto";
   }, [messages, scrollToBottom]);
 
-  // Init: load user, send proactive first message
+  // ── Init ──
   useEffect(() => {
     if (initCalledRef.current) return;
     initCalledRef.current = true;
@@ -143,10 +182,8 @@ export default function ClientChatPage() {
       const name = profile?.full_name_ar || user.user_metadata?.full_name || "عميل";
       setUserName(name);
 
-      // Send proactive first message
       try {
         const data = await getGlobalChatInit(user.id);
-
         if (data?.reply) {
           seedInitialMessage({
             id: `ai-${Date.now()}`,
@@ -156,7 +193,6 @@ export default function ClientChatPage() {
           });
           if (data.suggestedActions) setSuggestedActions(data.suggestedActions);
         } else {
-          // Fallback welcome
           seedInitialMessage({
             id: `welcome-${Date.now()}`,
             role: "assistant",
@@ -177,6 +213,27 @@ export default function ClientChatPage() {
     init();
   }, [navigate, seedInitialMessage]);
 
+  // ── Feedback handler ──
+  const handleFeedback = useCallback(async (msgId: string, dbId: string | undefined, rating: "thumbs_up" | "thumbs_down") => {
+    if (!dbId || !userId) return;
+
+    // Optimistic update
+    replaceMessages(messagesRef.current.map(m =>
+      m.id === msgId ? { ...m, feedback: rating } : m
+    ));
+
+    try {
+      await supabase.from("client_chat_feedback" as any).upsert({
+        message_id: dbId,
+        user_id: userId,
+        rating,
+      } as any, { onConflict: "message_id,user_id" as any });
+    } catch (e) {
+      console.error("Feedback save error:", e);
+    }
+  }, [userId, replaceMessages]);
+
+  // ── Send message ──
   const sendMessage = useCallback(async (text: string) => {
     const trimmedText = text.trim();
     if (!trimmedText || sendingRef.current) return;
@@ -184,22 +241,35 @@ export default function ClientChatPage() {
     shouldAutoScrollRef.current = true;
     scrollBehaviorRef.current = "smooth";
 
+    const now = new Date().toISOString();
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
       content: trimmedText,
-      timestamp: new Date().toISOString(),
+      timestamp: now,
     };
     appendMessage(userMsg);
     setInput("");
     sendingRef.current = true;
     setSending(true);
 
+    // Persist user message (fire-and-forget)
+    persistMessage(userMsg).then(dbId => {
+      if (dbId) {
+        replaceMessages(messagesRef.current.map(m =>
+          m.id === userMsg.id ? { ...m, dbId } : m
+        ));
+      }
+    });
+
     try {
-      const history = messagesRef.current.slice(-8).map((message) => ({
-        content: message.content,
-        sender_type: message.role === "user" ? "client" : "ai",
+      const history = messagesRef.current.slice(-6).map((m) => ({
+        content: m.content,
+        sender_type: m.role === "user" ? "client" : "ai",
       }));
+
+      // Detect fast intent
+      const fastIntent = detectFastIntent(trimmedText);
 
       const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
@@ -207,6 +277,7 @@ export default function ClientChatPage() {
           is_global_chat: true,
           conversationHistory: history,
           requestContext: { client_user_id: userId },
+          fast_intent: fastIntent,
         },
       });
 
@@ -214,27 +285,29 @@ export default function ClientChatPage() {
 
       const reply = data?.reply?.trim();
       if (reply) {
-        appendMessage({
+        const aiMsg: ChatMessage = {
           id: `ai-${Date.now()}`,
           role: "assistant",
           content: reply,
           timestamp: new Date().toISOString(),
+          feedback: null,
+        };
+        appendMessage(aiMsg);
+
+        // Persist AI message
+        persistMessage(aiMsg).then(dbId => {
+          if (dbId) {
+            replaceMessages(messagesRef.current.map(m =>
+              m.id === aiMsg.id ? { ...m, dbId } : m
+            ));
+          }
         });
       }
 
-      // Handle action tokens
-      if (data?.newRequestTriggered) {
-        navigate("/client/new-request");
-      }
-      if (data?.switchedRequestId) {
-        navigate(`/client/request/${data.switchedRequestId}`);
-      }
-      if (data?.suggestedActions) {
-        setSuggestedActions(data.suggestedActions);
-      }
-      if (data?.scopeApproved) {
-        toast({ title: "تم اعتماد نطاق العمل بنجاح" });
-      }
+      if (data?.newRequestTriggered) navigate("/client/new-request");
+      if (data?.switchedRequestId) navigate(`/client/request/${data.switchedRequestId}`);
+      if (data?.suggestedActions) setSuggestedActions(data.suggestedActions);
+      if (data?.scopeApproved) toast({ title: "تم اعتماد نطاق العمل بنجاح" });
     } catch (err) {
       console.error("Chat error:", err);
       appendMessage({
@@ -247,27 +320,23 @@ export default function ClientChatPage() {
       sendingRef.current = false;
       setSending(false);
     }
-  }, [userId, navigate, toast, appendMessage]);
+  }, [userId, navigate, toast, appendMessage, persistMessage, replaceMessages]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files?.length) return;
-    
     const fileNames = Array.from(files).map(f => f.name).join("، ");
-    
-    // Upload files
     for (const file of Array.from(files)) {
       const path = `client-data/global/${userId}/${crypto.randomUUID()}_${file.name}`;
       await supabase.storage.from("client-uploads").upload(path, file);
     }
-    
     sendMessage(`تم رفع الملفات التالية: ${fileNames}`);
     e.target.value = "";
   };
 
   return (
     <div className="bg-background h-[calc(100vh-56px)] flex flex-col" dir="rtl">
-      {/* Chat Header */}
+      {/* Header */}
       <div className="border-b border-border bg-card px-4 py-3">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <RaqeemAnimatedLogo size={36} />
@@ -297,22 +366,54 @@ export default function ClientChatPage() {
                   <RaqeemAnimatedLogo size={28} />
                 </div>
               )}
-              <div
-                className={`max-w-[85%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : msg.role === "system"
-                    ? "bg-muted/50 text-muted-foreground text-xs border border-border"
-                    : "bg-card border border-border text-foreground"
-                }`}
-              >
-                {msg.role === "assistant" ? (
-                  <div className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-                    <ReactMarkdown>{msg.content}</ReactMarkdown>
-                  </div>
-                ) : (
-                  <p className="whitespace-pre-wrap">{msg.content}</p>
-                )}
+              <div className={`max-w-[85%] ${msg.role === "user" ? "text-left" : ""}`}>
+                <div
+                  className={`rounded-xl px-4 py-3 text-sm leading-relaxed ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : msg.role === "system"
+                      ? "bg-muted/50 text-muted-foreground text-xs border border-border"
+                      : "bg-card border border-border text-foreground"
+                  }`}
+                >
+                  {msg.role === "assistant" ? (
+                    <div className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                      <ReactMarkdown>{msg.content}</ReactMarkdown>
+                    </div>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{msg.content}</p>
+                  )}
+                </div>
+
+                {/* Timestamp + Feedback row */}
+                <div className={`flex items-center gap-2 mt-1 px-1 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
+                  <span className="text-[10px] text-muted-foreground/70">{formatTime(msg.timestamp)}</span>
+
+                  {msg.role === "assistant" && msg.id !== messages[0]?.id && (
+                    <div className="flex items-center gap-0.5">
+                      <button
+                        onClick={() => handleFeedback(msg.id, msg.dbId, "thumbs_up")}
+                        disabled={!!msg.feedback}
+                        className={`p-1 rounded hover:bg-muted/50 transition-colors ${
+                          msg.feedback === "thumbs_up" ? "text-primary" : "text-muted-foreground/50 hover:text-muted-foreground"
+                        } ${msg.feedback ? "cursor-default" : "cursor-pointer"}`}
+                        title="إجابة مفيدة"
+                      >
+                        <ThumbsUp className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => handleFeedback(msg.id, msg.dbId, "thumbs_down")}
+                        disabled={!!msg.feedback}
+                        className={`p-1 rounded hover:bg-muted/50 transition-colors ${
+                          msg.feedback === "thumbs_down" ? "text-destructive" : "text-muted-foreground/50 hover:text-muted-foreground"
+                        } ${msg.feedback ? "cursor-default" : "cursor-pointer"}`}
+                        title="إجابة غير مفيدة"
+                      >
+                        <ThumbsDown className="w-3 h-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}

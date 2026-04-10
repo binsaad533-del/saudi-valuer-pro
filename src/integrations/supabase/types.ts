@@ -496,6 +496,74 @@ export type Database = {
         }
         Relationships: []
       }
+      client_chat_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          rating: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          rating: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          rating?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_chat_feedback_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "client_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      client_chat_messages: {
+        Row: {
+          assignment_id: string | null
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          request_id: string | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          assignment_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string | null
+          role: string
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          assignment_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          request_id?: string | null
+          role?: string
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       client_engagement_scores: {
         Row: {
           activity_status: string | null
