@@ -164,7 +164,10 @@ export default function RaqeemChatPage() {
       source_page: sourcePage,
     };
 
-    // Fetch full assignment details from DB
+    // Set context IMMEDIATELY with URL params so it's available for early messages
+    setPlatformContext(ctx);
+
+    // Then enrich with DB data asynchronously
     const fetchContext = async () => {
       setContextLoading(true);
       try {
@@ -197,7 +200,6 @@ export default function RaqeemChatPage() {
             .maybeSingle();
           if (data?.assignment_id) {
             ctx.assignment_id = data.assignment_id;
-            // Fetch assignment details
             const { data: aData } = await supabase
               .from("valuation_assignments")
               .select("reference_number, status, property_type, clients(name_ar)")
@@ -214,7 +216,8 @@ export default function RaqeemChatPage() {
       } catch (e) {
         console.error("Context fetch error:", e);
       } finally {
-        setPlatformContext(ctx);
+        // Update with enriched data
+        setPlatformContext({ ...ctx });
         setContextLoading(false);
       }
     };
