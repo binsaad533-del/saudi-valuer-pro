@@ -3665,7 +3665,17 @@ serve(async (req) => {
             const resolvedArgs = await resolveIdsFromContext(db, platformContext, JSON.parse(tc.function.arguments || "{}"));
             resolvedToolCalls.push({ ...tc, resolvedArgs });
           }
-...
+
+          const statusEvent = {
+            type: "orchestration_status",
+            tools: resolvedToolCalls.map((tc: any) => ({
+              name: tc.function.name,
+              args: tc.resolvedArgs,
+              status: "running"
+            }))
+          };
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "" }, orchestration: statusEvent }] })}\n\n`));
+
           for (const tc of resolvedToolCalls) {
             const args = tc.resolvedArgs;
             const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey, platformContext);
