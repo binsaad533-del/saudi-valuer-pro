@@ -10,10 +10,10 @@
 
 export const ASSISTANT_IDENTITY = {
   /** Display name shown in UI and chat */
-  name: "ChatGPT",
+  name: "رقيم",
 
   /** Full branded title (used in headers and welcome messages) */
-  title: "ChatGPT – مساعدك الذكي",
+  title: "رقيم — مساعدك الذكي",
 
   /** Short description for tooltips and status bars */
   description: "المساعد الذكي لمنصة جساس للتقييم",
@@ -36,28 +36,28 @@ export const ASSISTANT_IDENTITY = {
   ],
 
   /** Audit log source label */
-  auditSource: "ChatGPT",
+  auditSource: "رقيم",
 
   /** Action description template — use with template literals */
-  actionVia: (action: string) => `${action} عبر ChatGPT`,
+  actionVia: (action: string) => `${action} عبر رقيم`,
 
   /** Typing indicator text */
-  typingText: "ChatGPT يكتب...",
+  typingText: "رقيم يكتب...",
 
   /** Thinking indicator text */
-  thinkingText: "ChatGPT يفكر...",
+  thinkingText: "رقيم يفكر...",
 
   /** Status active label */
-  activeLabel: "ChatGPT نشط",
+  activeLabel: "رقيم نشط",
 
   /** Input placeholder for chat */
-  chatPlaceholder: "اسأل ChatGPT أو اكتب ملاحظة...",
+  chatPlaceholder: "اسأل رقيم أو اكتب ملاحظة...",
 
   /** Error fallback message */
-  errorMessage: "تعذر التواصل مع ChatGPT حالياً، يرجى المحاولة لاحقاً.",
+  errorMessage: "تعذر التواصل مع رقيم حالياً، يرجى المحاولة لاحقاً.",
 
   /** Welcome message builder */
-  welcomeGreeting: (userName: string) => `مرحباً ${userName} 👋\n\nأنا **ChatGPT – مساعدك الذكي** في جساس للتقييم.`,
+  welcomeGreeting: (userName: string) => `مرحباً ${userName} 👋\n\nأنا **رقيم — مساعدك الذكي** في جساس للتقييم.`,
 
   /** Build the core system prompt identity block */
   systemPromptIdentity: () =>
