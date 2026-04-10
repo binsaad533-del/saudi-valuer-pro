@@ -109,15 +109,31 @@ function getFileIcon(type: string) {
   return File;
 }
 
+interface PlatformContext {
+  assignment_id?: string;
+  request_id?: string;
+  reference_number?: string;
+  current_status?: string;
+  property_type?: string;
+  client_name?: string;
+  source_page?: string;
+  user_role?: string;
+}
+
 export default function RaqeemChatPage() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
+  const [platformContext, setPlatformContext] = useState<PlatformContext>({});
+  const [contextLoading, setContextLoading] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,6 +142,85 @@ export default function RaqeemChatPage() {
 
   const suggestedPrompts = ROLE_PROMPTS[effectiveRole] || ROLE_PROMPTS.client;
   const quickActions = ROLE_QUICK_ACTIONS[effectiveRole] || ROLE_QUICK_ACTIONS.client;
+
+  // ── Load platform context from URL params or navigation state ──
+  useEffect(() => {
+    const navState = location.state as any;
+    const assignmentId = searchParams.get("assignment_id") || navState?.assignment_id;
+    const requestId = searchParams.get("request_id") || navState?.request_id;
+    const refNumber = searchParams.get("reference_number") || navState?.reference_number;
+    const sourcePage = navState?.source_page || document.referrer || location.pathname;
+
+    if (!assignmentId && !requestId) {
+      setPlatformContext({ user_role: effectiveRole, source_page: sourcePage });
+      return;
+    }
+
+    const ctx: PlatformContext = {
+      assignment_id: assignmentId || undefined,
+      request_id: requestId || undefined,
+      reference_number: refNumber || undefined,
+      user_role: effectiveRole,
+      source_page: sourcePage,
+    };
+
+    // Fetch full assignment details from DB
+    const fetchContext = async () => {
+      setContextLoading(true);
+      try {
+        if (assignmentId) {
+          const { data } = await supabase
+            .from("valuation_assignments")
+            .select("id, reference_number, status, property_type, notes, clients(name_ar)")
+            .eq("id", assignmentId)
+            .maybeSingle();
+          if (data) {
+            ctx.reference_number = ctx.reference_number || data.reference_number || undefined;
+            ctx.current_status = data.status || undefined;
+            ctx.property_type = data.property_type || undefined;
+            ctx.client_name = (data.clients as any)?.name_ar || undefined;
+          }
+          // Also get request_id if not provided
+          if (!requestId) {
+            const { data: reqData } = await supabase
+              .from("valuation_requests")
+              .select("id")
+              .eq("assignment_id", assignmentId)
+              .maybeSingle();
+            if (reqData) ctx.request_id = reqData.id;
+          }
+        } else if (requestId) {
+          const { data } = await supabase
+            .from("valuation_requests")
+            .select("id, assignment_id")
+            .eq("id", requestId)
+            .maybeSingle();
+          if (data?.assignment_id) {
+            ctx.assignment_id = data.assignment_id;
+            // Fetch assignment details
+            const { data: aData } = await supabase
+              .from("valuation_assignments")
+              .select("reference_number, status, property_type, clients(name_ar)")
+              .eq("id", data.assignment_id)
+              .maybeSingle();
+            if (aData) {
+              ctx.reference_number = aData.reference_number || undefined;
+              ctx.current_status = aData.status || undefined;
+              ctx.property_type = aData.property_type || undefined;
+              ctx.client_name = (aData.clients as any)?.name_ar || undefined;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Context fetch error:", e);
+      } finally {
+        setPlatformContext(ctx);
+        setContextLoading(false);
+      }
+    };
+
+    fetchContext();
+  }, [searchParams, location.state, effectiveRole]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
