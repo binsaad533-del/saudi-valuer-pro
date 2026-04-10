@@ -91,9 +91,9 @@ Deno.serve(async (req) => {
         .select("role")
         .eq("user_id", user.id);
 
-      const isOwner = roles?.some((r: any) => ["owner", "super_admin", "firm_admin"].includes(r.role));
+      const isOwner = roles?.some((r: any) => ["owner", "super_admin", "firm_admin", "financial_manager"].includes(r.role));
       if (!isOwner) {
-        return new Response(JSON.stringify({ error: "Owner access required" }), { status: 403, headers: corsHeaders });
+        return new Response(JSON.stringify({ error: "Access denied" }), { status: 403, headers: corsHeaders });
       }
 
       const { data: payment } = await supabase
@@ -104,6 +104,29 @@ Deno.serve(async (req) => {
 
       if (!payment) {
         return new Response(JSON.stringify({ error: "Payment not found" }), { status: 404, headers: corsHeaders });
+      }
+
+      // ── HARD GATE: Block confirmation without proof ──
+      if (decision === "paid") {
+        const hasProof = (payment as any).payment_proof_path?.trim() || (payment as any).proof_url?.trim();
+        if (!hasProof) {
+          // Log blocked attempt
+          await supabase.from("audit_logs").insert({
+            user_id: user.id,
+            action: "reject" as any,
+            table_name: "payments",
+            record_id: paymentId,
+            assignment_id: (payment as any).assignment_id,
+            description: "رفض تأكيد الدفعة — لا يوجد إثبات سداد مرفق في النظام",
+            new_data: { rejected: true, reason: "no_proof", payment_id: paymentId },
+            user_role: roles?.find((r: any) => r.role)?.role || "unknown",
+          } as any).catch(() => {});
+
+          return new Response(JSON.stringify({
+            error: "لا يمكن تأكيد الدفعة بدون إثبات سداد مرفق. يرجى إرفاق إثبات التحويل أولاً.",
+            code: "NO_PROOF",
+          }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
       }
 
       const newStatus = decision === "paid" ? "paid" : "rejected";
