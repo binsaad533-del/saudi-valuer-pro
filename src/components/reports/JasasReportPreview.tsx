@@ -152,6 +152,7 @@ const TOTAL_PAGES = 17;
 /* ── Company & Valuer Identity (read-only — sourced from shared identity) ── */
 import { JSAAS_IDENTITY, getReportFooterText } from "@/lib/company-identity";
 import ReportAccreditationSection from "./ReportAccreditationSection";
+import ReportDisclaimerSection from "./ReportDisclaimerSection";
 
 const COMPANY_IDENTITY = {
   companyName: JSAAS_IDENTITY.companyName,
@@ -1019,10 +1020,19 @@ function DisclosuresPage() {
   );
 }
 
+/* ── Professional Disclaimer (before signature) ── */
+function DisclaimerPage() {
+  return (
+    <PageShell pageNum={17}>
+      <ReportDisclaimerSection />
+    </PageShell>
+  );
+}
+
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={17}>
+    <PageShell pageNum={18}>
       <ReportAccreditationSection />
     </PageShell>
   );
@@ -1143,6 +1153,7 @@ export default function JasasReportPreview() {
         <DataSourcesPage />
         <RiskStatementPage />
         <DisclosuresPage />
+        <DisclaimerPage />
         <AccreditationPage />
       </div>
     </div>
