@@ -695,7 +695,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     ];
 
     if (conversationHistory?.length) {
-      for (const msg of conversationHistory.slice(-8)) {
+      for (const msg of conversationHistory.slice(-6)) {
         if (msg.role === "client" || msg.sender_type === "client") {
           messages.push({ role: "user", content: msg.content });
         } else if (msg.role === "ai" || msg.sender_type === "ai") {
