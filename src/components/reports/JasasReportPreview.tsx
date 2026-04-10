@@ -1,7 +1,7 @@
 import { useRef, useCallback, useMemo } from "react";
 import { Separator } from "@/components/ui/separator";
 import { QRCodeSVG } from "qrcode.react";
-import logo from "@/assets/logo.png";
+import jasasLogo from "@/assets/jasas-logo.png";
 
 /* ══════════════════════════════════════════════
    Sample Data
@@ -121,8 +121,8 @@ function WatermarkOverlay() {
 function PageHeader() {
   return (
     <div className="flex items-center justify-between pb-3 mb-4 border-b border-border/40">
-      <img src={logo} alt="جساس" className="w-7 h-7 object-contain" />
       <span className="text-[10px] text-muted-foreground font-medium">{SAMPLE.reportNumber}</span>
+      <img src={jasasLogo} alt="جساس للتقييم" className="h-8 w-auto object-contain" />
     </div>
   );
 }
@@ -217,11 +217,8 @@ function CoverPage() {
   return (
     <PageShell pageNum={1} noHeader>
       <div className="flex flex-col h-full justify-between">
-        <div className="flex items-start justify-between">
-          <img src={logo} alt="جساس" className="w-14 h-14 object-contain" />
-          <div className="text-left" dir="ltr">
-            <p className="text-[10px] text-muted-foreground font-medium">Jassas Valuation Co.</p>
-          </div>
+        <div className="flex items-center justify-end">
+          <img src={jasasLogo} alt="جساس للتقييم" className="h-16 w-auto object-contain" />
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
           <div className="space-y-2">
