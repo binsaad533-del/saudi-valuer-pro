@@ -407,8 +407,8 @@ function CoverPage({ mode, versionNum }: { mode: "draft" | "final"; versionNum: 
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">تقرير تقييم</h1>
-            <h2 className="text-xl font-semibold text-primary">الآلات والمعدات</h2>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">تقرير تقييم مركب</h1>
+            <h2 className="text-xl font-semibold text-primary">عقار + آلات ومعدات</h2>
           </div>
           <Separator className="w-24 mx-auto" />
           <div className="space-y-3 text-sm text-muted-foreground">
