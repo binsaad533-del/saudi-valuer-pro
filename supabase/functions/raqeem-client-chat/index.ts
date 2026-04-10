@@ -804,41 +804,55 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     const suggestedActions: { label: string; message: string }[] = [];
     const status = ctx.status;
 
-    // Universal actions
-    suggestedActions.push({ label: "⏱️ المدة المتوقعة", message: "كم المدة المتوقعة لإنجاز التقييم؟" });
+    // Global chat actions — no request context
+    if (isGlobalChat && allClientRequests.length === 0) {
+      suggestedActions.push({ label: "🆕 طلب تقييم جديد", message: "أريد تقديم طلب تقييم جديد" });
+      suggestedActions.push({ label: "❓ ما هو التقييم العقاري؟", message: "اشرح لي ما هو التقييم العقاري وكيف يتم" });
+      suggestedActions.push({ label: "📋 الخدمات المتاحة", message: "ما هي خدمات التقييم المتاحة؟" });
+    } else if (isGlobalChat && allClientRequests.length > 0) {
+      // Suggest based on most urgent action
+      const needsScope = allClientRequests.find(r => r.status === "scope_generated");
+      const needsReview = allClientRequests.find(r => r.status === "client_review");
+      const needsPayment = allClientRequests.find(r => ["scope_approved", "draft_approved"].includes(r.status));
 
-    // Cancellation action for eligible statuses
-    if (["draft", "submitted", "scope_generated"].includes(status || "")) {
-      suggestedActions.push({ label: "❌ إلغاء الطلب", message: "أرغب في إلغاء طلب التقييم" });
+      if (needsScope) suggestedActions.push({ label: "✅ مراجعة عرض السعر", message: "أريد مراجعة عرض السعر والموافقة عليه" });
+      if (needsReview) suggestedActions.push({ label: "📝 مراجعة المسودة", message: "أريد مراجعة مسودة التقرير" });
+      if (needsPayment) suggestedActions.push({ label: "💳 إتمام الدفع", message: "أريد سداد المبلغ المطلوب" });
+      suggestedActions.push({ label: "📊 حالة طلباتي", message: "أعطني ملخص حالة كل طلباتي" });
+      suggestedActions.push({ label: "🆕 طلب جديد", message: "أريد تقديم طلب تقييم جديد" });
     }
 
-    if (status === "submitted" || status === "under_pricing") {
-      suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
-      suggestedActions.push({ label: "📊 تقدير أولي", message: "هل يمكنك إعطائي تقدير أولي للقيمة؟" });
-    } else if (status === "scope_generated") {
-      suggestedActions.push({ label: "📋 شرح النطاق", message: "اشرح لي نطاق العمل بالتفصيل" });
-      suggestedActions.push({ label: "💰 تفاصيل السعر", message: "ما تفاصيل عرض السعر؟" });
-    } else if (status === "data_collection_open") {
-      suggestedActions.push({ label: "📎 ملفات ناقصة", message: "هل هناك ملفات ناقصة في طلبي؟" });
-      suggestedActions.push({ label: "📊 نسبة الاكتمال", message: "كم نسبة اكتمال ملف طلبي؟" });
-    } else if (status === "inspection_pending" || status === "inspection_completed") {
-      if (isDesktop) {
-        suggestedActions.push({ label: "📋 حالة التحليل", message: "ما وضع التحليل الحالي في طلبي المكتبي؟" });
-        suggestedActions.push({ label: "⚠️ المخاطر", message: "هل توجد مخاطر أو نواقص قد تؤثر على التقييم المكتبي؟" });
-      } else {
-        suggestedActions.push({ label: "🔎 تفاصيل المعاينة", message: "ما تفاصيل المعاينة الميدانية؟" });
-        suggestedActions.push({ label: "⚠️ المخاطر", message: "هل هناك مخاطر متوقعة في هذا التقييم؟" });
+    // Request-specific actions (when context is available)
+    if (status) {
+      suggestedActions.push({ label: "⏱️ المدة المتوقعة", message: "كم المدة المتوقعة لإنجاز التقييم؟" });
+
+      if (["draft", "submitted", "scope_generated"].includes(status)) {
+        suggestedActions.push({ label: "❌ إلغاء الطلب", message: "أرغب في إلغاء طلب التقييم" });
       }
-    } else if (status === "professional_review" || status === "analysis_complete") {
-      suggestedActions.push({ label: "📋 حالة الامتثال", message: "ما حالة فحوصات الامتثال لطلبي؟" });
-      suggestedActions.push({ label: "🔍 المنهجيات", message: "ما المنهجيات المستخدمة في التقييم؟" });
-    } else if (status === "draft_report_ready" || status === "client_review") {
-      suggestedActions.push({ label: "📊 ملخص التقرير", message: "أعطني ملخص المسودة" });
-      suggestedActions.push({ label: "📈 مقارنة سوقية", message: "كيف تقارن القيمة مع السوق؟" });
-      suggestedActions.push({ label: "✅ جاهزية الإصدار", message: "ما نسبة جاهزية طلبي للإصدار النهائي؟" });
-    } else if (status === "issued") {
-      suggestedActions.push({ label: "✅ رمز التحقق", message: "ما هو رمز التحقق من التقرير؟" });
-      suggestedActions.push({ label: "📜 حقوقي", message: "ما هي حقوقي كعميل بعد صدور التقرير؟" });
+
+      if (status === "submitted" || status === "under_pricing") {
+        suggestedActions.push({ label: "📄 المستندات المطلوبة", message: "ما هي المستندات المطلوبة لإتمام التقييم؟" });
+      } else if (status === "scope_generated") {
+        suggestedActions.push({ label: "📋 شرح النطاق", message: "اشرح لي نطاق العمل بالتفصيل" });
+        suggestedActions.push({ label: "✅ موافقة على النطاق", message: "أوافق على نطاق العمل وعرض السعر" });
+      } else if (status === "data_collection_open") {
+        suggestedActions.push({ label: "📎 ملفات ناقصة", message: "هل هناك ملفات ناقصة في طلبي؟" });
+        suggestedActions.push({ label: "📊 نسبة الاكتمال", message: "كم نسبة اكتمال ملف طلبي؟" });
+      } else if (status === "inspection_pending" || status === "inspection_completed") {
+        if (isDesktop) {
+          suggestedActions.push({ label: "📋 حالة التحليل", message: "ما وضع التحليل الحالي في طلبي المكتبي؟" });
+        } else {
+          suggestedActions.push({ label: "🔎 تفاصيل المعاينة", message: "ما تفاصيل المعاينة الميدانية؟" });
+        }
+      } else if (status === "professional_review" || status === "analysis_complete") {
+        suggestedActions.push({ label: "📋 حالة الامتثال", message: "ما حالة فحوصات الامتثال لطلبي؟" });
+      } else if (status === "draft_report_ready" || status === "client_review") {
+        suggestedActions.push({ label: "📊 ملخص التقرير", message: "أعطني ملخص المسودة" });
+        suggestedActions.push({ label: "✅ اعتماد المسودة", message: "أوافق على المسودة وأعتمدها" });
+      } else if (status === "issued") {
+        suggestedActions.push({ label: "✅ رمز التحقق", message: "ما هو رمز التحقق من التقرير؟" });
+        suggestedActions.push({ label: "📜 حقوقي", message: "ما هي حقوقي كعميل بعد صدور التقرير؟" });
+      }
     }
 
     // Add document readiness indicator
@@ -847,6 +861,24 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       missing: docReadiness.missing,
       total: docReadiness.total,
     } : null;
+
+    // ── Audit log for all executed actions ──
+    if (executedActions.length > 0 && ctx.client_user_id) {
+      for (const action of executedActions) {
+        await db.from("audit_logs").insert({
+          user_id: ctx.client_user_id,
+          action: (["cancel", "scope_approve", "approve_draft"].includes(action) ? "status_change" : "create") as any,
+          table_name: "client_chat_action",
+          entity_type: "request",
+          record_id: ctx.assignment_id || null,
+          assignment_id: ctx.assignment_id || null,
+          description: `إجراء عبر ${AI.name}: ${action}`,
+          new_data: { action, source: "client_operating_layer", message: message.substring(0, 200) },
+          user_role: "client",
+          user_name: clientDisplayName || "عميل",
+        } as any).catch(e => console.error(`Audit log for action ${action} failed:`, e));
+      }
+    }
 
     // ── Save AI reply ──
     if (request_id) {
@@ -862,6 +894,12 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
 
     return new Response(JSON.stringify({
       reply, suggestedActions, documentReadiness, cancelExecuted,
+      scopeApproved: scopeApproved || false,
+      draftApproved: draftApproved || false,
+      executedActions,
+      switchedToAssignment,
+      isGlobalChat,
+      clientRequestsCount: allClientRequests.length,
       complianceReadiness: complianceStatus.totalChecks > 0 ? {
         percent: complianceStatus.mandatoryTotal > 0 ? Math.round((complianceStatus.mandatoryPassed / complianceStatus.mandatoryTotal) * 100) : 0,
         issuanceReady: complianceStatus.issuanceReady,
