@@ -1571,19 +1571,18 @@ const FIELD_LABELS: Record<string, string> = {
   assignments: "الطلبات", recent_requests: "الطلبات الأخيرة", platform_health: "صحة المنصة",
 };
 
-/** Convert an object to clean Arabic text lines — no JSON, no internal fields */
+/** Convert an object to executive-style Arabic text — no JSON, no internal fields */
 function formatObjectToText(obj: any, depth = 0): string {
   if (obj === null || obj === undefined) return "";
   if (typeof obj === "string") return obj;
   if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
   if (Array.isArray(obj)) {
-    return obj.map((item, i) => {
+    return obj.map((item) => {
       if (typeof item === "string") return `- ${item}`;
       if (typeof item === "object") return formatObjectToText(item, depth + 1);
       return `- ${String(item)}`;
     }).join("\n");
   }
-  // Object — convert each key-value pair to a labeled line
   const lines: string[] = [];
   for (const [key, value] of Object.entries(obj)) {
     if (key.startsWith("_") || key === "success" || key === "error") continue;
@@ -1596,18 +1595,23 @@ function formatObjectToText(obj: any, depth = 0): string {
       lines.push(`**${label}**:`);
       lines.push(formatObjectToText(value, depth + 1));
     } else {
-      lines.push(`- **${label}**: ${String(value)}`);
+      // Format numbers with locale for currency-like fields
+      const numericKeys = ["revenue", "amount", "week_revenue", "total_revenue", "pending_payments"];
+      const formatted = numericKeys.includes(key) && typeof value === "number"
+        ? `${value.toLocaleString("en-US")} ر.س`
+        : String(value);
+      lines.push(`- **${label}**: ${formatted}`);
     }
   }
   return lines.join("\n");
 }
 
-/** Format tool result for AI consumption — extract meaningful content only */
+/** Format tool result for AI — executive structure with decision framing */
 function formatToolResultForAI(toolResponse: any): string {
   if (!toolResponse) return "تم تنفيذ الإجراء بنجاح";
   
   if (!toolResponse.success) {
-    return toolResponse.error || "فشل تنفيذ الأداة";
+    return `⚠️ ${toolResponse.error || "فشل تنفيذ الأداة"}`;
   }
   
   const inner = toolResponse.result;
@@ -1618,7 +1622,19 @@ function formatToolResultForAI(toolResponse: any): string {
     return inner;
   }
   if (typeof inner === "object") {
-    return formatObjectToText(inner);
+    // Check for known executive summary patterns
+    const obj = inner as Record<string, any>;
+    const hasExecutiveFields = obj.reference_number || obj.total_active || obj.total_assignments || obj.platform_health;
+    
+    if (hasExecutiveFields) {
+      // Build executive summary with structured sections
+      const sections: string[] = [];
+      sections.push("📊 **ملخص تنفيذي**:");
+      sections.push(formatObjectToText(obj));
+      return sections.join("\n");
+    }
+    
+    return formatObjectToText(obj);
   }
   return String(inner);
 }
