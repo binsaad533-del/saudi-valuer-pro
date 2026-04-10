@@ -889,12 +889,47 @@ function DataSourcesPage() {
   );
 }
 
+/* ── Risk Statement ── */
+function RiskStatementPage() {
+  const { market, data, operational, reliance } = SAMPLE.riskStatement;
+  const categories = [
+    { title: "مخاطر السوق", items: market, color: "text-blue-600 dark:text-blue-400" },
+    { title: "مخاطر البيانات", items: data, color: "text-amber-600 dark:text-amber-400" },
+    { title: "مخاطر التشغيل", items: operational, color: "text-destructive" },
+    { title: "مخاطر الاعتماد", items: reliance, color: "text-muted-foreground" },
+  ];
+
+  return (
+    <PageShell pageNum={14}>
+      <div className="space-y-4">
+        <SectionTitle id="risk-statement" num={13} title="بيان المخاطر" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          يوضح هذا القسم المخاطر المرتبطة بنتيجة التقييم والتي يجب أخذها بعين الاعتبار عند اتخاذ القرار.
+        </p>
+
+        {categories.map((cat, i) => (
+          <div key={i} className="space-y-1.5">
+            <p className={`text-xs font-bold ${cat.color}`}>{cat.title}</p>
+            {cat.items.map((item, j) => <Bullet key={j}>{item}</Bullet>)}
+          </div>
+        ))}
+
+        <div className="border border-border rounded px-4 py-3 mt-2">
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            تم تحديد المخاطر بناءً على تحليل البيانات المتاحة والمعاينة الميدانية. يُنصح بمراجعة هذه المخاطر مع المستشار المالي أو القانوني قبل اتخاذ أي قرار استثماري.
+          </p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={14}>
+    <PageShell pageNum={15}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={13} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={14} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -910,9 +945,9 @@ function DisclosuresPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={15}>
+    <PageShell pageNum={16}>
       <div className="space-y-6">
-        <SectionTitle id="accreditation" num={14} title="الاعتماد والتوقيع" />
+        <SectionTitle id="accreditation" num={15} title="الاعتماد والتوقيع" />
 
         {/* Company */}
         <div className="space-y-3">
@@ -1088,6 +1123,7 @@ export default function JasasReportPreview() {
         <AssumptionImpactPage />
         <AssetTablePage />
         <DataSourcesPage />
+        <RiskStatementPage />
         <DisclosuresPage />
         <AccreditationPage />
       </div>
