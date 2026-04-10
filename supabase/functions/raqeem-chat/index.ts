@@ -2056,55 +2056,67 @@ async function executeTool(
       else if (rawStatus === "final_payment_pending") nextStep = "تأكيد الدفعة النهائية وإصدار التقرير";
       else if (rawStatus === "completed") nextStep = "الطلب مكتمل — لا إجراءات مطلوبة";
 
-      return {
-        success: true,
-        result: {
-          رقم_الطلب: assignment.reference_number,
-          الحالة: STATUS_AR[rawStatus] || rawStatus,
-          الغرض: PURPOSE_AR[rawPurpose] || rawPurpose || "—",
-          نوع_الأصل: PROP_TYPE_AR[rawPropType] || rawPropType || "—",
-          فرع_التقييم: VAL_TYPE_AR[rawValType] || rawValType || "—",
-          وضع_التنفيذ: MODE_AR[rawMode] || rawMode || "—",
-          القيمة_النهائية: assignment.final_value ? Number(assignment.final_value).toLocaleString() + " ر.س" : "لم تُحدد بعد",
-          العميل: {
-            الاسم: client?.name_ar || "—",
-            الهاتف: client?.phone || "غير مسجل",
-            البريد: client?.email || "غير مسجل",
-            النوع: CLIENT_TYPE_AR[rawClientType] || rawClientType || "—",
-          },
-          الأصل: subject ? {
-            المدينة: subject.city_ar || "—",
-            الحي: subject.district_ar || "—",
-            العنوان: subject.address_ar || "—",
-            مساحة_الأرض: subject.land_area ? `${subject.land_area} م²` : "—",
-            مساحة_البناء: subject.building_area ? `${subject.building_area} م²` : "—",
-            الوصف: req?.property_description_ar || subject.description_ar || "—",
-          } : "بيانات الأصل غير متوفرة",
-          المعاينة: {
-            الحالة: rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || rawInspStatus) : "غير مجدولة",
-            المعاين: inspectorName,
-            التاريخ: inspRes.data?.[0]?.inspection_date || "—",
-          },
-          المالية: {
-            الرسوم: req?.total_fees ? `${Number(req.total_fees).toLocaleString()} ر.س` : "لم تُحدد",
-            المدفوع: totalPaid ? `${totalPaid.toLocaleString()} ر.س` : "0 ر.س",
-            حالة_السداد: PAY_STATUS_AR[rawPayStatus] || rawPayStatus || "—",
-            عدد_الدفعات: payments.length,
-          },
-          الامتثال: {
-            المقارنات: compRes.data?.length || 0,
-            الافتراضات: assumRes.data?.length || 0,
-            التقرير: reportRes.data?.length ? "موجود" : "غير موجود",
-          },
-          التواريخ: {
-            الإنشاء: new Date(assignment.created_at).toLocaleDateString("ar-SA"),
-            آخر_تحديث: new Date(assignment.updated_at).toLocaleDateString("ar-SA"),
-          },
-          ملاحظات: assignment.notes || "—",
-          النواقص: missingItems.length > 0 ? missingItems : "لا نواقص",
-          الخطوة_التالية: nextStep,
-        }
+      // Build clean result — only non-empty values, Arabic only
+      const result: Record<string, any> = {
+        رقم_الطلب: assignment.reference_number,
+        الحالة: STATUS_AR[rawStatus] || rawStatus,
       };
+
+      const purposeAr = PURPOSE_AR[rawPurpose] || "";
+      if (purposeAr) result["الغرض"] = purposeAr;
+
+      const propTypeAr = PROP_TYPE_AR[rawPropType] || VAL_TYPE_AR[rawValType] || "";
+      if (propTypeAr) result["نوع_الأصل"] = propTypeAr;
+
+      const modeAr = MODE_AR[rawMode] || "";
+      if (modeAr) result["وضع_التنفيذ"] = modeAr;
+
+      if (assignment.final_value) {
+        result["القيمة_النهائية"] = Number(assignment.final_value).toLocaleString() + " ر.س";
+      }
+
+      // Inspection — only if relevant
+      if (rawMode === "field" || rawInspStatus) {
+        result["المعاينة"] = {
+          الحالة: rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || "غير محددة") : "غير مجدولة",
+        };
+        if (inspectorName !== "—") result["المعاينة"]["المعاين"] = inspectorName;
+        if (inspRes.data?.[0]?.inspection_date) result["المعاينة"]["التاريخ"] = inspRes.data[0].inspection_date;
+      }
+
+      // Payment — always relevant
+      const payStatusAr = PAY_STATUS_AR[rawPayStatus] || "";
+      if (payStatusAr || totalPaid > 0 || req?.total_fees) {
+        result["المالية"] = {};
+        if (req?.total_fees) result["المالية"]["الرسوم"] = `${Number(req.total_fees).toLocaleString()} ر.س`;
+        if (totalPaid > 0) result["المالية"]["المدفوع"] = `${totalPaid.toLocaleString()} ر.س`;
+        if (payStatusAr) result["المالية"]["حالة_السداد"] = payStatusAr;
+      }
+
+      // Asset summary — compact
+      if (subject) {
+        const assetInfo: Record<string, string> = {};
+        if (subject.city_ar) assetInfo["المدينة"] = subject.city_ar;
+        if (subject.district_ar) assetInfo["الحي"] = subject.district_ar;
+        if (subject.land_area) assetInfo["مساحة_الأرض"] = `${subject.land_area} م²`;
+        if (subject.building_area) assetInfo["مساحة_البناء"] = `${subject.building_area} م²`;
+        if (Object.keys(assetInfo).length > 0) result["الأصل"] = assetInfo;
+      }
+
+      // Client — compact
+      if (client?.name_ar) {
+        result["العميل"] = client.name_ar;
+        const clientTypeAr = CLIENT_TYPE_AR[rawClientType] || "";
+        if (clientTypeAr) result["العميل"] += ` (${clientTypeAr})`;
+      }
+
+      // Missing items
+      if (missingItems.length > 0) result["النواقص"] = missingItems;
+
+      // Next step — always present
+      result["الخطوة_التالية"] = nextStep;
+
+      return { success: true, result };
     }
 
     if (toolName === "get_audit_trail") {
