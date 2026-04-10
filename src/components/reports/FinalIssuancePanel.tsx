@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { updateReportDraftStatus } from "@/lib/report-draft-status";
+import { runReportQC, logQCResult, type ReportQCResult, QC_CATEGORY_LABELS } from "@/lib/report-qc-engine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Shield, CheckCircle, Lock, Send,
-  FileText, Archive, AlertTriangle,
+  FileText, Archive, AlertTriangle, XCircle, ClipboardCheck,
 } from "lucide-react";
 
 interface Props {
