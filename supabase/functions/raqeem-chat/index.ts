@@ -2112,17 +2112,6 @@ async function executeTool(
         success: true,
         result: lines.join("\n"),
         _format: "markdown",
-      };
-        if (clientTypeAr) result["العميل"] += ` (${clientTypeAr})`;
-      }
-
-      // Missing items
-      if (missingItems.length > 0) result["النواقص"] = missingItems;
-
-      // Next step — always present
-      result["الخطوة_التالية"] = nextStep;
-
-      return { success: true, result };
     }
 
     if (toolName === "get_audit_trail") {
