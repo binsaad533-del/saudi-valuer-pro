@@ -86,10 +86,20 @@ const SAMPLE = {
     ],
     valueImpact: "ساهمت المرفقات في تحديد 85% من مكونات القيمة النهائية. تم استخدام فواتير الشراء كأساس لتكلفة الاستبدال، وعقود الصيانة لتقدير نسبة الإهلاك. المرفقات المفقودة قد تؤثر على دقة التقدير بنسبة ±5%.",
   },
+  dataSources: [
+    { dataPoint: "تكلفة الاستبدال الجديدة (RCN)", value: "18,200,000 SAR", source: "فواتير الشراء الأصلية", sourceType: "مرفق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "نسبة الإهلاك المادي", value: "30%", source: "تقارير الفحص الفني + المعاينة", sourceType: "مرفق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "العمر الإنتاجي المتبقي", value: "12 عاماً", source: "سجلات الصيانة وتقارير الشركة المصنعة", sourceType: "مرفق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "معدل التشغيل الفعلي", value: "87%", source: "بيانات العميل الشفهية", sourceType: "عميل" as const, reliability: "تقديري" as const },
+    { dataPoint: "أسعار المعدات المماثلة", value: "متوسط السوق", source: "Ritchie Brothers + الإعلانات المحلية", sourceType: "سوق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "الإهلاك الوظيفي", value: "5%", source: "تقدير المقيّم بناءً على المعاينة", sourceType: "تقدير" as const, reliability: "تقديري" as const },
+    { dataPoint: "الإهلاك الاقتصادي", value: "3%", source: "تحليل ظروف السوق الحالية", sourceType: "سوق" as const, reliability: "تقديري" as const },
+    { dataPoint: "جدول الإنتاج الشهري", value: "—", source: "غير متوفر", sourceType: "عميل" as const, reliability: "غير مكتمل" as const },
+  ],
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 13;
+const TOTAL_PAGES = 14;
 
 /* ── Company & Valuer Identity (read-only) ── */
 const COMPANY_IDENTITY = {
@@ -111,8 +121,9 @@ const TOC = [
   { id: "methodology", num: 8, title: "المنهجية" },
   { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
   { id: "final-value", num: 10, title: "النتيجة النهائية" },
-  { id: "disclosures", num: 11, title: "الإفصاحات" },
-  { id: "accreditation", num: 12, title: "الاعتماد والتوقيع" },
+  { id: "data-sources", num: 11, title: "مصادر البيانات" },
+  { id: "disclosures", num: 12, title: "الإفصاحات" },
+  { id: "accreditation", num: 13, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
