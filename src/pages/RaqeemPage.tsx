@@ -71,21 +71,75 @@ export default function RaqeemPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState("chat");
+  const [platformContext, setPlatformContext] = useState<PlatformContext>({});
   const [correctionDialog, setCorrectionDialog] = useState<{
     open: boolean; msgIndex: number; correctedAnswer: string; reason: string;
   }>({ open: false, msgIndex: -1, correctedAnswer: "", reason: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, role } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // ── Build platform context from URL params, location state, and active data ──
+  useEffect(() => {
+    const ctx: PlatformContext = {
+      current_route: location.pathname,
+      user_role: role || "owner",
+    };
+
+    // From URL search params (e.g., /raqeem-chat?assignment_id=xxx)
+    const assignmentParam = searchParams.get("assignment_id") || searchParams.get("aid");
+    const requestParam = searchParams.get("request_id") || searchParams.get("rid");
+    if (assignmentParam) ctx.assignment_id = assignmentParam;
+    if (requestParam) ctx.request_id = requestParam;
+
+    // From navigation state (e.g., navigate("/raqeem-chat", { state: { assignment_id } }))
+    const navState = location.state as any;
+    if (navState?.assignment_id && !ctx.assignment_id) ctx.assignment_id = navState.assignment_id;
+    if (navState?.request_id && !ctx.request_id) ctx.request_id = navState.request_id;
+    if (navState?.reference_number) ctx.reference_number = navState.reference_number;
+    if (navState?.source_page) ctx.source_page = navState.source_page;
+
+    // Fetch assignment details if we have an ID
+    if (ctx.assignment_id) {
+      supabase
+        .from("valuation_assignments")
+        .select("id, reference_number, status, property_type, client_id, clients(name_ar)")
+        .eq("id", ctx.assignment_id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            ctx.reference_number = data.reference_number || ctx.reference_number;
+            ctx.current_status = data.status || undefined;
+            ctx.property_type = data.property_type || undefined;
+            ctx.client_name = (data.clients as any)?.name_ar || undefined;
+          }
+          setPlatformContext(ctx);
+        });
+    } else {
+      setPlatformContext(ctx);
+    }
+  }, [location.pathname, location.state, searchParams, role]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
   const streamChat = useCallback(async (allMessages: Message[]) => {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
     const resp = await fetch(CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-      body: JSON.stringify({ messages: allMessages.map((m) => ({ role: m.role, content: m.content })) }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
+        userRole: platformContext.user_role || role || "owner",
+        userId: user?.id,
+        platformContext: Object.keys(platformContext).length > 0 ? platformContext : undefined,
+      }),
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => null);
