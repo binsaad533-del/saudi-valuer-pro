@@ -1926,8 +1926,12 @@ async function executeTool(
       else if (args.reference_number) query = query.ilike("reference_number", `%${args.reference_number}%`);
       else return { success: false, result: null, error: "يجب تحديد معرّف المهمة أو الرقم المرجعي" };
 
-      const { data: assignment } = await query.single();
-      if (!assignment) return { success: false, result: null, error: "لم يتم العثور على الطلب" };
+      const { data: assignment, error: assignmentError } = await query.maybeSingle();
+      if (assignmentError) {
+        console.error("[get_assignment_details] Query error:", JSON.stringify(assignmentError));
+        return { success: false, result: null, error: `خطأ في الاستعلام: ${assignmentError.message}` };
+      }
+      if (!assignment) return { success: false, result: null, error: `لم يتم العثور على الطلب (assignment_id: ${args.assignment_id || '—'}, ref: ${args.reference_number || '—'})` };
 
       // Fetch related data in parallel
       const [inspRes, payRes, compRes, assumRes, reportRes] = await Promise.all([
