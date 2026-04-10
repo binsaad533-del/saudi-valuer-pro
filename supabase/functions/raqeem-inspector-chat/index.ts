@@ -81,7 +81,7 @@ serve(async (req) => {
         inspectionsSummary += "\n";
       }
     } else {
-      inspectionsSummary = "\n- لا توجد معاينات مُسندة حالياً.\n";
+      inspectionsSummary = "\n- لا توجد مهام ميدانية مُسندة حالياً.\n";
     }
 
     // ── Current inspection context ──
@@ -105,34 +105,49 @@ serve(async (req) => {
     const systemPrompt = `أنت "${AI.title}"، مساعد ميداني ذكي للمُعاين في شركة جسّاس للتقييم.
 
 ## دورك
-أنت تساعد المُعاين في إدارة مهامه الميدانية فقط. لا تملك صلاحيات المالك أو العميل أو المدير المالي.
+تساعد المُعاين في إدارة مهامه الميدانية فقط. لا تملك صلاحيات المالك أو العميل أو المدير المالي.
 
-## قواعد إلزامية
-- كن مختصراً: 2-5 جمل.
-- افهم العامية السعودية.
-- لا تعرض UUIDs. استخدم الأرقام المرجعية فقط.
-- لا تعطي أي معلومات تقييمية أو مالية.
-- لا توجّه المعاين لصفحة أخرى. كل شيء يتم هنا عبر الدردشة.
-${inspectorName ? `- اسم المُعاين: ${inspectorName}. رحّب باسمه أول مرة فقط.` : ""}
+## قواعد اللغة (إلزامية)
+- اكتب بالعربية الفصحى المهنية دائماً. لا تستخدم ترجمة حرفية من الإنجليزية.
+- تأكد أن كل كلمة مكتملة وصحيحة إملائياً قبل الإرسال.
+- لا ترسل أي جملة مقطوعة أو كلمة ناقصة أو غير مفهومة.
+- استخدم جملاً قصيرة ومباشرة (2-4 جمل كحد أقصى).
+- افهم العامية السعودية لكن أجب بالفصحى المهنية المبسطة.
+- استخدم الأرقام الغربية (0-9) دائماً.
 
-## ما يمكنك فعله
+## صياغات معتمدة (استخدمها حرفياً)
+- عند عدم وجود مهام: "لا توجد مهام ميدانية مُسندة إليك حالياً."
+- عند عدم وجود معاينات: "لا توجد معاينات حالية."
+- عند عدم وجود معاينة جارية: "لا توجد معاينة جارية حالياً."
+- عند السؤال عن الجدول: "هل تودّ عرض جدول اليوم أو هذا الأسبوع؟"
+- عند نجاح البدء: "تم تسجيل بدء المعاينة بنجاح."
+- عند نجاح التسليم: "تم تسليم المعاينة بنجاح. ستتم مراجعتها من قِبل المقيّم المعتمد."
+- عند الترحيب: "أهلاً [الاسم]، كيف أساعدك اليوم؟"
+
+## قواعد تشغيلية
+- لا تعرض معرّفات تقنية (UUIDs). استخدم الأرقام المرجعية فقط.
+- لا تقدّم أي معلومات تقييمية أو مالية.
+- لا توجّه المعاين لصفحة أخرى. كل شيء يتم عبر الدردشة.
+${inspectorName ? `- اسم المُعاين: ${inspectorName}. رحّب باسمه في أول رسالة فقط.` : ""}
+
+## صلاحياتك
+يمكنك:
 - عرض المعاينات المُسندة وحالتها
 - توضيح بيانات المهمة (الموقع، نوع العقار، التاريخ)
 - إرشاد المعاين لرفع الصور والملاحظات
-- تحديث حالة المعاينة عبر Action Tokens
-- تسجيل الوصول وبدء/إنهاء المعاينة
-- إيضاح النواقص الميدانية والخطوات التالية
+- تحديث حالة المعاينة (بدء / تسليم)
+- توضيح النواقص الميدانية والخطوة التالية
 
-## ما لا يمكنك فعله
-- لا تملك صلاحية إلغاء طلبات
-- لا تملك صلاحية مراجعة تقارير
-- لا تملك صلاحية عرض بيانات مالية
-- لا تملك صلاحية تعديل بيانات العملاء
+لا يمكنك:
+- إلغاء الطلبات
+- مراجعة التقارير
+- عرض بيانات مالية
+- تعديل بيانات العملاء
 
 ## إجراءات (Action Tokens)
 - بدء المعاينة: [ACTION:START_INSPECTION]
 - إنهاء وتسليم المعاينة: [ACTION:SUBMIT_INSPECTION]
-- لا تنفذ أي إجراء بدون تأكيد صريح من المعاين.
+- لا تنفّذ أي إجراء بدون تأكيد صريح من المعاين.
 
 ${inspectionsSummary}${currentInspectionSection}`;
 
@@ -208,23 +223,54 @@ ${inspectionsSummary}${currentInspectionSection}`;
       return { cleanReply, executedActions };
     }
 
+    // ── Post-processing: sanitize Arabic output ──
+    function sanitizeArabicReply(text: string): string {
+      let clean = text;
+      // Remove orphan single-character fragments that aren't valid Arabic words
+      clean = clean.replace(/(?<!\S)[^\s\d\w\u0600-\u06FF](?!\S)/g, "");
+      // Fix common AI glitches
+      const fixes: [RegExp, string][] = [
+        [/لا يوجد حالة/g, "لا توجد معاينات حالية"],
+        [/لا توجد أيينات/g, "لا توجد معاينات"],
+        [/مهام نش حالياً/g, "لا توجد مهام ميدانية مُسندة حالياً"],
+        [/موقع جار المعاينة/g, "لا توجد معاينة جارية حالياً"],
+        [/لا يوجد معاينات/g, "لا توجد معاينات"],
+        [/لا يوجد مهام/g, "لا توجد مهام"],
+        [/أبدأ المعاينة/g, "أبدأ المعاينة"],
+        [/تم بدء المعاينة/g, "تم تسجيل بدء المعاينة"],
+      ];
+      for (const [pattern, replacement] of fixes) {
+        clean = clean.replace(pattern, replacement);
+      }
+      // Remove lines that are too short to be meaningful (likely broken fragments)
+      clean = clean.split("\n").filter(line => {
+        const trimmed = line.trim();
+        if (trimmed.length === 0) return true; // keep empty lines
+        if (trimmed.length <= 2 && !/^[-•*#>]/.test(trimmed) && !/^\d+$/.test(trimmed)) return false;
+        return true;
+      }).join("\n");
+      // Collapse excessive newlines
+      clean = clean.replace(/\n{4,}/g, "\n\n\n");
+      return clean.trim();
+    }
+
     // ── Suggested actions ──
     function buildSuggestedActions() {
       const actions: { label: string; message: string }[] = [];
       if (pending.length > 0) {
-        actions.push({ label: "📋 معايناتي", message: "اعرض معايناتي الحالية" });
-        actions.push({ label: "📍 الموقع", message: "وين موقع المعاينة القادمة؟" });
+        actions.push({ label: "📋 المعاينات المُسندة", message: "اعرض المعاينات المُسندة إليّ" });
+        actions.push({ label: "📍 موقع المهمة", message: "أين موقع المعاينة القادمة؟" });
       }
       if (currentInspection.data) {
         const ci = currentInspection.data as any;
         if (ci.status === "assigned") {
-          actions.push({ label: "▶️ بدء المعاينة", message: "أبدأ المعاينة الآن" });
+          actions.push({ label: "▶️ بدء المعاينة", message: "أريد بدء المعاينة الآن" });
         } else if (ci.status === "in_progress") {
           actions.push({ label: "✅ تسليم المعاينة", message: "أنهيت المعاينة وأريد تسليمها" });
-          actions.push({ label: "📸 رفع صور", message: "أريد رفع صور المعاينة" });
+          actions.push({ label: "📸 رفع الصور", message: "أريد رفع صور المعاينة" });
         }
       }
-      actions.push({ label: "❓ الخطوة التالية", message: "ما الخطوة التالية المطلوبة مني؟" });
+      actions.push({ label: "❓ الخطوة التالية", message: "ما الخطوة التالية المطلوبة منّي؟" });
       return actions;
     }
 
@@ -260,7 +306,8 @@ ${inspectionsSummary}${currentInspectionSection}`;
                 if (line.startsWith("data: ")) {
                   const data = line.slice(6).trim();
                   if (data === "[DONE]") {
-                    // Process actions in background
+                    // Sanitize and process actions
+                    fullReply = sanitizeArabicReply(fullReply);
                     const actionResult = await processActions(fullReply);
                     const meta = JSON.stringify({
                       done: true,
@@ -270,13 +317,13 @@ ${inspectionsSummary}${currentInspectionSection}`;
                     controller.enqueue(new TextEncoder().encode(`data: ${meta}\n\n`));
                     controller.close();
 
-                    // Persist to chat messages
+                    // Persist sanitized reply
                     if (inspectorId) {
                       db.from("client_chat_messages").insert({
                         user_id: inspectorId,
                         session_id: `inspector-${inspectorId}`,
                         role: "assistant",
-                        content: actionResult.cleanReply,
+                        content: sanitizeArabicReply(actionResult.cleanReply),
                         metadata: { inspection_id: inspection_id || null },
                       } as any).catch(() => {});
                     }
@@ -318,7 +365,7 @@ ${inspectionsSummary}${currentInspectionSection}`;
     let reply = aiData.choices?.[0]?.message?.content || "عذراً، يرجى المحاولة مرة أخرى.";
 
     const actionResult = await processActions(reply);
-    reply = actionResult.cleanReply;
+    reply = sanitizeArabicReply(actionResult.cleanReply);
 
     // Persist
     if (inspectorId) {
