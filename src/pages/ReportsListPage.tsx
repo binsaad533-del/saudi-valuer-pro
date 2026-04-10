@@ -17,6 +17,8 @@ import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
+import { useContentProtection } from "@/hooks/useContentProtection";
+import LegalDisclaimer from "@/components/security/LegalDisclaimer";
 
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
@@ -33,6 +35,10 @@ export default function ReportsListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState<typeof mockReports[0] | null>(null);
+
+  useContentProtection(true);
 
   const handleDownloadPdf = useCallback(async (report: typeof mockReports[0]) => {
     setExportingId(report.id);
@@ -46,6 +52,19 @@ export default function ReportsListPage() {
       setExportingId(null);
     }
   }, [toast]);
+
+  const requestDownload = useCallback((report: typeof mockReports[0]) => {
+    setPendingDownload(report);
+    setDisclaimerOpen(true);
+  }, []);
+
+  const handleDisclaimerAccept = useCallback(() => {
+    setDisclaimerOpen(false);
+    if (pendingDownload) {
+      handleDownloadPdf(pendingDownload);
+      setPendingDownload(null);
+    }
+  }, [pendingDownload, handleDownloadPdf]);
 
   const filtered = useMemo(() => {
     return mockReports.filter((r) => {
@@ -149,7 +168,7 @@ export default function ReportsListPage() {
                           size="icon"
                           className="h-8 w-8"
                           disabled={exportingId === r.id}
-                          onClick={() => handleDownloadPdf(r)}
+                          onClick={() => requestDownload(r)}
                         >
                           {exportingId === r.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -166,6 +185,12 @@ export default function ReportsListPage() {
           </TableBody>
         </Table>
       </div>
+      <LegalDisclaimer
+        open={disclaimerOpen}
+        onAccept={handleDisclaimerAccept}
+        onCancel={() => { setDisclaimerOpen(false); setPendingDownload(null); }}
+        actionType="download"
+      />
     </div>
   );
 }
