@@ -89,7 +89,16 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 12;
+const TOTAL_PAGES = 13;
+
+/* ── Company & Valuer Identity (read-only) ── */
+const COMPANY_IDENTITY = {
+  companyName: "جساس للتقييم",
+  valuerName: "أحمد سعد أحمد المالكي",
+  licenseNumber: "4306",
+  memberships: ["4210000041", "1210001217"],
+  crNumber: "7016803038",
+} as const;
 
 const TOC = [
   { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
@@ -103,6 +112,7 @@ const TOC = [
   { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
   { id: "final-value", num: 10, title: "النتيجة النهائية" },
   { id: "disclosures", num: 11, title: "الإفصاحات" },
+  { id: "accreditation", num: 12, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -184,8 +194,8 @@ function PageHeader({ versionNum, mode }: { versionNum: number; mode: "draft" | 
 function PageFooter({ pageNum }: { pageNum: number }) {
   return (
     <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-3 mt-4 border-t border-border/40">
-      <span>شركة جساس للتقييم — Jassas Valuation Co.</span>
-      <span>{pageNum} / {TOTAL_PAGES}</span>
+      <span>{COMPANY_IDENTITY.companyName} | {COMPANY_IDENTITY.crNumber}</span>
+      <span>Page {pageNum} / {TOTAL_PAGES}</span>
     </div>
   );
 }
@@ -684,7 +694,7 @@ function AssetTablePage() {
   );
 }
 
-/* ── Disclosures + QR ── */
+/* ── Disclosures ── */
 function DisclosuresPage() {
   return (
     <PageShell pageNum={12}>
@@ -697,8 +707,60 @@ function DisclosuresPage() {
             تمثل هذه القيمة رأي المقيّم المعتمد بناءً على المعلومات المتاحة وقت التقييم، وفقاً لـ IVS 2025 ومتطلبات تقييم.
           </p>
         </div>
+      </div>
+    </PageShell>
+  );
+}
 
-        <div className="flex items-end justify-between mt-6 pt-4 border-t border-border/40">
+/* ── Accreditation & Signature (read-only, auto-populated) ── */
+function AccreditationPage() {
+  return (
+    <PageShell pageNum={13}>
+      <div className="space-y-6">
+        <SectionTitle id="accreditation" num={12} title="الاعتماد والتوقيع" />
+
+        {/* Company */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-foreground">بيانات شركة التقييم</h3>
+          <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
+            <span className="text-muted-foreground">اسم الشركة</span>
+            <span className="font-semibold text-foreground">{COMPANY_IDENTITY.companyName}</span>
+            <span className="text-muted-foreground">السجل التجاري</span>
+            <span className="font-semibold text-foreground" dir="ltr">{COMPANY_IDENTITY.crNumber}</span>
+          </div>
+        </div>
+
+        {/* Valuer */}
+        <div className="space-y-3">
+          <h3 className="text-sm font-bold text-foreground">بيانات المقيّم المعتمد</h3>
+          <div className="grid grid-cols-2 gap-y-2 text-sm border border-border rounded-lg p-4">
+            <span className="text-muted-foreground">الاسم</span>
+            <span className="font-semibold text-foreground">{COMPANY_IDENTITY.valuerName}</span>
+            <span className="text-muted-foreground">رقم الترخيص</span>
+            <span className="font-semibold text-foreground" dir="ltr">{COMPANY_IDENTITY.licenseNumber}</span>
+            <span className="text-muted-foreground">العضويات</span>
+            <div className="space-y-0.5">
+              {COMPANY_IDENTITY.memberships.map((m) => (
+                <span key={m} className="block font-semibold text-foreground" dir="ltr">{m}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Signature placeholder */}
+        <div className="border-2 border-dashed border-border/60 rounded-lg p-6 flex items-center justify-between">
+          <div className="space-y-1">
+            <p className="text-sm font-bold text-foreground">{COMPANY_IDENTITY.valuerName}</p>
+            <p className="text-xs text-muted-foreground">ترخيص رقم {COMPANY_IDENTITY.licenseNumber}</p>
+            <p className="text-xs text-muted-foreground">التاريخ: {SAMPLE.issueDate}</p>
+          </div>
+          <div className="w-[140px] h-[60px] border border-border/40 rounded flex items-center justify-center">
+            <span className="text-[10px] text-muted-foreground">التوقيع</span>
+          </div>
+        </div>
+
+        {/* QR + Security */}
+        <div className="flex items-end justify-between mt-4 pt-4 border-t border-border/40">
           <VerificationQR size={72} />
           <div className="text-left space-y-1" dir="ltr">
             <p className="text-[9px] text-muted-foreground">Print: Disabled</p>
@@ -707,6 +769,12 @@ function DisclosuresPage() {
             <p className="text-[9px] text-muted-foreground">Link expires: 10 min</p>
             <p className="text-[9px] text-muted-foreground">Download: Single-use</p>
           </div>
+        </div>
+
+        <div className="border border-border rounded px-4 py-3">
+          <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
+            هذا القسم يُولَّد تلقائياً ولا يمكن تعديله — البيانات مأخوذة من سجلات الشركة الرسمية
+          </p>
         </div>
       </div>
     </PageShell>
@@ -824,6 +892,7 @@ export default function JasasReportPreview() {
         <AssumptionsPage />
         <AssetTablePage />
         <DisclosuresPage />
+        <AccreditationPage />
       </div>
     </div>
   );
