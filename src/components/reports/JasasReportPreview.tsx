@@ -797,9 +797,9 @@ function DisclosuresPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={13}>
+    <PageShell pageNum={14}>
       <div className="space-y-6">
-        <SectionTitle id="accreditation" num={12} title="الاعتماد والتوقيع" />
+        <SectionTitle id="accreditation" num={13} title="الاعتماد والتوقيع" />
 
         {/* Company */}
         <div className="space-y-3">
