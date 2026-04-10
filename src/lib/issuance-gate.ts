@@ -207,6 +207,20 @@ export async function runIssuanceGate(
     });
   }
 
+  // 10. Report Quality Control
+  const qcResult = await runReportQC(assignmentId);
+  checks.push({
+    code: "REPORT_QC",
+    label_ar: "تدقيق جودة التقرير",
+    label_en: "Report quality control",
+    passed: qcResult.passed,
+    mandatory: true,
+    category: "technical",
+    details: qcResult.passed
+      ? undefined
+      : `لا يمكن إصدار التقرير لعدم اكتمال المتطلبات: ${qcResult.blocked_reasons_ar.join("، ")}`,
+  });
+
   // Calculate results
   const failedMandatory = checks.filter(c => c.mandatory && !c.passed);
   const passedCount = checks.filter(c => c.passed).length;
@@ -219,6 +233,7 @@ export async function runIssuanceGate(
     failed_mandatory: failedMandatory.length,
     total: checks.length,
     blocked_reasons_ar: failedMandatory.map(c => c.details || c.label_ar),
+    qc_result: qcResult,
   };
 }
 
