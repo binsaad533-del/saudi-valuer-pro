@@ -78,6 +78,7 @@ import CFOChatPage from "@/pages/cfo/CFOChatPage";
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
 import SecureDownloadPage from "@/pages/SecureDownloadPage";
+import JasasReportPreview from "@/components/reports/JasasReportPreview";
 
 const queryClient = new QueryClient();
 const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
