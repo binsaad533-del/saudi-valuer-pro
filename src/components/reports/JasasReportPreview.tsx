@@ -883,50 +883,189 @@ function AssumptionImpactPage() {
   );
 }
 
-/* ── Asset Table + Final Value ── */
-function AssetTablePage() {
-  const total = SAMPLE.assets
-    .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
-    .toLocaleString("en-US");
+/* ══════════════════════════════════════════════
+   Mixed Valuation — Discipline-Separated Sections
+   ══════════════════════════════════════════════ */
 
+/* ── 12. Real Estate Valuation ── */
+function RealEstateValuationPage() {
   return (
     <PageShell pageNum={13}>
       <div className="space-y-5">
-        <SectionTitle id="final-value" num={12} title="النتيجة النهائية" />
+        <SectionTitle id="re-valuation" num={12} title="تقييم العقار" />
 
+        <div className="border border-primary/20 rounded-lg px-4 py-2 bg-primary/5">
+          <p className="text-[10px] text-primary font-semibold">التخصص: عقار — IVS 400</p>
+        </div>
+
+        {/* Methodology */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">المنهجية المعتمدة</p>
+          <p className="text-sm text-foreground">{SAMPLE.realEstateMethodology}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            السبب: {SAMPLE.realEstateMethodReason}
+          </p>
+        </div>
+
+        {/* Assumptions */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">الافتراضات الخاصة بالعقار</p>
+          {SAMPLE.realEstateAssumptions.map((a, i) => <Bullet key={i}>{a}</Bullet>)}
+        </div>
+
+        {/* Assets table */}
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-right py-2.5 font-semibold text-foreground">نوع الأصل</th>
-              <th className="text-center py-2.5 font-semibold text-foreground w-20">الكمية</th>
-              <th className="text-left py-2.5 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
+              <th className="text-right py-2 font-semibold text-foreground">الأصل العقاري</th>
+              <th className="text-center py-2 font-semibold text-foreground w-24">المساحة</th>
+              <th className="text-left py-2 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
             </tr>
           </thead>
           <tbody>
-            {SAMPLE.assets.map((asset, i) => (
+            {SAMPLE.realEstateAssets.map((a, i) => (
               <tr key={i} className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">{asset.type}</td>
-                <td className="py-2 text-center text-muted-foreground">{asset.qty}</td>
-                <td className="py-2 text-left text-muted-foreground" dir="ltr">{asset.value}</td>
+                <td className="py-2 text-muted-foreground">{a.type}</td>
+                <td className="py-2 text-center text-muted-foreground">{a.area}</td>
+                <td className="py-2 text-left text-muted-foreground" dir="ltr">{a.value}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-foreground/20">
-              <td className="py-3 font-bold text-foreground">الإجمالي</td>
+              <td colSpan={2} className="py-3 font-bold text-foreground">إجمالي قيمة العقار</td>
+              <td className="py-3 text-left font-bold text-primary" dir="ltr">{SAMPLE.realEstateTotal}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <ValueBox label="القيمة السوقية العادلة — العقار" value={SAMPLE.realEstateTotal} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── 13. Machinery & Equipment Valuation ── */
+function MachineryValuationPage() {
+  const total = SAMPLE.machineryAssets
+    .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
+    .toLocaleString("en-US");
+
+  return (
+    <PageShell pageNum={14}>
+      <div className="space-y-5">
+        <SectionTitle id="me-valuation" num={13} title="تقييم الآلات والمعدات" />
+
+        <div className="border border-primary/20 rounded-lg px-4 py-2 bg-primary/5">
+          <p className="text-[10px] text-primary font-semibold">التخصص: آلات ومعدات — IVS 300</p>
+        </div>
+
+        {/* Methodology */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">المنهجية المعتمدة</p>
+          <p className="text-sm text-foreground">{SAMPLE.machineryMethodology}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            السبب: {SAMPLE.machineryMethodReason}
+          </p>
+        </div>
+
+        {/* Assumptions */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">الافتراضات الخاصة بالآلات والمعدات</p>
+          {SAMPLE.machineryAssumptions.map((a, i) => <Bullet key={i}>{a}</Bullet>)}
+        </div>
+
+        {/* Assets table */}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-right py-2 font-semibold text-foreground">نوع المعدة</th>
+              <th className="text-center py-2 font-semibold text-foreground w-20">الكمية</th>
+              <th className="text-left py-2 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SAMPLE.machineryAssets.map((a, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="py-2 text-muted-foreground">{a.type}</td>
+                <td className="py-2 text-center text-muted-foreground">{a.qty}</td>
+                <td className="py-2 text-left text-muted-foreground" dir="ltr">{a.value}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-foreground/20">
+              <td className="py-3 font-bold text-foreground">إجمالي قيمة الآلات والمعدات</td>
               <td className="py-3 text-center font-bold text-foreground">
-                {SAMPLE.assets.reduce((s, a) => s + a.qty, 0)}
+                {SAMPLE.machineryAssets.reduce((s, a) => s + a.qty, 0)}
               </td>
               <td className="py-3 text-left font-bold text-primary" dir="ltr">{total}</td>
             </tr>
           </tfoot>
         </table>
 
+        <ValueBox label="القيمة السوقية العادلة — الآلات والمعدات" value={SAMPLE.machineryTotal} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── 14. Combined Final Value ── */
+function CombinedValuePage() {
+  return (
+    <PageShell pageNum={15}>
+      <div className="space-y-5">
+        <SectionTitle id="combined-value" num={14} title="القيمة الإجمالية المركبة" />
+
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          يجمع هذا القسم نتائج التقييم المنفصلة لكلا التخصصين (العقار والآلات والمعدات) في قيمة إجمالية موحدة.
+        </p>
+
+        {/* Summary table */}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-right py-2.5 font-semibold text-foreground">التخصص</th>
+              <th className="text-center py-2.5 font-semibold text-foreground w-28">المعيار</th>
+              <th className="text-center py-2.5 font-semibold text-foreground w-28">المنهجية</th>
+              <th className="text-left py-2.5 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-border/50">
+              <td className="py-2.5 text-foreground font-medium">العقار</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">IVS 400</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">مقارنة سوقية</td>
+              <td className="py-2.5 text-left text-foreground font-semibold" dir="ltr">{SAMPLE.realEstateTotal}</td>
+            </tr>
+            <tr className="border-b border-border/50">
+              <td className="py-2.5 text-foreground font-medium">الآلات والمعدات</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">IVS 300</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">تكلفة مستبدلة (DRC)</td>
+              <td className="py-2.5 text-left text-foreground font-semibold" dir="ltr">{SAMPLE.machineryTotal}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-primary/30">
+              <td colSpan={3} className="py-3 font-bold text-foreground text-base">القيمة الإجمالية المركبة</td>
+              <td className="py-3 text-left font-bold text-primary text-base" dir="ltr">{SAMPLE.combinedTotal}</td>
+            </tr>
+          </tfoot>
+        </table>
+
         <ValueBox
-          label="القيمة السوقية العادلة"
-          value={SAMPLE.estimatedValue}
-          subtext={SAMPLE.estimatedValueText}
+          label="إجمالي القيمة السوقية العادلة — تقييم مركب"
+          value={SAMPLE.combinedTotal}
+          subtext={SAMPLE.combinedTotalText}
         />
+
+        <div className="border border-border rounded-lg px-4 py-3 space-y-1">
+          <p className="text-xs font-semibold text-foreground">ملاحظة مهنية</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            تم تقييم كل تخصص بشكل مستقل وفقاً للمعايير الدولية المعتمدة (IVS 300 للآلات وIVS 400 للعقار)،
+            مع فصل كامل للافتراضات والمنهجيات. القيمة الإجمالية تمثل مجموع التقييمين دون أي تعديل محفظة.
+          </p>
+        </div>
       </div>
     </PageShell>
   );
