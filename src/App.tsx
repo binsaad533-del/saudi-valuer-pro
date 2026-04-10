@@ -104,6 +104,7 @@ const App = () => (
           <Route path="/client/login" element={<UnifiedLogin />} />
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
           <Route path="/download/:token" element={<SecureDownloadPage />} />
+          <Route path="/report-preview" element={<JasasReportPreview />} />
           {/* Admin Routes - Protected */}
           <Route element={
             <ProtectedRoute allowedRoles={ADMIN_ROLES}>
