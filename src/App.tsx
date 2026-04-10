@@ -55,6 +55,7 @@ import SmartMarketingDashboard from "@/pages/admin/SmartMarketingDashboard";
 import RaqeemWatchdogPage from "@/pages/RaqeemWatchdogPage";
 import RaqeemTechEnginePage from "@/pages/RaqeemTechEnginePage";
 import RaqeemExpertPage from "@/pages/RaqeemExpertPage";
+import ReportQualityDashboardPage from "@/pages/ReportQualityDashboardPage";
 import RaqeemChatPage from "@/pages/RaqeemChatPage";
 import RaqeemFloatingButton from "@/components/raqeem/RaqeemFloatingButton";
 import ClientAuth from "@/pages/client/ClientAuth";
@@ -147,6 +148,7 @@ const App = () => (
             <Route path="/watchdog" element={<RaqeemWatchdogPage />} />
             <Route path="/tech-engine" element={<RaqeemTechEnginePage />} />
             <Route path="/expert" element={<RaqeemExpertPage />} />
+            <Route path="/quality-dashboard" element={<ReportQualityDashboardPage />} />
           </Route>
 
           {/* Inspector Portal - Protected */}
