@@ -79,7 +79,15 @@ const BASE_SYSTEM_PROMPT = `أنت "${AI.name}" — مساعد ذكاء اصطن
 3. اسأل عن رقم الطلب **فقط** إذا لم يكن هناك سياق محمّل ولم يذكر المستخدم أي رقم
 4. عند استدعاء أي أداة تتطلب assignment_id أو request_id، مرّر القيمة من سياق المنصة المحمّل تلقائياً
 5. بعد تنفيذ الأداة، اعرض النتائج بشكل مهني ومنظم
-6. لا تعتمد أي شيء تلقائياً — اعرض النتائج وانتظر قرار المقيّم
+ 6. لا تعتمد أي شيء تلقائياً — اعرض النتائج وانتظر قرار المقيّم
+ 
+ ## قواعد تنسيق المخرجات (إلزامية)
+ - **ممنوع منعاً باتاً** عرض أسماء حقول قاعدة البيانات أو القيم الخام الإنجليزية (مثل submitted, field, residential, sale_purchase) في الرد النهائي
+ - جميع البيانات المُرجَعة من الأدوات تحتوي مفاتيح عربية جاهزة — استخدمها مباشرة
+ - رتّب ملخص حالة الطلب بالترتيب التالي: رقم الطلب → الحالة → الغرض → نوع الأصل → وضع التنفيذ → العميل → المعاينة → المالية → الامتثال → النواقص → الخطوة التالية
+ - استخدم تنسيق Markdown منظم: عناوين فرعية وقوائم نقطية
+ - لا تكرر المعلومات ولا تعرض بيانات فارغة (إذا كانت القيمة "—" أو "غير متوفرة" تجاوزها)
+ - قسم "الخطوة التالية" يجب أن يكون واضحاً ومباشراً مع اقتراح الإجراء المناسب
 7. للأوامر التنفيذية (تغيير حالة، تأكيد دفع): تأكد من المستخدم قبل التنفيذ
 
 ## دورك
@@ -1954,26 +1962,126 @@ async function executeTool(
       }
 
       const payments = payRes.data || [];
-      const totalPaid = payments.filter((p: any) => p.payment_status === "paid").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+      const totalPaid = payments.filter((p: any) => p.payment_status === "paid" || p.payment_status === "completed").reduce((s: number, p: any) => s + (p.amount || 0), 0);
+
+      // ── Arabic label maps ──
+      const STATUS_AR: Record<string, string> = {
+        submitted: "مقدّم", pending: "قيد الانتظار", intake: "استلام", sow_pending: "بانتظار نطاق العمل",
+        sow_approved: "نطاق العمل معتمد", quotation_sent: "عرض السعر مرسل", quotation_approved: "عرض السعر معتمد",
+        first_payment_pending: "بانتظار الدفعة الأولى", first_payment_confirmed: "الدفعة الأولى مؤكدة",
+        inspection_scheduled: "المعاينة مجدولة", inspection_completed: "المعاينة مكتملة",
+        data_collection: "جمع البيانات", valuation_in_progress: "التقييم جارٍ",
+        review: "قيد المراجعة", draft_ready: "المسودة جاهزة", draft_sent: "المسودة مرسلة",
+        client_approved: "معتمد من العميل", final_payment_pending: "بانتظار الدفعة النهائية",
+        final_payment_confirmed: "الدفعة النهائية مؤكدة", completed: "مكتمل", cancelled: "ملغى",
+        archived: "مؤرشف", on_hold: "معلّق",
+      };
+      const PROP_TYPE_AR: Record<string, string> = {
+        residential: "سكني", commercial: "تجاري", industrial: "صناعي", land: "أرض",
+        mixed_use: "متعدد الاستخدام", agricultural: "زراعي", special_purpose: "أغراض خاصة",
+        machinery: "آلات ومعدات", business: "منشأة تجارية", vehicle: "مركبة", equipment: "معدات",
+      };
+      const VAL_TYPE_AR: Record<string, string> = {
+        real_estate: "عقار", machinery: "آلات ومعدات", business: "منشأة تجارية",
+        vehicle: "مركبة", equipment: "معدات",
+      };
+      const PURPOSE_AR: Record<string, string> = {
+        sale_purchase: "بيع/شراء", financing: "تمويل", insurance: "تأمين",
+        legal: "قانوني/قضائي", financial_reporting: "تقارير مالية",
+        zakat_tax: "زكاة وضريبة", other: "أخرى",
+      };
+      const MODE_AR: Record<string, string> = {
+        field: "معاينة ميدانية", desktop_with_photos: "مكتبي بصور", desktop_without_photos: "مكتبي بدون صور",
+      };
+      const PAY_STATUS_AR: Record<string, string> = {
+        unpaid: "غير مدفوع", partial: "مدفوع جزئياً", paid: "مدفوع بالكامل",
+        completed: "مدفوع بالكامل", pending: "قيد الانتظار", overdue: "متأخر",
+      };
+      const CLIENT_TYPE_AR: Record<string, string> = {
+        individual: "فرد", company: "شركة", government: "جهة حكومية",
+      };
+      const INSP_STATUS_AR: Record<string, string> = {
+        scheduled: "مجدولة", in_progress: "جارية", completed: "مكتملة",
+        submitted: "مُسلَّمة", reviewed: "مُراجَعة", cancelled: "ملغاة",
+      };
+
+      const rawMode = req?.valuation_mode || assignment.valuation_mode || "";
+      const rawStatus = assignment.status || "";
+      const rawPurpose = assignment.purpose || req?.purpose || "";
+      const rawPropType = assignment.property_type || "";
+      const rawValType = assignment.valuation_type || "";
+      const rawPayStatus = req?.payment_status || "";
+      const rawClientType = client?.client_type || "";
+      const rawInspStatus = inspRes.data?.[0]?.status || "";
+
+      // Build missing items list
+      const missingItems: string[] = [];
+      if (!subject) missingItems.push("بيانات الأصل/العقار غير مسجلة");
+      if (!client?.phone && !client?.email) missingItems.push("بيانات تواصل العميل ناقصة");
+      if (!req?.total_fees) missingItems.push("لم يتم التسعير بعد");
+      if (!inspRes.data?.length && rawMode === "field") missingItems.push("المعاينة الميدانية غير مجدولة");
+
+      // Determine next step
+      let nextStep = "متابعة سير العمل";
+      if (rawStatus === "submitted") nextStep = "مراجعة الطلب وتأكيد التصنيف ثم توليد نطاق العمل";
+      else if (rawStatus === "sow_pending") nextStep = "اعتماد نطاق العمل من العميل";
+      else if (rawStatus === "quotation_sent") nextStep = "انتظار موافقة العميل على عرض السعر";
+      else if (rawStatus === "first_payment_pending") nextStep = "تأكيد استلام الدفعة الأولى";
+      else if (rawStatus === "first_payment_confirmed" || rawStatus === "inspection_scheduled") nextStep = "تنفيذ المعاينة الميدانية";
+      else if (rawStatus === "inspection_completed" || rawStatus === "data_collection") nextStep = "جمع البيانات وتحليل المقارنات";
+      else if (rawStatus === "valuation_in_progress") nextStep = "إكمال التقييم وإعداد المسودة";
+      else if (rawStatus === "review") nextStep = "مراجعة التقرير والتحقق من الامتثال";
+      else if (rawStatus === "draft_ready" || rawStatus === "draft_sent") nextStep = "انتظار اعتماد العميل للمسودة";
+      else if (rawStatus === "final_payment_pending") nextStep = "تأكيد الدفعة النهائية وإصدار التقرير";
+      else if (rawStatus === "completed") nextStep = "الطلب مكتمل — لا إجراءات مطلوبة";
 
       return {
         success: true,
         result: {
-          reference: assignment.reference_number,
-          status: assignment.status,
-          property_type: assignment.property_type,
-          valuation_type: assignment.valuation_type,
-          valuation_mode: req?.valuation_mode || assignment.valuation_mode || "—",
-          purpose: assignment.purpose || req?.purpose || "—",
-          final_value: assignment.final_value ? Number(assignment.final_value).toLocaleString() + " ر.س" : "غير محددة",
-          client: { name: client?.name_ar, phone: client?.phone, email: client?.email, type: client?.client_type },
-           property: { city: subject?.city_ar, district: subject?.district_ar, address: subject?.address_ar, land_area: subject?.land_area, building_area: subject?.building_area, description: req?.property_description_ar || subject?.description_ar },
-          inspector: { name: inspectorName, inspection_status: inspRes.data?.[0]?.status || "لا معاينة", inspection_date: inspRes.data?.[0]?.inspection_date },
-           financials: { total_fees: req?.total_fees, total_paid: totalPaid, payment_status: req?.payment_status || "—", payments_count: payments.length },
-          compliance: { comparables_count: compRes.data?.length || 0, assumptions_count: assumRes.data?.length || 0, has_report: !!(reportRes.data?.length) },
-          created_at: new Date(assignment.created_at).toLocaleDateString("ar-SA"),
-          updated_at: new Date(assignment.updated_at).toLocaleDateString("ar-SA"),
-          notes: assignment.notes || req?.notes || "—",
+          رقم_الطلب: assignment.reference_number,
+          الحالة: STATUS_AR[rawStatus] || rawStatus,
+          الغرض: PURPOSE_AR[rawPurpose] || rawPurpose || "—",
+          نوع_الأصل: PROP_TYPE_AR[rawPropType] || rawPropType || "—",
+          فرع_التقييم: VAL_TYPE_AR[rawValType] || rawValType || "—",
+          وضع_التنفيذ: MODE_AR[rawMode] || rawMode || "—",
+          القيمة_النهائية: assignment.final_value ? Number(assignment.final_value).toLocaleString() + " ر.س" : "لم تُحدد بعد",
+          العميل: {
+            الاسم: client?.name_ar || "—",
+            الهاتف: client?.phone || "غير مسجل",
+            البريد: client?.email || "غير مسجل",
+            النوع: CLIENT_TYPE_AR[rawClientType] || rawClientType || "—",
+          },
+          الأصل: subject ? {
+            المدينة: subject.city_ar || "—",
+            الحي: subject.district_ar || "—",
+            العنوان: subject.address_ar || "—",
+            مساحة_الأرض: subject.land_area ? `${subject.land_area} م²` : "—",
+            مساحة_البناء: subject.building_area ? `${subject.building_area} م²` : "—",
+            الوصف: req?.property_description_ar || subject.description_ar || "—",
+          } : "بيانات الأصل غير متوفرة",
+          المعاينة: {
+            الحالة: rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || rawInspStatus) : "غير مجدولة",
+            المعاين: inspectorName,
+            التاريخ: inspRes.data?.[0]?.inspection_date || "—",
+          },
+          المالية: {
+            الرسوم: req?.total_fees ? `${Number(req.total_fees).toLocaleString()} ر.س` : "لم تُحدد",
+            المدفوع: totalPaid ? `${totalPaid.toLocaleString()} ر.س` : "0 ر.س",
+            حالة_السداد: PAY_STATUS_AR[rawPayStatus] || rawPayStatus || "—",
+            عدد_الدفعات: payments.length,
+          },
+          الامتثال: {
+            المقارنات: compRes.data?.length || 0,
+            الافتراضات: assumRes.data?.length || 0,
+            التقرير: reportRes.data?.length ? "موجود" : "غير موجود",
+          },
+          التواريخ: {
+            الإنشاء: new Date(assignment.created_at).toLocaleDateString("ar-SA"),
+            آخر_تحديث: new Date(assignment.updated_at).toLocaleDateString("ar-SA"),
+          },
+          ملاحظات: assignment.notes || "—",
+          النواقص: missingItems.length > 0 ? missingItems : "لا نواقص",
+          الخطوة_التالية: nextStep,
         }
       };
     }
