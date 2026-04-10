@@ -118,7 +118,7 @@ export default function RaqeemExpertPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">رقيم — الخبير التقني المقيم</h1>
+          <h1 className="text-2xl font-bold text-foreground">ChatGPT — الخبير التقني المقيم</h1>
           <p className="text-muted-foreground text-sm mt-1">
             مفتش تقني ذكي: البنية، سير العمل، الأداء، الأمان، جودة الكود
           </p>

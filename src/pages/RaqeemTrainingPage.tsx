@@ -16,7 +16,7 @@ export default function RaqeemTrainingPage() {
           <RaqeemIcon size={24} />
         </div>
         <div>
-          <h1 className="text-xl font-bold text-foreground">لوحة تدريب رقيم</h1>
+          <h1 className="text-xl font-bold text-foreground">لوحة تدريب ChatGPT</h1>
           <p className="text-sm text-muted-foreground">
             نظام تحسين الذكاء الاصطناعي المتحكم به — لا يوجد تعلم ذاتي
           </p>
