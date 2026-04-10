@@ -1,5 +1,6 @@
 /**
  * Report Quality Gate Engine — بوابة جودة التقارير
+ * مبني على نموذج قياس جودة تقارير التقييم IVS 2025
  * 
  * Three-tier validation system:
  * 1. MANDATORY (إلزامي) — blocks issuance if any fail
@@ -8,42 +9,58 @@
  */
 
 import { supabase } from "@/integrations/supabase/client";
+import {
+  IVS_STANDARDS, IVS_GRADE_THRESHOLDS,
+  getItemSeverity, getApplicableItems, getGrade,
+  type IVSStandard, type IVSCheckItem, type IVSStandardCode, type QCGrade,
+} from "./ivs-quality-standards";
 
 /* ─── Types ─── */
 
 export type QCSeverity = "mandatory" | "quality" | "enhancement";
 
 export type QCCategory =
-  | "section_completeness"
-  | "content_quality"
-  | "methodology"
-  | "value_integrity"
-  | "compliance"
-  | "documentation"
-  | "professional_standards";
+  | "IVS101" | "IVS102" | "IVS103" | "IVS104"
+  | "IVS105" | "IVS106" | "IVS400" | "IVS410"
+  | "system_checks";
 
 export interface QCCheckItem {
   code: string;
+  ref?: string;
   label_ar: string;
   label_en: string;
   category: QCCategory;
   severity: QCSeverity;
   passed: boolean;
-  /** @deprecated use severity instead */
   mandatory: boolean;
+  score?: number; // 0-3 for IVS checks
+  weight_pct?: number;
   details_ar?: string;
 }
 
+export interface IVSStandardResult {
+  code: IVSStandardCode;
+  title_ar: string;
+  weight_pct: number;
+  score_pct: number; // 0-100
+  total_items: number;
+  checked_items: number;
+  passed_items: number;
+}
+
 export interface ReportQCResult {
-  passed: boolean;          // true if no mandatory failures
-  can_issue: boolean;       // same as passed
-  has_warnings: boolean;    // quality-level failures exist
-  score: number;            // 0–100
+  passed: boolean;
+  can_issue: boolean;
+  has_warnings: boolean;
+  score: number;             // 0-100 weighted
+  grade: QCGrade;
+  grade_label_ar: string;
   total_checks: number;
   passed_checks: number;
   failed_mandatory: number;
   failed_quality: number;
   failed_enhancement: number;
+  standard_results: IVSStandardResult[];
   checks: QCCheckItem[];
   blocked_reasons_ar: string[];
   warning_reasons_ar: string[];
@@ -53,14 +70,16 @@ export interface ReportQCResult {
 
 /* ─── Category Labels ─── */
 
-export const QC_CATEGORY_LABELS: Record<QCCategory, { ar: string; en: string }> = {
-  section_completeness: { ar: "اكتمال الأقسام", en: "Section Completeness" },
-  content_quality: { ar: "جودة المحتوى", en: "Content Quality" },
-  methodology: { ar: "المنهجية والتبرير", en: "Methodology Justification" },
-  value_integrity: { ar: "سلامة القيمة", en: "Value Integrity" },
-  compliance: { ar: "الامتثال التنظيمي", en: "Regulatory Compliance" },
-  documentation: { ar: "التوثيق", en: "Documentation" },
-  professional_standards: { ar: "المعايير المهنية", en: "Professional Standards" },
+export const QC_CATEGORY_LABELS: Record<string, { ar: string; en: string }> = {
+  IVS101: { ar: "IVS 101 نطاق العمل", en: "Scope of Work" },
+  IVS102: { ar: "IVS 102 أسس القيمة", en: "Bases of Value" },
+  IVS103: { ar: "IVS 103 أساليب التقييم", en: "Valuation Approaches" },
+  IVS104: { ar: "IVS 104 البيانات", en: "Data and Inputs" },
+  IVS105: { ar: "IVS 105 نماذج التقييم", en: "Valuation Models" },
+  IVS106: { ar: "IVS 106 التوثيق", en: "Documentation" },
+  IVS400: { ar: "IVS 400 المصالح العقارية", en: "Real Property Interests" },
+  IVS410: { ar: "IVS 410 العقارات التطويرية", en: "Development Property" },
+  system_checks: { ar: "فحوصات النظام", en: "System Checks" },
 };
 
 export const SEVERITY_LABELS: Record<QCSeverity, { ar: string; en: string; color: string }> = {
@@ -69,20 +88,7 @@ export const SEVERITY_LABELS: Record<QCSeverity, { ar: string; en: string; color
   enhancement: { ar: "تحسين", en: "Enhancement", color: "info" },
 };
 
-/* ─── Required Report Sections ─── */
-
-const REQUIRED_SECTIONS = [
-  { key: "executive_summary", label_ar: "الملخص التنفيذي", label_en: "Executive Summary" },
-  { key: "scope_of_work", label_ar: "نطاق العمل", label_en: "Scope of Work" },
-  { key: "methodology", label_ar: "المنهجية", label_en: "Methodology" },
-  { key: "assumptions", label_ar: "الافتراضات", label_en: "Assumptions" },
-  { key: "final_value", label_ar: "النتيجة النهائية", label_en: "Final Value" },
-];
-
-/* ─── Thresholds ─── */
-const MIN_SECTION_LENGTH = 20;
-const MIN_METHODOLOGY_LENGTH = 50;
-const MIN_CONTENT_LENGTH = 500;
+/* ─── Placeholder detection ─── */
 const PLACEHOLDER_PATTERNS = [
   /\[.*?\]/g, /_{3,}/g, /\.{4,}/g,
   /أدخل|يرجى الإدخال|لم يحدد/gi,
@@ -98,14 +104,104 @@ function addCheck(
   category: QCCategory,
   severity: QCSeverity,
   passed: boolean,
-  details_ar?: string
+  details_ar?: string,
+  extra?: { ref?: string; score?: number; weight_pct?: number }
 ) {
   checks.push({
     code, label_ar, label_en, category, severity,
     passed,
     mandatory: severity === "mandatory",
     details_ar: passed ? undefined : details_ar,
+    ...(extra || {}),
   });
+}
+
+/* ─── Auto-evaluate IVS items against report content ─── */
+function autoScoreItem(
+  item: IVSCheckItem,
+  standard: IVSStandard,
+  reportText: string,
+  assignment: any,
+  assumptions: any[],
+  comparables: any[],
+  inspections: any[],
+): number {
+  const text = reportText.toLowerCase();
+  const q = item.question_ar;
+
+  // IVS 101 checks — scope of work
+  if (standard.code === "IVS101") {
+    if (item.ref === "20.1(أ)") return (assignment?.subjects?.[0]?.property_type) ? 3 : text.includes("الأصل") ? 2 : 0;
+    if (item.ref === "20.1(ب)") return assignment?.client_name_ar ? 3 : text.includes("العميل") ? 1 : 0;
+    if (item.ref === "20.1(ج)") return text.includes("الاستخدام المقصود") || text.includes("الغرض") ? 3 : text.includes("غرض") ? 1 : 0;
+    if (item.ref === "20.1(د)") return text.includes("المستخدم المقصود") ? 3 : 2; // optional
+    if (item.ref === "20.1(هـ)") return text.includes("تضارب") || text.includes("مصالح") ? 3 : text.includes("استقلالية") ? 2 : 0;
+    if (item.ref === "20.1(و)") return text.includes("ريال") || text.includes("عملة") || text.includes("SAR") ? 3 : 0;
+    if (item.ref === "20.1(ز)") return assignment?.valuation_date ? 3 : text.includes("تاريخ التقييم") ? 2 : 0;
+    if (item.ref === "20.1(ط)") return text.includes("نطاق") || text.includes("قيود") ? 3 : text.includes("scope") ? 1 : 0;
+    if (item.ref === "20.1(ي)") return text.includes("مصدر") && text.includes("معلومات") ? 3 : text.includes("مصدر") ? 1 : 0;
+    if (item.ref === "20.1(ك)") return assumptions.length > 0 ? 3 : text.includes("افتراض") ? 1 : 0;
+    if (item.ref === "20.1(ل)") return text.includes("أخصائي") ? 3 : 2; // optional
+    if (item.ref === "20.1(م)") return text.includes("بيئي") || text.includes("حوكمة") || text.includes("ESG") ? 3 : 1;
+    if (item.ref === "20.1(ن)") return text.includes("نوع التقرير") || text.includes("تفصيلي") || text.includes("سردي") ? 3 : 1;
+    if (item.ref === "20.1(س)") return text.includes("قيود") && text.includes("استخدام") ? 3 : text.includes("توزيع") ? 2 : 0;
+    if (item.ref === "20.1(ع)") return text.includes("IVS") || text.includes("معايير التقييم الدولية") ? 3 : 0;
+  }
+
+  // IVS 102 — bases of value
+  if (standard.code === "IVS102") {
+    if (item.ref === "3.10") return text.includes("أعلى وأفضل") || text.includes("highest and best") ? 3 : text.includes("فرضية القيمة") ? 2 : 0;
+    if (item.ref === "2.20") return text.includes("القيمة السوقية") || text.includes("أساس القيمة") ? 3 : 0;
+    if (item.ref === "4.20") return text.includes("أساس القيمة") && text.includes("مناسب") ? 3 : text.includes("أساس القيمة") ? 2 : 1;
+    if (item.ref === "6.20") return text.includes("تعريف") && (text.includes("القيمة السوقية") || text.includes("أساس القيمة")) ? 3 : 1;
+    if (item.ref === "50.4") return assumptions.length > 0 ? 3 : text.includes("افتراض") ? 1 : 0;
+  }
+
+  // IVS 103 — valuation approaches
+  if (standard.code === "IVS103") {
+    if (item.ref === "1.10") return text.includes("أسلوب") && (text.includes("سوق") || text.includes("دخل") || text.includes("تكلفة")) ? 3 : 0;
+    if (item.ref === "3.10") return text.includes("طريقة التقييم") || text.includes("المقارنة") ? 3 : text.includes("طريقة") ? 1 : 0;
+    if (item.ref?.startsWith("10.")) return text.includes("أسلوب") ? 2 : 1;
+    if (item.ref?.startsWith("10-السوق")) return comparables.length > 0 ? 3 : text.includes("مقارن") ? 1 : 0;
+    if (item.ref?.startsWith("20-الدخل")) return text.includes("دخل") || text.includes("عائد") || text.includes("رسملة") ? 2 : 0;
+    if (item.ref?.startsWith("30-التكلفة")) return text.includes("تكلفة") || text.includes("إهلاك") ? 2 : 0;
+  }
+
+  // IVS 104 — data
+  if (standard.code === "IVS104") {
+    if (item.ref === "20" && item.optional) return 2;
+    if (item.ref?.startsWith("30.")) return text.includes("بيانات") || text.includes("مصدر") ? 2 : 1;
+    if (item.ref === "40.2") return text.length > 500 ? 2 : 1;
+    if (item.ref === "50.1/50.2") return text.includes("مصدر") && text.includes("مدخل") ? 3 : 1;
+    if (item.ref === "6-10أ") return text.includes("بيئي") || text.includes("ESG") ? 2 : 1;
+  }
+
+  // IVS 105 — valuation models
+  if (standard.code === "IVS105") {
+    if (item.ref === "20" && item.optional) return 2;
+    if (item.ref === "40") return text.includes("نموذج") && text.includes("تقييم") ? 3 : text.includes("نموذج") ? 1 : 0;
+    if (item.ref === "50") return text.includes("نموذج") && text.includes("مدخل") ? 2 : 1;
+  }
+
+  // IVS 106 — documentation
+  if (standard.code === "IVS106") {
+    if (item.ref === "20") return text.length > 1000 ? 3 : text.length > 300 ? 2 : 1;
+    if (item.ref === "30") return assignment?.subjects?.[0] ? 3 : text.includes("أصل") ? 1 : 0;
+    if (item.ref === "6.30(ص)") return assignment?.valuation_date && assignment?.report_date ? 3 : 2;
+  }
+
+  // IVS 400 — real property interests
+  if (standard.code === "IVS400") {
+    if (item.ref === "2.20-أ") return text.includes("ملكية") || text.includes("صك") ? 3 : text.includes("عقار") ? 1 : 0;
+    if (item.ref === "2.20-ب") return text.includes("مصلحة") || text.includes("حقوق") ? 3 : 1;
+  }
+
+  // IVS 410 — development property
+  if (standard.code === "IVS410") {
+    return text.includes("تطوير") ? 2 : 0;
+  }
+
+  return 1; // default partial score
 }
 
 /* ─── Main Quality Gate Runner ─── */
@@ -131,207 +227,139 @@ export async function runReportQC(assignmentId: string): Promise<ReportQCResult>
   const inspections = inspectionsRes.data || [];
   const complianceChecks = complianceRes.data || [];
 
-  // ══════════════════════════════════════════════
-  // 1. SECTION COMPLETENESS — MANDATORY
-  // ══════════════════════════════════════════════
-
-  if (!draft) {
-    addCheck(checks, "QG_NO_DRAFT", "مسودة التقرير غير موجودة", "Report draft not found",
-      "section_completeness", "mandatory", false, "لا توجد مسودة تقرير — لا يمكن الإصدار");
-  } else {
+  // Build full report text
+  let reportText = "";
+  if (draft) {
     const contentAr: string = draft.content_ar || "";
     const sections = draft.sections || {};
+    reportText = contentAr + " " + Object.values(sections).map(v => typeof v === "string" ? v : JSON.stringify(v)).join(" ");
+  }
 
-    for (const sec of REQUIRED_SECTIONS) {
-      let sectionContent = "";
-      if (sections[sec.key]) {
-        sectionContent = typeof sections[sec.key] === "string" ? sections[sec.key] : JSON.stringify(sections[sec.key]);
-      } else if (contentAr.includes(sec.label_ar)) {
-        sectionContent = sec.label_ar;
-      }
-      if (sec.key === "assumptions" && assumptions.length > 0) sectionContent = "documented_in_db";
-      if (sec.key === "final_value" && (assignment?.final_value || assignment?.estimated_value)) sectionContent = "value_confirmed";
+  // Determine used approaches
+  const usedApproaches = {
+    market: reportText.includes("السوق") || reportText.includes("مقارن") || comparables.length > 0,
+    income: reportText.includes("دخل") || reportText.includes("رسملة") || reportText.includes("عائد"),
+    cost: reportText.includes("تكلفة") || reportText.includes("إهلاك") || reportText.includes("استبدال"),
+    development: reportText.includes("تطوير") || assignment?.property_type === "development",
+  };
 
-      const hasContent = sectionContent.length >= MIN_SECTION_LENGTH || sectionContent === "documented_in_db" || sectionContent === "value_confirmed";
-      addCheck(checks, `QG_SECTION_${sec.key.toUpperCase()}`, sec.label_ar, sec.label_en,
-        "section_completeness", "mandatory", hasContent, `قسم "${sec.label_ar}" مفقود أو غير مكتمل`);
+  const standardResults: IVSStandardResult[] = [];
+
+  // ══════════════════════════════════════════════
+  // Run IVS Standard Checks
+  // ══════════════════════════════════════════════
+  for (const std of IVS_STANDARDS) {
+    // Skip IVS 410 if not development property
+    if (std.code === "IVS410" && !usedApproaches.development) continue;
+
+    const applicableItems = getApplicableItems(std, usedApproaches);
+    let stdPassed = 0;
+    let stdTotal = applicableItems.length;
+    let weightedScore = 0;
+    let totalWeight = 0;
+
+    for (const item of applicableItems) {
+      const score = autoScoreItem(item, std, reportText, assignment, assumptions, comparables, inspections);
+      const severity = getItemSeverity(std, item);
+      const passed = score >= 2; // Score ≥2 = passed
+
+      if (passed) stdPassed++;
+      totalWeight += item.weight_pct;
+      weightedScore += (score / 3) * item.weight_pct;
+
+      addCheck(checks,
+        `IVS_${std.code}_${item.ref}`,
+        item.question_ar,
+        `${std.code} ${item.ref}`,
+        std.code as QCCategory,
+        severity,
+        passed,
+        `${item.question_ar} — الدرجة: ${score}/3`,
+        { ref: item.ref, score, weight_pct: item.weight_pct }
+      );
     }
+
+    const scorePct = totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) : 100;
+    standardResults.push({
+      code: std.code,
+      title_ar: std.title_ar,
+      weight_pct: std.weight_pct,
+      score_pct: scorePct,
+      total_items: stdTotal,
+      checked_items: stdTotal,
+      passed_items: stdPassed,
+    });
   }
 
   // ══════════════════════════════════════════════
-  // 2. CONTENT QUALITY — MANDATORY + QUALITY
+  // System-level checks (not in IVS model)
   // ══════════════════════════════════════════════
 
+  // Draft exists
+  if (!draft) {
+    addCheck(checks, "SYS_NO_DRAFT", "مسودة التقرير غير موجودة", "Report draft not found",
+      "system_checks", "mandatory", false, "لا توجد مسودة تقرير — لا يمكن الإصدار");
+  }
+
+  // No placeholders
   if (draft) {
-    const contentAr: string = draft.content_ar || "";
-    const sections = draft.sections || {};
-    const allText = contentAr + " " + Object.values(sections).map(v => typeof v === "string" ? v : JSON.stringify(v)).join(" ");
-
-    // Mandatory: no placeholders
-    const hasPlaceholders = PLACEHOLDER_PATTERNS.some(p => p.test(allText));
-    addCheck(checks, "QG_NO_PLACEHOLDERS", "خلو التقرير من نصوص مؤقتة", "No placeholder text",
-      "content_quality", "mandatory", !hasPlaceholders, "يحتوي التقرير على نصوص مؤقتة ([...] أو TODO)");
-
-    // Mandatory: minimum content
-    const totalLength = allText.replace(/\s+/g, "").length;
-    addCheck(checks, "QG_MIN_CONTENT", "الحد الأدنى من المحتوى", "Minimum content threshold",
-      "content_quality", "mandatory", totalLength >= MIN_CONTENT_LENGTH, "محتوى التقرير أقل من الحد الأدنى المطلوب");
-
-    // Quality: Arabic language consistency
-    const arabicRatio = (allText.match(/[\u0600-\u06FF]/g) || []).length / Math.max(allText.length, 1);
-    addCheck(checks, "QG_ARABIC_QUALITY", "جودة النص العربي", "Arabic text quality",
-      "content_quality", "quality", arabicRatio > 0.3, "نسبة النص العربي منخفضة — تأكد من كتابة التقرير بالعربية");
-
-    // Enhancement: comprehensive content (>2000 chars)
-    addCheck(checks, "QG_CONTENT_DEPTH", "عمق المحتوى التحليلي", "Content depth",
-      "content_quality", "enhancement", totalLength >= 2000, "يُنصح بإثراء المحتوى التحليلي لرفع جودة التقرير");
+    const hasPlaceholders = PLACEHOLDER_PATTERNS.some(p => p.test(reportText));
+    addCheck(checks, "SYS_NO_PLACEHOLDERS", "خلو التقرير من نصوص مؤقتة", "No placeholder text",
+      "system_checks", "mandatory", !hasPlaceholders, "يحتوي التقرير على نصوص مؤقتة ([...] أو TODO)");
   }
 
-  // ══════════════════════════════════════════════
-  // 3. METHODOLOGY — MANDATORY + QUALITY
-  // ══════════════════════════════════════════════
-
-  if (draft) {
-    const sections = draft.sections || {};
-    const methodologyContent = sections.methodology || sections.valuation_methodology || "";
-    const methodText = typeof methodologyContent === "string" ? methodologyContent : JSON.stringify(methodologyContent);
-
-    // Mandatory: methodology justified
-    addCheck(checks, "QG_METHODOLOGY_JUSTIFIED", "تبرير المنهجية", "Methodology justification",
-      "methodology", "mandatory", methodText.length >= MIN_METHODOLOGY_LENGTH,
-      "المنهجية غير مبررة أو وصفها غير كافٍ — مطلوب حسب IVS 105");
-  }
-
-  // Mandatory: assumptions documented
-  addCheck(checks, "QG_ASSUMPTIONS_DOCUMENTED", "توثيق الافتراضات", "Assumptions documented",
-    "methodology", "mandatory", assumptions.length > 0, "لم يتم توثيق أي افتراضات — إلزامي حسب IVS 2025");
-
-  // Quality: special assumptions identified
-  const hasSpecialAssumptions = assumptions.some((a: any) => a.is_special);
-  addCheck(checks, "QG_SPECIAL_ASSUMPTIONS", "تحديد الافتراضات الخاصة", "Special assumptions identified",
-    "methodology", "quality", assumptions.length === 0 || hasSpecialAssumptions,
-    "يُوصى بتحديد الافتراضات الخاصة وفصلها عن الافتراضات العامة");
-
-  // Quality: comparables used
-  addCheck(checks, "QG_COMPARABLES_USED", "استخدام مقارنات سوقية", "Market comparables used",
-    "methodology", "quality", comparables.length >= 2,
-    "يُوصى باستخدام مقارنتين سوقيتين على الأقل لدعم التقييم");
-
-  // ══════════════════════════════════════════════
-  // 4. VALUE INTEGRITY — MANDATORY
-  // ══════════════════════════════════════════════
-
+  // Final value exists
   const finalValue = assignment?.final_value;
   const estimatedValue = assignment?.estimated_value;
-  const hasValue = !!finalValue || !!estimatedValue;
   const numericValue = Number(finalValue || estimatedValue || 0);
+  addCheck(checks, "SYS_VALUE_EXISTS", "وجود القيمة النهائية", "Final value exists",
+    "system_checks", "mandatory", numericValue > 0, "القيمة النهائية غير محددة أو صفرية");
 
-  addCheck(checks, "QG_VALUE_EXISTS", "وجود القيمة النهائية", "Final value exists",
-    "value_integrity", "mandatory", hasValue, "القيمة النهائية غير محددة");
-
-  addCheck(checks, "QG_VALUE_POSITIVE", "القيمة موجبة وصالحة", "Value is positive",
-    "value_integrity", "mandatory", numericValue > 0, "القيمة المحددة غير صالحة (صفر أو سالبة)");
-
-  // Enhancement: value reconciliation documented
-  addCheck(checks, "QG_VALUE_RECONCILIATION", "مصالحة القيمة", "Value reconciliation",
-    "value_integrity", "enhancement", false, "يُنصح بتوثيق مصالحة القيمة بين المناهج المستخدمة");
-
-  // ══════════════════════════════════════════════
-  // 5. COMPLIANCE — MANDATORY + QUALITY
-  // ══════════════════════════════════════════════
-
+  // Compliance checks
   if (complianceChecks.length > 0) {
     const mandatoryFailed = complianceChecks.filter((c: any) => c.is_mandatory && !c.is_passed);
-    addCheck(checks, "QG_COMPLIANCE_CHECKS", "فحوصات الامتثال التنظيمي", "Regulatory compliance checks",
-      "compliance", "mandatory", mandatoryFailed.length === 0,
+    addCheck(checks, "SYS_COMPLIANCE", "فحوصات الامتثال التنظيمي", "Regulatory compliance",
+      "system_checks", "mandatory", mandatoryFailed.length === 0,
       `${mandatoryFailed.length} فحوصات امتثال إلزامية لم تجتز`);
   }
 
-  // Mandatory: inspection completed (unless desktop)
+  // Inspection for field mode
   const isDesktop = assignment?.valuation_mode === "desktop";
   if (!isDesktop) {
     const inspDone = inspections[0]?.completed || inspections[0]?.status === "completed" || inspections[0]?.status === "submitted";
-    addCheck(checks, "QG_INSPECTION_DONE", "اكتمال المعاينة الميدانية", "Field inspection completed",
-      "compliance", "mandatory", !!inspDone, "المعاينة الميدانية لم تكتمل — إلزامية لنمط التقييم الميداني");
+    addCheck(checks, "SYS_INSPECTION", "اكتمال المعاينة الميدانية", "Field inspection completed",
+      "system_checks", "mandatory", !!inspDone, "المعاينة الميدانية لم تكتمل");
   }
 
-  // ══════════════════════════════════════════════
-  // 6. DOCUMENTATION — QUALITY + ENHANCEMENT
-  // ══════════════════════════════════════════════
-
-  // Quality: photos attached (for field inspections)
-  if (!isDesktop) {
-    const { count: photosCount } = await supabase
-      .from("inspection_photos")
-      .select("id", { count: "exact", head: true })
-      .in("inspection_id", inspections.map((i: any) => i.id).filter(Boolean));
-
-    addCheck(checks, "QG_PHOTOS_ATTACHED", "إرفاق صور المعاينة", "Inspection photos attached",
-      "documentation", "quality", (photosCount || 0) >= 3,
-      "يُوصى بإرفاق 3 صور معاينة على الأقل لتوثيق الحالة");
+  // ── Compute overall weighted score ──
+  let overallWeightedScore = 0;
+  let totalStdWeight = 0;
+  for (const sr of standardResults) {
+    const effectiveWeight = sr.code === "IVS410" ? 10 : sr.weight_pct;
+    overallWeightedScore += sr.score_pct * effectiveWeight;
+    totalStdWeight += effectiveWeight;
   }
+  const score = totalStdWeight > 0 ? Math.round(overallWeightedScore / totalStdWeight) : 0;
+  const gradeInfo = getGrade(score);
 
-  // Enhancement: attachments present
-  const { count: attachmentsCount } = await supabase
-    .from("attachments")
-    .select("id", { count: "exact", head: true })
-    .eq("assignment_id", assignmentId);
-
-  addCheck(checks, "QG_ATTACHMENTS", "إرفاق مستندات داعمة", "Supporting documents attached",
-    "documentation", "enhancement", (attachmentsCount || 0) > 0,
-    "يُنصح بإرفاق المستندات الداعمة (صكوك، رخص، مخططات)");
-
-  // ══════════════════════════════════════════════
-  // 7. PROFESSIONAL STANDARDS — QUALITY + ENHANCEMENT
-  // ══════════════════════════════════════════════
-
-  // Quality: subject property details
-  const subject = (assignment as any)?.subjects?.[0] || (assignment as any)?.subjects;
-  const hasSubjectDetails = !!(subject?.property_type && (subject?.land_area || subject?.building_area));
-  addCheck(checks, "QG_SUBJECT_DETAILS", "بيانات العقار محل التقييم", "Subject property details",
-    "professional_standards", "quality", hasSubjectDetails,
-    "بيانات العقار محل التقييم غير مكتملة (النوع، المساحة)");
-
-  // Enhancement: glossary
-  addCheck(checks, "QG_GLOSSARY", "قائمة المصطلحات", "Glossary of terms",
-    "professional_standards", "enhancement", false,
-    "يُنصح بإضافة قائمة مصطلحات لتعزيز الوضوح المهني");
-
-  // Enhancement: limiting conditions
-  addCheck(checks, "QG_LIMITING_CONDITIONS", "الشروط المقيّدة", "Limiting conditions",
-    "professional_standards", "enhancement", false,
-    "يُنصح بتوثيق الشروط المقيّدة وحدود نطاق العمل");
-
-  // ── Compute result ──
-  const passedChecks = checks.filter(c => c.passed).length;
+  // ── Categorize failures ──
   const mandatoryFails = checks.filter(c => c.severity === "mandatory" && !c.passed);
   const qualityFails = checks.filter(c => c.severity === "quality" && !c.passed);
   const enhancementFails = checks.filter(c => c.severity === "enhancement" && !c.passed);
-
-  // Score: mandatory=50%, quality=35%, enhancement=15%
-  const mandatoryChecks = checks.filter(c => c.severity === "mandatory");
-  const qualityChecks = checks.filter(c => c.severity === "quality");
-  const enhancementChecks = checks.filter(c => c.severity === "enhancement");
-
-  const mandatoryScore = mandatoryChecks.length > 0
-    ? (mandatoryChecks.filter(c => c.passed).length / mandatoryChecks.length) * 50 : 50;
-  const qualityScore = qualityChecks.length > 0
-    ? (qualityChecks.filter(c => c.passed).length / qualityChecks.length) * 35 : 35;
-  const enhancementScore = enhancementChecks.length > 0
-    ? (enhancementChecks.filter(c => c.passed).length / enhancementChecks.length) * 15 : 15;
-
-  const score = Math.round(mandatoryScore + qualityScore + enhancementScore);
 
   return {
     passed: mandatoryFails.length === 0,
     can_issue: mandatoryFails.length === 0,
     has_warnings: qualityFails.length > 0,
     score,
+    grade: gradeInfo.grade,
+    grade_label_ar: gradeInfo.label_ar,
     total_checks: checks.length,
-    passed_checks: passedChecks,
+    passed_checks: checks.filter(c => c.passed).length,
     failed_mandatory: mandatoryFails.length,
     failed_quality: qualityFails.length,
     failed_enhancement: enhancementFails.length,
+    standard_results: standardResults,
     checks,
     blocked_reasons_ar: mandatoryFails.map(c => c.details_ar || c.label_ar),
     warning_reasons_ar: qualityFails.map(c => c.details_ar || c.label_ar),
@@ -340,7 +368,7 @@ export async function runReportQC(assignmentId: string): Promise<ReportQCResult>
   };
 }
 
-/* ─── Log QC result to audit trail + quality_gate_results table ─── */
+/* ─── Log QC result ─── */
 
 export async function logQCResult(
   assignmentId: string,
@@ -348,7 +376,6 @@ export async function logQCResult(
   userId: string
 ): Promise<void> {
   await Promise.all([
-    // Structured table
     supabase.from("quality_gate_results" as any).insert({
       assignment_id: assignmentId,
       run_by: userId,
@@ -366,7 +393,6 @@ export async function logQCResult(
       warning_reasons: result.warning_reasons_ar,
       enhancement_suggestions: result.enhancement_suggestions_ar,
     }),
-    // Audit log
     supabase.from("audit_logs").insert({
       user_id: userId,
       action: "create" as any,
@@ -374,18 +400,19 @@ export async function logQCResult(
       record_id: assignmentId,
       assignment_id: assignmentId,
       description: result.passed
-        ? `اجتياز بوابة الجودة — ${result.score}% (${result.passed_checks}/${result.total_checks})${result.has_warnings ? ` — ${result.failed_quality} ملاحظات جودة` : ""}`
-        : `رفض بوابة الجودة — ${result.score}% — ${result.failed_mandatory} متطلبات إلزامية لم تتحقق`,
+        ? `اجتياز بوابة الجودة — ${result.score}% (${result.grade_label_ar}) — ${result.passed_checks}/${result.total_checks}${result.has_warnings ? ` — ${result.failed_quality} ملاحظات جودة` : ""}`
+        : `رفض بوابة الجودة — ${result.score}% (${result.grade_label_ar}) — ${result.failed_mandatory} متطلبات إلزامية لم تتحقق`,
       new_data: {
         qg_passed: result.passed,
         qg_score: result.score,
+        qg_grade: result.grade,
+        qg_grade_label: result.grade_label_ar,
+        standard_results: result.standard_results,
         can_issue: result.can_issue,
         has_warnings: result.has_warnings,
         failed_mandatory: result.failed_mandatory,
         failed_quality: result.failed_quality,
         failed_enhancement: result.failed_enhancement,
-        blocked_reasons: result.blocked_reasons_ar,
-        warning_reasons: result.warning_reasons_ar,
         checked_at: result.checked_at,
       },
     }),
