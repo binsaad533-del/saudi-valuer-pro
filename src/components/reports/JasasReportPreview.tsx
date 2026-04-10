@@ -4,7 +4,7 @@ import { QRCodeSVG } from "qrcode.react";
 import jasasLogo from "@/assets/jasas-logo.png";
 
 /* ══════════════════════════════════════════════
-   Sample Data
+   Sample Data — Executive Style
    ══════════════════════════════════════════════ */
 const SAMPLE = {
   reportNumber: "JV-2026-0412",
@@ -12,47 +12,35 @@ const SAMPLE = {
   valuationDate: "2026-04-01",
   issueDate: "2026-04-10",
   recipient: { name: "محمد العبدالله", email: "m.abdullah@company.sa" },
-  objective:
-    "تحديد القيمة السوقية العادلة للآلات والمعدات المملوكة للعميل وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين.",
-  scope:
-    "يشمل نطاق العمل جميع الآلات والمعدات الثابتة والمتحركة الموجودة في موقع العميل، بما في ذلك خطوط الإنتاج والمعدات المساندة. تم إجراء معاينة ميدانية شاملة للموقع بتاريخ 2026-03-25.",
-  assetDefinition:
-    "تشمل الأصول المقيّمة جميع الآلات والمعدات الصناعية المملوكة للعميل والمتواجدة في المصنع الرئيسي بالمنطقة الصناعية الثانية بالرياض. تم تصنيف الأصول إلى خمس فئات رئيسية حسب طبيعة الاستخدام والعمر الإنتاجي.",
+  assumptions: [
+    "جميع الآلات في حالة تشغيلية وقت المعاينة",
+    "لا توجد التزامات مالية أو رهونات على الأصول",
+    "المعلومات المقدمة من العميل دقيقة وكاملة",
+  ],
+  limitations: [
+    "لم يتم فحص الأجزاء الداخلية للآلات",
+    "التقييم لا يشمل الأصول غير الملموسة أو المخزون",
+  ],
+  disclosures: [
+    "لا توجد علاقة مالية أو شخصية تؤثر على استقلالية التقييم",
+    "التقرير معدّ وفقاً لـ IVS 2025 ومتطلبات تقييم",
+    "المقيّم مؤهل لإجراء هذا النوع من التقييمات",
+    "التقرير حصري للمستلم ولا يجوز تداوله دون موافقة خطية",
+  ],
   documents: [
-    "صك ملكية المصنع — صادر بتاريخ 2020-06-15",
+    "صك ملكية المصنع — 2020-06-15",
     "فواتير شراء المعدات الأصلية",
     "عقود الصيانة السارية",
     "تقارير الفحص الفني السابقة",
     "شهادات المطابقة والجودة",
   ],
-  inspectionNotes:
-    "تمت المعاينة الميدانية بتاريخ 2026-03-25 بحضور ممثل العميل. تم التحقق من وجود جميع الأصول المدرجة وفحص حالتها التشغيلية العامة. لوحظ أن المعدات في حالة جيدة مع صيانة دورية منتظمة.",
   inspectionPhotos: [
-    { caption: "خط الإنتاج الرئيسي — المنظر العام" },
-    { caption: "المولدات الكهربائية — الوحدة 1" },
-    { caption: "الرافعات الصناعية — منطقة التخزين" },
+    { caption: "خط الإنتاج الرئيسي" },
+    { caption: "المولدات الكهربائية" },
+    { caption: "الرافعات الصناعية" },
     { caption: "أنظمة التبريد المركزية" },
     { caption: "لوحة التحكم الرئيسية" },
-    { caption: "المعدات المساندة — ورشة الصيانة" },
-  ],
-  analysis:
-    "تم تحليل الأصول بناءً على عمرها الإنتاجي المتبقي، حالتها الفعلية، ومعدلات الإهلاك المطبقة. أظهر التحليل أن متوسط العمر الإنتاجي المتبقي للأصول يبلغ 12 عاماً، مع معدل إهلاك مرجّح قدره 35%. تم الأخذ بعين الاعتبار تكاليف الاستبدال الحالية وأسعار السوق المحلي والدولي للمعدات المماثلة.",
-  methodology:
-    "تم اعتماد أسلوب التكلفة (Cost Approach) كمنهج رئيسي لتحديد تكلفة الاستبدال الجديدة مع خصم الإهلاك التراكمي. كما تم الاستئناس بأسلوب السوق (Market Approach) من خلال مقارنة أسعار معدات مماثلة في السوق للتحقق من معقولية النتائج. لم يتم تطبيق أسلوب الدخل لعدم توفر بيانات تدفقات نقدية منفصلة للأصول.",
-  assumptions: [
-    "جميع الآلات في حالة تشغيلية وقت المعاينة",
-    "لا توجد التزامات مالية أو رهونات على الأصول المقيّمة",
-    "المعلومات المقدمة من العميل دقيقة وكاملة",
-  ],
-  limitations: [
-    "لم يتم إجراء فحص فني تفصيلي للأجزاء الداخلية للآلات",
-    "التقييم لا يشمل الأصول غير الملموسة أو المخزون",
-  ],
-  disclosures: [
-    "لا توجد علاقة مالية أو شخصية بين المقيّم والعميل تؤثر على استقلالية التقييم",
-    "تم إعداد هذا التقرير وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين (تقييم)",
-    "المقيّم يمتلك الخبرة والتأهيل الكافي لإجراء هذا النوع من التقييمات",
-    "هذا التقرير معدّ حصرياً للجهة المستلمة ولا يجوز تداوله أو الاعتماد عليه من قبل أطراف أخرى دون موافقة خطية مسبقة",
+    { caption: "معدات ورشة الصيانة" },
   ],
   assets: [
     { type: "خطوط إنتاج", qty: 3, value: "7,200,000" },
@@ -69,9 +57,6 @@ const SAMPLE = {
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
 const TOTAL_PAGES = 10;
 
-/* ══════════════════════════════════════════════
-   TOC
-   ══════════════════════════════════════════════ */
 const TOC = [
   { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
   { id: "scope", num: 2, title: "نطاق العمل" },
@@ -86,24 +71,18 @@ const TOC = [
 ];
 
 /* ══════════════════════════════════════════════
-   Watermark Overlay — rendered on every page
+   Watermark
    ══════════════════════════════════════════════ */
 function WatermarkOverlay() {
   const now = new Date().toISOString().slice(0, 16).replace("T", " ");
   const text = `CONFIDENTIAL — ${SAMPLE.recipient.name} — ${now}`;
-
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden z-10" aria-hidden="true">
-      {/* Diagonal repeating watermark */}
       <div className="absolute inset-0 flex flex-col justify-around">
         {Array.from({ length: 5 }).map((_, row) => (
           <div key={row} className="flex justify-around -rotate-[25deg] origin-center">
             {Array.from({ length: 2 }).map((_, col) => (
-              <span
-                key={col}
-                className="text-[11px] whitespace-nowrap select-none"
-                style={{ color: "hsl(var(--muted-foreground) / 0.08)" }}
-              >
+              <span key={col} className="text-[11px] whitespace-nowrap select-none" style={{ color: "hsl(var(--muted-foreground) / 0.08)" }}>
                 {text}
               </span>
             ))}
@@ -161,29 +140,47 @@ function SectionTitle({ id, num, title }: { id: string; num: number; title: stri
   );
 }
 
-function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
+/** Executive bullet — concise single-line point */
+function Bullet({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-      {children}
+    <div className="flex gap-2 text-sm text-muted-foreground">
+      <span className="text-primary/60 shrink-0 mt-0.5">-</span>
+      <span className="leading-relaxed">{children}</span>
     </div>
   );
 }
 
-function Paragraph({ text }: { text: string }) {
-  return <p className="text-sm text-muted-foreground leading-[1.85]">{text}</p>;
+/** Key-value metric row */
+function MetricRow({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className={`text-sm font-semibold ${highlight ? "text-primary" : "text-foreground"}`}>{value}</span>
+    </div>
+  );
+}
+
+/** Prominent value box */
+function ValueBox({ label, value, subtext }: { label: string; value: string; subtext?: string }) {
+  return (
+    <div className="bg-primary/5 border-2 border-primary/15 rounded-lg px-6 py-5 text-center space-y-1.5">
+      <p className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">{label}</p>
+      <p className="text-3xl font-bold text-primary tracking-tight">{value} <span className="text-lg">SAR</span></p>
+      {subtext && <p className="text-sm text-muted-foreground">{subtext}</p>}
+    </div>
+  );
 }
 
 function NumberedList({ items }: { items: string[] }) {
   return (
-    <ul className="space-y-1.5">
+    <div className="space-y-1">
       {items.map((item, i) => (
-        <li key={i} className="text-sm text-muted-foreground flex gap-2">
+        <div key={i} className="flex gap-2 text-sm text-muted-foreground">
           <span className="text-primary font-bold shrink-0">{i + 1}.</span>
           <span className="leading-relaxed">{item}</span>
-        </li>
+        </div>
       ))}
-    </ul>
+    </div>
   );
 }
 
@@ -192,9 +189,7 @@ function VerificationQR({ size = 64 }: { size?: number }) {
   return (
     <div className="flex flex-col items-center gap-1.5">
       <QRCodeSVG value={url} size={size} level="M" />
-      <p className="text-[8px] text-muted-foreground text-center leading-tight max-w-[120px]" dir="ltr">
-        {url}
-      </p>
+      <p className="text-[8px] text-muted-foreground text-center leading-tight max-w-[120px]" dir="ltr">{url}</p>
     </div>
   );
 }
@@ -209,10 +204,9 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 /* ══════════════════════════════════════════════
-   Pages
+   Pages — Executive Style
    ══════════════════════════════════════════════ */
 
-/* ── Cover ── */
 function CoverPage() {
   return (
     <PageShell pageNum={1} noHeader>
@@ -231,10 +225,7 @@ function CoverPage() {
             <Row label="تاريخ التقييم" value={SAMPLE.valuationDate} />
             <Row label="تاريخ الإصدار" value={SAMPLE.issueDate} />
           </div>
-          {/* QR on cover */}
-          <div className="mt-2">
-            <VerificationQR size={56} />
-          </div>
+          <div className="mt-2"><VerificationQR size={56} /></div>
         </div>
         <div className="space-y-3 text-center">
           <div className="inline-block border border-border rounded px-4 py-1.5">
@@ -248,7 +239,6 @@ function CoverPage() {
   );
 }
 
-/* ── TOC ── */
 function TOCPage({ onNavigate }: { onNavigate: (id: string) => void }) {
   return (
     <PageShell pageNum={2}>
@@ -268,9 +258,7 @@ function TOCPage({ onNavigate }: { onNavigate: (id: string) => void }) {
                 <span className="text-primary font-bold w-5 text-center">{item.num}</span>
                 <span className="text-foreground group-hover:text-primary transition-colors">{item.title}</span>
               </div>
-              <span className="text-muted-foreground text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                انتقال
-              </span>
+              <span className="text-muted-foreground text-xs opacity-0 group-hover:opacity-100 transition-opacity">انتقال</span>
             </button>
           ))}
         </div>
@@ -279,34 +267,58 @@ function TOCPage({ onNavigate }: { onNavigate: (id: string) => void }) {
   );
 }
 
-/* ── Executive Summary ── */
+/* ── Executive Summary — Half page max, numbers-first ── */
 function ExecSummaryPage() {
   return (
     <PageShell pageNum={3}>
-      <div className="space-y-5">
+      <div className="space-y-4">
         <SectionTitle id="exec-summary" num={1} title="الملخص التنفيذي" />
-        <SubSection title="الهدف"><Paragraph text={SAMPLE.objective} /></SubSection>
-        <SubSection title="النطاق"><Paragraph text={SAMPLE.scope} /></SubSection>
-        <SubSection title="المنهج"><Paragraph text={SAMPLE.methodology} /></SubSection>
-        <SubSection title="القيمة التقديرية">
-          <div className="bg-primary/5 border border-primary/10 rounded px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-primary">{SAMPLE.estimatedValue} {SAMPLE.currency}</p>
-          </div>
-        </SubSection>
+
+        <ValueBox
+          label="القيمة السوقية العادلة"
+          value={SAMPLE.estimatedValue}
+          subtext={SAMPLE.estimatedValueText}
+        />
+
+        <div className="space-y-1 mt-2">
+          <MetricRow label="عدد الأصول" value={`${SAMPLE.assets.reduce((s, a) => s + a.qty, 0)} وحدة`} />
+          <MetricRow label="عدد الفئات" value={`${SAMPLE.assets.length} فئات`} />
+          <MetricRow label="المنهج الرئيسي" value="أسلوب التكلفة" />
+          <MetricRow label="المنهج المساند" value="أسلوب السوق" />
+          <MetricRow label="تاريخ المعاينة" value="2026-03-25" />
+          <MetricRow label="المعيار" value="IVS 2025" />
+        </div>
+
+        <div className="space-y-1 pt-2">
+          <p className="text-xs font-semibold text-foreground">الافتراضات الجوهرية:</p>
+          {SAMPLE.assumptions.map((a, i) => <Bullet key={i}>{a}</Bullet>)}
+        </div>
       </div>
     </PageShell>
   );
 }
 
-/* ── Scope ── */
+/* ── Scope + Asset Definition — Bullets only ── */
 function ScopePage() {
   return (
     <PageShell pageNum={4}>
       <div className="space-y-5">
         <SectionTitle id="scope" num={2} title="نطاق العمل" />
-        <Paragraph text={SAMPLE.scope} />
+        <div className="space-y-1">
+          <Bullet>جميع الآلات والمعدات الثابتة والمتحركة في موقع العميل</Bullet>
+          <Bullet>خطوط الإنتاج والمعدات المساندة</Bullet>
+          <Bullet>معاينة ميدانية شاملة بتاريخ 2026-03-25</Bullet>
+          <Bullet>تحديد القيمة السوقية العادلة وفقاً لـ IVS 2025</Bullet>
+        </div>
+
         <SectionTitle id="asset-def" num={3} title="تعريف الأصل" />
-        <Paragraph text={SAMPLE.assetDefinition} />
+        <div className="space-y-1">
+          <Bullet>الموقع: المنطقة الصناعية الثانية — الرياض</Bullet>
+          <Bullet>المالك: العميل المحدد في نطاق العمل</Bullet>
+          <Bullet>التصنيف: 5 فئات حسب طبيعة الاستخدام والعمر الإنتاجي</Bullet>
+          <Bullet>الشمول: جميع المعدات الصناعية المملوكة في المصنع الرئيسي</Bullet>
+          <Bullet>الاستثناء: الأصول غير الملموسة والمخزون</Bullet>
+        </div>
       </div>
     </PageShell>
   );
@@ -318,23 +330,30 @@ function DocumentsPage() {
     <PageShell pageNum={5}>
       <div className="space-y-5">
         <SectionTitle id="documents" num={4} title="المستندات" />
-        <Paragraph text="تم الاعتماد على المستندات التالية المقدمة من العميل في إعداد هذا التقرير:" />
+        <p className="text-xs text-muted-foreground">المستندات المعتمدة في التقييم:</p>
         <NumberedList items={SAMPLE.documents} />
       </div>
     </PageShell>
   );
 }
 
-/* ── Inspection ── */
+/* ── Inspection — Grid + brief notes ── */
 function InspectionPage() {
   return (
     <PageShell pageNum={6}>
-      <div className="space-y-5">
+      <div className="space-y-4">
         <SectionTitle id="inspection" num={5} title="المعاينة" />
-        <Paragraph text={SAMPLE.inspectionNotes} />
-        <div className="grid grid-cols-3 gap-3 mt-4">
+
+        <div className="space-y-1">
+          <MetricRow label="تاريخ المعاينة" value="2026-03-25" />
+          <MetricRow label="الحضور" value="ممثل العميل + المقيّم" />
+          <MetricRow label="حالة الأصول" value="جيدة — صيانة دورية منتظمة" />
+          <MetricRow label="التحقق" value="جميع الأصول المدرجة موجودة ومتطابقة" />
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mt-3">
           {SAMPLE.inspectionPhotos.map((photo, i) => (
-            <div key={i} className="space-y-1.5">
+            <div key={i} className="space-y-1">
               <div className="aspect-[4/3] bg-muted/40 border border-border/50 rounded flex items-center justify-center">
                 <span className="text-[10px] text-muted-foreground/50">صورة {i + 1}</span>
               </div>
@@ -347,60 +366,82 @@ function InspectionPage() {
   );
 }
 
-/* ── Analysis + Methodology ── */
+/* ── Analysis + Methodology — Structured table, no paragraphs ── */
 function AnalysisPage() {
   return (
     <PageShell pageNum={7}>
       <div className="space-y-5">
         <SectionTitle id="analysis" num={6} title="التحليل" />
-        <Paragraph text={SAMPLE.analysis} />
+
+        <div className="space-y-1">
+          <MetricRow label="متوسط العمر الإنتاجي المتبقي" value="12 عاماً" />
+          <MetricRow label="معدل الإهلاك المرجّح" value="35%" />
+          <MetricRow label="أساس التكلفة" value="تكلفة الاستبدال الحالية" />
+          <MetricRow label="مصادر السوق" value="سوق محلي + دولي" />
+        </div>
+
         <SectionTitle id="methodology" num={7} title="المنهجية" />
-        <Paragraph text={SAMPLE.methodology} />
-        <table className="w-full text-sm mt-2">
+
+        <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
               <th className="text-right py-2 font-semibold text-foreground">الأسلوب</th>
               <th className="text-center py-2 font-semibold text-foreground">الحالة</th>
-              <th className="text-right py-2 font-semibold text-foreground">الملاحظة</th>
+              <th className="text-right py-2 font-semibold text-foreground">المبرر</th>
             </tr>
           </thead>
           <tbody className="text-muted-foreground">
             <tr className="border-b border-border/50">
               <td className="py-2">أسلوب التكلفة</td>
               <td className="py-2 text-center text-primary font-medium">رئيسي</td>
-              <td className="py-2">تكلفة الاستبدال مخصوماً منها الإهلاك</td>
+              <td className="py-2 text-sm">RCN مع خصم الإهلاك التراكمي</td>
             </tr>
             <tr className="border-b border-border/50">
               <td className="py-2">أسلوب السوق</td>
               <td className="py-2 text-center">مساند</td>
-              <td className="py-2">مقارنة أسعار معدات مماثلة</td>
+              <td className="py-2 text-sm">مقارنة أسعار معدات مماثلة</td>
             </tr>
             <tr className="border-b border-border/50">
               <td className="py-2">أسلوب الدخل</td>
               <td className="py-2 text-center text-muted-foreground/60">غير مطبق</td>
-              <td className="py-2">عدم توفر بيانات تدفقات نقدية منفصلة</td>
+              <td className="py-2 text-sm">عدم توفر تدفقات نقدية منفصلة</td>
             </tr>
           </tbody>
         </table>
+
+        <div className="bg-muted/30 border border-border/40 rounded p-3">
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground">التبرير:</span>{" "}
+            أسلوب التكلفة هو الأنسب للآلات والمعدات الصناعية المتخصصة. تم الاستئناس بأسلوب السوق للتحقق من معقولية النتائج.
+          </p>
+        </div>
       </div>
     </PageShell>
   );
 }
 
-/* ── Assumptions ── */
+/* ── Assumptions — Clean bullets ── */
 function AssumptionsPage() {
   return (
     <PageShell pageNum={8}>
       <div className="space-y-5">
         <SectionTitle id="assumptions" num={8} title="الافتراضات والقيود" />
-        <SubSection title="الافتراضات"><NumberedList items={SAMPLE.assumptions} /></SubSection>
-        <SubSection title="القيود"><NumberedList items={SAMPLE.limitations} /></SubSection>
+
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-foreground mb-1">الافتراضات:</p>
+          {SAMPLE.assumptions.map((a, i) => <Bullet key={i}>{a}</Bullet>)}
+        </div>
+
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-foreground mb-1">القيود:</p>
+          {SAMPLE.limitations.map((l, i) => <Bullet key={i}>{l}</Bullet>)}
+        </div>
       </div>
     </PageShell>
   );
 }
 
-/* ── Asset Table + Final Value ── */
+/* ── Asset Table + Final Value — Prominent box ── */
 function AssetTablePage() {
   const total = SAMPLE.assets
     .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
@@ -410,6 +451,7 @@ function AssetTablePage() {
     <PageShell pageNum={9}>
       <div className="space-y-5">
         <SectionTitle id="final-value" num={9} title="النتيجة النهائية" />
+
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
@@ -421,9 +463,9 @@ function AssetTablePage() {
           <tbody>
             {SAMPLE.assets.map((asset, i) => (
               <tr key={i} className="border-b border-border/50">
-                <td className="py-2.5 text-muted-foreground">{asset.type}</td>
-                <td className="py-2.5 text-center text-muted-foreground">{asset.qty}</td>
-                <td className="py-2.5 text-left text-muted-foreground" dir="ltr">{asset.value}</td>
+                <td className="py-2 text-muted-foreground">{asset.type}</td>
+                <td className="py-2 text-center text-muted-foreground">{asset.qty}</td>
+                <td className="py-2 text-left text-muted-foreground" dir="ltr">{asset.value}</td>
               </tr>
             ))}
           </tbody>
@@ -437,13 +479,12 @@ function AssetTablePage() {
             </tr>
           </tfoot>
         </table>
-        <div className="bg-primary/5 border border-primary/10 rounded px-6 py-5 text-center space-y-2 mt-4">
-          <p className="text-xs text-muted-foreground">القيمة السوقية العادلة</p>
-          <p className="text-3xl font-bold text-primary tracking-tight">
-            {SAMPLE.estimatedValue} <span className="text-lg">SAR</span>
-          </p>
-          <p className="text-sm text-muted-foreground leading-relaxed">{SAMPLE.estimatedValueText}</p>
-        </div>
+
+        <ValueBox
+          label="القيمة السوقية العادلة"
+          value={SAMPLE.estimatedValue}
+          subtext={SAMPLE.estimatedValueText}
+        />
       </div>
     </PageShell>
   );
@@ -457,13 +498,12 @@ function DisclosuresPage() {
         <SectionTitle id="disclosures" num={10} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
-        <div className="border border-border rounded px-5 py-4 mt-4 space-y-2">
+        <div className="border border-border rounded px-4 py-3 mt-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            تمثل هذه القيمة رأي المقيّم المعتمد بناءً على المعلومات المتاحة وقت التقييم، وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين (تقييم).
+            تمثل هذه القيمة رأي المقيّم المعتمد بناءً على المعلومات المتاحة وقت التقييم، وفقاً لـ IVS 2025 ومتطلبات تقييم.
           </p>
         </div>
 
-        {/* Verification QR + Security badges */}
         <div className="flex items-end justify-between mt-6 pt-4 border-t border-border/40">
           <VerificationQR size={72} />
           <div className="text-left space-y-1" dir="ltr">
