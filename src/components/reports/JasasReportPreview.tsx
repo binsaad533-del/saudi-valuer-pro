@@ -86,10 +86,20 @@ const SAMPLE = {
     ],
     valueImpact: "ساهمت المرفقات في تحديد 85% من مكونات القيمة النهائية. تم استخدام فواتير الشراء كأساس لتكلفة الاستبدال، وعقود الصيانة لتقدير نسبة الإهلاك. المرفقات المفقودة قد تؤثر على دقة التقدير بنسبة ±5%.",
   },
+  dataSources: [
+    { dataPoint: "تكلفة الاستبدال الجديدة (RCN)", value: "18,200,000 SAR", source: "فواتير الشراء الأصلية", sourceType: "مرفق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "نسبة الإهلاك المادي", value: "30%", source: "تقارير الفحص الفني + المعاينة", sourceType: "مرفق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "العمر الإنتاجي المتبقي", value: "12 عاماً", source: "سجلات الصيانة وتقارير الشركة المصنعة", sourceType: "مرفق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "معدل التشغيل الفعلي", value: "87%", source: "بيانات العميل الشفهية", sourceType: "عميل" as const, reliability: "تقديري" as const },
+    { dataPoint: "أسعار المعدات المماثلة", value: "متوسط السوق", source: "Ritchie Brothers + الإعلانات المحلية", sourceType: "سوق" as const, reliability: "مؤكد" as const },
+    { dataPoint: "الإهلاك الوظيفي", value: "5%", source: "تقدير المقيّم بناءً على المعاينة", sourceType: "تقدير" as const, reliability: "تقديري" as const },
+    { dataPoint: "الإهلاك الاقتصادي", value: "3%", source: "تحليل ظروف السوق الحالية", sourceType: "سوق" as const, reliability: "تقديري" as const },
+    { dataPoint: "جدول الإنتاج الشهري", value: "—", source: "غير متوفر", sourceType: "عميل" as const, reliability: "غير مكتمل" as const },
+  ],
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 13;
+const TOTAL_PAGES = 14;
 
 /* ── Company & Valuer Identity (read-only) ── */
 const COMPANY_IDENTITY = {
@@ -111,8 +121,9 @@ const TOC = [
   { id: "methodology", num: 8, title: "المنهجية" },
   { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
   { id: "final-value", num: 10, title: "النتيجة النهائية" },
-  { id: "disclosures", num: 11, title: "الإفصاحات" },
-  { id: "accreditation", num: 12, title: "الاعتماد والتوقيع" },
+  { id: "data-sources", num: 11, title: "مصادر البيانات" },
+  { id: "disclosures", num: 12, title: "الإفصاحات" },
+  { id: "accreditation", num: 13, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -694,12 +705,83 @@ function AssetTablePage() {
   );
 }
 
+/* ── Data Sources Transparency ── */
+function DataSourcesPage() {
+  const reliabilityStyle = (r: string) => {
+    if (r === "مؤكد") return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400";
+    if (r === "تقديري") return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+    return "bg-destructive/10 text-destructive";
+  };
+  const sourceTypeStyle = (s: string) => {
+    if (s === "مرفق") return "text-primary";
+    if (s === "سوق") return "text-blue-600 dark:text-blue-400";
+    if (s === "عميل") return "text-amber-600 dark:text-amber-400";
+    return "text-muted-foreground";
+  };
+
+  const confirmed = SAMPLE.dataSources.filter(d => d.reliability === "مؤكد").length;
+  const estimated = SAMPLE.dataSources.filter(d => d.reliability === "تقديري").length;
+  const incomplete = SAMPLE.dataSources.filter(d => d.reliability === "غير مكتمل").length;
+
+  return (
+    <PageShell pageNum={12}>
+      <div className="space-y-4">
+        <SectionTitle id="data-sources" num={11} title="مصادر البيانات" />
+
+        {/* Summary bar */}
+        <div className="flex gap-3 text-xs">
+          <span className="px-2 py-1 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">مؤكد: {confirmed}</span>
+          <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 font-medium">تقديري: {estimated}</span>
+          {incomplete > 0 && (
+            <span className="px-2 py-1 rounded bg-destructive/10 text-destructive font-medium">غير مكتمل: {incomplete}</span>
+          )}
+        </div>
+
+        {/* Table */}
+        <table className="w-full text-xs border border-border rounded overflow-hidden">
+          <thead>
+            <tr className="bg-muted/40 border-b border-border">
+              <th className="text-right py-2 px-2 font-semibold text-foreground">البيان</th>
+              <th className="text-right py-2 px-2 font-semibold text-foreground w-24">القيمة</th>
+              <th className="text-right py-2 px-2 font-semibold text-foreground">المصدر</th>
+              <th className="text-center py-2 px-2 font-semibold text-foreground w-16">النوع</th>
+              <th className="text-center py-2 px-2 font-semibold text-foreground w-20">الاعتماد</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SAMPLE.dataSources.map((d, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="py-2 px-2 text-foreground font-medium">{d.dataPoint}</td>
+                <td className="py-2 px-2 text-muted-foreground" dir="ltr">{d.value}</td>
+                <td className="py-2 px-2 text-muted-foreground">{d.source}</td>
+                <td className={`py-2 px-2 text-center font-medium ${sourceTypeStyle(d.sourceType)}`}>{d.sourceType}</td>
+                <td className="py-2 px-2 text-center">
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${reliabilityStyle(d.reliability)}`}>
+                    {d.reliability}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="border border-border rounded px-4 py-3 space-y-1.5">
+          <p className="text-[11px] font-bold text-foreground">ملاحظة الشفافية</p>
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            جميع الأرقام الواردة في هذا التقرير مرتبطة بمصادرها الموثقة أعلاه. البيانات المصنفة "تقديري" تعتمد على الحكم المهني للمقيّم وفقاً لـ IVS 105. البيانات "غير المكتملة" تم الإشارة إليها بوضوح وقد تؤثر على دقة التقدير النهائي.
+          </p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={12}>
+    <PageShell pageNum={13}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={11} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={12} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -715,9 +797,9 @@ function DisclosuresPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={13}>
+    <PageShell pageNum={14}>
       <div className="space-y-6">
-        <SectionTitle id="accreditation" num={12} title="الاعتماد والتوقيع" />
+        <SectionTitle id="accreditation" num={13} title="الاعتماد والتوقيع" />
 
         {/* Company */}
         <div className="space-y-3">
@@ -891,6 +973,7 @@ export default function JasasReportPreview() {
         <AnalysisPage />
         <AssumptionsPage />
         <AssetTablePage />
+        <DataSourcesPage />
         <DisclosuresPage />
         <AccreditationPage />
       </div>
