@@ -2057,57 +2057,62 @@ async function executeTool(
       else if (rawStatus === "final_payment_pending") nextStep = "تأكيد الدفعة النهائية وإصدار التقرير";
       else if (rawStatus === "completed") nextStep = "الطلب مكتمل — لا إجراءات مطلوبة";
 
-      // Build clean result — only non-empty values, Arabic only
-      const result: Record<string, any> = {
-        رقم_الطلب: assignment.reference_number,
-        الحالة: STATUS_AR[rawStatus] || rawStatus,
-      };
+      // Build pre-formatted Markdown — prevents AI from merging lines
+      const lines: string[] = [];
+      lines.push(`- **رقم الطلب:** ${assignment.reference_number}`);
+      lines.push(`- **الحالة:** ${STATUS_AR[rawStatus] || rawStatus}`);
 
       const purposeAr = PURPOSE_AR[rawPurpose] || "";
-      if (purposeAr) result["الغرض"] = purposeAr;
+      if (purposeAr) lines.push(`- **الغرض:** ${purposeAr}`);
 
       const propTypeAr = PROP_TYPE_AR[rawPropType] || VAL_TYPE_AR[rawValType] || "";
-      if (propTypeAr) result["نوع_الأصل"] = propTypeAr;
+      if (propTypeAr) lines.push(`- **نوع الأصل:** ${propTypeAr}`);
 
       const modeAr = MODE_AR[rawMode] || "";
-      if (modeAr) result["وضع_التنفيذ"] = modeAr;
+      if (modeAr) lines.push(`- **وضع التنفيذ:** ${modeAr}`);
 
       if (assignment.final_value) {
-        result["القيمة_النهائية"] = Number(assignment.final_value).toLocaleString() + " ر.س";
+        lines.push(`- **القيمة النهائية:** ${Number(assignment.final_value).toLocaleString()} ر.س`);
       }
 
-      // Inspection — only if relevant
+      // Inspection
       if (rawMode === "field" || rawInspStatus) {
-        result["المعاينة"] = {
-          الحالة: rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || "غير محددة") : "غير مجدولة",
-        };
-        if (inspectorName !== "—") result["المعاينة"]["المعاين"] = inspectorName;
-        if (inspRes.data?.[0]?.inspection_date) result["المعاينة"]["التاريخ"] = inspRes.data[0].inspection_date;
+        const inspStatus = rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || "غير محددة") : "غير مجدولة";
+        let inspLine = `- **المعاينة:** ${inspStatus}`;
+        if (inspectorName !== "—") inspLine += ` — المعاين: ${inspectorName}`;
+        if (inspRes.data?.[0]?.inspection_date) inspLine += ` — التاريخ: ${inspRes.data[0].inspection_date}`;
+        lines.push(inspLine);
       }
 
-      // Payment — always relevant
+      // Payment
       const payStatusAr = PAY_STATUS_AR[rawPayStatus] || "";
       if (payStatusAr || totalPaid > 0 || req?.total_fees) {
-        result["المالية"] = {};
-        if (req?.total_fees) result["المالية"]["الرسوم"] = `${Number(req.total_fees).toLocaleString()} ر.س`;
-        if (totalPaid > 0) result["المالية"]["المدفوع"] = `${totalPaid.toLocaleString()} ر.س`;
-        if (payStatusAr) result["المالية"]["حالة_السداد"] = payStatusAr;
+        let payLine = `- **المالية:**`;
+        if (req?.total_fees) payLine += ` الرسوم ${Number(req.total_fees).toLocaleString()} ر.س`;
+        if (totalPaid > 0) payLine += ` | المدفوع ${totalPaid.toLocaleString()} ر.س`;
+        if (payStatusAr) payLine += ` | ${payStatusAr}`;
+        lines.push(payLine);
       }
 
-      // Asset summary — compact
-      if (subject) {
-        const assetInfo: Record<string, string> = {};
-        if (subject.city_ar) assetInfo["المدينة"] = subject.city_ar;
-        if (subject.district_ar) assetInfo["الحي"] = subject.district_ar;
-        if (subject.land_area) assetInfo["مساحة_الأرض"] = `${subject.land_area} م²`;
-        if (subject.building_area) assetInfo["مساحة_البناء"] = `${subject.building_area} م²`;
-        if (Object.keys(assetInfo).length > 0) result["الأصل"] = assetInfo;
-      }
-
-      // Client — compact
+      // Client
       if (client?.name_ar) {
-        result["العميل"] = client.name_ar;
         const clientTypeAr = CLIENT_TYPE_AR[rawClientType] || "";
+        lines.push(`- **العميل:** ${client.name_ar}${clientTypeAr ? ` (${clientTypeAr})` : ""}`);
+      }
+
+      // Missing items
+      if (missingItems.length > 0) {
+        lines.push(`- **النواقص:** ${missingItems.join("، ")}`);
+      }
+
+      // Next step
+      lines.push(`- **الخطوة التالية:** ${nextStep}`);
+
+      return {
+        success: true,
+        result: lines.join("\n"),
+        _format: "markdown",
+      };
         if (clientTypeAr) result["العميل"] += ` (${clientTypeAr})`;
       }
 
