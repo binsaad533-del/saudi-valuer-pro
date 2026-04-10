@@ -1,6 +1,7 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { QRCodeSVG } from "qrcode.react";
+import { Lock, FileText, ShieldCheck, Clock } from "lucide-react";
 import jasasLogo from "@/assets/jasas-logo.png";
 
 /* ══════════════════════════════════════════════
@@ -107,7 +108,39 @@ const TOC = [
 /* ══════════════════════════════════════════════
    Watermark
    ══════════════════════════════════════════════ */
-function WatermarkOverlay() {
+function WatermarkOverlay({ mode }: { mode: "draft" | "final" }) {
+  const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+
+  if (mode === "final") return null; // No watermark on final version
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10" aria-hidden="true">
+      {/* Large diagonal DRAFT watermark */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span
+          className="text-[72px] font-black tracking-[0.3em] -rotate-[35deg] select-none whitespace-nowrap"
+          style={{ color: "hsl(var(--destructive) / 0.08)" }}
+        >
+          مسودة
+        </span>
+      </div>
+      {/* Subtle user + date repeating pattern */}
+      <div className="absolute inset-0 flex flex-col justify-around">
+        {Array.from({ length: 4 }).map((_, row) => (
+          <div key={row} className="flex justify-around -rotate-[25deg] origin-center">
+            {Array.from({ length: 2 }).map((_, col) => (
+              <span key={col} className="text-[9px] whitespace-nowrap select-none" style={{ color: "hsl(var(--muted-foreground) / 0.06)" }}>
+                {`مسودة — ${SAMPLE.recipient.name} — ${now}`}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ConfidentialWatermark() {
   const now = new Date().toISOString().slice(0, 16).replace("T", " ");
   const text = `CONFIDENTIAL — ${SAMPLE.recipient.name} — ${now}`;
   return (
@@ -131,10 +164,18 @@ function WatermarkOverlay() {
    Shared Components
    ══════════════════════════════════════════════ */
 
-function PageHeader() {
+function PageHeader({ versionNum, mode }: { versionNum: number; mode: "draft" | "final" }) {
   return (
     <div className="flex items-center justify-between pb-3 mb-4 border-b border-border/40">
-      <span className="text-[10px] text-muted-foreground font-medium">{SAMPLE.reportNumber}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] text-muted-foreground font-medium">{SAMPLE.reportNumber}</span>
+        <span className="text-[9px] px-1.5 py-0.5 rounded font-medium" style={{
+          background: mode === "draft" ? "hsl(var(--destructive) / 0.1)" : "hsl(var(--primary) / 0.1)",
+          color: mode === "draft" ? "hsl(var(--destructive))" : "hsl(var(--primary))",
+        }}>
+          {mode === "draft" ? `مسودة v${versionNum}` : `نهائي v${versionNum}`}
+        </span>
+      </div>
       <img src={jasasLogo} alt="جساس للتقييم" className="h-8 w-auto object-contain" />
     </div>
   );
@@ -149,12 +190,14 @@ function PageFooter({ pageNum }: { pageNum: number }) {
   );
 }
 
-function PageShell({ children, pageNum, noHeader }: { children: React.ReactNode; pageNum: number; noHeader?: boolean }) {
+function PageShell({ children, pageNum, noHeader, mode = "draft", versionNum = 1 }: {
+  children: React.ReactNode; pageNum: number; noHeader?: boolean; mode?: "draft" | "final"; versionNum?: number;
+}) {
   return (
     <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden relative" style={{ aspectRatio: "210/297" }}>
-      <WatermarkOverlay />
+      {mode === "draft" ? <WatermarkOverlay mode="draft" /> : <ConfidentialWatermark />}
       <div className="h-full flex flex-col justify-between p-10 relative z-20">
-        {!noHeader && <PageHeader />}
+        {!noHeader && <PageHeader versionNum={versionNum} mode={mode} />}
         <div className="flex-1 overflow-hidden">{children}</div>
         <PageFooter pageNum={pageNum} />
       </div>
@@ -241,9 +284,9 @@ function Row({ label, value }: { label: string; value: string }) {
    Pages — Executive Style
    ══════════════════════════════════════════════ */
 
-function CoverPage() {
+function CoverPage({ mode, versionNum }: { mode: "draft" | "final"; versionNum: number }) {
   return (
-    <PageShell pageNum={1} noHeader>
+    <PageShell pageNum={1} noHeader mode={mode} versionNum={versionNum}>
       <div className="flex flex-col h-full justify-between">
         <div className="flex items-center justify-end">
           <img src={jasasLogo} alt="جساس للتقييم" className="h-16 w-auto object-contain" />
@@ -258,15 +301,27 @@ function CoverPage() {
             <Row label="رقم التقرير" value={SAMPLE.reportNumber} />
             <Row label="تاريخ التقييم" value={SAMPLE.valuationDate} />
             <Row label="تاريخ الإصدار" value={SAMPLE.issueDate} />
+            <Row label="رقم الإصدار" value={`v${versionNum}`} />
           </div>
           <div className="mt-2"><VerificationQR size={56} /></div>
         </div>
         <div className="space-y-3 text-center">
-          <div className="inline-block border border-border rounded px-4 py-1.5">
-            <span className="text-xs text-muted-foreground">نسخة: </span>
-            <span className="text-xs font-semibold text-foreground">عميل</span>
+          <div className="flex items-center justify-center gap-2">
+            <div className="inline-block border border-border rounded px-4 py-1.5">
+              <span className="text-xs text-muted-foreground">نسخة: </span>
+              <span className="text-xs font-semibold text-foreground">عميل</span>
+            </div>
+            <div className="inline-block rounded px-3 py-1.5" style={{
+              background: mode === "draft" ? "hsl(var(--destructive) / 0.1)" : "hsl(var(--primary) / 0.1)",
+              color: mode === "draft" ? "hsl(var(--destructive))" : "hsl(var(--primary))",
+            }}>
+              <span className="text-xs font-bold">{mode === "draft" ? "مسودة" : "نهائي"}</span>
+            </div>
           </div>
           <p className="text-[11px] text-destructive/80 font-medium">سري — للاستخدام الحصري للمستلم</p>
+          {mode === "draft" && (
+            <p className="text-[10px] text-muted-foreground/60">هذه المسودة لا تعتبر تقريراً رسمياً ولا تحمل أي صفة قانونية</p>
+          )}
         </div>
       </div>
     </PageShell>
@@ -663,6 +718,15 @@ function DisclosuresPage() {
    ══════════════════════════════════════════════ */
 export default function JasasReportPreview() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [mode, setMode] = useState<"draft" | "final">("draft");
+  const [versionNum] = useState(3); // Sample: version 3
+  const [isLocked] = useState(false);
+
+  const versions = [
+    { num: 1, date: "2026-03-28", mode: "draft" as const, locked: true },
+    { num: 2, date: "2026-04-05", mode: "draft" as const, locked: true },
+    { num: 3, date: "2026-04-10", mode: mode, locked: isLocked },
+  ];
 
   const scrollToSection = useCallback((id: string) => {
     const el = document.getElementById(id);
@@ -670,19 +734,97 @@ export default function JasasReportPreview() {
   }, []);
 
   return (
-    <div ref={containerRef} className="max-w-2xl mx-auto space-y-8 py-8" dir="rtl">
-      <CoverPage />
-      <TOCPage onNavigate={scrollToSection} />
-      <ExecSummaryPage />
-      <ScopePage />
-      <DocumentsPage />
-      <AttachmentIntelPage1 />
-      <AttachmentIntelPage2 />
-      <InspectionPage />
-      <AnalysisPage />
-      <AssumptionsPage />
-      <AssetTablePage />
-      <DisclosuresPage />
+    <div className="max-w-2xl mx-auto py-8 space-y-6" dir="rtl">
+      {/* ── Version Control Toolbar ── */}
+      <div className="bg-card border border-border rounded-lg p-4 space-y-4 sticky top-0 z-50">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <FileText className="h-4 w-4 text-primary" />
+            <h3 className="text-sm font-bold text-foreground">التحكم في نسخ التقرير</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setMode("draft")}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                mode === "draft"
+                  ? "bg-destructive/10 text-destructive border border-destructive/30"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              مسودة
+            </button>
+            <button
+              onClick={() => setMode("final")}
+              className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                mode === "final"
+                  ? "bg-primary/10 text-primary border border-primary/30"
+                  : "bg-muted/50 text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              نهائي
+            </button>
+          </div>
+        </div>
+
+        {/* Version history */}
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {versions.map((v) => (
+            <div
+              key={v.num}
+              className={`flex items-center gap-2 px-3 py-2 rounded border text-xs shrink-0 ${
+                v.num === versionNum
+                  ? "border-primary/40 bg-primary/5"
+                  : "border-border/50 bg-muted/20"
+              }`}
+            >
+              {v.locked && <Lock className="h-3 w-3 text-muted-foreground/60" />}
+              <span className="font-medium text-foreground">v{v.num}</span>
+              <span className="text-muted-foreground">{v.date}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                v.mode === "final"
+                  ? "bg-primary/10 text-primary"
+                  : "bg-destructive/10 text-destructive"
+              }`}>
+                {v.mode === "final" ? "نهائي" : "مسودة"}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Status bar */}
+        <div className="flex items-center gap-4 text-[11px] text-muted-foreground border-t border-border/40 pt-3">
+          <div className="flex items-center gap-1">
+            <Clock className="h-3 w-3" />
+            <span>آخر تعديل: {SAMPLE.issueDate}</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <ShieldCheck className="h-3 w-3" />
+            <span>{mode === "final" ? "مقفل — لا يمكن التعديل" : "قابل للتعديل"}</span>
+          </div>
+          {mode === "final" && (
+            <div className="flex items-center gap-1 text-primary">
+              <Lock className="h-3 w-3" />
+              <span className="font-medium">محمي من التعديل</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Report Pages ── */}
+      <div ref={containerRef} className="space-y-8">
+        <CoverPage mode={mode} versionNum={versionNum} />
+        <TOCPage onNavigate={scrollToSection} />
+        <ExecSummaryPage />
+        <ScopePage />
+        <DocumentsPage />
+        <AttachmentIntelPage1 />
+        <AttachmentIntelPage2 />
+        <InspectionPage />
+        <AnalysisPage />
+        <AssumptionsPage />
+        <AssetTablePage />
+        <DisclosuresPage />
+      </div>
     </div>
   );
 }
