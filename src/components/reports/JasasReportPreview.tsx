@@ -152,6 +152,7 @@ const TOTAL_PAGES = 17;
 /* ── Company & Valuer Identity (read-only — sourced from shared identity) ── */
 import { JSAAS_IDENTITY, getReportFooterText } from "@/lib/company-identity";
 import ReportAccreditationSection from "./ReportAccreditationSection";
+import ReportDisclaimerSection from "./ReportDisclaimerSection";
 
 const COMPANY_IDENTITY = {
   companyName: JSAAS_IDENTITY.companyName,
@@ -1152,6 +1153,7 @@ export default function JasasReportPreview() {
         <DataSourcesPage />
         <RiskStatementPage />
         <DisclosuresPage />
+        <DisclaimerPage />
         <AccreditationPage />
       </div>
     </div>

@@ -215,6 +215,12 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
         </div>
       </div>
 
+      {/* Professional Disclaimer — before accreditation */}
+      <Separator className="mx-6 my-6" />
+      <div className="mx-6 mb-6">
+        <ReportDisclaimerSection />
+      </div>
+
       {/* Official Accreditation Section — auto-generated, non-editable */}
       <Separator className="mx-6 my-6" />
       <div className="mx-6 mb-6">
