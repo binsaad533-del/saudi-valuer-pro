@@ -124,5 +124,61 @@ export async function execute(
     });
   }
 
+  if (toolName === "analyze_documents") {
+    if (!args.request_id && !args.assignment_id) {
+      return { success: false, result: null, error: "تعذر تحديد الطلب الحالي لتحليل المستندات" };
+    }
+
+    const requestId = args.request_id;
+    const assignmentId = args.assignment_id;
+
+    // Gather attachments
+    const attachmentQueries = [];
+    if (assignmentId) {
+      attachmentQueries.push(
+        db.from("attachments")
+          .select("file_name, file_path, mime_type, description_ar")
+          .eq("assignment_id", assignmentId)
+          .limit(30)
+      );
+    }
+    if (requestId) {
+      attachmentQueries.push(
+        db.from("attachments")
+          .select("file_name, file_path, mime_type, description_ar")
+          .or(`subject_id.eq.${requestId},assignment_id.eq.${requestId}`)
+          .limit(30)
+      );
+    }
+
+    const attachmentResults = await Promise.all(attachmentQueries);
+    const allAttachments = attachmentResults.flatMap((res: any) => res.data || []);
+    const uniqueAttachments = allAttachments.filter((a: any, i: number, arr: any[]) =>
+      arr.findIndex((x: any) => x.file_path === a.file_path) === i
+    );
+
+    if (uniqueAttachments.length === 0) {
+      return { success: false, result: null, error: "لا توجد مستندات مرفوعة لهذا الطلب" };
+    }
+
+    // Get organization_id
+    let orgId = null;
+    if (assignmentId) {
+      const { data: asg } = await db.from("valuation_assignments").select("organization_id").eq("id", assignmentId).maybeSingle();
+      orgId = asg?.organization_id;
+    }
+
+    return await callInternalFunction(supabaseUrl, serviceKey, "analyze-documents", {
+      requestId,
+      assignmentId,
+      organizationId: orgId,
+      storagePaths: uniqueAttachments.map((a: any) => ({
+        path: a.file_path,
+        name: a.file_name,
+        mimeType: a.mime_type,
+      })),
+    });
+  }
+
   return null; // Not handled by this module
 }
