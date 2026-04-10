@@ -168,7 +168,7 @@ export default function ReportsListPage() {
                           size="icon"
                           className="h-8 w-8"
                           disabled={exportingId === r.id}
-                          onClick={() => handleDownloadPdf(r)}
+                          onClick={() => requestDownload(r)}
                         >
                           {exportingId === r.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -185,6 +185,12 @@ export default function ReportsListPage() {
           </TableBody>
         </Table>
       </div>
+      <LegalDisclaimer
+        open={disclaimerOpen}
+        onAccept={handleDisclaimerAccept}
+        onCancel={() => { setDisclaimerOpen(false); setPendingDownload(null); }}
+        actionType="download"
+      />
     </div>
   );
 }
