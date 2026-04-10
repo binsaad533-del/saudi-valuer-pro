@@ -376,8 +376,8 @@ export default function SimplifiedJourney() {
         });
       };
 
-      // For small file counts (≤5), use synchronous processing (faster, no polling overhead)
-      if (otherFiles.length <= 5) {
+      // For small file counts (≤10), use synchronous processing (faster, no polling overhead)
+      if (otherFiles.length <= 10) {
         setProcessingStatus("جارٍ تحليل الصور والمستندات بالذكاء الاصطناعي...");
         setProcessingProgress(30);
 
@@ -465,7 +465,7 @@ export default function SimplifiedJourney() {
     if (step !== "processing" || !jobId) return;
     let cancelled = false;
     const startedAt = Date.now();
-    const timeoutMs = 90 * 1000;
+    const timeoutMs = 180 * 1000;
 
     const poll = async () => {
       while (!cancelled) {
