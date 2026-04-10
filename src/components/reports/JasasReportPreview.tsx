@@ -428,12 +428,58 @@ function TOCPage({ onNavigate }: { onNavigate: (id: string) => void }) {
   );
 }
 
+/* ── Client Summary — Single page, non-technical ── */
+function ClientSummaryPage() {
+  return (
+    <PageShell pageNum={3}>
+      <div className="space-y-6">
+        <SectionTitle id="client-summary" num={1} title="ملخص العميل" />
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-primary">ما تم تقييمه</p>
+            <p className="text-sm text-foreground leading-relaxed">
+              جميع الآلات والمعدات الصناعية في المصنع الرئيسي بالمنطقة الصناعية الثانية — الرياض، وتشمل {SAMPLE.assets.length} فئات بإجمالي {SAMPLE.assets.reduce((s, a) => s + a.qty, 0)} وحدة.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="text-xs font-bold text-primary">الغرض من التقييم</p>
+            <p className="text-sm text-foreground leading-relaxed">
+              تحديد القيمة السوقية العادلة للأصول بغرض إعداد القوائم المالية واتخاذ القرارات الاستثمارية، وفقاً للمعايير الدولية المعتمدة.
+            </p>
+          </div>
+        </div>
+
+        <ValueBox
+          label="القيمة السوقية العادلة"
+          value={SAMPLE.estimatedValue}
+          subtext={SAMPLE.estimatedValueText}
+        />
+
+        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 rounded-lg px-5 py-4">
+          <p className="text-xs font-bold text-amber-800 dark:text-amber-400 mb-1">أهم ملاحظة</p>
+          <p className="text-sm text-amber-900 dark:text-amber-300 leading-relaxed">
+            3 معدات تجاوزت 70% من عمرها الإنتاجي وتتطلب مراقبة قريبة. يُنصح بجدولة صيانة وقائية أو تخطيط للاستبدال خلال 12-18 شهراً للحفاظ على القيمة التشغيلية.
+          </p>
+        </div>
+
+        <div className="border border-border rounded px-4 py-2.5 text-center">
+          <p className="text-[10px] text-muted-foreground">
+            للتفاصيل التقنية والمنهجية الكاملة، يُرجى مراجعة الأقسام التالية من التقرير
+          </p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Executive Summary — Half page max, numbers-first ── */
 function ExecSummaryPage() {
   return (
-    <PageShell pageNum={3}>
+    <PageShell pageNum={4}>
       <div className="space-y-4">
-        <SectionTitle id="exec-summary" num={1} title="الملخص التنفيذي" />
+        <SectionTitle id="exec-summary" num={2} title="الملخص التنفيذي" />
 
         <ValueBox
           label="القيمة السوقية العادلة"
