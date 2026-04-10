@@ -4,6 +4,9 @@ import { AI } from "../_shared/assistantIdentity.ts";
 import { resolveIdsFromContext } from "./_tools/helpers.ts";
 import { execute as executeValuationTools } from "./_tools/valuation-tools.ts";
 import { execute as executeExecutiveTools } from "./_tools/executive-tools.ts";
+import { execute as executeInspectorTools } from "./_tools/inspector-tools.ts";
+import { execute as executeClientTools } from "./_tools/client-tools.ts";
+import { execute as executeCfoTools } from "./_tools/cfo-tools.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
