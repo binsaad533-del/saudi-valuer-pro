@@ -11,6 +11,8 @@ import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
 import { AlertTriangle } from "lucide-react";
 import ReportQualitySection from "./ReportQualitySection";
+import ReportAccreditationSection from "./ReportAccreditationSection";
+import { JSAAS_IDENTITY } from "@/lib/company-identity";
 
 
 interface ReportPreviewProfessionalProps {
@@ -211,6 +213,18 @@ export default function ReportPreviewProfessional({ report, valuationMode = "fie
             </div>
           )}
         </div>
+      </div>
+
+      {/* Official Accreditation Section — auto-generated, non-editable */}
+      <Separator className="mx-6 my-6" />
+      <div className="mx-6 mb-6">
+        <ReportAccreditationSection />
+      </div>
+
+      {/* Page Footer */}
+      <div className="mx-6 pb-4 flex items-center justify-between text-[10px] text-muted-foreground border-t border-border/40 pt-3">
+        <span>{JSAAS_IDENTITY.companyName} | {JSAAS_IDENTITY.crNumber} | الرقم الضريبي: {JSAAS_IDENTITY.taxNumber}</span>
+        <span>Page 1</span>
       </div>
     </div>
   );
