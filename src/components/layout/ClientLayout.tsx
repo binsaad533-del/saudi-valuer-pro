@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import AppFooter from "@/components/layout/AppFooter";
 import RaqeemSmartPresence from "@/components/client/RaqeemSmartPresence";
-import logo from "@/assets/logo.png";
+
 import { LayoutDashboard, FolderOpen, PlusCircle, LogOut } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -29,12 +29,7 @@ export default function ClientLayout() {
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between">
           {/* Right side: Logo + Raqeem */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/client/dashboard")}>
-              <img src={logo} alt="جساس" className="w-7 h-7" />
-              <span className="text-sm font-bold text-foreground hidden sm:inline">جساس للتقييم</span>
-            </div>
-            <div className="border-r border-border h-6" />
+          <div className="flex items-center gap-3">
             <RaqeemSmartPresence />
           </div>
 
