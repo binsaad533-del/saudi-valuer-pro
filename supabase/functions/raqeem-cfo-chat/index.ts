@@ -256,11 +256,11 @@ ${financialSummary}`;
                 cleanReply += `\n\n🚫 ${PROOF_REQUIRED_MSG}`;
                 // Audit the rejection
                 await db.from("audit_logs").insert({
-                  user_id: cfoId, action: "status_change" as any,
+                  user_id: cfoId, action: "payment_confirm_blocked" as any,
                   table_name: "payments", record_id: assignment.id,
                   assignment_id: assignment.id,
                   description: `رفض تأكيد الدفعة الأولى — لا يوجد إثبات سداد | الطلب: ${refNum}`,
-                  new_data: { rejected: true, reason: "no_proof", ref: refNum },
+                  new_data: { blocked: true, reason: "NO_PROOF", code: "NO_PROOF", ref: refNum },
                   user_name: cfoName, user_role: "financial_manager",
                 } as any).catch(() => {});
                 return { cleanReply, executedActions };
@@ -320,11 +320,11 @@ ${financialSummary}`;
               if (!fullProofExists) {
                 cleanReply += `\n\n🚫 ${PROOF_REQUIRED_MSG}`;
                 await db.from("audit_logs").insert({
-                  user_id: cfoId, action: "status_change" as any,
+                  user_id: cfoId, action: "payment_confirm_blocked" as any,
                   table_name: "payments", record_id: assignment.id,
                   assignment_id: assignment.id,
                   description: `رفض تأكيد الدفعة النهائية — لا يوجد إثبات سداد | الطلب: ${refNum}`,
-                  new_data: { rejected: true, reason: "no_proof", ref: refNum },
+                  new_data: { blocked: true, reason: "NO_PROOF", code: "NO_PROOF", ref: refNum },
                   user_name: cfoName, user_role: "financial_manager",
                 } as any).catch(() => {});
                 return { cleanReply, executedActions };
