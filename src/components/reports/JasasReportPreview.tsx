@@ -88,19 +88,20 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 10;
+const TOTAL_PAGES = 12;
 
 const TOC = [
   { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
   { id: "scope", num: 2, title: "نطاق العمل" },
   { id: "asset-def", num: 3, title: "تعريف الأصل" },
   { id: "documents", num: 4, title: "المستندات" },
-  { id: "inspection", num: 5, title: "المعاينة" },
-  { id: "analysis", num: 6, title: "التحليل" },
-  { id: "methodology", num: 7, title: "المنهجية" },
-  { id: "assumptions", num: 8, title: "الافتراضات والقيود" },
-  { id: "final-value", num: 9, title: "النتيجة النهائية" },
-  { id: "disclosures", num: 10, title: "الإفصاحات" },
+  { id: "attachment-intel", num: 5, title: "تحليل المرفقات" },
+  { id: "inspection", num: 6, title: "المعاينة" },
+  { id: "analysis", num: 7, title: "التحليل" },
+  { id: "methodology", num: 8, title: "المنهجية" },
+  { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
+  { id: "final-value", num: 10, title: "النتيجة النهائية" },
+  { id: "disclosures", num: 11, title: "الإفصاحات" },
 ];
 
 /* ══════════════════════════════════════════════
