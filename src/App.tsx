@@ -69,6 +69,7 @@ import ClientChatPage from "@/pages/client/ClientChatPage";
 // Inspector Portal
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
+import InspectorChatPage from "@/pages/inspector/InspectorChatPage";
 
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
@@ -143,6 +144,11 @@ const App = () => (
           <Route path="/inspector" element={
             <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
               <InspectorDashboard />
+            </ProtectedRoute>
+          } />
+          <Route path="/inspector/chat" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
+              <InspectorChatPage />
             </ProtectedRoute>
           } />
           <Route path="/inspector/inspection/:inspectionId" element={
