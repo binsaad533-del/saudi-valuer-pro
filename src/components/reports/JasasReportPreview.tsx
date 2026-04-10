@@ -1153,9 +1153,9 @@ function RiskStatementPage() {
   ];
 
   return (
-    <PageShell pageNum={15}>
+    <PageShell pageNum={17}>
       <div className="space-y-4">
-        <SectionTitle id="risk-statement" num={14} title="بيان المخاطر" />
+        <SectionTitle id="risk-statement" num={16} title="بيان المخاطر" />
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           يوضح هذا القسم المخاطر المرتبطة بنتيجة التقييم والتي يجب أخذها بعين الاعتبار عند اتخاذ القرار.
         </p>
@@ -1180,9 +1180,9 @@ function RiskStatementPage() {
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={16}>
+    <PageShell pageNum={18}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={15} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={17} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -1198,7 +1198,7 @@ function DisclosuresPage() {
 /* ── Professional Disclaimer (before signature) ── */
 function DisclaimerPage() {
   return (
-    <PageShell pageNum={17}>
+    <PageShell pageNum={19}>
       <ReportDisclaimerSection />
     </PageShell>
   );
@@ -1207,7 +1207,7 @@ function DisclaimerPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={18}>
+    <PageShell pageNum={20}>
       <ReportAccreditationSection />
     </PageShell>
   );
