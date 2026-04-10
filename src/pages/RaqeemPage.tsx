@@ -168,12 +168,29 @@ export default function RaqeemPage() {
       });
     };
 
+    /** Strip any leaked JSON fragments from streamed content */
+    const sanitizeContent = (text: string): string => {
+      return text
+        // Remove standalone JSON-like fragments that leak from tool results
+        .replace(/\{"?success"?\s*:\s*(true|false)\s*,\s*"?result"?\s*:/g, "")
+        .replace(/,?\s*"?_format"?\s*:\s*"[^"]*"\s*\}?/g, "")
+        .replace(/\{"?success"?\s*:\s*(true|false)\s*\}/g, "")
+        .replace(/\{"?error"?\s*:\s*"[^"]*"\s*\}/g, "")
+        // Remove orphan JSON braces from tool result leaks
+        .replace(/^\s*\}\s*\{/gm, "")
+        .replace(/^\s*\}\s*$/gm, "")
+        // Clean up multiple consecutive newlines
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
+    };
+
     const upsert = (chunk: string) => {
       assistantSoFar += chunk;
+      const cleanContent = sanitizeContent(assistantSoFar);
       setMessages((prev) => {
         const last = prev[prev.length - 1];
-        if (last?.role === "assistant") return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: assistantSoFar } : m));
-        return [...prev, { role: "assistant", content: assistantSoFar, orchestration: currentOrchestration.length > 0 ? [...currentOrchestration] : undefined }];
+        if (last?.role === "assistant") return prev.map((m, i) => (i === prev.length - 1 ? { ...m, content: cleanContent } : m));
+        return [...prev, { role: "assistant", content: cleanContent, orchestration: currentOrchestration.length > 0 ? [...currentOrchestration] : undefined }];
       });
     };
 
