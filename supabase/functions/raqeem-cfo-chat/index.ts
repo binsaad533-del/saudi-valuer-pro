@@ -166,6 +166,13 @@ serve(async (req) => {
 - لا تنفّذ أي إجراء بدون تأكيد صريح من المدير المالي.
 - عند طلب تأكيد دفعة، اعرض التفاصيل أولاً واطلب التأكيد.
 
+## بوابة إثبات السداد (إلزامية — لا استثناء)
+- لا يمكن تأكيد أي دفعة (أولى أو نهائية) إلا إذا كان إثبات السداد مرفوعاً في النظام.
+- إذا لم يكن هناك إثبات سداد (proof_url أو مرفق إيصال)، يجب أن ترفض الطلب فوراً وتقول:
+  "لا يمكن تأكيد الدفعة بدون إثبات سداد مرفوع في النظام. يرجى التأكد من رفع الإيصال أولاً."
+- لا تُصدر Action Token إذا لم يكن هناك إثبات.
+- هذا منطق حوكمة مالية إلزامي وليس اختيارياً.
+
 ## قواعد تشغيلية
 - لا تعرض معرّفات تقنية (UUIDs). استخدم الأرقام المرجعية وأرقام الفواتير فقط.
 - كل مبلغ يجب أن يُعرض بـ "ر.س" (ريال سعودي).
@@ -198,6 +205,24 @@ ${financialSummary}`;
       let cleanReply = reply;
       const executedActions: string[] = [];
 
+      // ── Helper: check payment proof exists ──
+      async function hasPaymentProof(assignmentId: string, stage: string): Promise<boolean> {
+        // Check payments table for proof_url or payment_proof_path
+        const { data: payments } = await db.from("payments")
+          .select("id, proof_url, payment_proof_path")
+          .eq("assignment_id", assignmentId)
+          .eq("payment_stage", stage)
+          .in("payment_status", ["proof_uploaded", "payment_submitted", "pending", "paid"]);
+
+        if (!payments || payments.length === 0) return false;
+        return payments.some((p: any) => 
+          (p.proof_url && p.proof_url.trim() !== "") || 
+          (p.payment_proof_path && p.payment_proof_path.trim() !== "")
+        );
+      }
+
+      const PROOF_REQUIRED_MSG = "لا يمكن تأكيد الدفعة بدون إثبات سداد مرفوع في النظام. يرجى التأكد من رفع الإيصال أولاً.";
+
       // CONFIRM_FIRST_PAYMENT
       const firstPaymentMatch = cleanReply.match(/\[ACTION:CONFIRM_FIRST_PAYMENT:([^\]]+)\]/);
       if (firstPaymentMatch) {
@@ -205,7 +230,6 @@ ${financialSummary}`;
         cleanReply = cleanReply.replace(firstPaymentMatch[0], "").trim();
 
         try {
-          // Find assignment by reference number
           const { data: assignment } = await db.from("valuation_assignments")
             .select("id, status, reference_number")
             .eq("reference_number", refNum)
@@ -216,7 +240,26 @@ ${financialSummary}`;
           } else if (assignment.status !== "scope_approved") {
             cleanReply += `\n\n⚠️ الطلب ${refNum} ليس في مرحلة انتظار الدفعة الأولى.`;
           } else {
-            // Use the centralized RPC
+            // HARD GATE: Check proof exists
+            const proofExists = await hasPaymentProof(assignment.id, "first");
+            if (!proofExists) {
+              // Also check 'full' stage
+              const fullProofExists = await hasPaymentProof(assignment.id, "full");
+              if (!fullProofExists) {
+                cleanReply += `\n\n🚫 ${PROOF_REQUIRED_MSG}`;
+                // Audit the rejection
+                await db.from("audit_logs").insert({
+                  user_id: cfoId, action: "status_change" as any,
+                  table_name: "payments", record_id: assignment.id,
+                  assignment_id: assignment.id,
+                  description: `رفض تأكيد الدفعة الأولى — لا يوجد إثبات سداد | الطلب: ${refNum}`,
+                  new_data: { rejected: true, reason: "no_proof", ref: refNum },
+                  user_name: cfoName, user_role: "financial_manager",
+                } as any).catch(() => {});
+                return { cleanReply, executedActions };
+              }
+            }
+
             const result = await db.rpc("update_request_status", {
               _assignment_id: assignment.id,
               _new_status: "first_payment_confirmed",
@@ -232,7 +275,6 @@ ${financialSummary}`;
               cleanReply += `\n\n⚠️ تعذر تأكيد الدفعة: ${result.data?.error || "خطأ غير معروف"}`;
             }
 
-            // Audit log
             await db.from("audit_logs").insert({
               user_id: cfoId, action: "status_change" as any,
               table_name: "valuation_assignments", record_id: assignment.id,
@@ -264,6 +306,24 @@ ${financialSummary}`;
           } else if (assignment.status !== "draft_approved") {
             cleanReply += `\n\n⚠️ الطلب ${refNum} ليس في مرحلة انتظار الدفعة النهائية.`;
           } else {
+            // HARD GATE: Check proof exists for final payment
+            const proofExists = await hasPaymentProof(assignment.id, "final");
+            if (!proofExists) {
+              const fullProofExists = await hasPaymentProof(assignment.id, "full");
+              if (!fullProofExists) {
+                cleanReply += `\n\n🚫 ${PROOF_REQUIRED_MSG}`;
+                await db.from("audit_logs").insert({
+                  user_id: cfoId, action: "status_change" as any,
+                  table_name: "payments", record_id: assignment.id,
+                  assignment_id: assignment.id,
+                  description: `رفض تأكيد الدفعة النهائية — لا يوجد إثبات سداد | الطلب: ${refNum}`,
+                  new_data: { rejected: true, reason: "no_proof", ref: refNum },
+                  user_name: cfoName, user_role: "financial_manager",
+                } as any).catch(() => {});
+                return { cleanReply, executedActions };
+              }
+            }
+
             const result = await db.rpc("update_request_status", {
               _assignment_id: assignment.id,
               _new_status: "final_payment_confirmed",
