@@ -169,11 +169,11 @@ serve(async (req) => {
       try {
         const { data: profile } = await db
           .from("profiles")
-          .select("full_name")
-          .eq("id", ctx.client_user_id)
+          .select("full_name_ar, full_name_en")
+          .eq("user_id", ctx.client_user_id)
           .maybeSingle();
-        if (profile?.full_name) {
-          clientDisplayName = profile.full_name;
+        if (profile?.full_name_ar || profile?.full_name_en) {
+          clientDisplayName = profile.full_name_ar || profile.full_name_en;
         } else {
           const { data: { user: authUser } } = await db.auth.admin.getUserById(ctx.client_user_id);
           clientDisplayName = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || "";
@@ -191,56 +191,64 @@ serve(async (req) => {
       }
     }
 
-    // ── Parallel data loading ──
+    // ── Parallel data loading (FAST PATH for global chat) ──
+    // Global chat without assignment_id skips heavy per-assignment queries
+    const skipHeavyQueries = isGlobalChat && !ctx.assignment_id;
+    const nullP = Promise.resolve(null);
+    const emptyP = Promise.resolve("");
+
     const [knowledgeResult, correctionsResult, clientMemory, docReadiness, marketInsights, clientHistory, predictions, workflowStatus, complianceStatus, selfLearning, marketTrends, partyStatus, autonomousResult, machineryDepreciation, machineryMarket, productionLines, iotTelemetry, predictiveMaintenance, auctionIntel, digitalTwins, fleetPortfolio, regulatoryCompliance, insuranceRisk, bulkIntake, smartClustering, multiSite, desktopFleet, fleetReport, bulkQC, fleetDashboard, predictiveValuation, digitalTwin3D, aiPeerReview, voiceCapture, imageFraud, smartPortal, competitiveBenchmark, multiCurrency, institutionalMemory, portfolioHealth, erpIntegration, blockchainSeal, seasonalReminders, loyaltyOffers, behaviorIntel, occasionMessages, engagementAnalytics] = await Promise.all([
-      db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(20),
-      db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(20),
-      ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : Promise.resolve(null),
-      request_id ? analyzeDocumentReadiness(db, request_id, effectivePropertyType) : Promise.resolve(null),
-      generateMarketInsights(db, ctx.property_type, ctx.property_city, ctx.organization_id),
-      ctx.client_user_id ? getClientHistory(db, ctx.client_user_id) : Promise.resolve(""),
-      generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
-      analyzeWorkflowReadiness(db, ctx.assignment_id, ctx.status, request_id),
-      checkComplianceStatus(db, ctx.assignment_id, ctx.status),
-      analyzeSelfLearning(db, ctx.organization_id),
-      analyzeMarketTrends(db, ctx.property_type, ctx.property_city, ctx.organization_id),
-      analyzeMultiPartyStatus(db, ctx.assignment_id, ctx.status),
-      executeAutonomousLogic(db, ctx.assignment_id, ctx.status, request_id, ctx.organization_id),
-      analyzeMachineryDepreciation(db, ctx.assignment_id),
-      analyzeMachineryMarket(db, ctx.assignment_id, ctx.organization_id),
-      analyzeProductionLines(db, ctx.assignment_id),
-      analyzeIoTTelemetry(db, ctx.assignment_id),
-      analyzePredictiveMaintenance(db, ctx.assignment_id),
-      analyzeAuctionIntelligence(db, ctx.assignment_id),
-      analyzeDigitalTwins(db, ctx.assignment_id),
-      analyzeFleetPortfolio(db, ctx.assignment_id),
-      analyzeRegulatoryCompliance(db, ctx.assignment_id),
-      analyzeInsuranceRisk(db, ctx.assignment_id),
-      analyzeBulkIntake(db, ctx.assignment_id),
-      analyzeSmartClustering(db, ctx.assignment_id),
-      analyzeMultiSite(db, ctx.assignment_id),
-      analyzeDesktopFleet(db, ctx.assignment_id),
-      generateFleetReport(db, ctx.assignment_id),
-      analyzeBulkQC(db, ctx.assignment_id),
-      generateFleetDashboard(db, ctx.assignment_id),
-      analyzePredictiveValuation(db, ctx.assignment_id),
-      analyzeDigitalTwin3D(db, ctx.assignment_id),
-      analyzeAIPeerReview(db, ctx.assignment_id),
-      analyzeVoiceFieldCapture(db, ctx.assignment_id),
-      analyzeImageFraud(db, ctx.assignment_id),
-      analyzeSmartPortal(db, ctx.assignment_id, request_id),
-      analyzeCompetitiveBenchmark(db, ctx.assignment_id, ctx.organization_id),
-      analyzeMultiCurrency(db, ctx.assignment_id),
-      analyzeInstitutionalMemory(db, ctx.assignment_id),
-      analyzePortfolioHealth(db, ctx.assignment_id),
-      analyzeERPIntegration(db, ctx.assignment_id),
-      analyzeBlockchainNotarization(db, ctx.assignment_id),
-      // Levels 61-66: Smart Marketing Engine
-      analyzeSeasonalReminders(db, ctx.assignment_id, ctx.client_user_id),
-      analyzeLoyaltyOffers(db, ctx.assignment_id, ctx.client_user_id),
-      analyzeBehaviorIntelligence(db, ctx.assignment_id, ctx.client_user_id),
-      analyzeOccasionMessages(db, ctx.assignment_id, ctx.client_user_id, ctx.status),
-      analyzeEngagementAnalytics(db, ctx.organization_id),
+      // Essential: knowledge + corrections + client memory (always load)
+      db.from("raqeem_knowledge").select("title_ar, content, category, priority").eq("is_active", true).order("priority", { ascending: false }).limit(10),
+      db.from("raqeem_corrections").select("original_question, corrected_answer").eq("is_active", true).order("created_at", { ascending: false }).limit(10),
+      ctx.client_user_id ? loadClientMemory(db, ctx.client_user_id) : nullP,
+      // Request-specific (skip in global chat)
+      request_id ? analyzeDocumentReadiness(db, request_id, effectivePropertyType) : nullP,
+      skipHeavyQueries ? nullP : generateMarketInsights(db, ctx.property_type, ctx.property_city, ctx.organization_id),
+      ctx.client_user_id ? getClientHistory(db, ctx.client_user_id) : emptyP,
+      skipHeavyQueries ? nullP : generatePredictions(db, ctx.property_type, ctx.property_city, ctx.valuation_mode, ctx.organization_id),
+      skipHeavyQueries ? nullP : analyzeWorkflowReadiness(db, ctx.assignment_id, ctx.status, request_id),
+      skipHeavyQueries ? nullP : checkComplianceStatus(db, ctx.assignment_id, ctx.status),
+      skipHeavyQueries ? nullP : analyzeSelfLearning(db, ctx.organization_id),
+      skipHeavyQueries ? nullP : analyzeMarketTrends(db, ctx.property_type, ctx.property_city, ctx.organization_id),
+      skipHeavyQueries ? nullP : analyzeMultiPartyStatus(db, ctx.assignment_id, ctx.status),
+      skipHeavyQueries ? nullP : executeAutonomousLogic(db, ctx.assignment_id, ctx.status, request_id, ctx.organization_id),
+      // Assignment-specific heavy queries (always skip without assignment_id)
+      skipHeavyQueries ? nullP : analyzeMachineryDepreciation(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeMachineryMarket(db, ctx.assignment_id, ctx.organization_id),
+      skipHeavyQueries ? nullP : analyzeProductionLines(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeIoTTelemetry(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzePredictiveMaintenance(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeAuctionIntelligence(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeDigitalTwins(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeFleetPortfolio(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeRegulatoryCompliance(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeInsuranceRisk(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeBulkIntake(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeSmartClustering(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeMultiSite(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeDesktopFleet(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : generateFleetReport(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeBulkQC(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : generateFleetDashboard(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzePredictiveValuation(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeDigitalTwin3D(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeAIPeerReview(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeVoiceFieldCapture(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeImageFraud(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeSmartPortal(db, ctx.assignment_id, request_id),
+      skipHeavyQueries ? nullP : analyzeCompetitiveBenchmark(db, ctx.assignment_id, ctx.organization_id),
+      skipHeavyQueries ? nullP : analyzeMultiCurrency(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeInstitutionalMemory(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzePortfolioHealth(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeERPIntegration(db, ctx.assignment_id),
+      skipHeavyQueries ? nullP : analyzeBlockchainNotarization(db, ctx.assignment_id),
+      // Levels 61-66: Smart Marketing (lightweight, keep for client engagement)
+      skipHeavyQueries ? nullP : analyzeSeasonalReminders(db, ctx.assignment_id, ctx.client_user_id),
+      skipHeavyQueries ? nullP : analyzeLoyaltyOffers(db, ctx.assignment_id, ctx.client_user_id),
+      skipHeavyQueries ? nullP : analyzeBehaviorIntelligence(db, ctx.assignment_id, ctx.client_user_id),
+      skipHeavyQueries ? nullP : analyzeOccasionMessages(db, ctx.assignment_id, ctx.client_user_id, ctx.status),
+      skipHeavyQueries ? nullP : analyzeEngagementAnalytics(db, ctx.organization_id),
     ]);
 
     // ── Knowledge section ──
