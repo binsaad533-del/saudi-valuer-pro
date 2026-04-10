@@ -331,7 +331,7 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
                         <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              sr.score_pct >= 86 ? "bg-green-500" : sr.score_pct >= 66 ? "bg-amber-500" : "bg-red-500"
+                              sr.score_pct >= 90 ? "bg-green-500" : sr.score_pct >= 70 ? "bg-amber-500" : "bg-red-500"
                             }`}
                             style={{ width: `${sr.score_pct}%` }}
                           />
