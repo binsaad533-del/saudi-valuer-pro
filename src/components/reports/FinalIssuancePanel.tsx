@@ -488,9 +488,9 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
             </p>
           </div>
           {!isIssued && (
-            <Button size="sm" onClick={handleIssue} disabled={issuing} className="gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
+            <Button size="sm" onClick={handleIssue} disabled={issuing || (qcResult !== null && qcResult.score < 80)} className="gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
               {issuing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lock className="w-3 h-3" />}
-              إصدار
+              {qcResult && qcResult.score < 80 ? "مسودة فقط" : "إصدار"}
             </Button>
           )}
         </div>
