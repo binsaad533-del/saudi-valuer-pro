@@ -80,6 +80,7 @@ const inspectorNavGroups: NavGroup[] = [
 const financialNavGroups: NavGroup[] = [
   { id: "main", title: "الرئيسية", icon: LayoutDashboard, items: [
     { label: "المالية", icon: LayoutDashboard, path: "/cfo-dashboard" },
+    { label: "المساعد المالي", icon: MessageSquare, path: "/cfo-chat" },
     { label: "الإشعارات", icon: Bell, path: "/notifications" },
     { label: "الإعدادات", icon: Settings, path: "/account" },
   ]},

@@ -71,6 +71,9 @@ import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
 import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import InspectorChatPage from "@/pages/inspector/InspectorChatPage";
 
+// CFO Chat
+import CFOChatPage from "@/pages/cfo/CFOChatPage";
+
 // Field Inspection (standalone)
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
 
@@ -126,6 +129,7 @@ const App = () => (
             <Route path="/inspectors" element={<InspectorsListPage />} />
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
             <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
+            <Route path="/cfo-chat" element={<CFOChatPage />} />
             <Route path="/knowledge" element={<KnowledgeBasePage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
             <Route path="/account" element={<UserSettingsPage />} />
