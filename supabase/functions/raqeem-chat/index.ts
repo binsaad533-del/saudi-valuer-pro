@@ -3578,31 +3578,76 @@ serve(async (req) => {
       + (imageAttachments.length > 0 ? `\n${buildMachineryVisionPromptLocal()}\n` : "");
     const roleTools = getToolsForRole(effectiveRole);
 
-    // First call: with tools enabled (non-streaming to detect tool calls)
-    const firstResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5",
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...normalizedMessages,
-        ],
-        tools: roleTools,
-        tool_choice: "auto",
-        stream: false,
-      }),
-    });
+    const latestUserPlainText = typeof latestUserText === "string" ? latestUserText.trim() : "";
+    const hasBoundContext = !!(platformContext && typeof platformContext === "object" && ((platformContext as any).assignment_id || (platformContext as any).request_id));
+    const wantsCurrentRequestStatus = hasBoundContext && /(?:حالة|وضع|تفاصيل).*(?:هذا الطلب|الطلب الحالي)|(?:اعرض|ورني|هات).*(?:حالة|تفاصيل).*(?:هذا الطلب|الطلب الحالي)/.test(latestUserPlainText);
+    const wantsPriorityUpdate = hasBoundContext && /(?:أولوية المتابعة|الأولوية).*(?:حدّث|تحديث|نفّذ|ارفع|عدّل)|(?:نفّذ|حدث|حدّث|ارفع|عدّل).*(?:أولوية المتابعة|الأولوية)/.test(latestUserPlainText);
 
-    if (!firstResponse.ok) {
-      return handleAIError(firstResponse);
+    let preflightToolCalls: any[] = [];
+    if (wantsCurrentRequestStatus) {
+      preflightToolCalls.push({
+        id: "preflight_get_assignment_details",
+        type: "function",
+        function: { name: "get_assignment_details", arguments: JSON.stringify({}) },
+      });
+    }
+    if (wantsPriorityUpdate) {
+      const priorityMatch = latestUserPlainText.match(/(urgent|critical|high|normal|low|عاجل(?:ة)?|حرج(?:ة)?|عالي(?:ة)?|متوسط(?:ة)?|منخفض(?:ة)?)/i);
+      const priorityMap: Record<string, string> = {
+        urgent: "urgent", critical: "critical", high: "high", normal: "normal", low: "low",
+        "عاجل": "urgent", "عاجلة": "urgent", "حرج": "critical", "حرجة": "critical",
+        "عالي": "high", "عالية": "high", "متوسط": "normal", "متوسطة": "normal",
+        "منخفض": "low", "منخفضة": "low",
+      };
+      preflightToolCalls.push({
+        id: "preflight_update_follow_up_priority",
+        type: "function",
+        function: {
+          name: "update_follow_up_priority",
+          arguments: JSON.stringify({
+            priority: priorityMap[(priorityMatch?.[0] || "high").toLowerCase()] || "high",
+            reason: "طلب مباشر من المستخدم داخل سياق الطلب الحالي",
+          }),
+        },
+      });
     }
 
-    const firstData = await firstResponse.json();
-    const choice = firstData.choices?.[0];
+    let choice: any;
+    if (preflightToolCalls.length > 0) {
+      choice = {
+        finish_reason: "tool_calls",
+        message: {
+          role: "assistant",
+          content: null,
+          tool_calls: preflightToolCalls,
+        },
+      };
+    } else {
+      const firstResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "openai/gpt-5",
+          messages: [
+            { role: "system", content: systemPrompt },
+            ...normalizedMessages,
+          ],
+          tools: roleTools,
+          tool_choice: "auto",
+          stream: false,
+        }),
+      });
+
+      if (!firstResponse.ok) {
+        return handleAIError(firstResponse);
+      }
+
+      const firstData = await firstResponse.json();
+      choice = firstData.choices?.[0];
+    }
 
     // Check if AI wants to call tools
     if (choice?.finish_reason === "tool_calls" || choice?.message?.tool_calls?.length > 0) {
