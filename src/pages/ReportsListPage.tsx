@@ -53,6 +53,19 @@ export default function ReportsListPage() {
     }
   }, [toast]);
 
+  const requestDownload = useCallback((report: typeof mockReports[0]) => {
+    setPendingDownload(report);
+    setDisclaimerOpen(true);
+  }, []);
+
+  const handleDisclaimerAccept = useCallback(() => {
+    setDisclaimerOpen(false);
+    if (pendingDownload) {
+      handleDownloadPdf(pendingDownload);
+      setPendingDownload(null);
+    }
+  }, [pendingDownload, handleDownloadPdf]);
+
   const filtered = useMemo(() => {
     return mockReports.filter((r) => {
       const matchSearch =
