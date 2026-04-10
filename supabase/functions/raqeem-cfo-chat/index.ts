@@ -284,7 +284,6 @@ ${financialSummary}`;
               user_name: cfoName, user_role: "financial_manager",
             } as any).catch(() => {});
           }
-          }
         } catch (e) {
           cleanReply += "\n\n⚠️ خطأ أثناء تأكيد الدفعة الأولى.";
         }
