@@ -3729,6 +3729,7 @@ serve(async (req) => {
     const hasBoundContext = !!(platformContext && typeof platformContext === "object" && ((platformContext as any).assignment_id || (platformContext as any).request_id));
     const wantsCurrentRequestStatus = hasBoundContext && /حالة|وضع|تفاصيل|ملخص|الطلب|بالتفصيل|status|details/.test(latestUserPlainText);
     const wantsPriorityUpdate = hasBoundContext && /(?:أولوية المتابعة|الأولوية).*(?:حدّث|تحديث|نفّذ|ارفع|عدّل)|(?:نفّذ|حدث|حدّث|ارفع|عدّل).*(?:أولوية المتابعة|الأولوية)/.test(latestUserPlainText);
+    console.log("[raqeem-chat] hasBoundContext:", hasBoundContext, "| wantsStatus:", wantsCurrentRequestStatus, "| latestText:", latestUserPlainText.slice(0, 80));
 
     let preflightToolCalls: any[] = [];
     if (wantsCurrentRequestStatus) {
