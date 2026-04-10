@@ -196,7 +196,7 @@ export default function RaqeemPage() {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center"><Sparkles className="w-5 h-5 text-primary-foreground" /></div>
           <div>
-            <h1 className="text-base font-bold text-foreground">رقيم — مركز التقييم الذكي</h1>
+            <h1 className="text-base font-bold text-foreground">ChatGPT — مركز التقييم الذكي</h1>
             <p className="text-[11px] text-muted-foreground hidden sm:block">مساعد التقييم الذكي الموحد لإدارة المعرفة، التدريب، التحليل، والتقييم</p>
           </div>
         </div>

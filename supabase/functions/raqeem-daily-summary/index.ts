@@ -305,7 +305,7 @@ serve(async (req) => {
           body: JSON.stringify({
             model: "openai/gpt-5-mini",
             messages: [
-              { role: "system", content: "أنت رقيم — المساعد الذكي لمنصة التقييم. أجب بالعربية فقط." },
+              { role: "system", content: "أنت ChatGPT — المساعد الذكي لمنصة التقييم. أجب بالعربية فقط." },
               { role: "user", content: aiPrompt },
             ],
             max_tokens: 300,

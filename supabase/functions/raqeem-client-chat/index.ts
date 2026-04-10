@@ -301,10 +301,10 @@ serve(async (req) => {
     }
 
     // ── Build system prompt with all intelligence layers ──
-    const systemPrompt = `أنت "رقيم – مساعدك الذكي"، مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation).
+    const systemPrompt = `أنت "ChatGPT – مساعدك الذكي"، مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation).
 
 ## هويتك
-- اسمك: "رقيم – مساعدك الذكي"
+- اسمك: "ChatGPT – مساعدك الذكي"
 - شركة جسّاس للتقييم، مرخصة من الهيئة السعودية للمقيمين المعتمدين (تقييم)
 - تراخيص: عقارات (1210001217) + آلات ومعدات (4114000015)
 - التواصل: 920015029 / 0500668089 | care@jsaas-valuation.com
@@ -541,7 +541,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
             _new_status: "cancelled",
             _user_id: ctx.client_user_id,
             _action_type: "normal",
-            _reason: "إلغاء بطلب العميل عبر رقيم",
+            _reason: "إلغاء بطلب العميل عبر ChatGPT",
           });
           if (cancelResult?.success) {
             cancelExecuted = true;
@@ -567,7 +567,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
             _new_status: "draft_approved",
             _user_id: ctx.client_user_id,
             _action_type: "normal",
-            _reason: "اعتماد المسودة بواسطة العميل عبر رقيم",
+            _reason: "اعتماد المسودة بواسطة العميل عبر ChatGPT",
           });
           if (approveResult?.success) {
             draftApproved = true;

@@ -136,7 +136,7 @@ export default function RaqeemWatchdogPage() {
         <div className="flex items-center gap-3">
           <RaqeemIcon size={32} />
           <div>
-            <h1 className="text-2xl font-light text-foreground">رقيم — المراقب الشامل</h1>
+            <h1 className="text-2xl font-light text-foreground">ChatGPT — المراقب الشامل</h1>
             <p className="text-sm text-muted-foreground">
               فحص مستمر لـ 7 طبقات: تقني، أمني، إجرائي، قانوني، مالي، سلوكي، أداء
             </p>
@@ -243,7 +243,7 @@ export default function RaqeemWatchdogPage() {
                                 <div className="p-2 bg-primary/5 rounded-md border border-primary/20">
                                   <div className="flex items-center gap-1 mb-1">
                                     <RaqeemIcon size={12} />
-                                    <span className="text-[10px] font-medium text-primary">اقتراح رقيم</span>
+                                    <span className="text-[10px] font-medium text-primary">اقتراح ChatGPT</span>
                                   </div>
                                   <p className="text-xs text-foreground">{finding.recommendation}</p>
                                 </div>

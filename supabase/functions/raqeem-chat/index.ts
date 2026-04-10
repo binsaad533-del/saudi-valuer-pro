@@ -1272,7 +1272,7 @@ async function executeTool(
         _new_status: args.new_status,
         _user_id: null,
         _action_type: "normal",
-        _reason: args.reason || "تغيير عبر رقيم بطلب المالك",
+        _reason: args.reason || "تغيير عبر ChatGPT بطلب المالك",
       });
       if (error) return { success: false, result: null, error: error.message };
       return { success: result?.success ?? false, result, error: result?.error };
@@ -1491,7 +1491,7 @@ async function executeTool(
         reference_number: "",
         sequential_number: 0,
         report_language: "ar",
-        notes: args.description || "طلب مُنشأ عبر رقيم",
+        notes: args.description || "طلب مُنشأ عبر ChatGPT",
       }).select("id, reference_number").single();
 
       if (assignErr) return { success: false, result: null, error: assignErr.message };
@@ -1668,7 +1668,7 @@ async function executeTool(
           _new_status: args.new_status,
           _user_id: null,
           _action_type: "normal",
-          _reason: args.reason || "تحديث جماعي عبر رقيم",
+          _reason: args.reason || "تحديث جماعي عبر ChatGPT",
         });
         results.push({ assignment_id: assignId, success: !error && result?.success, error: error?.message || result?.error });
       }
@@ -1906,7 +1906,7 @@ async function executeTool(
         _new_status: "issued",
         _user_id: null,
         _action_type: args.bypass_justification ? "bypass" : "normal",
-        _reason: "إصدار التقرير النهائي عبر رقيم",
+        _reason: "إصدار التقرير النهائي عبر ChatGPT",
         _bypass_justification: args.bypass_justification || null,
       });
 
@@ -2340,7 +2340,7 @@ async function executeTool(
         action: "status_change",
         table_name: "payments",
         record_id: args.payment_id,
-        description: `تأكيد استلام دفعة عبر رقيم${args.notes ? ' — ' + args.notes : ''}`,
+        description: `تأكيد استلام دفعة عبر ChatGPT${args.notes ? ' — ' + args.notes : ''}`,
       });
 
       return { success: true, result: { message: "تم تأكيد الدفعة بنجاح وتحريك سير العمل" } };
@@ -2631,7 +2631,7 @@ async function executeTool(
       if (args.approve) {
         const { data: result, error } = await db.rpc("update_request_status", {
           _assignment_id: args.assignment_id, _new_status: "draft_approved",
-          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر رقيم: ${args.feedback}`,
+          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر ChatGPT: ${args.feedback}`,
         });
         if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
         return { success: true, result: { message: "تمت الموافقة على المسودة بنجاح. الخطوة التالية: سداد الدفعة النهائية." } };
@@ -2648,7 +2648,7 @@ async function executeTool(
       if (args.approved !== false) {
         const { data: result, error } = await db.rpc("update_request_status", {
           _assignment_id: args.assignment_id, _new_status: "scope_approved",
-          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر رقيم",
+          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر ChatGPT",
         });
         if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
         return { success: true, result: { message: "تمت الموافقة على نطاق العمل. الخطوة التالية: سداد الدفعة الأولى (50%)." } };
