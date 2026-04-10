@@ -2,7 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import {
-  CreditCard, FileText, Upload, CheckCircle, Clock, Eye, MessageSquare,
+  CreditCard, FileText, Upload, CheckCircle, Clock, Eye,
 } from "lucide-react";
 import RaqeemAnimatedLogo from "./RaqeemAnimatedLogo";
 

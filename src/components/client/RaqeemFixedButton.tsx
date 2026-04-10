@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { MessageSquare } from "lucide-react";
+
 import RaqeemAnimatedLogo from "./RaqeemAnimatedLogo";
 
 export default function RaqeemFixedButton() {

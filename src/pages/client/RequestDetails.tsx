@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import {
   FileText, Loader2, Send, Upload, Download, CheckCircle, User,
-  CreditCard, Eye, ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
@@ -23,7 +23,7 @@ import { STATUS_LABELS as WF_STATUS_LABELS } from "@/lib/workflow-engine";
 import { useRealtimeAssignment } from "@/hooks/useRealtimeAssignment";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
-import { getValuationModeLabel, isDesktopValuationMode, getTurnaroundDays } from "@/lib/valuation-mode";
+import { getValuationModeLabel } from "@/lib/valuation-mode";
 import BidiText from "@/components/ui/bidi-text";
 
 export default function RequestDetails() {
