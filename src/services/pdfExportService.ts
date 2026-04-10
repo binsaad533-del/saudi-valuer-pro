@@ -1,7 +1,7 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import type { Report } from "@/types/report";
-import { applyPdfProtection, generateDownloadToken, type PdfRecipientInfo } from "@/lib/pdf-security";
+import { applyPdfProtection, generateDownloadToken, getProtectedPdfBlob, type PdfRecipientInfo } from "@/lib/pdf-security";
 import { supabase } from "@/integrations/supabase/client";
 import { getStatusLabel } from "@/utils/reportWorkflow";
 import { formatDate, formatNumber } from "@/lib/utils";
