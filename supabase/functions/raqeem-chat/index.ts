@@ -1273,7 +1273,7 @@ async function executeTool(
         _new_status: args.new_status,
         _user_id: null,
         _action_type: "normal",
-        _reason: args.reason || "تغيير عبر ChatGPT بطلب المالك",
+        _reason: args.reason || AI.actionVia("تغيير بطلب المالك"),
       });
       if (error) return { success: false, result: null, error: error.message };
       return { success: result?.success ?? false, result, error: result?.error };
@@ -1492,7 +1492,7 @@ async function executeTool(
         reference_number: "",
         sequential_number: 0,
         report_language: "ar",
-        notes: args.description || "طلب مُنشأ عبر ChatGPT",
+        notes: args.description || AI.actionVia("طلب مُنشأ"),
       }).select("id, reference_number").single();
 
       if (assignErr) return { success: false, result: null, error: assignErr.message };
@@ -1669,7 +1669,7 @@ async function executeTool(
           _new_status: args.new_status,
           _user_id: null,
           _action_type: "normal",
-          _reason: args.reason || "تحديث جماعي عبر ChatGPT",
+          _reason: args.reason || AI.actionVia("تحديث جماعي"),
         });
         results.push({ assignment_id: assignId, success: !error && result?.success, error: error?.message || result?.error });
       }
@@ -1907,7 +1907,7 @@ async function executeTool(
         _new_status: "issued",
         _user_id: null,
         _action_type: args.bypass_justification ? "bypass" : "normal",
-        _reason: "إصدار التقرير النهائي عبر ChatGPT",
+        _reason: AI.actionVia("إصدار التقرير النهائي"),
         _bypass_justification: args.bypass_justification || null,
       });
 
