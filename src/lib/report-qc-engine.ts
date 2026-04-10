@@ -10,9 +10,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import {
-  IVS_STANDARDS, IVS_GRADE_THRESHOLDS,
+  IVS_STANDARDS,
   getItemSeverity, getApplicableItems, getGrade,
-  type IVSStandard, type IVSCheckItem, type IVSStandardCode, type QCGrade,
+  type IVSStandardCode, type QCGrade,
 } from "./ivs-quality-standards";
 
 /* ─── Types ─── */
@@ -124,10 +124,10 @@ function autoScoreItem(
   assignment: any,
   assumptions: any[],
   comparables: any[],
-  inspections: any[],
+  _inspections: any[],
 ): number {
   const text = reportText.toLowerCase();
-  const q = item.question_ar;
+  
 
   // IVS 101 checks — scope of work
   if (standard.code === "IVS101") {
