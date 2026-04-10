@@ -347,6 +347,7 @@ export default function RaqeemChatPage() {
           userRole: effectiveRole,
           userId: user?.id,
           attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
+          platformContext: (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined,
         }),
       });
 
