@@ -13,7 +13,7 @@ export type IVSStandardCode =
   | "IVS101" | "IVS102" | "IVS103" | "IVS104"
   | "IVS105" | "IVS106" | "IVS400" | "IVS410";
 
-export type QCGrade = "excellent" | "very_good" | "good" | "acceptable" | "poor";
+export type QCGrade = "excellent" | "very_good" | "good" | "poor";
 
 export interface IVSCheckItem {
   ref: string;           // e.g. "20.1(أ)"
@@ -32,11 +32,10 @@ export interface IVSStandard {
 }
 
 export const IVS_GRADE_THRESHOLDS: { min: number; grade: QCGrade; label_ar: string; label_en: string; color: string }[] = [
-  { min: 86, grade: "excellent", label_ar: "ممتاز", label_en: "Excellent", color: "text-green-600" },
-  { min: 76, grade: "very_good", label_ar: "جيد جداً", label_en: "Very Good", color: "text-blue-600" },
-  { min: 66, grade: "good", label_ar: "جيد", label_en: "Good", color: "text-amber-600" },
-  { min: 51, grade: "acceptable", label_ar: "مقبول", label_en: "Acceptable", color: "text-orange-600" },
-  { min: 0, grade: "poor", label_ar: "ضعيف", label_en: "Poor", color: "text-red-600" },
+  { min: 90, grade: "excellent", label_ar: "ممتاز", label_en: "Excellent", color: "text-green-600" },
+  { min: 80, grade: "very_good", label_ar: "جيد جداً", label_en: "Very Good", color: "text-blue-600" },
+  { min: 70, grade: "good", label_ar: "مقبول", label_en: "Acceptable", color: "text-amber-600" },
+  { min: 0, grade: "poor", label_ar: "مرفوض", label_en: "Rejected", color: "text-red-600" },
 ];
 
 export function getGrade(score: number) {

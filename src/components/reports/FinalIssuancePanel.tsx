@@ -294,17 +294,18 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] text-muted-foreground">نتيجة الجودة</span>
                     <Badge variant="outline" className={`text-[10px] ${
-                      qcResult.score >= 86 ? "border-green-300 text-green-700" :
-                      qcResult.score >= 76 ? "border-blue-300 text-blue-700" :
-                      qcResult.score >= 66 ? "border-amber-300 text-amber-700" :
-                      qcResult.score >= 51 ? "border-orange-300 text-orange-700" :
+                      qcResult.score >= 90 ? "border-green-300 text-green-700" :
+                      qcResult.score >= 80 ? "border-blue-300 text-blue-700" :
+                      qcResult.score >= 70 ? "border-amber-300 text-amber-700" :
                       "border-red-300 text-red-700"
                     }`}>
-                      {(qcResult as any).grade_label_ar || "—"}
+                      {(qcResult as any).grade_label_ar || (
+                        qcResult.score >= 90 ? "ممتاز" : qcResult.score >= 80 ? "جيد جداً" : qcResult.score >= 70 ? "مقبول" : "مرفوض"
+                      )}
                     </Badge>
                   </div>
                   <span className={`text-sm font-bold ${
-                    qcResult.score >= 80 ? "text-green-600" : qcResult.score >= 50 ? "text-amber-600" : "text-red-600"
+                    qcResult.score >= 90 ? "text-green-600" : qcResult.score >= 70 ? "text-amber-600" : "text-red-600"
                   }`}>
                     {qcResult.score}%
                   </span>
@@ -314,7 +315,7 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
                 <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      qcResult.score >= 86 ? "bg-green-500" : qcResult.score >= 66 ? "bg-amber-500" : "bg-red-500"
+                      qcResult.score >= 90 ? "bg-green-500" : qcResult.score >= 70 ? "bg-amber-500" : "bg-red-500"
                     }`}
                     style={{ width: `${qcResult.score}%` }}
                   />
@@ -330,7 +331,7 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
                         <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              sr.score_pct >= 86 ? "bg-green-500" : sr.score_pct >= 66 ? "bg-amber-500" : "bg-red-500"
+                              sr.score_pct >= 90 ? "bg-green-500" : sr.score_pct >= 70 ? "bg-amber-500" : "bg-red-500"
                             }`}
                             style={{ width: `${sr.score_pct}%` }}
                           />

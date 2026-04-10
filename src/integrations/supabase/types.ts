@@ -5008,6 +5008,78 @@ export type Database = {
           },
         ]
       }
+      report_quality_scores: {
+        Row: {
+          assignment_id: string
+          can_issue: boolean | null
+          created_at: string
+          details: Json | null
+          failed_enhancement: number | null
+          failed_mandatory: number | null
+          failed_quality: number | null
+          grade: string
+          grade_label_ar: string | null
+          id: string
+          passed_checks: number | null
+          score: number
+          scored_by: string | null
+          standard_breakdown: Json | null
+          total_checks: number | null
+          updated_at: string
+        }
+        Insert: {
+          assignment_id: string
+          can_issue?: boolean | null
+          created_at?: string
+          details?: Json | null
+          failed_enhancement?: number | null
+          failed_mandatory?: number | null
+          failed_quality?: number | null
+          grade?: string
+          grade_label_ar?: string | null
+          id?: string
+          passed_checks?: number | null
+          score?: number
+          scored_by?: string | null
+          standard_breakdown?: Json | null
+          total_checks?: number | null
+          updated_at?: string
+        }
+        Update: {
+          assignment_id?: string
+          can_issue?: boolean | null
+          created_at?: string
+          details?: Json | null
+          failed_enhancement?: number | null
+          failed_mandatory?: number | null
+          failed_quality?: number | null
+          grade?: string
+          grade_label_ar?: string | null
+          id?: string
+          passed_checks?: number | null
+          score?: number
+          scored_by?: string | null
+          standard_breakdown?: Json | null
+          total_checks?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_quality_scores_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_quality_scores_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_signatures: {
         Row: {
           id: string

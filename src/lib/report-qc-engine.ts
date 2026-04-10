@@ -376,6 +376,27 @@ export async function logQCResult(
   userId: string
 ): Promise<void> {
   await Promise.all([
+    // Persistent quality score
+    supabase.from("report_quality_scores" as any).insert({
+      assignment_id: assignmentId,
+      score: result.score,
+      grade: result.grade,
+      grade_label_ar: result.grade_label_ar,
+      standard_breakdown: result.standard_results,
+      total_checks: result.total_checks,
+      passed_checks: result.passed_checks,
+      failed_mandatory: result.failed_mandatory,
+      failed_quality: result.failed_quality,
+      failed_enhancement: result.failed_enhancement,
+      can_issue: result.can_issue,
+      details: {
+        blocked_reasons: result.blocked_reasons_ar,
+        warning_reasons: result.warning_reasons_ar,
+        enhancement_suggestions: result.enhancement_suggestions_ar,
+      },
+      scored_by: userId,
+    }),
+    // Legacy quality_gate_results
     supabase.from("quality_gate_results" as any).insert({
       assignment_id: assignmentId,
       run_by: userId,
@@ -393,6 +414,7 @@ export async function logQCResult(
       warning_reasons: result.warning_reasons_ar,
       enhancement_suggestions: result.enhancement_suggestions_ar,
     }),
+    // Audit log
     supabase.from("audit_logs").insert([{
       user_id: userId,
       action: "create" as const,
@@ -409,10 +431,7 @@ export async function logQCResult(
         qg_grade_label: result.grade_label_ar,
         standard_results: result.standard_results,
         can_issue: result.can_issue,
-        has_warnings: result.has_warnings,
         failed_mandatory: result.failed_mandatory,
-        failed_quality: result.failed_quality,
-        failed_enhancement: result.failed_enhancement,
         checked_at: result.checked_at,
       } as any,
     }]),
