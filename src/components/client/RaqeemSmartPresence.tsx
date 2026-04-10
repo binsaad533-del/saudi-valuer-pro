@@ -109,38 +109,61 @@ export default function RaqeemSmartPresence() {
   if (isRaqeemPage) return null;
 
   return (
-    <div className="relative flex items-center">
-      <button
+    <div className="relative flex items-center justify-center">
+      <motion.button
         onClick={handleClick}
+        animate={stripVisible ? { filter: "brightness(1.1)" } : { filter: "brightness(1)" }}
+        transition={{ duration: 0.3 }}
         className="relative p-2 rounded-xl hover:bg-muted/60 transition-colors z-10"
         aria-label="رقيم"
       >
         <RaqeemAnimatedLogo size={32} />
-      </button>
+        {/* Sync pulse with strip */}
+        <AnimatePresence>
+          {stripVisible && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 0.25, scale: 1.8 }}
+              exit={{ opacity: 0, scale: 2.2 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="absolute inset-0 rounded-full pointer-events-none"
+              style={{ background: "radial-gradient(circle, rgba(226,168,130,0.35) 0%, transparent 70%)" }}
+            />
+          )}
+        </AnimatePresence>
+      </motion.button>
 
-      {/* Smart Strip */}
+      {/* Smart Strip — emerges from logo center */}
       <AnimatePresence>
         {stripVisible && (
           <motion.div
-            initial={{ opacity: 0, x: 20, scaleX: 0.3 }}
-            animate={{ opacity: 1, x: 0, scaleX: 1 }}
-            exit={{ opacity: 0, x: 16, scaleX: 0.5 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            style={{ transformOrigin: "right center" }}
+            initial={{ opacity: 0, scale: 0.8, x: 8 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.85, x: 12 }}
+            transition={{
+              opacity: { duration: 0.3, ease: "easeOut" },
+              scale: { duration: 0.3, ease: "easeOut" },
+              x: { duration: 0.3, ease: "easeOut", delay: 0.05 },
+            }}
+            style={{ transformOrigin: "center center" }}
             onClick={handleClick}
             className="absolute left-full mr-1 cursor-pointer flex items-center gap-2 whitespace-nowrap
-              h-9 px-4 rounded-lg
-              bg-foreground/90 text-background
-              border border-destructive/20
-              shadow-lg shadow-destructive/5"
+              h-9 px-4 rounded-xl
+              border
+              backdrop-blur-md"
+            css-style={{
+              background: "linear-gradient(135deg, rgba(255,215,200,0.08), rgba(255,255,255,0.05))",
+              borderColor: "rgba(210,170,140,0.25)",
+              boxShadow: "0 0 18px 2px rgba(210,170,140,0.08)",
+            }}
           >
-            {/* Red pulse dot */}
-            <span className="relative flex h-2 w-2 shrink-0">
-              <span className="absolute inline-flex h-full w-full rounded-full bg-destructive/60 animate-ping" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive/80" />
+            {/* Soft gold pulse dot */}
+            <span className="relative flex h-1.5 w-1.5 shrink-0">
+              <span className="absolute inline-flex h-full w-full rounded-full animate-ping" style={{ background: "rgba(210,170,140,0.5)" }} />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full" style={{ background: "rgba(220,180,150,0.8)" }} />
             </span>
 
-            <span className="text-xs font-medium leading-none">
+            <span className="text-xs font-light leading-none" style={{ color: "rgba(235,220,205,0.9)" }}>
               {stripMessage}
             </span>
           </motion.div>
