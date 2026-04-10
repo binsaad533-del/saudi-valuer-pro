@@ -78,6 +78,7 @@ export default function RaqeemPage() {
   }>({ open: false, msgIndex: -1, correctedAnswer: "", reason: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initCalledRef = useRef(false);
   const { user, role } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -129,6 +130,8 @@ export default function RaqeemPage() {
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
+
+  // ── Proactive daily briefing — defined after streamChat (see below) ──
 
   const streamChat = useCallback(async (allMessages: Message[]) => {
     const token = (await supabase.auth.getSession()).data.session?.access_token;
@@ -244,6 +247,31 @@ export default function RaqeemPage() {
       }
     }
   }, [user, role]);
+
+  // ── Proactive daily briefing on first load (owner only) ──
+  useEffect(() => {
+    if (initCalledRef.current) return;
+    if (!user) return;
+    const effectiveRole = role || "owner";
+    if (!["owner", "admin_coordinator", "valuation_manager", "valuer"].includes(effectiveRole)) return;
+    if (platformContextRef.current.assignment_id) return;
+    
+    initCalledRef.current = true;
+    
+    const briefingMsg: Message = { role: "user", content: "الإحاطة اليومية: أعطني ملخص تنفيذي للمنصة مع التنبيهات والقرارات المطلوبة" };
+    setMessages([briefingMsg]);
+    setIsLoading(true);
+    
+    (async () => {
+      try {
+        await streamChat([briefingMsg]);
+      } catch (e) {
+        console.error("Auto-briefing failed:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [user, role, streamChat]);
 
   const send = async (text?: string) => {
     const messageText = text || input.trim();
