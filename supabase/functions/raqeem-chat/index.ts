@@ -3143,6 +3143,46 @@ serve(async (req) => {
       } catch (_e) { /* ignore */ }
     }
 
+    // ── Load Executive Memory Profile ──
+    let memoryProfileSection = "";
+    if (authenticatedUserId) {
+      try {
+        const { data: memProfile } = await supabaseClient
+          .from("executive_memory_profiles")
+          .select("*")
+          .eq("user_id", authenticatedUserId)
+          .eq("is_active", true)
+          .maybeSingle();
+
+        if (memProfile) {
+          const style = memProfile.communication_style || {};
+          memoryProfileSection = `\n\n## ⚙️ ملف المستخدم التنفيذي (Executive Memory Profile)`;
+          memoryProfileSection += `\n- الاسم: **${memProfile.display_name_ar || memProfile.display_name_en || ""}**`;
+          memoryProfileSection += `\n- المسمى: ${memProfile.role_title_ar || memProfile.role_title_en || ""}`;
+          memoryProfileSection += `\n- اللغة: ${memProfile.preferred_language === "ar" ? "العربية فقط" : memProfile.preferred_language}`;
+          if (memProfile.domain_context) {
+            memoryProfileSection += `\n- السياق المهني: ${memProfile.domain_context}`;
+          }
+          if (style.brevity === "extreme") memoryProfileSection += `\n- ⚡ اختصار شديد مطلوب — لا مقدمات ولا حشو`;
+          if (style.format_preference === "tables_and_numbers") memoryProfileSection += `\n- 📊 يفضل الجداول والأرقام الدقيقة`;
+          if (style.no_english_reading) memoryProfileSection += `\n- 🚫 لا يقرأ الإنجليزية — كل شيء بالعربية`;
+          if (style.no_filler) memoryProfileSection += `\n- أسلوب مباشر بلا تزيين`;
+
+          if (memProfile.behavior_directives?.length > 0) {
+            memoryProfileSection += `\n\n### تعليمات السلوك الشخصية:\n`;
+            memoryProfileSection += memProfile.behavior_directives.map((d: string, i: number) => `${i + 1}. ${d}`).join("\n");
+          }
+          if (memProfile.context_rules?.length > 0) {
+            memoryProfileSection += `\n\n### قواعد السياق:\n`;
+            memoryProfileSection += memProfile.context_rules.map((r: string) => `• ${r}`).join("\n");
+          }
+          memoryProfileSection += `\n\n**⚠️ هذه التعليمات دائمة ومُلزمة في كل جلسة — لا تتجاهلها أبداً.**`;
+        }
+      } catch (e) {
+        console.error("Memory profile fetch error:", e);
+      }
+    }
+
     let knownClientName = "";
 
     // Handle correction submission
@@ -3292,6 +3332,7 @@ serve(async (req) => {
     const basePrompt = await buildContextualPrompt(supabaseClient);
     const systemPrompt = basePrompt
       + getRolePromptAddition(effectiveRole)
+      + memoryProfileSection
       + clientContextSection
       + greetingInstruction
       + attachmentIntelligenceSection
