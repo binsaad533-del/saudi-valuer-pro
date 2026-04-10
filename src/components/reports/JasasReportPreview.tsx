@@ -284,9 +284,9 @@ function Row({ label, value }: { label: string; value: string }) {
    Pages — Executive Style
    ══════════════════════════════════════════════ */
 
-function CoverPage() {
+function CoverPage({ mode, versionNum }: { mode: "draft" | "final"; versionNum: number }) {
   return (
-    <PageShell pageNum={1} noHeader>
+    <PageShell pageNum={1} noHeader mode={mode} versionNum={versionNum}>
       <div className="flex flex-col h-full justify-between">
         <div className="flex items-center justify-end">
           <img src={jasasLogo} alt="جساس للتقييم" className="h-16 w-auto object-contain" />
@@ -301,15 +301,27 @@ function CoverPage() {
             <Row label="رقم التقرير" value={SAMPLE.reportNumber} />
             <Row label="تاريخ التقييم" value={SAMPLE.valuationDate} />
             <Row label="تاريخ الإصدار" value={SAMPLE.issueDate} />
+            <Row label="رقم الإصدار" value={`v${versionNum}`} />
           </div>
           <div className="mt-2"><VerificationQR size={56} /></div>
         </div>
         <div className="space-y-3 text-center">
-          <div className="inline-block border border-border rounded px-4 py-1.5">
-            <span className="text-xs text-muted-foreground">نسخة: </span>
-            <span className="text-xs font-semibold text-foreground">عميل</span>
+          <div className="flex items-center justify-center gap-2">
+            <div className="inline-block border border-border rounded px-4 py-1.5">
+              <span className="text-xs text-muted-foreground">نسخة: </span>
+              <span className="text-xs font-semibold text-foreground">عميل</span>
+            </div>
+            <div className="inline-block rounded px-3 py-1.5" style={{
+              background: mode === "draft" ? "hsl(var(--destructive) / 0.1)" : "hsl(var(--primary) / 0.1)",
+              color: mode === "draft" ? "hsl(var(--destructive))" : "hsl(var(--primary))",
+            }}>
+              <span className="text-xs font-bold">{mode === "draft" ? "مسودة" : "نهائي"}</span>
+            </div>
           </div>
           <p className="text-[11px] text-destructive/80 font-medium">سري — للاستخدام الحصري للمستلم</p>
+          {mode === "draft" && (
+            <p className="text-[10px] text-muted-foreground/60">هذه المسودة لا تعتبر تقريراً رسمياً ولا تحمل أي صفة قانونية</p>
+          )}
         </div>
       </div>
     </PageShell>
