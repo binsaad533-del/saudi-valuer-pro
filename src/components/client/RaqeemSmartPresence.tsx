@@ -1,21 +1,18 @@
-import { useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import RaqeemAnimatedLogo from "./RaqeemAnimatedLogo";
 
-const CONTEXT_MAP: { pattern: RegExp; message: string; context: string }[] = [
-  { pattern: /\/client\/new-request/, message: "ابدأ مع رقيم", context: "new_request" },
-  { pattern: /\/client\/request\/.*\/upload/, message: "خل رقيم يكملها", context: "upload" },
-  { pattern: /\/client\/request\/.*\/payment/, message: "خل رقيم يكملها", context: "payment" },
-  { pattern: /\/client\/request\/.*\/review/, message: "رقيم يشرحها لك", context: "review" },
-  { pattern: /\/client\/request\//, message: "خل رقيم ينجزها", context: "request_detail" },
-];
-
-const DEFAULT_MESSAGE = "خل رقيم ينجزها";
-
 function getContextForPath(pathname: string) {
-  for (const entry of CONTEXT_MAP) {
-    if (entry.pattern.test(pathname)) return entry;
+  const map = [
+    { pattern: /\/client\/new-request/, context: "new_request" },
+    { pattern: /\/client\/request\/.*\/upload/, context: "upload" },
+    { pattern: /\/client\/request\/.*\/payment/, context: "payment" },
+    { pattern: /\/client\/request\/.*\/review/, context: "review" },
+    { pattern: /\/client\/request\//, context: "request_detail" },
+  ];
+  for (const entry of map) {
+    if (entry.pattern.test(pathname)) return entry.context;
   }
   return null;
 }
@@ -23,6 +20,8 @@ function getContextForPath(pathname: string) {
 export default function RaqeemSmartPresence() {
   const navigate = useNavigate();
   const location = useLocation();
+  const [showBubble, setShowBubble] = useState(false);
+  const [bubbleShown, setBubbleShown] = useState(false);
 
   const ctx = useMemo(() => getContextForPath(location.pathname), [location.pathname]);
 
@@ -30,55 +29,66 @@ export default function RaqeemSmartPresence() {
     location.pathname.startsWith(p)
   );
 
+  // Show intro bubble once on first visit
+  useEffect(() => {
+    if (isRaqeemPage || bubbleShown) return;
+    const t = setTimeout(() => {
+      setShowBubble(true);
+      setBubbleShown(true);
+      setTimeout(() => setShowBubble(false), 2000);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, [isRaqeemPage, bubbleShown]);
+
   const handleClick = useCallback(() => {
     const chatPath = location.pathname.startsWith("/client")
       ? "/client/chat"
       : "/raqeem-chat";
-    const query = ctx ? `?context=${ctx.context}` : "";
+    const query = ctx ? `?context=${ctx}` : "";
     navigate(`${chatPath}${query}`);
   }, [navigate, location.pathname, ctx]);
 
   if (isRaqeemPage) return null;
 
-  const displayMessage = ctx?.message || DEFAULT_MESSAGE;
-
   return (
-    <motion.button
-      onClick={handleClick}
-      whileHover={{ y: -2, boxShadow: "0 8px 24px rgba(74,144,217,0.18)" }}
-      whileTap={{ scale: 0.97 }}
-      animate={{
-        scale: [1, 1.02, 1],
-      }}
-      transition={{
-        scale: { duration: 2.5, repeat: Infinity, repeatDelay: 11, ease: "easeInOut" },
-      }}
-      className="fixed bottom-6 left-6 z-50 flex items-center gap-3 cursor-pointer
-        rounded-full pl-3 pr-6
-        border border-primary/20
-        shadow-lg transition-shadow duration-300"
-      style={{
-        height: 68,
-        background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary)/0.85) 100%)",
-        boxShadow: "0 4px 20px rgba(74,144,217,0.15)",
-      }}
-      aria-label="رقيم"
-    >
-      {/* Animated logo — protrudes slightly */}
-      <div
-        className="relative flex items-center justify-center rounded-full bg-white shadow-md"
-        style={{ width: 52, height: 52, marginRight: -4 }}
-      >
-        <RaqeemAnimatedLogo size={40} />
-      </div>
+    <div className="fixed bottom-6 left-6 z-50">
+      {/* Intro bubble — once only */}
+      <AnimatePresence>
+        {showBubble && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 4 }}
+            transition={{ duration: 0.3 }}
+            className="absolute -top-10 left-1/2 -translate-x-1/2 whitespace-nowrap
+              text-[11px] font-medium px-3 py-1.5 rounded-lg
+              bg-primary/10 text-primary border border-primary/15"
+          >
+            رقيم ينفذ طلبك
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Text */}
-      <span
-        className="text-sm font-medium leading-none whitespace-nowrap"
-        style={{ color: "hsl(var(--primary-foreground))" }}
+      {/* Pulse ring */}
+      <motion.span
+        className="absolute inset-0 rounded-full pointer-events-none"
+        style={{ border: "2px solid hsl(var(--primary)/0.15)" }}
+        animate={{ scale: [1, 1.35, 1.35], opacity: [0.4, 0, 0] }}
+        transition={{ duration: 1.8, repeat: Infinity, repeatDelay: 12, ease: "easeOut" }}
+      />
+
+      {/* Logo button */}
+      <motion.button
+        onClick={handleClick}
+        whileHover={{ scale: 1.08 }}
+        whileTap={{ scale: 0.95 }}
+        className="relative w-14 h-14 flex items-center justify-center rounded-full
+          bg-card border border-border shadow-md cursor-pointer
+          transition-shadow duration-200 hover:shadow-lg"
+        aria-label="رقيم"
       >
-        {displayMessage}
-      </span>
-    </motion.button>
+        <RaqeemAnimatedLogo size={36} />
+      </motion.button>
+    </div>
   );
 }
