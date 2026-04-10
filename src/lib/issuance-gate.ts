@@ -6,6 +6,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { hasPermission } from "./permissions-engine";
+import { runReportQC, type ReportQCResult } from "./report-qc-engine";
 
 export interface IssuanceCheck {
   code: string;
@@ -25,6 +26,7 @@ export interface IssuanceGateResult {
   failed_mandatory: number;
   total: number;
   blocked_reasons_ar: string[];
+  qc_result?: ReportQCResult;
 }
 
 export async function runIssuanceGate(
