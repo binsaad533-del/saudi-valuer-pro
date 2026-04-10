@@ -38,9 +38,26 @@ interface Props {
   messages: Message[];
   isLoading: boolean;
   onCorrect: (msgIndex: number) => void;
+  onSendMessage?: (message: string) => void;
 }
 
-export default function RaqeemChatMessages({ messages, isLoading, onCorrect }: Props) {
+/** Extract 🟢 action lines from content and return {cleanContent, actions} */
+function extractActions(content: string): { cleanContent: string; actions: string[] } {
+  const actions: string[] = [];
+  const lines = content.split("\n");
+  const cleanLines: string[] = [];
+  for (const line of lines) {
+    const match = line.match(/🟢\s*\*{0,2}(.+?)\*{0,2}\s*$/);
+    if (match) {
+      actions.push(match[1].trim());
+    } else {
+      cleanLines.push(line);
+    }
+  }
+  return { cleanContent: cleanLines.join("\n"), actions };
+}
+
+export default function RaqeemChatMessages({ messages, isLoading, onCorrect, onSendMessage }: Props) {
   return (
     <div className="max-w-3xl mx-auto space-y-5">
       {messages.map((msg, i) => (
