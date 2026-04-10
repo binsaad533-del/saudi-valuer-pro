@@ -265,13 +265,24 @@ export default function RaqeemPage() {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center"><Sparkles className="w-5 h-5 text-primary-foreground" /></div>
           <div>
-            <h1 className="text-base font-bold text-foreground">ChatGPT — مركز التقييم الذكي</h1>
-            <p className="text-[11px] text-muted-foreground hidden sm:block">مساعد التقييم الذكي الموحد لإدارة المعرفة، التدريب، التحليل، والتقييم</p>
+            <h1 className="text-base font-bold text-foreground">ChatGPT — مركز التنفيذ الذكي</h1>
+            <p className="text-[11px] text-muted-foreground hidden sm:block">
+              {platformContext.reference_number
+                ? `🔗 مرتبط بالطلب ${platformContext.reference_number} — ${platformContext.current_status || ""}`
+                : "وحدة التنفيذ الذكية — مرتبطة بسياق المنصة تلقائياً"}
+            </p>
           </div>
         </div>
-        {activeTab === "chat" && messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs"><Trash2 className="w-3.5 h-3.5 ml-1" /> محادثة جديدة</Button>
-        )}
+        <div className="flex items-center gap-2">
+          {platformContext.reference_number && (
+            <Badge variant="secondary" className="text-[10px] gap-1">
+              {platformContext.reference_number}
+            </Badge>
+          )}
+          {activeTab === "chat" && messages.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs"><Trash2 className="w-3.5 h-3.5 ml-1" /> محادثة جديدة</Button>
+          )}
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden" dir="rtl">
