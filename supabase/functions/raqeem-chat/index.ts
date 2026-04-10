@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { AI } from "../_shared/assistantIdentity.ts";
 import { resolveIdsFromContext } from "./_tools/helpers.ts";
+import { execute as executeValuationTools } from "./_tools/valuation-tools.ts";
 import { execute as executeExecutiveTools } from "./_tools/executive-tools.ts";
 
 const corsHeaders = {
