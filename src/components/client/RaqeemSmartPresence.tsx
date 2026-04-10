@@ -51,7 +51,7 @@ export default function RaqeemSmartPresence() {
   if (isRaqeemPage) return null;
 
   return (
-    <div className="fixed bottom-6 left-6 z-50">
+    <div className="fixed bottom-14 left-6 z-50">
       {/* Intro bubble — once only */}
       <AnimatePresence>
         {showBubble && (
@@ -83,8 +83,8 @@ export default function RaqeemSmartPresence() {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         className="relative w-14 h-14 flex items-center justify-center rounded-full
-          bg-card border border-border shadow-md cursor-pointer
-          transition-shadow duration-200 hover:shadow-lg"
+          bg-card border border-border shadow-lg cursor-pointer
+          transition-shadow duration-200 hover:shadow-xl"
         aria-label="رقيم"
       >
         <RaqeemAnimatedLogo size={36} />
