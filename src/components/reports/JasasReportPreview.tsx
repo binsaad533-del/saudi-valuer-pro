@@ -973,6 +973,7 @@ export default function JasasReportPreview() {
         <AnalysisPage />
         <AssumptionsPage />
         <AssetTablePage />
+        <DataSourcesPage />
         <DisclosuresPage />
         <AccreditationPage />
       </div>
