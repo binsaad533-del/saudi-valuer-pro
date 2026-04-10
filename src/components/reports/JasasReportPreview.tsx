@@ -1090,9 +1090,9 @@ function DataSourcesPage() {
   const incomplete = SAMPLE.dataSources.filter(d => d.reliability === "غير مكتمل").length;
 
   return (
-    <PageShell pageNum={14}>
+    <PageShell pageNum={16}>
       <div className="space-y-4">
-        <SectionTitle id="data-sources" num={13} title="مصادر البيانات" />
+        <SectionTitle id="data-sources" num={15} title="مصادر البيانات" />
 
         {/* Summary bar */}
         <div className="flex gap-3 text-xs">
