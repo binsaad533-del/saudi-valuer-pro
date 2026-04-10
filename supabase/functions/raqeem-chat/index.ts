@@ -1920,7 +1920,7 @@ async function executeTool(
 
     if (toolName === "get_assignment_details") {
       let query = db.from("valuation_assignments")
-        .select("*, clients(name_ar, phone, email, client_type), subjects(city_ar, district_ar, address_ar, land_area, building_area, property_type, description_ar), valuation_requests(total_price, payment_status, valuation_mode, property_description, notes, purpose)");
+        .select("*, clients(name_ar, phone, email, client_type), subjects(city_ar, district_ar, address_ar, land_area, building_area, property_type, description_ar), valuation_requests(total_fees, payment_status, valuation_mode, property_description_ar, purpose)");
 
       if (args.assignment_id) query = query.eq("id", args.assignment_id);
       else if (args.reference_number) query = query.ilike("reference_number", `%${args.reference_number}%`);
@@ -1967,9 +1967,9 @@ async function executeTool(
           purpose: assignment.purpose || req?.purpose || "—",
           final_value: assignment.final_value ? Number(assignment.final_value).toLocaleString() + " ر.س" : "غير محددة",
           client: { name: client?.name_ar, phone: client?.phone, email: client?.email, type: client?.client_type },
-          property: { city: subject?.city_ar, district: subject?.district_ar, address: subject?.address_ar, land_area: subject?.land_area, building_area: subject?.building_area, description: req?.property_description || subject?.description_ar },
+           property: { city: subject?.city_ar, district: subject?.district_ar, address: subject?.address_ar, land_area: subject?.land_area, building_area: subject?.building_area, description: req?.property_description_ar || subject?.description_ar },
           inspector: { name: inspectorName, inspection_status: inspRes.data?.[0]?.status || "لا معاينة", inspection_date: inspRes.data?.[0]?.inspection_date },
-          financials: { total_price: req?.total_price, total_paid: totalPaid, payment_status: req?.payment_status || "—", payments_count: payments.length },
+           financials: { total_fees: req?.total_fees, total_paid: totalPaid, payment_status: req?.payment_status || "—", payments_count: payments.length },
           compliance: { comparables_count: compRes.data?.length || 0, assumptions_count: assumRes.data?.length || 0, has_report: !!(reportRes.data?.length) },
           created_at: new Date(assignment.created_at).toLocaleDateString("ar-SA"),
           updated_at: new Date(assignment.updated_at).toLocaleDateString("ar-SA"),
