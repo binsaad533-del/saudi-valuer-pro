@@ -94,11 +94,16 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { mode, sectionKey, sectionKeys, existingText, context } = body as {
+    const { mode, sectionKey, sectionKeys, existingText, context, qualityEnforcement } = body as {
       mode: Mode;
       sectionKey?: string;
       sectionKeys?: string[];
       existingText?: string;
+      qualityEnforcement?: {
+        enabled?: boolean;
+        score?: number;
+        warnings?: string[];
+      };
       context: {
         assetType?: string;
         assetDescription?: string;
@@ -200,7 +205,40 @@ ${disciplineInstructions}
 【الهدف النهائي】
 كل تقرير يجب أن يكون جاهزاً للتقديم الرسمي إلى البنوك والمحاكم والجهات الحكومية بدون أي تعديل.
 
+══════ ضوابط ضمان الجودة المدمجة (Quality Enforcement) ══════
+
+【قاعدة صفر التقدير】
+- يُمنع منعاً باتاً تقدير أي قيمة أو رقم بدون أساس بياني واضح
+- كل قيمة مالية يجب أن تكون مبررة بمصدر (مقارنة، حساب، بيان رسمي)
+- إذا لم تتوفر بيانات كافية لقسم ما، اكتب: "لم تتوفر بيانات كافية لهذا القسم — يتطلب استكمال البيانات من المقيّم"
+- لا تخترع مقارنات أو بيانات سوقية غير موجودة في البيانات المدخلة
+
+【قاعدة منع التعميم】
+- كل فقرة يجب أن تحتوي على بيانات محددة بالأصل محل التقييم
+- لا تستخدم صياغات عامة يمكن تطبيقها على أي عقار
+- اربط كل تحليل بخصائص العقار المحددة (الموقع، المساحة، الحالة، السوق المحلي)
+
+【قاعدة التبرير الإلزامي】
+- كل قرار مهني (اختيار المنهجية، التعديلات، معدل الرسملة) يجب تبريره
+- كل تعديل على المقارنات يجب ذكر سببه المحدد
+- النتيجة النهائية يجب أن تكون مدعومة بتحليل المصالحة بين الطرق المختلفة
+
+【قاعدة اكتمال المحتوى】
+- لا يُقبل أي قسم بأقل من 100 كلمة (للأقسام الرئيسية)
+- يجب ذكر المعايير المرجعية (IVS / تقييم) في كل قسم يتطلب ذلك
+- كل قسم يجب أن يكون متماسكاً مع بقية الأقسام ولا يتناقض معها
+
 - استند في كتابتك إلى المراجع المهنية والمعايير المرفقة أدناه عند توفرها، واستشهد بالمعايير ذات الصلة${knowledgeContext}`;
+
+    // Append quality enforcement metadata if provided
+    let qualityBlock = "";
+    if (qualityEnforcement?.enabled) {
+      qualityBlock = `\n\n══════ حالة جاهزية البيانات ══════\nنسبة اكتمال البيانات: ${qualityEnforcement.score || 0}%`;
+      if (qualityEnforcement.warnings?.length) {
+        qualityBlock += `\nبيانات ناقصة (جودة): ${qualityEnforcement.warnings.join("، ")}`;
+        qualityBlock += `\nتعليمات: عند كتابة الأقسام المتعلقة بالبيانات الناقصة أعلاه، أشر صراحة إلى أن هذه البيانات لم تُقدم وأن التحليل مبني على المعلومات المتاحة فقط.`;
+      }
+    }
 
     // Build machinery inventory block if applicable
     let machineryBlock = "";
@@ -231,7 +269,7 @@ ${disciplineInstructions}
 - تاريخ التقييم: ${context.valuationDate || "غير محدد"}
 - الرقم المرجعي: ${context.referenceNumber || "غير محدد"}${machineryBlock}
 ${context.inspectionSummary ? "- ملخص المعاينة: " + context.inspectionSummary : ""}
-${context.comparables?.length ? "- المقارنات:\n" + context.comparables.map((c, i) => `  ${i + 1}. ${c.description} — ${c.value.toLocaleString()} ر.س${c.source ? " (المصدر: " + c.source + ")" : ""}${c.reference_number ? " [رقم المرجع: " + c.reference_number + "]" : ""}${c.source_date ? " [تاريخ المصدر: " + c.source_date + "]" : ""}`).join("\n") : ""}\n\nملاحظة مهمة: يجب ذكر مصدر كل مقارنة بوضوح في التقرير وفقاً لمتطلبات IVS 2025 ومعايير تقييم. عند الإشارة إلى المقارنات في قسم التحليل والحسابات، اذكر اسم المصدر وتاريخ الحصول على البيانات ورقم المرجع إن وُجد.`;
+${context.comparables?.length ? "- المقارنات:\n" + context.comparables.map((c, i) => `  ${i + 1}. ${c.description} — ${c.value.toLocaleString()} ر.س${c.source ? " (المصدر: " + c.source + ")" : ""}${c.reference_number ? " [رقم المرجع: " + c.reference_number + "]" : ""}${c.source_date ? " [تاريخ المصدر: " + c.source_date + "]" : ""}`).join("\n") : ""}\n\nملاحظة مهمة: يجب ذكر مصدر كل مقارنة بوضوح في التقرير وفقاً لمتطلبات IVS 2025 ومعايير تقييم. عند الإشارة إلى المقارنات في قسم التحليل والحسابات، اذكر اسم المصدر وتاريخ الحصول على البيانات ورقم المرجع إن وُجد.${qualityBlock}`;
 
     let userPrompt = "";
     let useToolCalling = false;
