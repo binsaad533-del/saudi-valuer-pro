@@ -121,35 +121,39 @@ serve(async (req) => {
           archived: "مؤرشف", cancelled: "ملغي",
         };
 
-        globalStatusSummary = "\n\n## 📋 ملخص طلبات العميل الشامل\n";
-        globalStatusSummary += `- **إجمالي الطلبات**: ${allClientRequests.length}\n`;
+        globalStatusSummary = "\n\n## ملخص طلبات العميل\n";
 
         const activeReqs = allClientRequests.filter(r => !["cancelled", "archived"].includes(r.status));
         const needsAction = allClientRequests.filter(r => ["scope_generated", "client_review", "draft_approved"].includes(r.status));
 
-        globalStatusSummary += `- **طلبات نشطة**: ${activeReqs.length}\n`;
-        globalStatusSummary += `- **تحتاج إجراء منك**: ${needsAction.length}\n\n`;
+        globalStatusSummary += `- إجمالي الطلبات: ${allClientRequests.length}\n`;
+        globalStatusSummary += `- طلبات نشطة: ${activeReqs.length}\n`;
+        globalStatusSummary += `- تحتاج إجراء من العميل: ${needsAction.length}\n\n`;
 
-        // Detail each request
-        for (const req of allClientRequests.slice(0, 10)) {
+        // Detail each request with friendly label (NO UUIDs)
+        for (let i = 0; i < Math.min(allClientRequests.length, 10); i++) {
+          const req = allClientRequests[i];
           const statusLabel = statusLabels[req.status] || req.status;
-          globalStatusSummary += `### طلب ${req.reference_number || req.id.substring(0, 8)}\n`;
-          globalStatusSummary += `- الحالة: **${statusLabel}**\n`;
+          const friendlyLabel = req.reference_number || `طلب رقم ${i + 1}`;
+          globalStatusSummary += `### ${friendlyLabel}\n`;
+          globalStatusSummary += `- الحالة: ${statusLabel}\n`;
           if (req.property_description_ar) globalStatusSummary += `- الوصف: ${req.property_description_ar}\n`;
           if (req.property_city_ar) globalStatusSummary += `- المدينة: ${req.property_city_ar}\n`;
-          globalStatusSummary += `- التاريخ: ${new Date(req.created_at).toLocaleDateString("ar-SA")}\n`;
+          if (req.property_type) globalStatusSummary += `- نوع الأصل: ${req.property_type}\n`;
+          globalStatusSummary += `- تاريخ التقديم: ${new Date(req.created_at).toLocaleDateString("ar-SA")}\n`;
 
-          // What client needs to do
           const actionNeeded: Record<string, string> = {
-            scope_generated: "⚡ **مطلوب منك**: مراجعة عرض السعر والموافقة عليه",
-            scope_approved: "💳 **مطلوب منك**: سداد الدفعة الأولى (50%)",
-            data_collection_open: "📎 **مطلوب منك**: رفع أي مستندات إضافية",
-            client_review: "📝 **مطلوب منك**: مراجعة المسودة واعتمادها",
-            draft_approved: "💳 **مطلوب منك**: سداد الدفعة النهائية",
-            issued: "✅ التقرير جاهز للتحميل",
+            submitted: "قيد المراجعة — لا يوجد إجراء مطلوب منك حالياً",
+            scope_generated: "مطلوب منك: مراجعة عرض السعر والموافقة عليه",
+            scope_approved: "مطلوب منك: سداد الدفعة الأولى (50%)",
+            data_collection_open: "مطلوب منك: رفع أي مستندات إضافية",
+            client_review: "مطلوب منك: مراجعة المسودة واعتمادها",
+            draft_approved: "مطلوب منك: سداد الدفعة النهائية",
+            issued: "التقرير جاهز للتحميل",
+            first_payment_confirmed: "جارٍ العمل على طلبك",
           };
           if (actionNeeded[req.status]) globalStatusSummary += `- ${actionNeeded[req.status]}\n`;
-          globalStatusSummary += `- assignment_id: ${req.assignment_id || "غير متاح"}\n\n`;
+          globalStatusSummary += `\n`;
         }
 
         // Set active request for action (most recent non-completed)
@@ -387,21 +391,28 @@ serve(async (req) => {
 
     // ── Build system prompt with all intelligence layers ──
     const operatingLayerPrompt = isGlobalChat ? `
-## 🎯 أنت طبقة التشغيل الأساسية للعميل (Client Operating Layer)
-أنت لست مجرد مساعد — أنت **المنصة نفسها**. العميل يمكنه تنفيذ كامل رحلته من خلالك فقط.
+## أنت طبقة التشغيل الأساسية للعميل
+العميل يمكنه تنفيذ كامل رحلته من خلالك فقط.
 
-### قواعد طبقة التشغيل (إلزامية):
-1. **كن استباقياً دائماً**: لا تنتظر أوامر. حلل حالة العميل فوراً واقترح الخطوة التالية
-2. **ممنوع منعاً باتاً** استخدام عبارات مثل: "اذهب إلى صفحة..."، "افتح تبويب..."، "انتقل إلى..."، "يمكنك من خلال الواجهة..."
-3. **كل شيء يتم هنا**: إنشاء طلب، موافقة، متابعة، استفسار — كل شيء عبر هذه المحادثة
-4. **اعرف العميل**: لديك سياقه الكامل (طلباته، حالاتها، مدفوعاته) — لا تسأل عن المعروف
-5. **قد الرحلة**: في كل رد، وجّه العميل للخطوة التالية بوضوح مع عرض الإجراء المتاح
-6. **تعدد الطلبات**: إذا كان لدى العميل عدة طلبات، حدد أيها يتحدث عنه أو اعمل على الأكثر أولوية
+### قواعد إلزامية:
+1. **كن استباقياً**: حلل حالة العميل فوراً واقترح الخطوة التالية
+2. **ممنوع منعاً باتاً**: عبارات مثل "اذهب إلى صفحة..."، "افتح تبويب..."، "انتقل إلى..."
+3. **كل شيء يتم هنا**: إنشاء طلب، موافقة، متابعة — كل شيء عبر هذه المحادثة
+4. **لا تسأل عن المعروف**: لديك سياقه الكامل
+5. **قد الرحلة**: وجّه العميل للخطوة التالية بوضوح
 
-### السلوك الاستباقي عند أول رسالة:
-- إذا لا طلبات: "مرحباً [الاسم]، يسعدني مساعدتك في بدء طلب تقييم. ما نوع الأصل الذي تريد تقييمه؟"
-- إذا طلب يحتاج إجراء: وضح الحالة واقترح الإجراء فوراً
-- إذا كل شيء جارٍ: طمئن العميل وقدم تحديث الحالة
+### ⛔ قواعد حماية المعلومات الداخلية (حرجة):
+- **ممنوع منعاً باتاً** عرض أي UUID أو معرف داخلي (مثل d229ad57 أو assignment_id أو request_id)
+- لا تعرض أي معلومة من قاعدة البيانات بشكل خام
+- استخدم فقط: الرقم المرجعي (reference_number) أو ترقيم تسلسلي ("طلب 1"، "طلب 2")
+- اعرض للعميل فقط: عدد الطلبات، الحالة، المطلوب منه، الخطوة التالية
+- كن مختصراً ومهنياً — 3-5 جمل كحد أقصى في الملخص الأولي
+
+### شكل الملخص الأولي المطلوب:
+1. ترحيب قصير باسم العميل
+2. عدد الطلبات النشطة وحالتها العامة
+3. ما يحتاج إجراء من العميل (إن وُجد)
+4. الخطوة التالية المقترحة
 
 ${globalStatusSummary}
 ` : "";
