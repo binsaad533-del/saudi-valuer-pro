@@ -201,31 +201,53 @@ export default function InspectorChatPage() {
         const aiMsgId = `ai-${Date.now()}`;
         const aiTs = new Date().toISOString();
         let fullContent = "";
+        let finalReply = "";
+        let buffer = "";
         appendMessage({ id: aiMsgId, role: "assistant", content: "", timestamp: aiTs, feedback: null });
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+
+        const processSseLine = (line: string) => {
+          if (!line.startsWith("data: ")) return;
+          const raw = line.slice(6).trim();
+          if (!raw) return;
+
+          try {
+            const parsed = JSON.parse(raw);
+            if (parsed.delta) {
+              fullContent += parsed.delta;
+              replaceMessages(messagesRef.current.map(m => m.id === aiMsgId ? { ...m, content: fullContent } : m));
+            }
+            if (parsed.done) {
+              if (parsed.reply) {
+                finalReply = parsed.reply;
+                replaceMessages(messagesRef.current.map(m => m.id === aiMsgId ? { ...m, content: finalReply } : m));
+              }
+              if (parsed.suggestedActions) setSuggestedActions(parsed.suggestedActions);
+            }
+          } catch {}
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          for (const line of chunk.split("\n")) {
-            if (!line.startsWith("data: ")) continue;
-            const raw = line.slice(6).trim();
-            if (!raw) continue;
-            try {
-              const parsed = JSON.parse(raw);
-              if (parsed.delta) {
-                fullContent += parsed.delta;
-                replaceMessages(messagesRef.current.map(m => m.id === aiMsgId ? { ...m, content: fullContent } : m));
-              }
-              if (parsed.done && parsed.suggestedActions) setSuggestedActions(parsed.suggestedActions);
-            } catch {}
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+
+          for (const rawLine of lines) {
+            processSseLine(rawLine.trimEnd());
           }
         }
 
-        if (fullContent.trim()) {
-          persistMessage({ id: aiMsgId, role: "assistant", content: fullContent, timestamp: aiTs }).then(dbId => {
+        const remaining = buffer.trim();
+        if (remaining) processSseLine(remaining);
+
+        const contentToPersist = (finalReply || fullContent).trim();
+        if (contentToPersist) {
+          persistMessage({ id: aiMsgId, role: "assistant", content: contentToPersist, timestamp: aiTs }).then(dbId => {
             if (dbId) replaceMessages(messagesRef.current.map(m => m.id === aiMsgId ? { ...m, dbId } : m));
           });
         }
