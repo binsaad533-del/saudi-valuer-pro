@@ -1502,6 +1502,57 @@ export type Database = {
           },
         ]
       }
+      executive_memory_profiles: {
+        Row: {
+          behavior_directives: string[]
+          communication_style: Json
+          context_rules: string[]
+          created_at: string
+          display_name_ar: string | null
+          display_name_en: string | null
+          domain_context: string | null
+          id: string
+          is_active: boolean
+          preferred_language: string
+          role_title_ar: string | null
+          role_title_en: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          behavior_directives?: string[]
+          communication_style?: Json
+          context_rules?: string[]
+          created_at?: string
+          display_name_ar?: string | null
+          display_name_en?: string | null
+          domain_context?: string | null
+          id?: string
+          is_active?: boolean
+          preferred_language?: string
+          role_title_ar?: string | null
+          role_title_en?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          behavior_directives?: string[]
+          communication_style?: Json
+          context_rules?: string[]
+          created_at?: string
+          display_name_ar?: string | null
+          display_name_en?: string | null
+          domain_context?: string | null
+          id?: string
+          is_active?: boolean
+          preferred_language?: string
+          role_title_ar?: string | null
+          role_title_en?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       extracted_assets: {
         Row: {
           asset_data: Json
