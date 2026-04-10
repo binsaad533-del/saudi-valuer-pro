@@ -194,14 +194,19 @@ serve(async (req) => {
       }
 
       const finalStatus = extractionError && extractedAssets.length === 0 ? "failed" : "ready";
-      await updateJob(supabase, job.id, {
-        status: finalStatus,
-        current_message: extractedAssets.length > 0
-          ? `اكتمل التحليل — ${extractedAssets.length} أصل مستخرج`
+      const fileCount = files.length;
+      const assetCount = extractedAssets.length;
+      const clusterMsg = assetCount > 0 && fileCount > assetCount
+        ? `اكتمل التحليل — تم رصد ${assetCount} أصل من ${fileCount} ملف`
+        : assetCount > 0
+          ? `اكتمل التحليل — ${assetCount} أصل مستخرج`
           : extractionError
             ? `فشل التحليل: ${extractionError.substring(0, 200)}`
-            : "لم يتم استخراج أصول من الملفات",
-        total_assets_found: extractedAssets.length,
+            : "لم يتم استخراج أصول من الملفات";
+      await updateJob(supabase, job.id, {
+        status: finalStatus,
+        current_message: clusterMsg,
+        total_assets_found: assetCount,
         discipline,
         completed_at: new Date().toISOString(),
       });
@@ -210,9 +215,10 @@ serve(async (req) => {
         jobId: job.id,
         status: finalStatus,
         assets: extractedAssets,
-        totalAssets: extractedAssets.length,
+        totalAssets: assetCount,
+        totalFiles: fileCount,
         discipline,
-        error: extractionError && extractedAssets.length === 0 ? extractionError.substring(0, 300) : null,
+        error: extractionError && assetCount === 0 ? extractionError.substring(0, 300) : null,
       });
     }
 
