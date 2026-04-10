@@ -5562,6 +5562,48 @@ export type Database = {
           },
         ]
       }
+      secure_download_tokens: {
+        Row: {
+          created_at: string
+          download_count: number
+          expires_at: string
+          file_path: string | null
+          id: string
+          is_revoked: boolean
+          max_downloads: number
+          metadata: Json | null
+          report_id: string
+          token: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          download_count?: number
+          expires_at: string
+          file_path?: string | null
+          id?: string
+          is_revoked?: boolean
+          max_downloads?: number
+          metadata?: Json | null
+          report_id: string
+          token: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          download_count?: number
+          expires_at?: string
+          file_path?: string | null
+          id?: string
+          is_revoked?: boolean
+          max_downloads?: number
+          metadata?: Json | null
+          report_id?: string
+          token?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_alerts: {
         Row: {
           alert_type: string
@@ -6893,6 +6935,16 @@ export type Database = {
           discount_value: number
           is_valid: boolean
           rejection_reason: string
+        }[]
+      }
+      validate_download_token: {
+        Args: { _token: string }
+        Returns: {
+          file_path: string
+          is_valid: boolean
+          rejection_reason: string
+          report_id: string
+          user_id: string
         }[]
       }
     }
