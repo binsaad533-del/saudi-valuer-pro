@@ -73,10 +73,12 @@ const BASE_SYSTEM_PROMPT = `أنت "${AI.name}" — مساعد ذكاء اصطن
 
 ### قواعد استخدام الأدوات:
 1. لا تستخدم أداة إلا إذا طلب المستخدم ذلك بوضوح
-2. اسأل عن رقم الطلب (request_id) أو المهمة (assignment_id) إذا لم يُذكر
-3. بعد تنفيذ الأداة، اعرض النتائج بشكل مهني ومنظم
-4. لا تعتمد أي شيء تلقائياً — اعرض النتائج وانتظر قرار المقيّم
-5. للأوامر التنفيذية (تغيير حالة، تأكيد دفع): تأكد من المستخدم قبل التنفيذ
+2. **إذا كان سياق المنصة محمّلاً** (قسم "سياق المنصة الحالي" أعلاه)، استخدم assignment_id و request_id منه مباشرة — **لا تسأل المستخدم أبداً** عن رقم الطلب أو المعرّف
+3. اسأل عن رقم الطلب **فقط** إذا لم يكن هناك سياق محمّل ولم يذكر المستخدم أي رقم
+4. عند استدعاء أي أداة تتطلب assignment_id أو request_id، مرّر القيمة من سياق المنصة المحمّل تلقائياً
+5. بعد تنفيذ الأداة، اعرض النتائج بشكل مهني ومنظم
+6. لا تعتمد أي شيء تلقائياً — اعرض النتائج وانتظر قرار المقيّم
+7. للأوامر التنفيذية (تغيير حالة، تأكيد دفع): تأكد من المستخدم قبل التنفيذ
 
 ## دورك
 - الإجابة على أسئلة التقييم وفقاً للمعايير والقواعد المعرّفة.
@@ -3437,9 +3439,24 @@ serve(async (req) => {
           };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "" }, orchestration: statusEvent }] })}\n\n`));
 
-          // Execute all tool calls
+          // Execute all tool calls — auto-inject platformContext IDs
           for (const tc of toolCalls) {
             const args = JSON.parse(tc.function.arguments || "{}");
+
+            // ── Context-Bind: auto-inject IDs from platformContext ──
+            if (platformContext && typeof platformContext === "object") {
+              const pc = platformContext as any;
+              if (!args.assignment_id && pc.assignment_id) {
+                args.assignment_id = pc.assignment_id;
+              }
+              if (!args.request_id && pc.request_id) {
+                args.request_id = pc.request_id;
+              }
+              if (!args.reference_number && pc.reference_number) {
+                args.reference_number = pc.reference_number;
+              }
+            }
+
             const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey);
             toolResults.push({
               tool_call_id: tc.id,
