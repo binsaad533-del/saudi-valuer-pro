@@ -1558,6 +1558,71 @@ async function runComplianceCheck(db: any, assignmentId: string) {
   };
 }
 
+// Field label translations for clean Arabic output
+const FIELD_LABELS: Record<string, string> = {
+  reference_number: "رقم الطلب", status: "الحالة", new_status: "الحالة الجديدة",
+  total_active: "الطلبات النشطة", total_completed: "المكتملة", total_pending: "المعلقة",
+  total_stale: "المتعثرة", revenue: "الإيرادات", pending_payments: "المدفوعات المعلقة",
+  inspections: "المعاينات", notifications: "الإشعارات", overdue: "المتأخرة",
+  client_name: "العميل", property_type: "نوع الأصل", purpose: "الغرض",
+  valuation_mode: "وضع التنفيذ", inspection_status: "المعاينة", payment_status: "المالية",
+  missing_items: "النواقص", next_step: "الخطوة التالية", message: "الرسالة",
+  total: "الإجمالي", count: "العدد", amount: "المبلغ", date: "التاريخ",
+  assignments: "الطلبات", recent_requests: "الطلبات الأخيرة", platform_health: "صحة المنصة",
+};
+
+/** Convert an object to clean Arabic text lines — no JSON, no internal fields */
+function formatObjectToText(obj: any, depth = 0): string {
+  if (obj === null || obj === undefined) return "";
+  if (typeof obj === "string") return obj;
+  if (typeof obj === "number" || typeof obj === "boolean") return String(obj);
+  if (Array.isArray(obj)) {
+    return obj.map((item, i) => {
+      if (typeof item === "string") return `- ${item}`;
+      if (typeof item === "object") return formatObjectToText(item, depth + 1);
+      return `- ${String(item)}`;
+    }).join("\n");
+  }
+  // Object — convert each key-value pair to a labeled line
+  const lines: string[] = [];
+  for (const [key, value] of Object.entries(obj)) {
+    if (key.startsWith("_") || key === "success" || key === "error") continue;
+    if (value === null || value === undefined || value === "") continue;
+    const label = FIELD_LABELS[key] || key;
+    if (typeof value === "object" && !Array.isArray(value)) {
+      lines.push(`**${label}**:`);
+      lines.push(formatObjectToText(value, depth + 1));
+    } else if (Array.isArray(value)) {
+      lines.push(`**${label}**:`);
+      lines.push(formatObjectToText(value, depth + 1));
+    } else {
+      lines.push(`- **${label}**: ${String(value)}`);
+    }
+  }
+  return lines.join("\n");
+}
+
+/** Format tool result for AI consumption — extract meaningful content only */
+function formatToolResultForAI(toolResponse: any): string {
+  if (!toolResponse) return "تم تنفيذ الإجراء بنجاح";
+  
+  if (!toolResponse.success) {
+    return toolResponse.error || "فشل تنفيذ الأداة";
+  }
+  
+  const inner = toolResponse.result;
+  if (inner === null || inner === undefined) {
+    return "تم التنفيذ بنجاح";
+  }
+  if (typeof inner === "string") {
+    return inner;
+  }
+  if (typeof inner === "object") {
+    return formatObjectToText(inner);
+  }
+  return String(inner);
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -1975,26 +2040,8 @@ serve(async (req) => {
             const args = tc.resolvedArgs;
             const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey, platformContext);
             
-            // Sanitize tool result: extract only the meaningful content for the AI
-            // Never pass raw {success, result, error, _format} wrapper to the model
-            let sanitizedContent: string;
-            if (!result.success) {
-              sanitizedContent = result.error || "فشل تنفيذ الأداة";
-            } else {
-              const inner = result.result;
-              if (inner === null || inner === undefined) {
-                sanitizedContent = "تم التنفيذ بنجاح";
-              } else if (typeof inner === "string") {
-                sanitizedContent = inner;
-              } else {
-                // Convert object to clean Arabic-friendly text, strip internal fields
-                const cleaned = { ...inner };
-                delete cleaned._format;
-                delete cleaned.success;
-                delete cleaned.error;
-                sanitizedContent = JSON.stringify(cleaned, null, 2);
-              }
-            }
+            // Extract clean content — never pass raw wrapper to the model
+            const sanitizedContent = formatToolResultForAI(result);
             
             toolResults.push({
               tool_call_id: tc.id,
