@@ -718,6 +718,81 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
       executedActions.push("pay_invoice");
     }
 
+    // Scope Approve — advance from scope_generated to scope_approved
+    let scopeApproved = false;
+    if (reply.includes("[ACTION:SCOPE_APPROVE]")) {
+      reply = reply.replace("[ACTION:SCOPE_APPROVE]", "").trim();
+      if (ctx.status === "scope_generated" && ctx.assignment_id && ctx.client_user_id) {
+        try {
+          const { data: scopeResult } = await db.rpc("update_request_status", {
+            _assignment_id: ctx.assignment_id,
+            _new_status: "scope_approved",
+            _user_id: ctx.client_user_id,
+            _action_type: "normal",
+            _reason: `موافقة على نطاق العمل عبر ${AI.name}`,
+          });
+          if (scopeResult?.success) {
+            scopeApproved = true;
+            executedActions.push("scope_approve");
+            reply += "\n\n✅ **تمت الموافقة على نطاق العمل بنجاح.** الخطوة التالية: سداد الدفعة الأولى (50%) لبدء العمل.";
+          } else {
+            reply += "\n\n⚠️ تعذرت الموافقة. " + (scopeResult?.error || "يرجى التواصل مع الدعم.");
+          }
+        } catch (err) {
+          console.error("Scope approve error:", err);
+          reply += "\n\n⚠️ حدث خطأ أثناء الموافقة. يرجى التواصل مع الدعم على 920015029.";
+        }
+      }
+    }
+
+    // New Request — flag for frontend to handle new request creation
+    if (reply.includes("[ACTION:NEW_REQUEST]")) {
+      reply = reply.replace("[ACTION:NEW_REQUEST]", "").trim();
+      executedActions.push("new_request");
+    }
+
+    // Repeat Request — flag for frontend
+    if (reply.includes("[ACTION:REPEAT_REQUEST]")) {
+      reply = reply.replace("[ACTION:REPEAT_REQUEST]", "").trim();
+      executedActions.push("repeat_request");
+    }
+
+    // Escalate — log and flag
+    if (reply.includes("[ACTION:ESCALATE]")) {
+      reply = reply.replace("[ACTION:ESCALATE]", "").trim();
+      executedActions.push("escalate");
+      // Log escalation in audit
+      if (ctx.client_user_id) {
+        await db.from("audit_logs").insert({
+          user_id: ctx.client_user_id,
+          action: "create" as any,
+          table_name: "client_escalation",
+          entity_type: "request",
+          record_id: ctx.assignment_id || null,
+          assignment_id: ctx.assignment_id || null,
+          description: `تصعيد شكوى عميل عبر ${AI.name}: ${message.substring(0, 200)}`,
+          new_data: { source: "chat", message: message.substring(0, 500) },
+          user_role: "client",
+          user_name: clientDisplayName || "عميل",
+        } as any).catch(e => console.error("Escalation audit log failed:", e));
+      }
+    }
+
+    // Request Certificate — flag
+    if (reply.includes("[ACTION:REQUEST_CERTIFICATE]")) {
+      reply = reply.replace("[ACTION:REQUEST_CERTIFICATE]", "").trim();
+      executedActions.push("request_certificate");
+    }
+
+    // Switch Request — extract target assignment_id
+    let switchedToAssignment: string | null = null;
+    const switchMatch = reply.match(/\[ACTION:SWITCH_REQUEST:([^\]]+)\]/);
+    if (switchMatch) {
+      reply = reply.replace(switchMatch[0], "").trim();
+      switchedToAssignment = switchMatch[1];
+      executedActions.push("switch_request");
+    }
+
     // ── Update client memory (background, don't await) ──
     if (ctx.client_user_id) {
       updateClientMemory(db, ctx.client_user_id, message, ctx).catch((e) =>
