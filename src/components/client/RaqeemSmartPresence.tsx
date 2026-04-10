@@ -1,9 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import RaqeemAnimatedLogo from "./RaqeemAnimatedLogo";
 
-/** Context map: path pattern → hint text + context key */
 const CONTEXT_MAP: { pattern: RegExp; hint: string; context: string }[] = [
   { pattern: /\/client\/new-request/, hint: "ابدأ لك الطلب؟", context: "new_request" },
   { pattern: /\/client\/request\/.*\/upload/, hint: "أحتاج ملفاتك هنا", context: "upload" },
@@ -14,9 +13,7 @@ const CONTEXT_MAP: { pattern: RegExp; hint: string; context: string }[] = [
 
 function getContextForPath(pathname: string) {
   for (const entry of CONTEXT_MAP) {
-    if (entry.pattern.test(pathname)) {
-      return { hint: entry.hint, context: entry.context };
-    }
+    if (entry.pattern.test(pathname)) return entry;
   }
   return null;
 }
@@ -25,19 +22,16 @@ export default function RaqeemSmartPresence() {
   const navigate = useNavigate();
   const location = useLocation();
   const [showHint, setShowHint] = useState(false);
-  const [hasAction, setHasAction] = useState(false);
+  const [pulseRing, setPulseRing] = useState(false);
   const lastInteraction = useRef(Date.now());
   const hintTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  const pulseTimerRef = useRef<ReturnType<typeof setInterval>>();
-  const [pulseRing, setPulseRing] = useState(false);
 
-  // Hide on chat pages
-  const hiddenPaths = ["/client/chat", "/raqeem-chat"];
-  if (hiddenPaths.some(p => location.pathname.startsWith(p))) return null;
+  const ctx = useMemo(() => getContextForPath(location.pathname), [location.pathname]);
+  const hasAction = !!ctx;
 
-  const ctx = getContextForPath(location.pathname);
+  const isHidden = ["/client/chat", "/raqeem-chat"].some(p => location.pathname.startsWith(p));
 
-  // Track user interaction to suppress hints
+  // Track user interaction
   useEffect(() => {
     const handler = () => { lastInteraction.current = Date.now(); };
     window.addEventListener("click", handler);
@@ -50,42 +44,29 @@ export default function RaqeemSmartPresence() {
     };
   }, []);
 
-  // Detect if there's an actionable context
+  // Show hint when idle > 5s and context exists
   useEffect(() => {
-    setHasAction(!!ctx);
-  }, [location.pathname]);
-
-  // Show hint periodically if context exists and user idle > 5s
-  useEffect(() => {
-    if (!ctx) { setShowHint(false); return; }
-
-    const tryShowHint = () => {
-      const idleTime = Date.now() - lastInteraction.current;
-      if (idleTime >= 5000) {
+    if (!ctx || isHidden) { setShowHint(false); return; }
+    const tryShow = () => {
+      if (Date.now() - lastInteraction.current >= 5000) {
         setShowHint(true);
         hintTimerRef.current = setTimeout(() => setShowHint(false), 3000);
       }
     };
-
-    // Initial delay then check
-    const initial = setTimeout(tryShowHint, 6000);
-    const interval = setInterval(tryShowHint, 15000);
-
-    return () => {
-      clearTimeout(initial);
-      clearInterval(interval);
-      if (hintTimerRef.current) clearTimeout(hintTimerRef.current);
-    };
-  }, [location.pathname, ctx?.hint]);
+    const t1 = setTimeout(tryShow, 6000);
+    const t2 = setInterval(tryShow, 15000);
+    return () => { clearTimeout(t1); clearInterval(t2); if (hintTimerRef.current) clearTimeout(hintTimerRef.current); };
+  }, [ctx, isHidden]);
 
   // Pulse ring every 8s
   useEffect(() => {
-    pulseTimerRef.current = setInterval(() => {
+    if (isHidden) return;
+    const iv = setInterval(() => {
       setPulseRing(true);
       setTimeout(() => setPulseRing(false), 1200);
     }, 8000);
-    return () => { if (pulseTimerRef.current) clearInterval(pulseTimerRef.current); };
-  }, []);
+    return () => clearInterval(iv);
+  }, [isHidden]);
 
   const handleClick = useCallback(() => {
     lastInteraction.current = Date.now();
@@ -95,9 +76,11 @@ export default function RaqeemSmartPresence() {
     navigate(`${chatPath}${query}`);
   }, [navigate, location.pathname, ctx]);
 
+  if (isHidden) return null;
+
   return (
     <div className="relative flex items-center">
-      {/* Hint text */}
+      {/* Hint */}
       <AnimatePresence>
         {showHint && ctx && (
           <motion.span
@@ -112,17 +95,16 @@ export default function RaqeemSmartPresence() {
         )}
       </AnimatePresence>
 
-      {/* Main button */}
       <button
         onClick={handleClick}
-        className="relative p-2 rounded-xl hover:bg-muted/60 transition-colors group"
+        className="relative p-2.5 rounded-xl hover:bg-muted/60 transition-colors"
         aria-label="رقيم"
       >
         {/* Pulse ring */}
         <AnimatePresence>
           {pulseRing && (
             <motion.div
-              initial={{ scale: 0.8, opacity: 0.5 }}
+              initial={{ scale: 0.8, opacity: 0.4 }}
               animate={{ scale: 1.8, opacity: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1.2, ease: "easeOut" }}
@@ -136,12 +118,11 @@ export default function RaqeemSmartPresence() {
           <div className="absolute inset-0 rounded-xl bg-primary/5 animate-pulse" style={{ animationDuration: "3s" }} />
         )}
 
-        {/* Logo */}
         <div className="relative">
           <RaqeemAnimatedLogo size={32} />
         </div>
 
-        {/* Action dot indicator */}
+        {/* Action dot */}
         {hasAction && (
           <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-primary animate-pulse" />
         )}
