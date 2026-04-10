@@ -70,7 +70,53 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const isIssued = status === "issued" || status === "archived" || draft?.status === "issued";
   const isArchived = status === "archived" || draft?.status === "archived";
 
+  const handleRunQC = async () => {
+    setRunningQC(true);
+    try {
+      const assignmentId = request.assignment_id || draft?.assignment_id;
+      if (!assignmentId) {
+        toast({ title: "خطأ", description: "لم يتم العثور على معرف المهمة", variant: "destructive" });
+        return;
+      }
+      const result = await runReportQC(assignmentId);
+      setQcResult(result);
+      await logQCResult(assignmentId, result, userId);
+
+      if (!result.passed) {
+        toast({
+          title: "لا يمكن إصدار التقرير لعدم اكتمال المتطلبات",
+          description: `${result.failed_mandatory} متطلبات لم تتحقق`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "اجتاز التقرير تدقيق الجودة", description: `النتيجة: ${result.score}%` });
+      }
+    } catch (err: any) {
+      toast({ title: "خطأ في تدقيق الجودة", description: err.message, variant: "destructive" });
+    } finally {
+      setRunningQC(false);
+    }
+  };
+
   const handleIssue = async () => {
+    // Run QC first if not already passed
+    if (!qcResult?.passed) {
+      const assignmentId = request.assignment_id || draft?.assignment_id;
+      if (assignmentId) {
+        const result = await runReportQC(assignmentId);
+        setQcResult(result);
+        await logQCResult(assignmentId, result, userId);
+        if (!result.passed) {
+          toast({
+            title: "لا يمكن إصدار التقرير لعدم اكتمال المتطلبات",
+            description: result.blocked_reasons_ar.join("، "),
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     setIssuing(true);
     try {
       const reportNumber = `RPT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, "0")}`;
@@ -93,7 +139,7 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
         supabase.from("request_messages" as any).insert({
           request_id: request.id,
           sender_type: "system" as any,
-          content: `🔒 تم إصدار التقرير النهائي رقم ${reportNumber} — التقرير محمي ولا يمكن تعديله.`,
+          content: `تم إصدار التقرير النهائي رقم ${reportNumber} — التقرير محمي ولا يمكن تعديله.`,
         }),
         supabase.from("audit_logs").insert({
           user_id: userId,
@@ -101,12 +147,12 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
           table_name: "report_issuance",
           record_id: request.id,
           description: `إصدار التقرير النهائي رقم ${reportNumber}`,
-          new_data: { report_number: reportNumber, verification_code: verificationCode },
+          new_data: { report_number: reportNumber, verification_code: verificationCode, qc_score: qcResult?.score },
         }),
       ]);
 
       if (draft) setDraft({ ...draft, status: "issued", report_number: reportNumber });
-      toast({ title: "تم إصدار التقرير النهائي 🔒", description: `رقم التقرير: ${reportNumber}` });
+      toast({ title: "تم إصدار التقرير النهائي", description: `رقم التقرير: ${reportNumber}` });
       onStatusChange?.();
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
