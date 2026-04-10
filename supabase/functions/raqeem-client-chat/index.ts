@@ -594,7 +594,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
     ];
 
     if (conversationHistory?.length) {
-      for (const msg of conversationHistory.slice(-16)) {
+      for (const msg of conversationHistory.slice(-8)) {
         if (msg.role === "client" || msg.sender_type === "client") {
           messages.push({ role: "user", content: msg.content });
         } else if (msg.role === "ai" || msg.sender_type === "ai") {
@@ -633,7 +633,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "openai/gpt-5",
+        model: isGlobalChat ? "openai/gpt-5-mini" : "openai/gpt-5",
         messages,
       }),
     });

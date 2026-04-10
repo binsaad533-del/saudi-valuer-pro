@@ -196,7 +196,7 @@ export default function ClientChatPage() {
     setSending(true);
 
     try {
-      const history = messagesRef.current.slice(-20).map((message) => ({
+      const history = messagesRef.current.slice(-8).map((message) => ({
         content: message.content,
         sender_type: message.role === "user" ? "client" : "ai",
       }));
