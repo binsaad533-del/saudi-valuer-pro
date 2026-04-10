@@ -17,6 +17,8 @@ import { getStatusLabel, getStatusColor } from "@/utils/reportWorkflow";
 import type { ReportStatus } from "@/types/report";
 import { formatDate, formatNumber } from "@/lib/utils";
 import { SAR } from "@/components/ui/saudi-riyal";
+import { useContentProtection } from "@/hooks/useContentProtection";
+import LegalDisclaimer from "@/components/security/LegalDisclaimer";
 
 
 const ASSET_TYPE_LABELS: Record<string, string> = {
@@ -33,6 +35,10 @@ export default function ReportsListPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [exportingId, setExportingId] = useState<string | null>(null);
+  const [disclaimerOpen, setDisclaimerOpen] = useState(false);
+  const [pendingDownload, setPendingDownload] = useState<typeof mockReports[0] | null>(null);
+
+  useContentProtection(true);
 
   const handleDownloadPdf = useCallback(async (report: typeof mockReports[0]) => {
     setExportingId(report.id);
