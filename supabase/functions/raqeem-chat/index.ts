@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { AI } from "../_shared/assistantIdentity.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -7,7 +8,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const BASE_SYSTEM_PROMPT = `أنت "ChatGPT" — مساعد ذكاء اصطناعي متخصص في التقييم العقاري والآلات والمعدات.
+const BASE_SYSTEM_PROMPT = `أنت "${AI.name}" — مساعد ذكاء اصطناعي متخصص في التقييم العقاري والآلات والمعدات.
 أنت أيضاً **المنسّق الذكي** لكل أنظمة منصة جساس. يمكنك تنفيذ إجراءات حقيقية عبر أدوات متخصصة.
 
 ## قيود صارمة — التعلم المتحكم به
