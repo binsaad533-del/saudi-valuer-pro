@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { updateReportDraftStatus } from "@/lib/report-draft-status";
-import { runReportQC, logQCResult, type ReportQCResult, QC_CATEGORY_LABELS } from "@/lib/report-qc-engine";
+import { runReportQC, logQCResult, type ReportQCResult } from "@/lib/report-qc-engine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import {
   Loader2, Shield, CheckCircle, Lock, Send,
-  FileText, Archive, AlertTriangle, XCircle, ClipboardCheck,
+  FileText, Archive, AlertTriangle,
 } from "lucide-react";
 
 interface Props {
@@ -252,6 +252,65 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* QC Section — before issuance */}
+        {!isIssued && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${qcResult?.passed ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
+                {qcResult?.passed
+                  ? <CheckCircle className="w-4 h-4 text-green-600" />
+                  : <Shield className="w-4 h-4 text-muted-foreground" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">تدقيق جودة التقرير</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {qcResult
+                    ? qcResult.passed
+                      ? `اجتاز التدقيق — ${qcResult.score}% (${qcResult.passed_checks}/${qcResult.total_checks})`
+                      : `${qcResult.failed_mandatory} متطلبات لم تتحقق`
+                    : "يجب تشغيل تدقيق الجودة قبل الإصدار"}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant={qcResult?.passed ? "outline" : "default"}
+                onClick={handleRunQC}
+                disabled={runningQC}
+                className="gap-1 shrink-0"
+              >
+                {runningQC ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shield className="w-3 h-3" />}
+                {qcResult ? "إعادة التدقيق" : "تدقيق الجودة"}
+              </Button>
+            </div>
+
+            {/* QC failures detail */}
+            {qcResult && !qcResult.passed && (
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1.5">
+                <p className="text-xs font-semibold text-destructive">لا يمكن إصدار التقرير لعدم اكتمال المتطلبات:</p>
+                <ul className="space-y-1">
+                  {qcResult.checks.filter(c => !c.passed && c.mandatory).map(c => (
+                    <li key={c.code} className="text-[10px] text-destructive/80 flex items-start gap-1.5">
+                      <span className="mt-0.5 shrink-0">-</span>
+                      <span>{c.details_ar || c.label_ar}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* QC success detail */}
+            {qcResult?.passed && (
+              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
+                  جميع المتطلبات مستوفاة — التقرير جاهز للإصدار
+                </p>
+              </div>
+            )}
+
+            <Separator />
+          </div>
+        )}
+
         {/* Step 1: Issue */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isIssued ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
