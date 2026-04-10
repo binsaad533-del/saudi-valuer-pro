@@ -169,8 +169,8 @@ serve(async (req) => {
       try {
         const { data: profile } = await db
           .from("profiles")
-          .select("full_name")
-          .eq("id", ctx.client_user_id)
+          .select("full_name_ar, full_name_en")
+          .eq("user_id", ctx.client_user_id)
           .maybeSingle();
         if (profile?.full_name) {
           clientDisplayName = profile.full_name;

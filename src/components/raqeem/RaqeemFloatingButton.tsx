@@ -10,7 +10,13 @@ export default function RaqeemFloatingButton() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  if (["/raqeem-chat", "/login", "/client/auth"].includes(location.pathname)) return null;
+  // Hide on chat pages and auth pages
+  const hiddenPaths = ["/raqeem-chat", "/client/chat", "/login", "/client/auth"];
+  if (hiddenPaths.includes(location.pathname)) return null;
+
+  // Route to client chat when on client pages, owner chat otherwise
+  const isClientRoute = location.pathname.startsWith("/client");
+  const chatPath = isClientRoute ? "/client/chat" : "/raqeem-chat";
 
   return (
     <div className="fixed bottom-6 left-6 z-50">
@@ -22,13 +28,15 @@ export default function RaqeemFloatingButton() {
             exit={{ opacity: 0, y: 8, scale: 0.9 }}
             className="absolute bottom-16 left-0 bg-card border border-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap"
           >
-            <span className="text-xs font-medium text-foreground">{AI.title}</span>
+            <span className="text-xs font-medium text-foreground">
+              {isClientRoute ? `${AI.title} — مركز التشغيل` : AI.title}
+            </span>
           </motion.div>
         )}
       </AnimatePresence>
 
       <motion.button
-        onClick={() => navigate("/raqeem-chat")}
+        onClick={() => navigate(chatPath)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         whileHover={{ scale: 1.1 }}
