@@ -39,6 +39,7 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
   const [sending, setSending] = useState(false);
   const [initialized, setInitialized] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const initCalledRef = useRef(false);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -46,7 +47,8 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
 
   // Proactive init
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || initCalledRef.current) return;
+    initCalledRef.current = true;
     const init = async () => {
       try {
         const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {

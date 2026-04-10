@@ -57,6 +57,7 @@ export default function ClientChatPage() {
   const [suggestedActions, setSuggestedActions] = useState<SuggestedAction[]>(GLOBAL_QUICK_ACTIONS);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initCalledRef = useRef(false);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -65,6 +66,8 @@ export default function ClientChatPage() {
 
   // Init: load user, send proactive first message
   useEffect(() => {
+    if (initCalledRef.current) return;
+    initCalledRef.current = true;
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
