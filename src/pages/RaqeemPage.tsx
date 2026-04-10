@@ -78,6 +78,7 @@ export default function RaqeemPage() {
   }>({ open: false, msgIndex: -1, correctedAnswer: "", reason: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const initCalledRef = useRef(false);
   const { user, role } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
