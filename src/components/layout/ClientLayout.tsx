@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import AppFooter from "@/components/layout/AppFooter";
 import RaqeemSmartPresence from "@/components/client/RaqeemSmartPresence";
-import logo from "@/assets/logo.png";
+
 import { LayoutDashboard, FolderOpen, PlusCircle, LogOut } from "lucide-react";
 
 const NAV_ITEMS = [
