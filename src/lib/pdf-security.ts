@@ -208,17 +208,18 @@ export function getProtectedPdfBlob(doc: jsPDF, ownerPassword?: string): Blob {
   const pwd = ownerPassword || `JSAAS-${Date.now().toString(36)}`;
 
   try {
-    // jsPDF 2.5+ encryption: empty userPassword = no password to open,
-    // ownerPassword = restricts actions, empty userPermissions = nothing allowed
-    return doc.output("blob", {
+    // Attempt encryption via jsPDF internal API
+    const pdfOutput = (doc as any).output("blob", {
       encryption: {
         userPassword: "",
         ownerPassword: pwd,
-        userPermissions: [], // No print, no copy, no edit
+        userPermissions: [],
       },
-    } as any);
+    });
+    if (pdfOutput instanceof Blob) return pdfOutput;
   } catch {
-    // Fallback if encryption not supported in this jsPDF version
-    return doc.output("blob");
+    // Encryption not supported — fall through
   }
+
+  return doc.output("blob");
 }
