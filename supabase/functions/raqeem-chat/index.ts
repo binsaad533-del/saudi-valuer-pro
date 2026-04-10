@@ -1664,9 +1664,77 @@ async function executeTool(
         channel: "in_app",
         delivery_status: "delivered",
         related_assignment_id: args.assignment_id || null,
+        related_request_id: args.request_id || null,
       });
       if (notifErr) return { success: false, result: null, error: notifErr.message };
-      return { success: true, result: { message: "تم إرسال الإشعار بنجاح" } };
+      return { success: true, result: { message: "تم إرسال الإشعار بنجاح", assignment_id: args.assignment_id || null, request_id: args.request_id || null } };
+    }
+
+    if (toolName === "update_follow_up_priority") {
+      let assignmentId = args.assignment_id;
+      let requestId = args.request_id;
+
+      if (!assignmentId && requestId) {
+        const { data: reqLink } = await db.from("valuation_requests").select("assignment_id").eq("id", requestId).maybeSingle();
+        assignmentId = reqLink?.assignment_id || null;
+      }
+      if (!requestId && assignmentId) {
+        const { data: requestLink } = await db.from("valuation_requests").select("id").eq("assignment_id", assignmentId).maybeSingle();
+        requestId = requestLink?.id || null;
+      }
+      if (!assignmentId) return { success: false, result: null, error: "تعذر تحديد الطلب الحالي لتحديث أولوية المتابعة" };
+
+      const { data: previous } = await db.from("valuation_assignments").select("priority").eq("id", assignmentId).maybeSingle();
+      const { error: updErr } = await db.from("valuation_assignments")
+        .update({ priority: args.priority, updated_at: new Date().toISOString() })
+        .eq("id", assignmentId);
+      if (updErr) return { success: false, result: null, error: updErr.message };
+
+      await db.from("audit_logs").insert({
+        action: "update",
+        table_name: "valuation_assignments",
+        record_id: assignmentId,
+        assignment_id: assignmentId,
+        description: `تحديث أولوية المتابعة من ${previous?.priority || "غير محددة"} إلى ${args.priority}${args.reason ? ` | السبب: ${args.reason}` : ""}`,
+        old_data: { priority: previous?.priority || null },
+        new_data: { priority: args.priority, request_id: requestId || null, reason: args.reason || null },
+      });
+
+      return { success: true, result: { message: `تم تحديث أولوية المتابعة إلى ${args.priority}`, assignment_id: assignmentId, request_id: requestId || null, priority: args.priority } };
+    }
+
+    if (toolName === "add_assignment_note") {
+      let assignmentId = args.assignment_id;
+      let requestId = args.request_id;
+
+      if (!assignmentId && requestId) {
+        const { data: reqLink } = await db.from("valuation_requests").select("assignment_id").eq("id", requestId).maybeSingle();
+        assignmentId = reqLink?.assignment_id || null;
+      }
+      if (!requestId && assignmentId) {
+        const { data: requestLink } = await db.from("valuation_requests").select("id").eq("assignment_id", assignmentId).maybeSingle();
+        requestId = requestLink?.id || null;
+      }
+      if (!assignmentId) return { success: false, result: null, error: "تعذر تحديد الطلب الحالي لإضافة الملاحظة" };
+
+      const { data: previous } = await db.from("valuation_assignments").select("notes").eq("id", assignmentId).maybeSingle();
+      const mergedNotes = [previous?.notes, args.note].filter(Boolean).join("\n\n");
+      const { error: updErr } = await db.from("valuation_assignments")
+        .update({ notes: mergedNotes, updated_at: new Date().toISOString() })
+        .eq("id", assignmentId);
+      if (updErr) return { success: false, result: null, error: updErr.message };
+
+      await db.from("audit_logs").insert({
+        action: "update",
+        table_name: "valuation_assignments",
+        record_id: assignmentId,
+        assignment_id: assignmentId,
+        description: `إضافة ملاحظة تنفيذية على الطلب${requestId ? ` | request_id: ${requestId}` : ""}`,
+        old_data: { notes: previous?.notes || null },
+        new_data: { note: args.note, notes: mergedNotes, request_id: requestId || null },
+      });
+
+      return { success: true, result: { message: "تمت إضافة الملاحظة بنجاح", assignment_id: assignmentId, request_id: requestId || null, note: args.note } };
     }
 
     if (toolName === "get_client_summary") {
@@ -3463,35 +3531,50 @@ serve(async (req) => {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
-          // Send initial status
+          const db = createClient(supabaseUrl, serviceKey);
+          const resolveToolArgs = async (rawArgs: any) => {
+            const args = { ...(rawArgs || {}) };
+
+            if (platformContext && typeof platformContext === "object") {
+              const pc = platformContext as any;
+              if (!args.assignment_id && pc.assignment_id) args.assignment_id = pc.assignment_id;
+              if (!args.request_id && pc.request_id) args.request_id = pc.request_id;
+              if (!args.reference_number && pc.reference_number) args.reference_number = pc.reference_number;
+            }
+
+            if (!args.request_id && args.assignment_id) {
+              const { data: reqLink } = await db.from("valuation_requests").select("id").eq("assignment_id", args.assignment_id).maybeSingle();
+              if (reqLink?.id) args.request_id = reqLink.id;
+            }
+
+            if (!args.assignment_id && args.request_id) {
+              const { data: reqLink } = await db.from("valuation_requests").select("assignment_id, reference_number").eq("id", args.request_id).maybeSingle();
+              if (reqLink?.assignment_id) args.assignment_id = reqLink.assignment_id;
+              if (!args.reference_number && reqLink?.reference_number) args.reference_number = reqLink.reference_number;
+            }
+
+            return args;
+          };
+
+          const resolvedToolCalls = [];
+          for (const tc of toolCalls) {
+            const resolvedArgs = await resolveToolArgs(JSON.parse(tc.function.arguments || "{}"));
+            resolvedToolCalls.push({ ...tc, resolvedArgs });
+          }
+
           const statusEvent = {
             type: "orchestration_status",
-            tools: toolCalls.map((tc: any) => ({
+            tools: resolvedToolCalls.map((tc: any) => ({
               name: tc.function.name,
-              args: JSON.parse(tc.function.arguments || "{}"),
+              args: tc.resolvedArgs,
               status: "running"
             }))
           };
           controller.enqueue(encoder.encode(`data: ${JSON.stringify({ choices: [{ delta: { content: "" }, orchestration: statusEvent }] })}\n\n`));
 
           // Execute all tool calls — auto-inject platformContext IDs
-          for (const tc of toolCalls) {
-            const args = JSON.parse(tc.function.arguments || "{}");
-
-            // ── Context-Bind: auto-inject IDs from platformContext ──
-            if (platformContext && typeof platformContext === "object") {
-              const pc = platformContext as any;
-              if (!args.assignment_id && pc.assignment_id) {
-                args.assignment_id = pc.assignment_id;
-              }
-              if (!args.request_id && pc.request_id) {
-                args.request_id = pc.request_id;
-              }
-              if (!args.reference_number && pc.reference_number) {
-                args.reference_number = pc.reference_number;
-              }
-            }
-
+          for (const tc of resolvedToolCalls) {
+            const args = tc.resolvedArgs;
             const result = await executeTool(tc.function.name, args, supabaseUrl, supabaseServiceKey);
             toolResults.push({
               tool_call_id: tc.id,
