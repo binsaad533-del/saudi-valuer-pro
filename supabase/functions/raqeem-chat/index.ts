@@ -81,13 +81,34 @@ const BASE_SYSTEM_PROMPT = `أنت "${AI.name}" — مساعد ذكاء اصطن
 5. بعد تنفيذ الأداة، اعرض النتائج بشكل مهني ومنظم
  6. لا تعتمد أي شيء تلقائياً — اعرض النتائج وانتظر قرار المقيّم
  
- ## قواعد تنسيق المخرجات (إلزامية)
- - **ممنوع منعاً باتاً** عرض أسماء حقول قاعدة البيانات أو القيم الخام الإنجليزية (مثل submitted, field, residential, sale_purchase) في الرد النهائي
- - جميع البيانات المُرجَعة من الأدوات تحتوي مفاتيح عربية جاهزة — استخدمها مباشرة
- - رتّب ملخص حالة الطلب بالترتيب التالي: رقم الطلب → الحالة → الغرض → نوع الأصل → وضع التنفيذ → العميل → المعاينة → المالية → الامتثال → النواقص → الخطوة التالية
- - استخدم تنسيق Markdown منظم: عناوين فرعية وقوائم نقطية
- - لا تكرر المعلومات ولا تعرض بيانات فارغة (إذا كانت القيمة "—" أو "غير متوفرة" تجاوزها)
- - قسم "الخطوة التالية" يجب أن يكون واضحاً ومباشراً مع اقتراح الإجراء المناسب
+ ## قواعد تنسيق المخرجات (إلزامية — تطبَّق على كل رد بلا استثناء)
+ 
+ ### الحظر المطلق
+ - **ممنوع منعاً باتاً** عرض أي كلمة إنجليزية خام من قاعدة البيانات: لا submitted, لا field, لا residential, لا sale_purchase, لا desktop_with_photos, لا pending, لا any_english_value.
+ - **ممنوع** عرض أسماء أدوات (get_assignment_details, change_assignment_status) أو أسماء جداول أو أسماء أعمدة.
+ - **ممنوع** عرض معرّفات UUID أو مفاتيح تقنية.
+ - **ممنوع** عرض JSON خام أو بنية بيانات برمجية.
+ - إذا كانت قيمة ما فارغة أو "—" أو null، **لا تعرض السطر إطلاقاً** — تجاوزه بصمت.
+ 
+ ### بنية ملخص حالة الطلب (بالترتيب الدقيق)
+ عند عرض حالة طلب، التزم بهذا الترتيب فقط:
+ 1. **رقم الطلب**
+ 2. **الحالة** (بالعربية فقط)
+ 3. **الغرض** (بالعربية فقط)
+ 4. **نوع الأصل** (بالعربية فقط)
+ 5. **وضع التنفيذ** (معاينة ميدانية / مكتبي بصور / مكتبي بدون صور)
+ 6. **المعاينة** (إذا كانت مطلوبة)
+ 7. **حالة الدفع** (مدفوع / غير مدفوع / جزئي)
+ 8. **النواقص** (فقط إن وُجدت)
+ 9. **الخطوة التالية** (جملة واحدة مباشرة)
+ 
+ ### أسلوب الكتابة
+ - عربي مهني مختصر — بدون حشو أو تكرار
+ - Markdown منظم: عناوين فرعية **غامقة** وقوائم نقطية
+ - لا تعرض قسم "العميل" أو "الامتثال" أو "التواريخ" إلا إذا طلبها المستخدم صراحةً
+ - لا تعرض أرقام صفرية (0 مقارنات، 0 افتراضات) — تجاوزها
+ - الخطوة التالية يجب أن تكون **توجيهاً واضحاً** وليس وصفاً عاماً
+ 
 7. للأوامر التنفيذية (تغيير حالة، تأكيد دفع): تأكد من المستخدم قبل التنفيذ
 
 ## دورك
@@ -2035,55 +2056,67 @@ async function executeTool(
       else if (rawStatus === "final_payment_pending") nextStep = "تأكيد الدفعة النهائية وإصدار التقرير";
       else if (rawStatus === "completed") nextStep = "الطلب مكتمل — لا إجراءات مطلوبة";
 
-      return {
-        success: true,
-        result: {
-          رقم_الطلب: assignment.reference_number,
-          الحالة: STATUS_AR[rawStatus] || rawStatus,
-          الغرض: PURPOSE_AR[rawPurpose] || rawPurpose || "—",
-          نوع_الأصل: PROP_TYPE_AR[rawPropType] || rawPropType || "—",
-          فرع_التقييم: VAL_TYPE_AR[rawValType] || rawValType || "—",
-          وضع_التنفيذ: MODE_AR[rawMode] || rawMode || "—",
-          القيمة_النهائية: assignment.final_value ? Number(assignment.final_value).toLocaleString() + " ر.س" : "لم تُحدد بعد",
-          العميل: {
-            الاسم: client?.name_ar || "—",
-            الهاتف: client?.phone || "غير مسجل",
-            البريد: client?.email || "غير مسجل",
-            النوع: CLIENT_TYPE_AR[rawClientType] || rawClientType || "—",
-          },
-          الأصل: subject ? {
-            المدينة: subject.city_ar || "—",
-            الحي: subject.district_ar || "—",
-            العنوان: subject.address_ar || "—",
-            مساحة_الأرض: subject.land_area ? `${subject.land_area} م²` : "—",
-            مساحة_البناء: subject.building_area ? `${subject.building_area} م²` : "—",
-            الوصف: req?.property_description_ar || subject.description_ar || "—",
-          } : "بيانات الأصل غير متوفرة",
-          المعاينة: {
-            الحالة: rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || rawInspStatus) : "غير مجدولة",
-            المعاين: inspectorName,
-            التاريخ: inspRes.data?.[0]?.inspection_date || "—",
-          },
-          المالية: {
-            الرسوم: req?.total_fees ? `${Number(req.total_fees).toLocaleString()} ر.س` : "لم تُحدد",
-            المدفوع: totalPaid ? `${totalPaid.toLocaleString()} ر.س` : "0 ر.س",
-            حالة_السداد: PAY_STATUS_AR[rawPayStatus] || rawPayStatus || "—",
-            عدد_الدفعات: payments.length,
-          },
-          الامتثال: {
-            المقارنات: compRes.data?.length || 0,
-            الافتراضات: assumRes.data?.length || 0,
-            التقرير: reportRes.data?.length ? "موجود" : "غير موجود",
-          },
-          التواريخ: {
-            الإنشاء: new Date(assignment.created_at).toLocaleDateString("ar-SA"),
-            آخر_تحديث: new Date(assignment.updated_at).toLocaleDateString("ar-SA"),
-          },
-          ملاحظات: assignment.notes || "—",
-          النواقص: missingItems.length > 0 ? missingItems : "لا نواقص",
-          الخطوة_التالية: nextStep,
-        }
+      // Build clean result — only non-empty values, Arabic only
+      const result: Record<string, any> = {
+        رقم_الطلب: assignment.reference_number,
+        الحالة: STATUS_AR[rawStatus] || rawStatus,
       };
+
+      const purposeAr = PURPOSE_AR[rawPurpose] || "";
+      if (purposeAr) result["الغرض"] = purposeAr;
+
+      const propTypeAr = PROP_TYPE_AR[rawPropType] || VAL_TYPE_AR[rawValType] || "";
+      if (propTypeAr) result["نوع_الأصل"] = propTypeAr;
+
+      const modeAr = MODE_AR[rawMode] || "";
+      if (modeAr) result["وضع_التنفيذ"] = modeAr;
+
+      if (assignment.final_value) {
+        result["القيمة_النهائية"] = Number(assignment.final_value).toLocaleString() + " ر.س";
+      }
+
+      // Inspection — only if relevant
+      if (rawMode === "field" || rawInspStatus) {
+        result["المعاينة"] = {
+          الحالة: rawInspStatus ? (INSP_STATUS_AR[rawInspStatus] || "غير محددة") : "غير مجدولة",
+        };
+        if (inspectorName !== "—") result["المعاينة"]["المعاين"] = inspectorName;
+        if (inspRes.data?.[0]?.inspection_date) result["المعاينة"]["التاريخ"] = inspRes.data[0].inspection_date;
+      }
+
+      // Payment — always relevant
+      const payStatusAr = PAY_STATUS_AR[rawPayStatus] || "";
+      if (payStatusAr || totalPaid > 0 || req?.total_fees) {
+        result["المالية"] = {};
+        if (req?.total_fees) result["المالية"]["الرسوم"] = `${Number(req.total_fees).toLocaleString()} ر.س`;
+        if (totalPaid > 0) result["المالية"]["المدفوع"] = `${totalPaid.toLocaleString()} ر.س`;
+        if (payStatusAr) result["المالية"]["حالة_السداد"] = payStatusAr;
+      }
+
+      // Asset summary — compact
+      if (subject) {
+        const assetInfo: Record<string, string> = {};
+        if (subject.city_ar) assetInfo["المدينة"] = subject.city_ar;
+        if (subject.district_ar) assetInfo["الحي"] = subject.district_ar;
+        if (subject.land_area) assetInfo["مساحة_الأرض"] = `${subject.land_area} م²`;
+        if (subject.building_area) assetInfo["مساحة_البناء"] = `${subject.building_area} م²`;
+        if (Object.keys(assetInfo).length > 0) result["الأصل"] = assetInfo;
+      }
+
+      // Client — compact
+      if (client?.name_ar) {
+        result["العميل"] = client.name_ar;
+        const clientTypeAr = CLIENT_TYPE_AR[rawClientType] || "";
+        if (clientTypeAr) result["العميل"] += ` (${clientTypeAr})`;
+      }
+
+      // Missing items
+      if (missingItems.length > 0) result["النواقص"] = missingItems;
+
+      // Next step — always present
+      result["الخطوة_التالية"] = nextStep;
+
+      return { success: true, result };
     }
 
     if (toolName === "get_audit_trail") {
