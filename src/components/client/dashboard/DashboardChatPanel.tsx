@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicator";
+import { getGlobalChatInit } from "@/components/client/chat/globalChatInit";
 import { AI } from "@/config/assistantIdentity";
 import {
   Send, Maximize2, Sparkles, MessageSquare, ArrowRight,
@@ -41,6 +42,7 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
   const chatEndRef = useRef<HTMLDivElement>(null);
   const initCalledRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
+  const sendingRef = useRef(false);
 
   const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
     messagesRef.current = nextMessages;
@@ -48,6 +50,15 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
   }, []);
 
   const appendMessage = useCallback((message: ChatMessage) => {
+    const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+    if (
+      message.role === "assistant" &&
+      lastMessage?.role === "assistant" &&
+      lastMessage.content.trim() === message.content.trim()
+    ) {
+      return;
+    }
+
     replaceMessages([...messagesRef.current, message]);
   }, [replaceMessages]);
 
@@ -66,15 +77,8 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
     initCalledRef.current = true;
     const init = async () => {
       try {
-        const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
-          body: {
-            message: "__init_global_chat__",
-            is_global_chat: true,
-            conversationHistory: [],
-            requestContext: { client_user_id: userId },
-          },
-        });
-        if (!error && data?.reply) {
+        const data = await getGlobalChatInit(userId);
+        if (data?.reply) {
           seedInitialMessage({ id: `ai-0`, role: "assistant", content: data.reply });
         } else {
           seedInitialMessage({ id: `ai-0`, role: "assistant", content: `مرحباً ${userName} 👋\nكيف يمكنني مساعدتك؟` });
@@ -89,10 +93,11 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
 
   const sendMessage = useCallback(async (text: string) => {
     const trimmedText = text.trim();
-    if (!trimmedText || sending) return;
+    if (!trimmedText || sendingRef.current) return;
 
     appendMessage({ id: `u-${Date.now()}`, role: "user", content: trimmedText });
     setInput("");
+    sendingRef.current = true;
     setSending(true);
 
     try {
@@ -119,9 +124,10 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
     } catch {
       appendMessage({ id: `err-${Date.now()}`, role: "assistant", content: AI.errorMessage });
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
-  }, [sending, userId, navigate, appendMessage]);
+  }, [userId, navigate, appendMessage]);
 
   return (
     <Card className="overflow-hidden">

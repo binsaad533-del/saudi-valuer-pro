@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import ReactMarkdown from "react-markdown";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
 import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicator";
+import { getGlobalChatInit } from "@/components/client/chat/globalChatInit";
 import { AI } from "@/config/assistantIdentity";
 import {
   Send, Paperclip, Plus, FileText, Clock, CreditCard,
@@ -59,6 +60,7 @@ export default function ClientChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initCalledRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
+  const sendingRef = useRef(false);
 
   const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
     messagesRef.current = nextMessages;
@@ -66,6 +68,15 @@ export default function ClientChatPage() {
   }, []);
 
   const appendMessage = useCallback((message: ChatMessage) => {
+    const lastMessage = messagesRef.current[messagesRef.current.length - 1];
+    if (
+      message.role === "assistant" &&
+      lastMessage?.role === "assistant" &&
+      lastMessage.content.trim() === message.content.trim()
+    ) {
+      return;
+    }
+
     replaceMessages([...messagesRef.current, message]);
   }, [replaceMessages]);
 
@@ -99,16 +110,9 @@ export default function ClientChatPage() {
 
       // Send proactive first message
       try {
-        const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
-          body: {
-            message: "__init_global_chat__",
-            is_global_chat: true,
-            conversationHistory: [],
-            requestContext: { client_user_id: user.id },
-          },
-        });
+        const data = await getGlobalChatInit(user.id);
 
-        if (!error && data?.reply) {
+        if (data?.reply) {
           seedInitialMessage({
             id: `ai-${Date.now()}`,
             role: "assistant",
@@ -140,7 +144,7 @@ export default function ClientChatPage() {
 
   const sendMessage = useCallback(async (text: string) => {
     const trimmedText = text.trim();
-    if (!trimmedText || sending) return;
+    if (!trimmedText || sendingRef.current) return;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -150,6 +154,7 @@ export default function ClientChatPage() {
     };
     appendMessage(userMsg);
     setInput("");
+    sendingRef.current = true;
     setSending(true);
 
     try {
@@ -201,9 +206,10 @@ export default function ClientChatPage() {
         timestamp: new Date().toISOString(),
       });
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
-  }, [sending, userId, navigate, toast, appendMessage]);
+  }, [userId, navigate, toast, appendMessage]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
