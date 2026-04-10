@@ -457,11 +457,45 @@ export default function RaqeemChatPage() {
           <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary-foreground">
             <RaqeemIcon size={40} className="text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-sm font-bold text-foreground">ChatGPT</h1>
             <p className="text-xs text-muted-foreground">مساعدك الذكي</p>
           </div>
+          {/* Context Badge */}
+          {platformContext.assignment_id && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                {platformContext.reference_number || "طلب مربوط"}
+              </span>
+              {effectiveRole === "owner" && (
+                <button
+                  onClick={() => setShowDebug(prev => !prev)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded border border-border"
+                >
+                  Debug
+                </button>
+              )}
+            </div>
+          )}
         </div>
+        {/* Debug Panel — Admin/Preview only */}
+        {showDebug && platformContext.assignment_id && (
+          <div className="max-w-3xl mx-auto px-4 pb-2">
+            <div className="bg-muted/50 border border-border rounded-lg p-3 text-[11px] font-mono space-y-1">
+              <div className="font-bold text-xs text-foreground mb-1">🔧 Debug: Platform Context</div>
+              <div><span className="text-muted-foreground">route:</span> {location.pathname + location.search}</div>
+              <div><span className="text-muted-foreground">assignment_id:</span> {platformContext.assignment_id || "—"}</div>
+              <div><span className="text-muted-foreground">request_id:</span> {platformContext.request_id || "—"}</div>
+              <div><span className="text-muted-foreground">reference_number:</span> {platformContext.reference_number || "—"}</div>
+              <div><span className="text-muted-foreground">current_status:</span> {platformContext.current_status || "—"}</div>
+              <div><span className="text-muted-foreground">property_type:</span> {platformContext.property_type || "—"}</div>
+              <div><span className="text-muted-foreground">client_name:</span> {platformContext.client_name || "—"}</div>
+              <div><span className="text-muted-foreground">user_role:</span> {effectiveRole}</div>
+              <div><span className="text-muted-foreground">source_page:</span> {platformContext.source_page || "—"}</div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Chat Area */}
