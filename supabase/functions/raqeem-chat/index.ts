@@ -3531,7 +3531,7 @@ serve(async (req) => {
       const encoder = new TextEncoder();
       const stream = new ReadableStream({
         async start(controller) {
-          const db = createClient(supabaseUrl, serviceKey);
+          const db = createClient(supabaseUrl, supabaseServiceKey);
           const resolveToolArgs = async (rawArgs: any) => {
             const args = { ...(rawArgs || {}) };
 
