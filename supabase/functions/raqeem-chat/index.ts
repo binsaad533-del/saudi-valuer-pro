@@ -3420,7 +3420,10 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, correction, userRole, userId, attachments = [], platformContext } = await req.json();
+    const body = await req.json();
+    const { messages, correction, userRole, userId, attachments = [], platformContext } = body;
+    console.log("[raqeem-chat] platformContext received:", JSON.stringify(platformContext || null));
+    console.log("[raqeem-chat] assignment_id:", platformContext?.assignment_id || "NONE");
     const effectiveRole = (userRole === "admin_coordinator" || userRole === "valuation_manager" || userRole === "valuer") ? "owner" : (userRole || "owner");
 
     if (!messages || !Array.isArray(messages)) {
@@ -3726,6 +3729,7 @@ serve(async (req) => {
     const hasBoundContext = !!(platformContext && typeof platformContext === "object" && ((platformContext as any).assignment_id || (platformContext as any).request_id));
     const wantsCurrentRequestStatus = hasBoundContext && /حالة|وضع|تفاصيل|ملخص|الطلب|بالتفصيل|status|details/.test(latestUserPlainText);
     const wantsPriorityUpdate = hasBoundContext && /(?:أولوية المتابعة|الأولوية).*(?:حدّث|تحديث|نفّذ|ارفع|عدّل)|(?:نفّذ|حدث|حدّث|ارفع|عدّل).*(?:أولوية المتابعة|الأولوية)/.test(latestUserPlainText);
+    console.log("[raqeem-chat] hasBoundContext:", hasBoundContext, "| wantsStatus:", wantsCurrentRequestStatus, "| latestText:", latestUserPlainText.slice(0, 80));
 
     let preflightToolCalls: any[] = [];
     if (wantsCurrentRequestStatus) {

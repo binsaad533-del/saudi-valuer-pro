@@ -164,7 +164,10 @@ export default function RaqeemChatPage() {
       source_page: sourcePage,
     };
 
-    // Fetch full assignment details from DB
+    // Set context IMMEDIATELY with URL params so it's available for early messages
+    setPlatformContext(ctx);
+
+    // Then enrich with DB data asynchronously
     const fetchContext = async () => {
       setContextLoading(true);
       try {
@@ -197,7 +200,6 @@ export default function RaqeemChatPage() {
             .maybeSingle();
           if (data?.assignment_id) {
             ctx.assignment_id = data.assignment_id;
-            // Fetch assignment details
             const { data: aData } = await supabase
               .from("valuation_assignments")
               .select("reference_number, status, property_type, clients(name_ar)")
@@ -214,7 +216,8 @@ export default function RaqeemChatPage() {
       } catch (e) {
         console.error("Context fetch error:", e);
       } finally {
-        setPlatformContext(ctx);
+        // Update with enriched data
+        setPlatformContext({ ...ctx });
         setContextLoading(false);
       }
     };
@@ -332,6 +335,8 @@ export default function RaqeemChatPage() {
       // Get user's session token for proper identification
       const { data: sessionData } = await supabase.auth.getSession();
       const authToken = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const payloadContext = (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined;
+      console.log("[RaqeemChat] Sending platformContext:", JSON.stringify(payloadContext || null));
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -347,7 +352,7 @@ export default function RaqeemChatPage() {
           userRole: effectiveRole,
           userId: user?.id,
           attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
-          platformContext: (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined,
+          platformContext: payloadContext,
         }),
       });
 
