@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import type { Report } from "@/types/report";
+import { applyPdfProtection, generateDownloadToken, type PdfRecipientInfo } from "@/lib/pdf-security";
+import { supabase } from "@/integrations/supabase/client";
 import { getStatusLabel } from "@/utils/reportWorkflow";
 import { formatDate, formatNumber } from "@/lib/utils";
 
@@ -497,6 +499,50 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
     drawTestWatermark(doc);
   } else if (isDraft) {
     drawDraftWatermark(doc);
+  }
+
+  // Security: Apply visible + forensic watermarks with recipient tracking
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name_ar, phone")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const sessionId = generateDownloadToken();
+      const recipient: PdfRecipientInfo = {
+        name: profile?.full_name_ar || user.email?.split("@")[0] || "مستخدم",
+        email: user.email || profile?.phone || "",
+        userId: user.id,
+        timestamp: new Date().toISOString(),
+        sessionId,
+      };
+
+      applyPdfProtection(doc, recipient);
+
+      // Audit log the download
+      await supabase.from("audit_logs").insert({
+        user_id: user.id,
+        action: "export" as any,
+        table_name: "reports",
+        entity_type: "report",
+        record_id: report.id,
+        description: `تحميل PDF — ${report.reportNumber} — معرف: ${sessionId}`,
+        new_data: {
+          report_number: report.reportNumber,
+          session_id: sessionId,
+          timestamp: recipient.timestamp,
+          is_draft: isDraft,
+          is_test: isTest,
+        },
+        user_name: recipient.name,
+        user_role: "unknown",
+      } as any);
+    }
+  } catch {
+    // Don't block PDF generation if protection fails
   }
 
   return doc.output("blob");
