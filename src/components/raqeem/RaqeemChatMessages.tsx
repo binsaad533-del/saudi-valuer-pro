@@ -32,6 +32,7 @@ const TOOL_LABELS: Record<string, { label: string; icon: string }> = {
   extract_documents: { label: "استخراج بيانات المستندات", icon: "📑" },
   translate_report: { label: "ترجمة التقرير", icon: "🌐" },
   check_consistency: { label: "فحص تطابق النسختين", icon: "🔍" },
+  analyze_documents: { label: "تحليل المستندات الشامل", icon: "🔬" },
 };
 
 interface Props {
