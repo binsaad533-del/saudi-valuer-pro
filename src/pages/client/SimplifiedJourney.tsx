@@ -418,8 +418,13 @@ export default function SimplifiedJourney() {
 
         buildScopeFromAssets(aiAssets, excelAssets);
         setProcessingProgress(100);
-        setProcessingStatus("اكتمل التحليل بنجاح");
-        await new Promise(r => setTimeout(r, 300));
+        const totalFiles = jobData.totalFiles || otherFiles.length;
+        const totalAssets = aiAssets.length;
+        const statusMsg = totalFiles > totalAssets && totalAssets > 0
+          ? `تم رصد ${totalAssets} أصل من ${totalFiles} ملف`
+          : `اكتمل التحليل — ${totalAssets} أصل مستخرج`;
+        setProcessingStatus(statusMsg);
+        await new Promise(r => setTimeout(r, 800));
         setStep("scope");
         return;
       }
