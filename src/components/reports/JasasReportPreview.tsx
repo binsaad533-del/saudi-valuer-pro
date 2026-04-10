@@ -149,13 +149,17 @@ const SAMPLE = {
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
 const TOTAL_PAGES = 17;
 
-/* ── Company & Valuer Identity (read-only) ── */
+/* ── Company & Valuer Identity (read-only — sourced from shared identity) ── */
+import { JSAAS_IDENTITY, getReportFooterText } from "@/lib/company-identity";
+import ReportAccreditationSection from "./ReportAccreditationSection";
+
 const COMPANY_IDENTITY = {
-  companyName: "جساس للتقييم",
-  valuerName: "أحمد سعد أحمد المالكي",
-  licenseNumber: "4306",
-  memberships: ["4210000041", "1210001217"],
-  crNumber: "7016803038",
+  companyName: JSAAS_IDENTITY.companyName,
+  valuerName: JSAAS_IDENTITY.valuerName,
+  licenseNumber: JSAAS_IDENTITY.licenseNumber,
+  memberships: JSAAS_IDENTITY.memberships.map(m => m.number),
+  crNumber: JSAAS_IDENTITY.crNumber,
+  taxNumber: JSAAS_IDENTITY.taxNumber,
 } as const;
 
 const TOC = [
@@ -254,10 +258,11 @@ function PageHeader({ versionNum, mode }: { versionNum: number; mode: "draft" | 
 }
 
 function PageFooter({ pageNum }: { pageNum: number }) {
+  const f = getReportFooterText(pageNum, TOTAL_PAGES);
   return (
     <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-3 mt-4 border-t border-border/40">
-      <span>{COMPANY_IDENTITY.companyName} | {COMPANY_IDENTITY.crNumber}</span>
-      <span>Page {pageNum} / {TOTAL_PAGES}</span>
+      <span>{f.right}</span>
+      <span>{f.left}</span>
     </div>
   );
 }
