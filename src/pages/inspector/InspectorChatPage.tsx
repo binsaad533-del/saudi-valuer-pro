@@ -134,7 +134,7 @@ export default function InspectorChatPage() {
 
       replaceMessages([{
         id: `welcome-${Date.now()}`, role: "assistant",
-        content: `أهلاً ${name} 👋\n\nأنا ${AI.name}، مساعدك الميداني. يمكنني مساعدتك في:\n- عرض معايناتك المُسندة\n- معرفة موقع وبيانات كل مهمة\n- بدء وإنهاء المعاينة\n- رفع الصور والملاحظات\n\nكيف أقدر أساعدك؟`,
+        content: `أهلاً ${name}، كيف أساعدك اليوم؟\n\nأنا ${AI.name} — مساعدك الميداني داخل المنصة.\n\nأساعدك في:\n- عرض المعاينات المُسندة إليك\n- معرفة موقع وبيانات كل مهمة\n- بدء وإنهاء المعاينة\n- رفع الصور والملاحظات\n- تحديث حالة التنفيذ\n\nأعمل ضمن صلاحيات المُعاين فقط.`,
         timestamp: new Date().toISOString(),
       }]);
       setInitialized(true);
