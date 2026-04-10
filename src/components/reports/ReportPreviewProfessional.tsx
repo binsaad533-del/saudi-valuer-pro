@@ -12,6 +12,7 @@ import { SAR } from "@/components/ui/saudi-riyal";
 import { AlertTriangle } from "lucide-react";
 import ReportQualitySection from "./ReportQualitySection";
 import ReportAccreditationSection from "./ReportAccreditationSection";
+import ReportDisclaimerSection from "./ReportDisclaimerSection";
 import { JSAAS_IDENTITY } from "@/lib/company-identity";
 
 
