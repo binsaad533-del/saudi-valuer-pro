@@ -30,6 +30,8 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const [issuing, setIssuing] = useState(false);
   const [delivering, setDelivering] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [qcResult, setQcResult] = useState<ReportQCResult | null>(null);
+  const [runningQC, setRunningQC] = useState(false);
 
   const status = request.status;
   // Show panel after final payment confirmed, or when already issued/archived
