@@ -1373,7 +1373,9 @@ export default function JasasReportPreview() {
         <AnalysisPage />
         <AssumptionsPage />
         <AssumptionImpactPage />
-        <AssetTablePage />
+        <RealEstateValuationPage />
+        <MachineryValuationPage />
+        <CombinedValuePage />
         <DataSourcesPage />
         <RiskStatementPage />
         <DisclosuresPage />
