@@ -5,11 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { TrendingUp, TrendingDown, AlertTriangle, CheckCircle, XCircle, BarChart3, Users, FileWarning } from "lucide-react";
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from "recharts";
+import { TrendingUp, TrendingDown, CheckCircle, XCircle, BarChart3, Users, FileWarning } from "lucide-react";
 import { getGrade, IVS_STANDARDS } from "@/lib/ivs-quality-standards";
-import { format, subDays, subMonths, startOfDay } from "date-fns";
+import { format, subDays, startOfDay } from "date-fns";
 
 type Period = "7d" | "30d" | "90d" | "all";
 
@@ -36,7 +35,7 @@ export default function ReportQualityDashboardPage() {
         query = query.gte("created_at", dateFrom);
       }
       if (valuationType !== "all") {
-        query = query.eq("valuation_assignments.valuation_type", valuationType);
+        query = query.eq("valuation_assignments.valuation_type", valuationType as any);
       }
 
       const { data, error } = await query;
