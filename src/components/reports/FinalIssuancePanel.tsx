@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { updateReportDraftStatus } from "@/lib/report-draft-status";
-import { runReportQC, logQCResult, type ReportQCResult } from "@/lib/report-qc-engine";
+import { runReportQC, logQCResult, type ReportQCResult, type QCSeverity, SEVERITY_LABELS, QC_CATEGORY_LABELS } from "@/lib/report-qc-engine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
