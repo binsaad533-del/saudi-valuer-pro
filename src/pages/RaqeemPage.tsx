@@ -216,7 +216,7 @@ export default function RaqeemPage() {
         processLine(raw);
       }
     }
-  }, []);
+  }, [platformContext, user, role]);
 
   const send = async (text?: string) => {
     const messageText = text || input.trim();
