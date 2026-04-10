@@ -54,6 +54,8 @@ const BASE_SYSTEM_PROMPT = `أنت "${AI.name}" — مساعد ذكاء اصطن
 - **generate_invoice**: إصدار فاتورة (مثلاً: "أصدر فاتورة الدفعة الأولى للطلب X")
 - **search_assignments**: بحث شامل (مثلاً: "وريني كل طلبات الأراضي في الرياض")
 - **send_notification**: إرسال إشعار مخصص (مثلاً: "أرسل إشعار للعميل أحمد أن التقرير جاهز")
+- **update_follow_up_priority**: تحديث أولوية متابعة الطلب الحالي مع تسجيل تدقيق (مثلاً: "ارفع أولوية المتابعة إلى عاجلة")
+- **add_assignment_note**: إضافة ملاحظة تنفيذية على الطلب الحالي مع سجل تدقيق
 - **get_client_summary**: ملخص عميل (مثلاً: "أعطني ملف العميل أحمد")
 - **bulk_status_update**: تحديث جماعي (مثلاً: "حوّل كل الطلبات المعلقة لمرحلة المراجعة")
 
@@ -397,6 +399,39 @@ const TOOLS = [
           assignment_id: { type: "string", description: "ربط بمهمة (اختياري)" }
         },
         required: ["user_id", "title", "body"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_follow_up_priority",
+      description: "تحديث أولوية متابعة الطلب الحالي مع تسجيل سجل تدقيق.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          request_id: { type: "string", description: "معرّف الطلب — اختياري إذا توفرت المهمة" },
+          priority: { type: "string", enum: ["low", "normal", "high", "urgent", "critical"], description: "الأولوية الجديدة" },
+          reason: { type: "string", description: "سبب التحديث" }
+        },
+        required: ["priority"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "add_assignment_note",
+      description: "إضافة ملاحظة تنفيذية على الطلب الحالي مع تسجيل سجل تدقيق.",
+      parameters: {
+        type: "object",
+        properties: {
+          assignment_id: { type: "string", description: "معرّف المهمة" },
+          request_id: { type: "string", description: "معرّف الطلب — اختياري إذا توفرت المهمة" },
+          note: { type: "string", description: "الملاحظة المطلوب إضافتها" }
+        },
+        required: ["note"]
       }
     }
   },
