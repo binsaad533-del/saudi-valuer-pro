@@ -100,12 +100,14 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
 
   const handleIssue = async () => {
     // Run QC first if not already passed
-    if (!qcResult?.passed) {
+    let currentQC = qcResult;
+    if (!currentQC || !currentQC.passed) {
       const assignmentId = request.assignment_id || draft?.assignment_id;
       if (assignmentId) {
         const result = await runReportQC(assignmentId);
         setQcResult(result);
         await logQCResult(assignmentId, result, userId);
+        currentQC = result;
         if (!result.passed) {
           toast({
             title: "لا يمكن إصدار التقرير لعدم اكتمال المتطلبات",
@@ -115,6 +117,16 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
           return;
         }
       }
+    }
+
+    // Enforce 80% minimum for final issuance
+    if (currentQC && currentQC.score < 80) {
+      toast({
+        title: "لا يمكن إصدار التقرير النهائي",
+        description: `النتيجة ${currentQC.score}% — يجب تجاوز 80% للإصدار النهائي. يمكن حفظه كمسودة فقط.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     setIssuing(true);
@@ -146,9 +158,27 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
           action: "create" as any,
           table_name: "report_issuance",
           record_id: request.id,
-          description: `إصدار التقرير النهائي رقم ${reportNumber}`,
-          new_data: { report_number: reportNumber, verification_code: verificationCode, qc_score: qcResult?.score },
+          description: `إصدار التقرير النهائي رقم ${reportNumber} — نتيجة الجودة المثبتة: ${currentQC?.score ?? qcResult?.score ?? "N/A"}%`,
+          new_data: {
+            report_number: reportNumber,
+            verification_code: verificationCode,
+            qc_score: currentQC?.score ?? qcResult?.score,
+            qc_grade: currentQC?.score ? (currentQC.score >= 90 ? "ممتاز" : "جيد جداً") : null,
+            qc_frozen: true,
+          },
         }),
+        // Freeze quality score in DB
+        ...(request.assignment_id ? [
+          supabase.from("report_quality_scores" as any).update({
+            details: {
+              ...(typeof (qcResult as any)?.details === "object" ? (qcResult as any).details : {}),
+              frozen_at: new Date().toISOString(),
+              frozen_by: userId,
+              is_final: true,
+            },
+            updated_at: new Date().toISOString(),
+          }).eq("assignment_id", request.assignment_id)
+        ] : []),
       ]);
 
       if (draft) setDraft({ ...draft, status: "issued", report_number: reportNumber });
@@ -415,20 +445,29 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
               </div>
             )}
 
-            {/* Full pass */}
-            {qcResult?.passed && !(qcResult as any).has_warnings && (
-              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-                <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
-                  جميع المتطلبات مستوفاة — التقرير جاهز للإصدار
+            {/* Score below 80 warning */}
+            {qcResult?.passed && qcResult.score < 80 && (
+              <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <p className="text-[10px] text-amber-700 dark:text-amber-300 text-center">
+                  النتيجة {qcResult.score}% — يجب تجاوز 80% للإصدار النهائي. يمكن حفظه كمسودة (Draft) فقط.
                 </p>
               </div>
             )}
 
-            {/* Pass with warnings */}
-            {qcResult?.passed && (qcResult as any).has_warnings && (
+            {/* Full pass >= 80 */}
+            {qcResult?.passed && !(qcResult as any).has_warnings && qcResult.score >= 80 && (
+              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
+                  جميع المتطلبات مستوفاة — التقرير جاهز للإصدار النهائي ({qcResult.score}%)
+                </p>
+              </div>
+            )}
+
+            {/* Pass with warnings >= 80 */}
+            {qcResult?.passed && (qcResult as any).has_warnings && qcResult.score >= 80 && (
               <div className="p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800">
                 <p className="text-[10px] text-amber-700 dark:text-amber-300 text-center">
-                  يُسمح بالإصدار — مع وجود ملاحظات جودة يُنصح بمعالجتها
+                  يُسمح بالإصدار ({qcResult.score}%) — مع وجود ملاحظات جودة يُنصح بمعالجتها
                 </p>
               </div>
             )}
@@ -449,9 +488,9 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
             </p>
           </div>
           {!isIssued && (
-            <Button size="sm" onClick={handleIssue} disabled={issuing} className="gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
+            <Button size="sm" onClick={handleIssue} disabled={issuing || (qcResult !== null && qcResult.score < 80)} className="gap-1 bg-green-600 hover:bg-green-700 text-white shrink-0">
               {issuing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Lock className="w-3 h-3" />}
-              إصدار
+              {qcResult && qcResult.score < 80 ? "مسودة فقط" : "إصدار"}
             </Button>
           )}
         </div>
