@@ -266,7 +266,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
   useEffect(() => {
     const initial: ChatMessage[] = [];
     const clientGreeting = data.clientName ? `أهلاً وسهلاً ${data.clientName}` : "أهلاً وسهلاً بك";
-    const greeting = `${clientGreeting} 👋\n\nأنا رقيم، مساعدك الذكي في ${COMPANY.name_ar}.\nمهمتي مساعدتك في مراجعة الأصول المرفقة والإجابة على استفساراتك بدقة واحترافية.\n\nراجعت المرفقات وهذا ملخص النتائج:`;
+    const greeting = `${clientGreeting} 👋\n\nأنا ChatGPT، مساعدك الذكي في ${COMPANY.name_ar}.\nمهمتي مساعدتك في مراجعة الأصول المرفقة والإجابة على استفساراتك بدقة واحترافية.\n\nراجعت المرفقات وهذا ملخص النتائج:`;
     initial.push({ id: "greeting", type: "system", text: greeting, timestamp: Date.now() });
 
     if (requestScopeSummary?.chatText) {
@@ -511,7 +511,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
         <CardContent className="p-0">
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-primary/5 rounded-t-lg">
             <RaqeemAnimatedLogo size={56} />
-            <span className="text-[11px] font-bold text-foreground">رقيم .. مساعدك الذكي</span>
+            <span className="text-[11px] font-bold text-foreground">ChatGPT .. مساعدك الذكي</span>
             {phase === "questions" && questions.length > 0 && (
               <span className="text-[9px] text-muted-foreground mr-auto">{currentQIdx + 1}/{questions.length}</span>
             )}
@@ -569,7 +569,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
                 <div className="bg-muted rounded-xl px-4 py-3 max-w-[85%]">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Cog className="w-3.5 h-3.5 animate-spin" />
-                    <span>رقيم يفكر...</span>
+                    <span>ChatGPT يفكر...</span>
                   </div>
                 </div>
               </div>
@@ -604,7 +604,7 @@ export default function AIReviewStep({ data, onApprove, onBack }: Props) {
               {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Paperclip className="w-4 h-4" />}
             </button>
             <input ref={chatFileRef} type="file" multiple className="hidden" onChange={e => e.target.files && handleChatFileUpload(e.target.files)} />
-            <Input value={freeText} onChange={e => setFreeText(e.target.value)} placeholder={pendingAttachments.length > 0 ? "أضف رسالة مع المرفقات..." : "اكتب سؤالك أو ملاحظتك لرقيم..."} className="h-8 text-[12px] flex-1 bg-background" onKeyDown={e => { if (e.key === "Enter" && (freeText.trim() || pendingAttachments.length > 0) && !isThinking) handleFreeTextSend(); }} />
+            <Input value={freeText} onChange={e => setFreeText(e.target.value)} placeholder={pendingAttachments.length > 0 ? "أضف رسالة مع المرفقات..." : "اكتب سؤالك أو ملاحظتك لـ ChatGPT..."} className="h-8 text-[12px] flex-1 bg-background" onKeyDown={e => { if (e.key === "Enter" && (freeText.trim() || pendingAttachments.length > 0) && !isThinking) handleFreeTextSend(); }} />
             <Button size="sm" className="h-8 px-2.5 shrink-0" disabled={(!freeText.trim() && pendingAttachments.length === 0) || isThinking} onClick={handleFreeTextSend}>
               <Send className="w-3.5 h-3.5" />
             </Button>

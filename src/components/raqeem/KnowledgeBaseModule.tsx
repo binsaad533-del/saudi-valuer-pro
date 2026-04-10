@@ -268,7 +268,7 @@ export default function KnowledgeBaseModule() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-foreground">قاعدة المعرفة</h3>
-          <p className="text-xs text-muted-foreground">المستندات والمعايير التي يعتمد عليها رقيم كمراجع أساسية</p>
+          <p className="text-xs text-muted-foreground">المستندات والمعايير التي يعتمد عليها ChatGPT كمراجع أساسية</p>
         </div>
         <div className="flex gap-2">
           {/* Bulk Upload Button */}

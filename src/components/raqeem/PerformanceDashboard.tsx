@@ -106,7 +106,7 @@ export default function PerformanceDashboard() {
     <div className="space-y-6">
       <div>
         <h3 className="text-base font-bold text-foreground">لوحة الأداء</h3>
-        <p className="text-xs text-muted-foreground">نظرة شاملة على حالة معرفة رقيم وأدائه</p>
+        <p className="text-xs text-muted-foreground">نظرة شاملة على حالة معرفة ChatGPT وأدائه</p>
       </div>
 
       {/* Main KPIs */}

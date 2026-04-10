@@ -393,7 +393,7 @@ export default function AssignmentHubPage() {
           <div className="flex flex-wrap gap-2">
             <Link to="/raqeem">
               <Button size="sm" className="gap-1.5 text-xs">
-                <Sparkles className="w-3.5 h-3.5" /> طلب من رقيم
+                <Sparkles className="w-3.5 h-3.5" /> طلب من ChatGPT
               </Button>
             </Link>
             <Link to={`/reports/generate/${id}`}>

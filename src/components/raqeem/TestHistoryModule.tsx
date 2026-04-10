@@ -119,7 +119,7 @@ export default function TestHistoryModule() {
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-base font-bold text-foreground">سجل الاختبارات</h3>
-          <p className="text-xs text-muted-foreground">جميع جلسات اختبار رقيم ونتائجها</p>
+          <p className="text-xs text-muted-foreground">جميع جلسات اختبار ChatGPT ونتائجها</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>

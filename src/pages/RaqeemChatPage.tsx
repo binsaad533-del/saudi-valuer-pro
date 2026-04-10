@@ -377,7 +377,7 @@ export default function RaqeemChatPage() {
                 <RaqeemAnimatedLogo size={128} />
               </div>
               <div>
-                <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا رقيم</h2>
+                <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا ChatGPT</h2>
                 <p className="text-sm text-muted-foreground">
                   {effectiveRole === "owner" ? "مساعدك التنفيذي — أدير لك العمليات مباشرة" :
                    effectiveRole === "inspector" ? "مساعدك الميداني — أنسق معاك مهام المعاينة" :
