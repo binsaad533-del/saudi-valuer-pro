@@ -1019,10 +1019,19 @@ function DisclosuresPage() {
   );
 }
 
+/* ── Professional Disclaimer (before signature) ── */
+function DisclaimerPage() {
+  return (
+    <PageShell pageNum={17}>
+      <ReportDisclaimerSection />
+    </PageShell>
+  );
+}
+
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={17}>
+    <PageShell pageNum={18}>
       <ReportAccreditationSection />
     </PageShell>
   );
