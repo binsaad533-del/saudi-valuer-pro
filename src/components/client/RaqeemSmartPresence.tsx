@@ -145,17 +145,15 @@ export default function RaqeemSmartPresence() {
               scale: { duration: 0.3, ease: "easeOut" },
               x: { duration: 0.3, ease: "easeOut", delay: 0.05 },
             }}
-            style={{ transformOrigin: "center center" }}
-            onClick={handleClick}
-            className="absolute left-full mr-1 cursor-pointer flex items-center gap-2 whitespace-nowrap
-              h-9 px-4 rounded-xl
-              border
-              backdrop-blur-md"
-            css-style={{
+            style={{
+              transformOrigin: "center center",
               background: "linear-gradient(135deg, rgba(255,215,200,0.08), rgba(255,255,255,0.05))",
               borderColor: "rgba(210,170,140,0.25)",
               boxShadow: "0 0 18px 2px rgba(210,170,140,0.08)",
             }}
+            onClick={handleClick}
+            className="absolute left-full mr-1 cursor-pointer flex items-center gap-2 whitespace-nowrap
+              h-9 px-4 rounded-xl border backdrop-blur-md"
           >
             {/* Soft gold pulse dot */}
             <span className="relative flex h-1.5 w-1.5 shrink-0">
