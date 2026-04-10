@@ -395,7 +395,7 @@ export default function RaqeemChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, effectiveRole]);
+  }, [messages, isLoading, effectiveRole, platformContext]);
 
   const handleSend = () => {
     sendMessage(input, attachedFiles);
