@@ -101,7 +101,10 @@ export default function RaqeemPage() {
     if (navState?.reference_number) ctx.reference_number = navState.reference_number;
     if (navState?.source_page) ctx.source_page = navState.source_page;
 
-    // Fetch assignment details if we have an ID
+    // Set context IMMEDIATELY so it's available for early messages
+    setPlatformContext({ ...ctx });
+
+    // Then enrich with DB data asynchronously
     if (ctx.assignment_id) {
       supabase
         .from("valuation_assignments")
@@ -115,10 +118,8 @@ export default function RaqeemPage() {
             ctx.property_type = data.property_type || undefined;
             ctx.client_name = (data.clients as any)?.name_ar || undefined;
           }
-          setPlatformContext(ctx);
+          setPlatformContext({ ...ctx });
         });
-    } else {
-      setPlatformContext(ctx);
     }
   }, [location.pathname, location.state, searchParams, role]);
 
