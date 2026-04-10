@@ -88,9 +88,29 @@ export default function RaqeemChatMessages({ messages, isLoading, onCorrect, onS
                 })}
               </div>
             )}
-            {msg.role === "assistant" ? (
-              <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right', unicodeBidi: 'plaintext' as any }}><ReactMarkdown>{msg.content}</ReactMarkdown></div>
-            ) : (
+            {msg.role === "assistant" ? (() => {
+              const { cleanContent, actions } = extractActions(msg.content);
+              return (
+                <>
+                  <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right', unicodeBidi: 'plaintext' as any }}><ReactMarkdown>{cleanContent}</ReactMarkdown></div>
+                  {actions.length > 0 && !isLoading && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {actions.map((action, ai) => (
+                        <Button
+                          key={ai}
+                          size="sm"
+                          className="gap-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white"
+                          onClick={() => onSendMessage?.(action)}
+                        >
+                          <Zap className="w-3 h-3" />
+                          {action}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              );
+            })() : (
               <span className="whitespace-pre-wrap leading-[1.9]" dir="rtl" style={{ textAlign: 'right', unicodeBidi: 'plaintext' }}>{msg.content}</span>
             )}
             {msg.role === "assistant" && i === messages.length - 1 && isLoading && <span className="inline-block w-2 h-4 bg-primary/60 animate-pulse mr-1 rounded-sm" />}
