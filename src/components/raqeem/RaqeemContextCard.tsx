@@ -79,7 +79,7 @@ export default function RaqeemContextCard({
         <RaqeemAnimatedLogo size={32} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="font-semibold text-sm">رقيم – مساعدك الذكي</span>
+            <span className="font-semibold text-sm">ChatGPT – مساعدك الذكي</span>
             {isAnalyzing && <Loader2 className="w-3 h-3 animate-spin text-primary" />}
             {riskCount > 0 && (
               <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
@@ -176,7 +176,7 @@ export default function RaqeemContextCard({
               onClick={(e) => { e.stopPropagation(); setShowChat(!showChat); }}
             >
               <MessageSquare className="w-3 h-3 ml-1" />
-              {showChat ? "إخفاء المحادثة" : "اسأل رقيم"}
+              {showChat ? "إخفاء المحادثة" : "اسأل ChatGPT"}
             </Button>
             <Button
               variant="ghost"
@@ -196,7 +196,7 @@ export default function RaqeemContextCard({
               <ScrollArea className="max-h-48 p-2" ref={scrollRef as any}>
                 {messages.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-3">
-                    اسأل رقيم عن أي شيء يخص هذه المهمة...
+                    اسأل ChatGPT عن أي شيء يخص هذه المهمة...
                   </p>
                 )}
                 {messages.map((msg, i) => (
@@ -224,7 +224,7 @@ export default function RaqeemContextCard({
                 {isChatting && messages[messages.length - 1]?.role === "user" && (
                   <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Loader2 className="w-3 h-3 animate-spin" />
-                    <span>رقيم يفكر...</span>
+                    <span>ChatGPT يفكر...</span>
                   </div>
                 )}
               </ScrollArea>

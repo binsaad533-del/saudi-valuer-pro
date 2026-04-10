@@ -20,7 +20,7 @@ export default function MessageRating({ messageId, requestId }: MessageRatingPro
       await supabase.from("request_messages" as any).insert({
         request_id: requestId,
         sender_type: "system" as any,
-        content: `تقييم رد رقيم: ${value === "up" ? "👍 مفيد" : "👎 غير مفيد"}`,
+        content: `تقييم رد ChatGPT: ${value === "up" ? "👍 مفيد" : "👎 غير مفيد"}`,
         metadata: { type: "rating", rated_message_id: messageId, rating: value },
       });
     } catch {

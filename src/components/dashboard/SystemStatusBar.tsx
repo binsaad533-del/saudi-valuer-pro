@@ -69,7 +69,7 @@ export default function SystemStatusBar() {
         {/* Raqeem */}
         <div className="flex items-center gap-1.5">
           <RaqeemIcon size={14} />
-          <span className="text-[11px] text-muted-foreground">رقيم نشط</span>
+          <span className="text-[11px] text-muted-foreground">ChatGPT نشط</span>
         </div>
 
         {/* Compliance */}

@@ -227,7 +227,7 @@ export default function RaqeemPage() {
               <div className="flex flex-col items-center justify-center h-full gap-6 py-12">
                 <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg"><Sparkles className="w-8 h-8 text-primary-foreground" /></div>
                 <div className="text-center space-y-1.5">
-                  <h2 className="text-xl font-bold text-foreground">مرحباً، أنا رقيم</h2>
+                  <h2 className="text-xl font-bold text-foreground">مرحباً، أنا ChatGPT</h2>
                   <p className="text-sm text-muted-foreground max-w-md">مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به. استخدم التبويبات أعلاه لإدارة المعرفة والقواعد والتصحيحات.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full">

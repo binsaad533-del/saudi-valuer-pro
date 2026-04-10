@@ -212,7 +212,7 @@ export default function RequestDetails() {
 
       if (error) {
         console.error("Raqeem AI error:", error);
-        toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء التواصل مع رقيم.", variant: "destructive" });
+        toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء التواصل مع ChatGPT.", variant: "destructive" });
         return;
       }
 
@@ -252,7 +252,7 @@ export default function RequestDetails() {
       });
     } catch (e) {
       console.error("Raqeem AI call error:", e);
-      toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء تشغيل رقيم.", variant: "destructive" });
+      toast({ title: "تعذر الرد حالياً", description: "حدث خلل أثناء تشغيل ChatGPT.", variant: "destructive" });
     } finally {
       setAiTyping(false);
     }
@@ -402,17 +402,17 @@ export default function RequestDetails() {
   // ── Export chat as text file ──
   const handleExportChat = () => {
     const welcomeMsg = getRaqeemWelcome(request.status, request);
-    const lines = [`=== سجل محادثة رقيم ===`, `الرقم المرجعي: ${request.reference_number || "—"}`, `التاريخ: ${new Date().toLocaleDateString("ar-SA")}`, `الحالة: ${getStatusLabel(request.status)}`, `${"=".repeat(40)}`, "", `رقيم: ${welcomeMsg}`, ""];
+    const lines = [`=== سجل محادثة ChatGPT ===`, `الرقم المرجعي: ${request.reference_number || "—"}`, `التاريخ: ${new Date().toLocaleDateString("ar-SA")}`, `الحالة: ${getStatusLabel(request.status)}`, `${"=".repeat(40)}`, "", `ChatGPT: ${welcomeMsg}`, ""];
     for (const msg of messages) {
       const time = new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
-      const sender = msg.sender_type === "client" ? "العميل" : msg.sender_type === "ai" ? "رقيم" : "النظام";
+      const sender = msg.sender_type === "client" ? "العميل" : msg.sender_type === "ai" ? "ChatGPT" : "النظام";
       lines.push(`[${time}] ${sender}: ${msg.content}`, "");
     }
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `محادثة-رقيم-${request.reference_number || id}.txt`;
+    a.download = `محادثة-ChatGPT-${request.reference_number || id}.txt`;
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: "تم تصدير المحادثة بنجاح" });
@@ -427,7 +427,7 @@ export default function RequestDetails() {
     const isDesktop = isDesktopValuationMode(valuationMode);
 
     const statusMessages: Record<string, string> = {
-      submitted: `${greeting} 👋\n\nأنا **رقيم – مساعدك الذكي** لمتابعة طلب التقييم${refNum ? ` رقم **${refNum}**` : ""}.\n\nطلبك قيد المراجعة الآن، وسأُبلغك فور جاهزية نطاق العمل وعرض السعر.${isDesktop ? "\n\nهذا الطلب مكتبي ولن يتضمن معاينة ميدانية." : ""}\n\nيمكنك سؤالي عن أي شيء أو إرفاق مستندات إضافية.`,
+      submitted: `${greeting} 👋\n\nأنا **ChatGPT – مساعدك الذكي** لمتابعة طلب التقييم${refNum ? ` رقم **${refNum}**` : ""}.\n\nطلبك قيد المراجعة الآن، وسأُبلغك فور جاهزية نطاق العمل وعرض السعر.${isDesktop ? "\n\nهذا الطلب مكتبي ولن يتضمن معاينة ميدانية." : ""}\n\nيمكنك سؤالي عن أي شيء أو إرفاق مستندات إضافية.`,
       under_pricing: `${greeting}\n\nطلبك بانتظار **إعداد عرض السعر** من فريق التسعير. سأُبلغك فور جاهزيته.\n\nإذا كان لديك أي استفسار، أنا هنا.`,
       scope_generated: `${greeting}\n\nتم إعداد **نطاق العمل وعرض السعر**.\n\nيرجى مراجعة التفاصيل في اللوحة الجانبية والموافقة عليها للمتابعة.`,
       scope_approved: `${greeting}\n\nتم اعتماد نطاق العمل ✅\n\nالخطوة التالية: **سداد الدفعة الأولى** لبدء التنفيذ${isDesktop ? " المكتبي" : ""}.`,
@@ -445,7 +445,7 @@ export default function RequestDetails() {
       issued: `${greeting}\n\n**التقرير النهائي** جاهز 🎉 يمكنك تحميله من الأعلى.\n\nإذا احتجت أي شيء مستقبلاً، أنا هنا.`,
     };
 
-    return statusMessages[status] || `${greeting} 👋\n\nأنا **رقيم – مساعدك الذكي** لمتابعة طلب التقييم.\n\nيمكنك سؤالي عن أي شيء يخص طلبك وسأجيبك فوراً.`;
+    return statusMessages[status] || `${greeting} 👋\n\nأنا **ChatGPT – مساعدك الذكي** لمتابعة طلب التقييم.\n\nيمكنك سؤالي عن أي شيء يخص طلبك وسأجيبك فوراً.`;
   };
 
   const getStatusLabel = (status: string) => {
@@ -580,7 +580,7 @@ export default function RequestDetails() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <RaqeemAnimatedLogo size={24} />
-                    <span>رقيم – مساعدك الذكي</span>
+                    <span>ChatGPT – مساعدك الذكي</span>
                   </CardTitle>
                   {docReadiness && (
                     <div className="flex items-center gap-2 text-xs" dir="rtl">
@@ -608,7 +608,7 @@ export default function RequestDetails() {
                   </div>
                   <div className="max-w-[85%] rounded-xl px-4 py-3 text-sm bg-card border border-primary/20 text-foreground shadow-sm">
                     <div className="flex items-center gap-1.5 mb-2">
-                      <span className="text-xs font-bold text-primary">رقيم – مساعدك الذكي</span>
+                      <span className="text-xs font-bold text-primary">ChatGPT – مساعدك الذكي</span>
                     </div>
                     <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right' }}>
                       <ReactMarkdown>{getRaqeemWelcome(request.status, request)}</ReactMarkdown>
@@ -639,7 +639,7 @@ export default function RequestDetails() {
                       <div className={`max-w-[80%] rounded-xl px-4 py-2.5 text-sm ${isClient ? "bg-primary text-primary-foreground" : isAI ? "bg-card border border-primary/20 text-foreground" : "bg-muted text-foreground"}`}>
                         {isAI && (
                           <div className="flex items-center gap-1.5 mb-1">
-                            <span className="text-[10px] font-bold text-primary">رقيم – مساعدك الذكي</span>
+                            <span className="text-[10px] font-bold text-primary">ChatGPT – مساعدك الذكي</span>
                           </div>
                         )}
                         {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
@@ -711,7 +711,7 @@ export default function RequestDetails() {
               </div>
               <div className="p-4 border-t border-border bg-card/50">
                 <div className="flex gap-2">
-                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اسأل رقيم أو اكتب ملاحظة..." disabled={sending || uploading} dir="rtl" className="flex-1" />
+                  <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اسأل ChatGPT أو اكتب ملاحظة..." disabled={sending || uploading} dir="rtl" className="flex-1" />
                   <input ref={chatFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls,.doc,.docx" onChange={handleChatFileUpload} />
                   <Button variant="outline" size="icon" onClick={() => chatFileRef.current?.click()} disabled={uploading} title="إرفاق ملف">
                     {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
@@ -720,7 +720,7 @@ export default function RequestDetails() {
                     {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                   </Button>
                 </div>
-                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><RaqeemAnimatedLogo size={14} /> رقيم – مساعدك الذكي — حاضر للإجابة على استفساراتك فوراً</p>
+                <p className="text-[10px] text-muted-foreground mt-1.5 flex items-center gap-1"><RaqeemAnimatedLogo size={14} /> ChatGPT – مساعدك الذكي — حاضر للإجابة على استفساراتك فوراً</p>
               </div>
             </Card>
           </div>

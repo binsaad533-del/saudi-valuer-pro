@@ -345,7 +345,7 @@ export default function ExecutiveDashboard() {
             {/* Raqeem */}
             <div className="flex items-center gap-1">
               <RaqeemIcon size={14} />
-              <span className="text-[10px] text-muted-foreground">رقيم نشط</span>
+              <span className="text-[10px] text-muted-foreground">ChatGPT نشط</span>
             </div>
             {/* Compliance */}
             <div className="flex items-center gap-1">

@@ -465,7 +465,7 @@ export function MobileSectionApproval({ formData, updateField, canSubmit, submit
         <Button onClick={onSubmit} disabled={!canSubmit || submitting} className="w-full h-14 text-lg">
           {submitting ? <Loader2 className="w-6 h-6 animate-spin ml-2" /> : <Send className="w-6 h-6 ml-2" />}إرسال واعتماد المعاينة
         </Button>
-        <p className="text-[10px] text-muted-foreground text-center">🔴 بعد الإرسال سيتم تحليل البيانات تلقائياً بواسطة رقيم ولن يمكن التعديل</p>
+        <p className="text-[10px] text-muted-foreground text-center">🔴 بعد الإرسال سيتم تحليل البيانات تلقائياً بواسطة ChatGPT ولن يمكن التعديل</p>
       </CardContent>
     </Card>
   );

@@ -434,10 +434,10 @@ export default function RaqeemKnowledgePanel() {
       <div className="px-4 pt-4 pb-2 border-b border-border">
         <div className="flex items-center gap-2 mb-1">
           <BookOpen className="w-4 h-4 text-primary" />
-          <h2 className="text-sm font-bold text-foreground">إدارة معرفة رقيم</h2>
+          <h2 className="text-sm font-bold text-foreground">إدارة معرفة ChatGPT</h2>
         </div>
         <p className="text-[11px] text-muted-foreground">
-          تحكم كامل بمعرفة رقيم — لا يتعلم ذاتياً بل من خلال ما تزوّده به فقط.
+          تحكم كامل بمعرفة ChatGPT — لا يتعلم ذاتياً بل من خلال ما تزوّده به فقط.
         </p>
       </div>
 

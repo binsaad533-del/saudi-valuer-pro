@@ -242,7 +242,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
           </div>
           <div>
             <h1 className="text-2xl font-bold text-foreground">نظام توليد التقارير الآلي</h1>
-            <p className="text-sm text-muted-foreground">رقيم يُنشئ مسودة تقرير تقييم كاملة وفق IVS 2025 ومعايير تقييم</p>
+            <p className="text-sm text-muted-foreground">ChatGPT يُنشئ مسودة تقرير تقييم كاملة وفق IVS 2025 ومعايير تقييم</p>
           </div>
         </div>
         {aggregatedData?.assignment?.reference_number && (
@@ -462,7 +462,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
             <Loader2 className="w-12 h-12 text-primary animate-spin mx-auto" />
             <div>
               <h3 className="text-lg font-bold text-foreground">جارٍ توليد التقرير...</h3>
-              <p className="text-sm text-muted-foreground mt-1">رقيم يحلل جميع البيانات ويكتب 20+ قسماً وفقاً لمعايير IVS 2025 وتقييم</p>
+              <p className="text-sm text-muted-foreground mt-1">ChatGPT يحلل جميع البيانات ويكتب 20+ قسماً وفقاً لمعايير IVS 2025 وتقييم</p>
               <p className="text-xs text-muted-foreground mt-2">قد يستغرق هذا 30-60 ثانية</p>
             </div>
           </CardContent>
@@ -670,7 +670,7 @@ export default function AIReportGenerationPage({ embedded }: { embedded?: boolea
             <Card className="border-dashed">
               <CardContent className="py-8 text-center space-y-3">
                 <Eye className="w-10 h-10 text-muted-foreground/40 mx-auto" />
-                <p className="text-sm text-muted-foreground">رقيم سيراجع جميع الأقسام ويفحص الامتثال لمعايير IVS 2025</p>
+                <p className="text-sm text-muted-foreground">ChatGPT سيراجع جميع الأقسام ويفحص الامتثال لمعايير IVS 2025</p>
                 <Button className="gap-2" onClick={handleReviewAll}><RaqeemIcon size={16} /> بدء فحص الجودة</Button>
               </CardContent>
             </Card>
