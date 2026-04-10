@@ -126,10 +126,28 @@ const SAMPLE = {
       optimistic: "14,210,000",
     },
   },
+  riskStatement: {
+    market: [
+      "تقلبات أسعار المعدات الصناعية محلياً وعالمياً قد تؤثر على القيمة خلال 6-12 شهراً",
+      "انخفاض الطلب في القطاع الصناعي قد يقلل القيمة القابلة للتحقيق بنسبة تصل إلى 10%",
+    ],
+    data: [
+      "عدم توفر جدول الإنتاج الشهري يحدّ من دقة تقدير معدل التشغيل الفعلي",
+      "غياب فواتير أصلية لـ 2 من الرافعات — اعتُمد على تقدير السوق البديل",
+    ],
+    operational: [
+      "3 معدات تجاوزت 70% من عمرها الإنتاجي — مخاطر توقف مفاجئ",
+      "انتهاء عقد صيانة المولدات خلال 60 يوماً قد يرفع تكاليف التشغيل",
+    ],
+    reliance: [
+      "التقييم يعتمد على دقة المعلومات المقدمة من العميل دون تحقق مستقل كامل",
+      "لم يتم التحقق من وجود رهونات أو التزامات مالية على الأصول من مصادر رسمية",
+    ],
+  },
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 15;
+const TOTAL_PAGES = 16;
 
 /* ── Company & Valuer Identity (read-only) ── */
 const COMPANY_IDENTITY = {
@@ -153,8 +171,9 @@ const TOC = [
   { id: "assumption-impact", num: 10, title: "تحليل تأثير الافتراضات" },
   { id: "final-value", num: 11, title: "النتيجة النهائية" },
   { id: "data-sources", num: 12, title: "مصادر البيانات" },
-  { id: "disclosures", num: 13, title: "الإفصاحات" },
-  { id: "accreditation", num: 14, title: "الاعتماد والتوقيع" },
+  { id: "risk-statement", num: 13, title: "بيان المخاطر" },
+  { id: "disclosures", num: 14, title: "الإفصاحات" },
+  { id: "accreditation", num: 15, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -870,12 +889,47 @@ function DataSourcesPage() {
   );
 }
 
+/* ── Risk Statement ── */
+function RiskStatementPage() {
+  const { market, data, operational, reliance } = SAMPLE.riskStatement;
+  const categories = [
+    { title: "مخاطر السوق", items: market, color: "text-blue-600 dark:text-blue-400" },
+    { title: "مخاطر البيانات", items: data, color: "text-amber-600 dark:text-amber-400" },
+    { title: "مخاطر التشغيل", items: operational, color: "text-destructive" },
+    { title: "مخاطر الاعتماد", items: reliance, color: "text-muted-foreground" },
+  ];
+
+  return (
+    <PageShell pageNum={14}>
+      <div className="space-y-4">
+        <SectionTitle id="risk-statement" num={13} title="بيان المخاطر" />
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          يوضح هذا القسم المخاطر المرتبطة بنتيجة التقييم والتي يجب أخذها بعين الاعتبار عند اتخاذ القرار.
+        </p>
+
+        {categories.map((cat, i) => (
+          <div key={i} className="space-y-1.5">
+            <p className={`text-xs font-bold ${cat.color}`}>{cat.title}</p>
+            {cat.items.map((item, j) => <Bullet key={j}>{item}</Bullet>)}
+          </div>
+        ))}
+
+        <div className="border border-border rounded px-4 py-3 mt-2">
+          <p className="text-[10px] text-muted-foreground leading-relaxed">
+            تم تحديد المخاطر بناءً على تحليل البيانات المتاحة والمعاينة الميدانية. يُنصح بمراجعة هذه المخاطر مع المستشار المالي أو القانوني قبل اتخاذ أي قرار استثماري.
+          </p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={14}>
+    <PageShell pageNum={15}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={13} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={14} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -891,9 +945,9 @@ function DisclosuresPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={15}>
+    <PageShell pageNum={16}>
       <div className="space-y-6">
-        <SectionTitle id="accreditation" num={14} title="الاعتماد والتوقيع" />
+        <SectionTitle id="accreditation" num={15} title="الاعتماد والتوقيع" />
 
         {/* Company */}
         <div className="space-y-3">
@@ -1069,6 +1123,7 @@ export default function JasasReportPreview() {
         <AssumptionImpactPage />
         <AssetTablePage />
         <DataSourcesPage />
+        <RiskStatementPage />
         <DisclosuresPage />
         <AccreditationPage />
       </div>
