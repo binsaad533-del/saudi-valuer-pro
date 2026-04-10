@@ -1,8 +1,10 @@
 import { useRef, useCallback, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { QRCodeSVG } from "qrcode.react";
-import { Lock, FileText, ShieldCheck, Clock } from "lucide-react";
+import { Lock, FileText, ShieldCheck, Clock, Download, Loader2 } from "lucide-react";
 import jasasLogo from "@/assets/jasas-logo.png";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 /* ══════════════════════════════════════════════
    Sample Data — Executive Style
