@@ -2,7 +2,7 @@ import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import AppFooter from "@/components/layout/AppFooter";
-import RaqeemFixedButton from "@/components/client/RaqeemFixedButton";
+import RaqeemSmartPresence from "@/components/client/RaqeemSmartPresence";
 import logo from "@/assets/logo.png";
 import { LayoutDashboard, FolderOpen, PlusCircle, LogOut } from "lucide-react";
 
@@ -28,11 +28,17 @@ export default function ClientLayout() {
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/client/dashboard")}>
-            <img src={logo} alt="جساس" className="w-7 h-7" />
-            <span className="text-sm font-bold text-foreground hidden sm:inline">جساس للتقييم</span>
+          {/* Right side: Logo + Raqeem */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/client/dashboard")}>
+              <img src={logo} alt="جساس" className="w-7 h-7" />
+              <span className="text-sm font-bold text-foreground hidden sm:inline">جساس للتقييم</span>
+            </div>
+            <div className="border-r border-border h-6" />
+            <RaqeemSmartPresence />
           </div>
 
+          {/* Center: Nav */}
           <nav className="flex items-center gap-1">
             {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
               <Button
@@ -48,6 +54,7 @@ export default function ClientLayout() {
             ))}
           </nav>
 
+          {/* Left: Logout */}
           <Button variant="ghost" size="sm" className="text-xs gap-1.5 h-8 text-muted-foreground" onClick={handleLogout}>
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">خروج</span>
@@ -59,9 +66,6 @@ export default function ClientLayout() {
       <main className="flex-1">
         <Outlet />
       </main>
-
-      {/* Raqeem Fixed Button */}
-      <RaqeemFixedButton />
 
       {/* Footer */}
       <AppFooter />
