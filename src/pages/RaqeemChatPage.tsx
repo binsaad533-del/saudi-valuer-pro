@@ -2,8 +2,8 @@
  * RaqeemChatPage — Universal Raqeem chat accessible to all authenticated users.
  * Supports file/image uploads of all types and sizes.
  */
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Send, ArrowRight, Paperclip, X, FileText, Image, File, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
