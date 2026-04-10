@@ -60,6 +60,9 @@ export default function ClientLayout() {
 
       {/* Footer */}
       <AppFooter />
+
+      {/* Raqeem floating capsule */}
+      <RaqeemSmartPresence />
     </div>
   );
 }
