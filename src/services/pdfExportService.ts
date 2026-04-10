@@ -545,7 +545,7 @@ export async function exportReportToPDF(report: Report, options?: { isTestMode?:
     // Don't block PDF generation if protection fails
   }
 
-  return doc.output("blob");
+  return getProtectedPdfBlob(doc);
 }
 
 // ─── Utilities ───
