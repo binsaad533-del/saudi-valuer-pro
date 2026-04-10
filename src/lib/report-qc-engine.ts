@@ -393,9 +393,9 @@ export async function logQCResult(
       warning_reasons: result.warning_reasons_ar,
       enhancement_suggestions: result.enhancement_suggestions_ar,
     }),
-    supabase.from("audit_logs").insert({
+    supabase.from("audit_logs").insert([{
       user_id: userId,
-      action: "create" as any,
+      action: "create" as const,
       table_name: "quality_gate",
       record_id: assignmentId,
       assignment_id: assignmentId,
@@ -414,7 +414,7 @@ export async function logQCResult(
         failed_quality: result.failed_quality,
         failed_enhancement: result.failed_enhancement,
         checked_at: result.checked_at,
-      },
-    }),
+      } as any,
+    }]),
   ]);
 }
