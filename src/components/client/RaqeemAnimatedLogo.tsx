@@ -5,107 +5,111 @@ interface RaqeemAnimatedLogoProps {
   className?: string;
 }
 
-/**
- * ChatGPT-style animated AI logo.
- * A pulsing circular icon with the OpenAI sparkle/bolt motif.
- */
 export default function RaqeemAnimatedLogo({ size = 112, className = "" }: RaqeemAnimatedLogoProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
 
-  const s = size;
-  const cx = s / 2;
-  const cy = s / 2;
-  const r = s * 0.42;
+  const cx = size / 2;
+  const cy = size / 2;
+  const pupilR = size * 0.10;
+
+  const arcs = [
+    { radius: size * 0.18, width: size * 0.06, color: "hsl(var(--primary))", dir: 1, startAngle: 200, sweep: 280 },
+    { radius: size * 0.26, width: size * 0.05, color: "hsl(210, 60%, 70%)", dir: -1, startAngle: 160, sweep: 260 },
+    { radius: size * 0.34, width: size * 0.045, color: "hsl(210, 50%, 78%)", dir: 1, startAngle: 140, sweep: 240 },
+    { radius: size * 0.42, width: size * 0.04, color: "hsl(210, 40%, 84%)", dir: -1, startAngle: 120, sweep: 220 },
+  ];
+
+  const squares = [
+    { angle: 295, color: "#4A90D9", s: size * 0.055, dist: size * 0.46 },
+    { angle: 305, color: "#E74C3C", s: size * 0.05, dist: size * 0.40 },
+    { angle: 312, color: "#2ECC71", s: size * 0.045, dist: size * 0.48 },
+    { angle: 320, color: "#9B59B6", s: size * 0.04, dist: size * 0.35 },
+    { angle: 328, color: "#F39C12", s: size * 0.05, dist: size * 0.44 },
+    { angle: 338, color: "#1ABC9C", s: size * 0.045, dist: size * 0.38 },
+    { angle: 345, color: "#3498DB", s: size * 0.04, dist: size * 0.48 },
+    { angle: 355, color: "#E67E22", s: size * 0.035, dist: size * 0.42 },
+  ];
+
+  function arcPath(radius: number, startAngle: number, sweep: number) {
+    const start = (startAngle * Math.PI) / 180;
+    const end = ((startAngle + sweep) * Math.PI) / 180;
+    const x1 = cx + radius * Math.cos(start);
+    const y1 = cy + radius * Math.sin(start);
+    const x2 = cx + radius * Math.cos(end);
+    const y2 = cy + radius * Math.sin(end);
+    const largeArc = sweep > 180 ? 1 : 0;
+    return `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`;
+  }
 
   return (
     <svg
-      width={s}
-      height={s}
-      viewBox={`0 0 ${s} ${s}`}
+      width={size}
+      height={size}
+      viewBox={`0 0 ${size} ${size}`}
       className={className}
       style={{ overflow: "visible" }}
     >
-      <defs>
-        <linearGradient id="gpt-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#10a37f" />
-          <stop offset="100%" stopColor="#1a7f64" />
-        </linearGradient>
-        <filter id="gpt-glow">
-          <feGaussianBlur stdDeviation={s * 0.02} result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-
-      {/* Outer pulse ring */}
-      <circle
-        cx={cx}
-        cy={cy}
-        r={r}
-        fill="none"
-        stroke="#10a37f"
-        strokeWidth={s * 0.02}
-        opacity={0.3}
-        style={{
-          animation: mounted ? "gpt-pulse 2.5s ease-in-out infinite" : "none",
-          transformOrigin: `${cx}px ${cy}px`,
-        }}
-      />
-
-      {/* Main circle */}
-      <circle cx={cx} cy={cy} r={r * 0.85} fill="url(#gpt-grad)" filter="url(#gpt-glow)" />
-
-      {/* ChatGPT sparkle/bolt icon — scaled to center */}
-      <g transform={`translate(${cx - s * 0.18}, ${cy - s * 0.22}) scale(${s / 140})`}>
+      {arcs.map((arc, i) => (
         <path
-          d="M37.5 2.5C37.5 2.5 40 12 45 17C50 22 59.5 24.5 59.5 24.5C59.5 24.5 50 27 45 32C40 37 37.5 46.5 37.5 46.5C37.5 46.5 35 37 30 32C25 27 15.5 24.5 15.5 24.5C15.5 24.5 25 22 30 17C35 12 37.5 2.5 37.5 2.5Z"
-          fill="white"
-          opacity={0.95}
+          key={i}
+          d={arcPath(arc.radius, arc.startAngle, arc.sweep)}
+          fill="none"
+          stroke={arc.color}
+          strokeWidth={arc.width}
+          strokeLinecap="round"
           style={{
-            animation: mounted ? "gpt-sparkle 3s ease-in-out infinite" : "none",
-            transformOrigin: "37.5px 24.5px",
+            transformOrigin: `${cx}px ${cy}px`,
+            animation: mounted
+              ? `raqeem-spin-${arc.dir > 0 ? "cw" : "ccw"} ${6 + i * 2}s linear infinite`
+              : "none",
           }}
         />
-        {/* Smaller secondary sparkle */}
-        <path
-          d="M18 38C18 38 19.5 43.5 22 46C24.5 48.5 30 50 30 50C30 50 24.5 51.5 22 54C19.5 56.5 18 62 18 62C18 62 16.5 56.5 14 54C11.5 51.5 6 50 6 50C6 50 11.5 48.5 14 46C16.5 43.5 18 38 18 38Z"
-          fill="white"
-          opacity={0.7}
-          style={{
-            animation: mounted ? "gpt-sparkle 3s ease-in-out 0.8s infinite" : "none",
-            transformOrigin: "18px 50px",
-          }}
-        />
-      </g>
+      ))}
 
-      {/* Orbiting dot */}
-      <circle
-        cx={cx + r * 0.92}
-        cy={cy}
-        r={s * 0.025}
-        fill="#10a37f"
-        opacity={0.6}
-        style={{
-          animation: mounted ? "gpt-orbit 4s linear infinite" : "none",
-          transformOrigin: `${cx}px ${cy}px`,
-        }}
-      />
+      {squares.map((sq, i) => {
+        const rad = (sq.angle * Math.PI) / 180;
+        const dist = sq.dist;
+        const x = cx + dist * Math.cos(rad) - sq.s / 2;
+        const y = cy + dist * Math.sin(rad) - sq.s / 2;
+        const delay = (i * 0.7 + Math.random() * 0.5).toFixed(2);
+        const duration = (1.5 + i * 0.3).toFixed(2);
+        return (
+          <rect
+            key={i}
+            x={x}
+            y={y}
+            width={sq.s}
+            height={sq.s}
+            rx={sq.s * 0.2}
+            fill={sq.color}
+            style={{
+              animation: mounted
+                ? `raqeem-blink ${duration}s ease-in-out ${delay}s infinite`
+                : "none",
+              opacity: 0.9,
+            }}
+          />
+        );
+      })}
+
+      <circle cx={cx} cy={cy} r={pupilR * 1.8} fill="white" />
+      <circle cx={cx} cy={cy} r={pupilR * 1.45} fill="#1a1a2e" />
+      <circle cx={cx - pupilR * 0.4} cy={cy - pupilR * 0.45} r={pupilR * 0.45} fill="white" />
+      <circle cx={cx - pupilR * 0.05} cy={cy + pupilR * 0.35} r={pupilR * 0.2} fill="white" />
 
       <style>{`
-        @keyframes gpt-pulse {
-          0%, 100% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.15); opacity: 0.1; }
-        }
-        @keyframes gpt-sparkle {
-          0%, 100% { transform: scale(1); opacity: 0.95; }
-          50% { transform: scale(0.85); opacity: 0.6; }
-        }
-        @keyframes gpt-orbit {
+        @keyframes raqeem-spin-cw {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        @keyframes raqeem-spin-ccw {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(-360deg); }
+        }
+        @keyframes raqeem-blink {
+          0%, 100% { opacity: 0.9; }
+          50% { opacity: 0.15; }
         }
       `}</style>
     </svg>
