@@ -339,7 +339,7 @@ export default function RaqeemChatPage() {
           Authorization: `Bearer ${authToken}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        body: JSON.stringify({
+        const payload = {
           messages: allMessages.map((m) => ({
             role: m.role,
             content: m.role === "user" && m === userMsg ? messageContent : m.content,
@@ -348,7 +348,9 @@ export default function RaqeemChatPage() {
           userId: user?.id,
           attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
           platformContext: (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined,
-        }),
+        };
+        console.log("[RaqeemChat] Sending payload, platformContext:", JSON.stringify(payload.platformContext || null));
+        body: JSON.stringify(payload),
       });
 
       if (!resp.ok) {
