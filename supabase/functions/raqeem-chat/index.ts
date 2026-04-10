@@ -2110,7 +2110,6 @@ async function executeTool(
       lines.push(`- **الخطوة التالية:** ${nextStep}`);
 
       return {
-      return {
         success: true,
         result: lines.join("\n"),
         _format: "markdown",
