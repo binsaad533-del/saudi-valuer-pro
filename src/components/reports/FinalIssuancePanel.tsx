@@ -288,20 +288,62 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
 
             {/* Score bar */}
             {qcResult && (
-              <div className="px-3">
-                <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-                  <span>نتيجة الجودة</span>
-                  <span className={`font-bold ${qcResult.score >= 80 ? "text-green-600" : qcResult.score >= 50 ? "text-amber-600" : "text-red-600"}`}>
+              <div className="px-3 space-y-3">
+                {/* Grade + Score */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] text-muted-foreground">نتيجة الجودة</span>
+                    <Badge variant="outline" className={`text-[10px] ${
+                      qcResult.score >= 86 ? "border-green-300 text-green-700" :
+                      qcResult.score >= 76 ? "border-blue-300 text-blue-700" :
+                      qcResult.score >= 66 ? "border-amber-300 text-amber-700" :
+                      qcResult.score >= 51 ? "border-orange-300 text-orange-700" :
+                      "border-red-300 text-red-700"
+                    }`}>
+                      {(qcResult as any).grade_label_ar || "—"}
+                    </Badge>
+                  </div>
+                  <span className={`text-sm font-bold ${
+                    qcResult.score >= 80 ? "text-green-600" : qcResult.score >= 50 ? "text-amber-600" : "text-red-600"
+                  }`}>
                     {qcResult.score}%
                   </span>
                 </div>
+
+                {/* Score bar */}
                 <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${qcResult.score >= 80 ? "bg-green-500" : qcResult.score >= 50 ? "bg-amber-500" : "bg-red-500"}`}
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      qcResult.score >= 86 ? "bg-green-500" : qcResult.score >= 66 ? "bg-amber-500" : "bg-red-500"
+                    }`}
                     style={{ width: `${qcResult.score}%` }}
                   />
                 </div>
-                <div className="flex gap-3 mt-1.5 text-[9px]">
+
+                {/* IVS Standards Breakdown */}
+                {(qcResult as any).standard_results && (
+                  <div className="space-y-1.5">
+                    <p className="text-[10px] font-semibold text-muted-foreground">تفصيل المعايير</p>
+                    {((qcResult as any).standard_results as any[]).map((sr: any) => (
+                      <div key={sr.code} className="flex items-center gap-2 text-[10px]">
+                        <span className="w-[120px] truncate text-muted-foreground">{sr.title_ar}</span>
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${
+                              sr.score_pct >= 86 ? "bg-green-500" : sr.score_pct >= 66 ? "bg-amber-500" : "bg-red-500"
+                            }`}
+                            style={{ width: `${sr.score_pct}%` }}
+                          />
+                        </div>
+                        <span className="w-8 text-left font-medium">{sr.score_pct}%</span>
+                        <span className="text-muted-foreground">({sr.passed_items}/{sr.total_items})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Summary counters */}
+                <div className="flex gap-3 text-[9px]">
                   <span className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full bg-red-500" />
                     إلزامي: {qcResult.failed_mandatory > 0 ? `${qcResult.failed_mandatory} فشل` : "✓"}
