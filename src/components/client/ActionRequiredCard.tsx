@@ -91,11 +91,14 @@ export default function ActionRequiredCard({ request }: ActionRequiredCardProps)
 
   if (!request) {
     return (
-      <Card className="border-primary/20 bg-primary/5">
+      <Card className="border-primary/20 bg-primary/5 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5">
         <CardContent className="p-5 text-center space-y-3">
           <p className="text-sm text-foreground font-medium">ابدأ أول طلب تقييم</p>
-          <p className="text-xs text-muted-foreground">ارفع صورك وملفاتك واترك الباقي علينا</p>
-          <Button onClick={() => navigate("/client/new-request")} className="w-full">
+          <p className="text-xs text-muted-foreground/70">ارفع صورك وملفاتك واترك الباقي علينا</p>
+          <Button
+            onClick={() => navigate("/client/new-request")}
+            className="w-full bg-gradient-to-l from-primary to-primary/90 hover:brightness-105 transition-all"
+          >
             طلب تقييم جديد
           </Button>
         </CardContent>
