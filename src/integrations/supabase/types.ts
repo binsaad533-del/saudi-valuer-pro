@@ -1360,6 +1360,140 @@ export type Database = {
           },
         ]
       }
+      document_analyses: {
+        Row: {
+          accounting_standards: string | null
+          ai_model_used: string | null
+          analyzed_by: string | null
+          anomalies: Json | null
+          assignment_id: string | null
+          compliance_status: Json | null
+          confidence_score: number | null
+          consistency_passed: boolean | null
+          created_at: string
+          error_message: string | null
+          executive_brief: Json | null
+          extracted_metrics: Json | null
+          file_classifications: Json | null
+          gap_impact_summary: string | null
+          id: string
+          identified_gaps: Json | null
+          ivs_alignment: string | null
+          key_metrics: Json | null
+          methodology_justification: string | null
+          methodology_mapping: Json | null
+          organization_id: string | null
+          pipeline_version: string | null
+          processing_duration_ms: number | null
+          recommendations: Json | null
+          recommended_methodology: string | null
+          request_id: string | null
+          required_decision: string | null
+          source_files: Json
+          status: string | null
+          taqeem_alignment: string | null
+          updated_at: string
+          validation_results: Json | null
+        }
+        Insert: {
+          accounting_standards?: string | null
+          ai_model_used?: string | null
+          analyzed_by?: string | null
+          anomalies?: Json | null
+          assignment_id?: string | null
+          compliance_status?: Json | null
+          confidence_score?: number | null
+          consistency_passed?: boolean | null
+          created_at?: string
+          error_message?: string | null
+          executive_brief?: Json | null
+          extracted_metrics?: Json | null
+          file_classifications?: Json | null
+          gap_impact_summary?: string | null
+          id?: string
+          identified_gaps?: Json | null
+          ivs_alignment?: string | null
+          key_metrics?: Json | null
+          methodology_justification?: string | null
+          methodology_mapping?: Json | null
+          organization_id?: string | null
+          pipeline_version?: string | null
+          processing_duration_ms?: number | null
+          recommendations?: Json | null
+          recommended_methodology?: string | null
+          request_id?: string | null
+          required_decision?: string | null
+          source_files?: Json
+          status?: string | null
+          taqeem_alignment?: string | null
+          updated_at?: string
+          validation_results?: Json | null
+        }
+        Update: {
+          accounting_standards?: string | null
+          ai_model_used?: string | null
+          analyzed_by?: string | null
+          anomalies?: Json | null
+          assignment_id?: string | null
+          compliance_status?: Json | null
+          confidence_score?: number | null
+          consistency_passed?: boolean | null
+          created_at?: string
+          error_message?: string | null
+          executive_brief?: Json | null
+          extracted_metrics?: Json | null
+          file_classifications?: Json | null
+          gap_impact_summary?: string | null
+          id?: string
+          identified_gaps?: Json | null
+          ivs_alignment?: string | null
+          key_metrics?: Json | null
+          methodology_justification?: string | null
+          methodology_mapping?: Json | null
+          organization_id?: string | null
+          pipeline_version?: string | null
+          processing_duration_ms?: number | null
+          recommendations?: Json | null
+          recommended_methodology?: string | null
+          request_id?: string | null
+          required_decision?: string | null
+          source_files?: Json
+          status?: string | null
+          taqeem_alignment?: string | null
+          updated_at?: string
+          validation_results?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_analyses_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "v_recent_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_analyses_assignment_id_fkey"
+            columns: ["assignment_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_assignments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_analyses_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_analyses_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "valuation_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_send_log: {
         Row: {
           created_at: string
