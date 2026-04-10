@@ -45,6 +45,36 @@ const SAMPLE = {
     { caption: "لوحة التحكم الرئيسية" },
     { caption: "معدات ورشة الصيانة" },
   ],
+  /* ── Real Estate Assets ── */
+  realEstateAssets: [
+    { type: "مبنى المصنع الرئيسي", area: "2,400 م²", value: "8,500,000" },
+    { type: "مستودع التخزين", area: "800 م²", value: "2,200,000" },
+  ],
+  realEstateTotal: "10,700,000",
+  realEstateMethodology: "أسلوب المقارنة السوقية (Sales Comparison) — IVS 400",
+  realEstateMethodReason: "توفر بيانات سوقية كافية لعقارات صناعية مماثلة في المنطقة",
+  realEstateAssumptions: [
+    "الصك مطابق للواقع ولا توجد نزاعات ملكية",
+    "لا توجد أعباء أو رهون غير مفصح عنها",
+    "الحالة الإنشائية بناءً على المعاينة الظاهرية فقط",
+  ],
+  /* ── Machinery Assets ── */
+  machineryAssets: [
+    { type: "خطوط إنتاج", qty: 3, value: "7,200,000" },
+    { type: "مولدات كهربائية", qty: 5, value: "1,850,000" },
+    { type: "رافعات صناعية", qty: 8, value: "1,400,000" },
+    { type: "أنظمة تبريد", qty: 4, value: "980,000" },
+    { type: "معدات مساندة", qty: 12, value: "1,320,000" },
+  ],
+  machineryTotal: "12,750,000",
+  machineryMethodology: "أسلوب التكلفة المستبدلة مع الاستهلاك (DRC) — IVS 300",
+  machineryMethodReason: "أصول متخصصة نادراً ما تُباع في سوق مفتوح، والتكلفة المستبدلة هي الأنسب",
+  machineryAssumptions: [
+    "جميع الآلات في حالة تشغيلية وقت المعاينة",
+    "العمر الإنتاجي المتبقي مقدّر بناءً على ساعات التشغيل وسجلات الصيانة",
+    "لا توجد التزامات مالية أو رهونات على المعدات",
+  ],
+  /* ── Combined ── */
   assets: [
     { type: "خطوط إنتاج", qty: 3, value: "7,200,000" },
     { type: "مولدات كهربائية", qty: 5, value: "1,850,000" },
@@ -52,8 +82,10 @@ const SAMPLE = {
     { type: "أنظمة تبريد", qty: 4, value: "980,000" },
     { type: "معدات مساندة", qty: 12, value: "1,320,000" },
   ],
-  estimatedValue: "12,750,000",
-  estimatedValueText: "اثنا عشر مليوناً وسبعمائة وخمسون ألف ريال سعودي",
+  combinedTotal: "23,450,000",
+  combinedTotalText: "ثلاثة وعشرون مليوناً وأربعمائة وخمسون ألف ريال سعودي",
+  estimatedValue: "23,450,000",
+  estimatedValueText: "ثلاثة وعشرون مليوناً وأربعمائة وخمسون ألف ريال سعودي",
   currency: "SAR",
   attachmentIntelligence: {
     financialMetrics: [
@@ -149,7 +181,7 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 18;
+const TOTAL_PAGES = 20;
 
 /* ── Company & Valuer Identity (read-only — sourced from shared identity) ── */
 import { JSAAS_IDENTITY, getReportFooterText } from "@/lib/company-identity";
@@ -177,11 +209,13 @@ const TOC = [
   { id: "methodology", num: 9, title: "المنهجية" },
   { id: "assumptions", num: 10, title: "الافتراضات والقيود" },
   { id: "assumption-impact", num: 11, title: "تحليل تأثير الافتراضات" },
-  { id: "final-value", num: 12, title: "النتيجة النهائية" },
-  { id: "data-sources", num: 13, title: "مصادر البيانات" },
-  { id: "risk-statement", num: 14, title: "بيان المخاطر" },
-  { id: "disclosures", num: 15, title: "الإفصاحات" },
-  { id: "accreditation", num: 16, title: "الاعتماد والتوقيع" },
+  { id: "re-valuation", num: 12, title: "تقييم العقار" },
+  { id: "me-valuation", num: 13, title: "تقييم الآلات والمعدات" },
+  { id: "combined-value", num: 14, title: "القيمة الإجمالية المركبة" },
+  { id: "data-sources", num: 15, title: "مصادر البيانات" },
+  { id: "risk-statement", num: 16, title: "بيان المخاطر" },
+  { id: "disclosures", num: 17, title: "الإفصاحات" },
+  { id: "accreditation", num: 18, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
@@ -373,8 +407,8 @@ function CoverPage({ mode, versionNum }: { mode: "draft" | "final"; versionNum: 
         </div>
         <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-foreground tracking-tight">تقرير تقييم</h1>
-            <h2 className="text-xl font-semibold text-primary">الآلات والمعدات</h2>
+            <h1 className="text-3xl font-bold text-foreground tracking-tight">تقرير تقييم مركب</h1>
+            <h2 className="text-xl font-semibold text-primary">عقار + آلات ومعدات</h2>
           </div>
           <Separator className="w-24 mx-auto" />
           <div className="space-y-3 text-sm text-muted-foreground">
@@ -849,50 +883,189 @@ function AssumptionImpactPage() {
   );
 }
 
-/* ── Asset Table + Final Value ── */
-function AssetTablePage() {
-  const total = SAMPLE.assets
-    .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
-    .toLocaleString("en-US");
+/* ══════════════════════════════════════════════
+   Mixed Valuation — Discipline-Separated Sections
+   ══════════════════════════════════════════════ */
 
+/* ── 12. Real Estate Valuation ── */
+function RealEstateValuationPage() {
   return (
     <PageShell pageNum={13}>
       <div className="space-y-5">
-        <SectionTitle id="final-value" num={12} title="النتيجة النهائية" />
+        <SectionTitle id="re-valuation" num={12} title="تقييم العقار" />
 
+        <div className="border border-primary/20 rounded-lg px-4 py-2 bg-primary/5">
+          <p className="text-[10px] text-primary font-semibold">التخصص: عقار — IVS 400</p>
+        </div>
+
+        {/* Methodology */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">المنهجية المعتمدة</p>
+          <p className="text-sm text-foreground">{SAMPLE.realEstateMethodology}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            السبب: {SAMPLE.realEstateMethodReason}
+          </p>
+        </div>
+
+        {/* Assumptions */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">الافتراضات الخاصة بالعقار</p>
+          {SAMPLE.realEstateAssumptions.map((a, i) => <Bullet key={i}>{a}</Bullet>)}
+        </div>
+
+        {/* Assets table */}
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
-              <th className="text-right py-2.5 font-semibold text-foreground">نوع الأصل</th>
-              <th className="text-center py-2.5 font-semibold text-foreground w-20">الكمية</th>
-              <th className="text-left py-2.5 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
+              <th className="text-right py-2 font-semibold text-foreground">الأصل العقاري</th>
+              <th className="text-center py-2 font-semibold text-foreground w-24">المساحة</th>
+              <th className="text-left py-2 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
             </tr>
           </thead>
           <tbody>
-            {SAMPLE.assets.map((asset, i) => (
+            {SAMPLE.realEstateAssets.map((a, i) => (
               <tr key={i} className="border-b border-border/50">
-                <td className="py-2 text-muted-foreground">{asset.type}</td>
-                <td className="py-2 text-center text-muted-foreground">{asset.qty}</td>
-                <td className="py-2 text-left text-muted-foreground" dir="ltr">{asset.value}</td>
+                <td className="py-2 text-muted-foreground">{a.type}</td>
+                <td className="py-2 text-center text-muted-foreground">{a.area}</td>
+                <td className="py-2 text-left text-muted-foreground" dir="ltr">{a.value}</td>
               </tr>
             ))}
           </tbody>
           <tfoot>
             <tr className="border-t-2 border-foreground/20">
-              <td className="py-3 font-bold text-foreground">الإجمالي</td>
+              <td colSpan={2} className="py-3 font-bold text-foreground">إجمالي قيمة العقار</td>
+              <td className="py-3 text-left font-bold text-primary" dir="ltr">{SAMPLE.realEstateTotal}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <ValueBox label="القيمة السوقية العادلة — العقار" value={SAMPLE.realEstateTotal} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── 13. Machinery & Equipment Valuation ── */
+function MachineryValuationPage() {
+  const total = SAMPLE.machineryAssets
+    .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
+    .toLocaleString("en-US");
+
+  return (
+    <PageShell pageNum={14}>
+      <div className="space-y-5">
+        <SectionTitle id="me-valuation" num={13} title="تقييم الآلات والمعدات" />
+
+        <div className="border border-primary/20 rounded-lg px-4 py-2 bg-primary/5">
+          <p className="text-[10px] text-primary font-semibold">التخصص: آلات ومعدات — IVS 300</p>
+        </div>
+
+        {/* Methodology */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">المنهجية المعتمدة</p>
+          <p className="text-sm text-foreground">{SAMPLE.machineryMethodology}</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            السبب: {SAMPLE.machineryMethodReason}
+          </p>
+        </div>
+
+        {/* Assumptions */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-foreground">الافتراضات الخاصة بالآلات والمعدات</p>
+          {SAMPLE.machineryAssumptions.map((a, i) => <Bullet key={i}>{a}</Bullet>)}
+        </div>
+
+        {/* Assets table */}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-right py-2 font-semibold text-foreground">نوع المعدة</th>
+              <th className="text-center py-2 font-semibold text-foreground w-20">الكمية</th>
+              <th className="text-left py-2 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {SAMPLE.machineryAssets.map((a, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="py-2 text-muted-foreground">{a.type}</td>
+                <td className="py-2 text-center text-muted-foreground">{a.qty}</td>
+                <td className="py-2 text-left text-muted-foreground" dir="ltr">{a.value}</td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-foreground/20">
+              <td className="py-3 font-bold text-foreground">إجمالي قيمة الآلات والمعدات</td>
               <td className="py-3 text-center font-bold text-foreground">
-                {SAMPLE.assets.reduce((s, a) => s + a.qty, 0)}
+                {SAMPLE.machineryAssets.reduce((s, a) => s + a.qty, 0)}
               </td>
               <td className="py-3 text-left font-bold text-primary" dir="ltr">{total}</td>
             </tr>
           </tfoot>
         </table>
 
+        <ValueBox label="القيمة السوقية العادلة — الآلات والمعدات" value={SAMPLE.machineryTotal} />
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── 14. Combined Final Value ── */
+function CombinedValuePage() {
+  return (
+    <PageShell pageNum={15}>
+      <div className="space-y-5">
+        <SectionTitle id="combined-value" num={14} title="القيمة الإجمالية المركبة" />
+
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          يجمع هذا القسم نتائج التقييم المنفصلة لكلا التخصصين (العقار والآلات والمعدات) في قيمة إجمالية موحدة.
+        </p>
+
+        {/* Summary table */}
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-right py-2.5 font-semibold text-foreground">التخصص</th>
+              <th className="text-center py-2.5 font-semibold text-foreground w-28">المعيار</th>
+              <th className="text-center py-2.5 font-semibold text-foreground w-28">المنهجية</th>
+              <th className="text-left py-2.5 font-semibold text-foreground w-36" dir="ltr">القيمة (SAR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-b border-border/50">
+              <td className="py-2.5 text-foreground font-medium">العقار</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">IVS 400</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">مقارنة سوقية</td>
+              <td className="py-2.5 text-left text-foreground font-semibold" dir="ltr">{SAMPLE.realEstateTotal}</td>
+            </tr>
+            <tr className="border-b border-border/50">
+              <td className="py-2.5 text-foreground font-medium">الآلات والمعدات</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">IVS 300</td>
+              <td className="py-2.5 text-center text-muted-foreground text-xs">تكلفة مستبدلة (DRC)</td>
+              <td className="py-2.5 text-left text-foreground font-semibold" dir="ltr">{SAMPLE.machineryTotal}</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-primary/30">
+              <td colSpan={3} className="py-3 font-bold text-foreground text-base">القيمة الإجمالية المركبة</td>
+              <td className="py-3 text-left font-bold text-primary text-base" dir="ltr">{SAMPLE.combinedTotal}</td>
+            </tr>
+          </tfoot>
+        </table>
+
         <ValueBox
-          label="القيمة السوقية العادلة"
-          value={SAMPLE.estimatedValue}
-          subtext={SAMPLE.estimatedValueText}
+          label="إجمالي القيمة السوقية العادلة — تقييم مركب"
+          value={SAMPLE.combinedTotal}
+          subtext={SAMPLE.combinedTotalText}
         />
+
+        <div className="border border-border rounded-lg px-4 py-3 space-y-1">
+          <p className="text-xs font-semibold text-foreground">ملاحظة مهنية</p>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            تم تقييم كل تخصص بشكل مستقل وفقاً للمعايير الدولية المعتمدة (IVS 300 للآلات وIVS 400 للعقار)،
+            مع فصل كامل للافتراضات والمنهجيات. القيمة الإجمالية تمثل مجموع التقييمين دون أي تعديل محفظة.
+          </p>
+        </div>
       </div>
     </PageShell>
   );
@@ -917,9 +1090,9 @@ function DataSourcesPage() {
   const incomplete = SAMPLE.dataSources.filter(d => d.reliability === "غير مكتمل").length;
 
   return (
-    <PageShell pageNum={14}>
+    <PageShell pageNum={16}>
       <div className="space-y-4">
-        <SectionTitle id="data-sources" num={13} title="مصادر البيانات" />
+        <SectionTitle id="data-sources" num={15} title="مصادر البيانات" />
 
         {/* Summary bar */}
         <div className="flex gap-3 text-xs">
@@ -980,9 +1153,9 @@ function RiskStatementPage() {
   ];
 
   return (
-    <PageShell pageNum={15}>
+    <PageShell pageNum={17}>
       <div className="space-y-4">
-        <SectionTitle id="risk-statement" num={14} title="بيان المخاطر" />
+        <SectionTitle id="risk-statement" num={16} title="بيان المخاطر" />
         <p className="text-[11px] text-muted-foreground leading-relaxed">
           يوضح هذا القسم المخاطر المرتبطة بنتيجة التقييم والتي يجب أخذها بعين الاعتبار عند اتخاذ القرار.
         </p>
@@ -1007,9 +1180,9 @@ function RiskStatementPage() {
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={16}>
+    <PageShell pageNum={18}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={15} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={17} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -1025,7 +1198,7 @@ function DisclosuresPage() {
 /* ── Professional Disclaimer (before signature) ── */
 function DisclaimerPage() {
   return (
-    <PageShell pageNum={17}>
+    <PageShell pageNum={19}>
       <ReportDisclaimerSection />
     </PageShell>
   );
@@ -1034,7 +1207,7 @@ function DisclaimerPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={18}>
+    <PageShell pageNum={20}>
       <ReportAccreditationSection />
     </PageShell>
   );
@@ -1200,7 +1373,9 @@ export default function JasasReportPreview() {
         <AnalysisPage />
         <AssumptionsPage />
         <AssumptionImpactPage />
-        <AssetTablePage />
+        <RealEstateValuationPage />
+        <MachineryValuationPage />
+        <CombinedValuePage />
         <DataSourcesPage />
         <RiskStatementPage />
         <DisclosuresPage />
