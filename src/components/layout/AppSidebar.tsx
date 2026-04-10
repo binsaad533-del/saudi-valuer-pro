@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Settings, LogOut, BookOpen, FileText,
   Users, UserCheck, ClipboardList, Archive, BarChart3,
   DollarSign, Shield, Search, Activity, Bell, Briefcase,
-  TrendingUp, MapPin, Scale,
+  TrendingUp, MapPin, Scale, MessageSquare,
   Zap,
 } from "lucide-react";
 import RaqeemIcon from "@/components/ui/RaqeemIcon";
