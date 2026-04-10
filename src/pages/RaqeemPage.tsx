@@ -131,35 +131,7 @@ export default function RaqeemPage() {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
-  // ── Proactive daily briefing on first load (owner only) ──
-  useEffect(() => {
-    if (initCalledRef.current) return;
-    if (!user || messages.length > 0) return;
-    const effectiveRole = role || "owner";
-    if (effectiveRole !== "owner" && effectiveRole !== "admin_coordinator" && effectiveRole !== "valuation_manager" && effectiveRole !== "valuer") return;
-    
-    // Don't auto-init if there's a specific assignment context (user navigated from a specific request)
-    if (platformContextRef.current.assignment_id) return;
-    
-    initCalledRef.current = true;
-    
-    // Auto-send daily briefing request
-    const briefingMsg: Message = { role: "user", content: "الإحاطة اليومية: أعطني ملخص تنفيذي للمنصة مع التنبيهات والقرارات المطلوبة" };
-    const initMessages = [briefingMsg];
-    setMessages(initMessages);
-    setIsLoading(true);
-    
-    // Small delay to ensure streamChat is ready
-    setTimeout(async () => {
-      try {
-        await streamChat(initMessages);
-      } catch (e) {
-        console.error("Auto-briefing failed:", e);
-      } finally {
-        setIsLoading(false);
-      }
-    }, 500);
-  }, [user, role, messages.length, streamChat]);
+  // ── Proactive daily briefing — defined after streamChat (see below) ──
 
   const streamChat = useCallback(async (allMessages: Message[]) => {
     const token = (await supabase.auth.getSession()).data.session?.access_token;
