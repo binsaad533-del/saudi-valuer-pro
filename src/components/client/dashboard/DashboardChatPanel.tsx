@@ -40,6 +40,21 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
   const [initialized, setInitialized] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const initCalledRef = useRef(false);
+  const messagesRef = useRef<ChatMessage[]>([]);
+
+  const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
+    messagesRef.current = nextMessages;
+    setMessages(nextMessages);
+  }, []);
+
+  const appendMessage = useCallback((message: ChatMessage) => {
+    replaceMessages([...messagesRef.current, message]);
+  }, [replaceMessages]);
+
+  const seedInitialMessage = useCallback((message: ChatMessage) => {
+    if (messagesRef.current.length > 0) return;
+    replaceMessages([message]);
+  }, [replaceMessages]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,55 +75,53 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
           },
         });
         if (!error && data?.reply) {
-          setMessages([{ id: `ai-0`, role: "assistant", content: data.reply }]);
+          seedInitialMessage({ id: `ai-0`, role: "assistant", content: data.reply });
         } else {
-          setMessages([{ id: `ai-0`, role: "assistant", content: `مرحباً ${userName} 👋\nكيف يمكنني مساعدتك؟` }]);
+          seedInitialMessage({ id: `ai-0`, role: "assistant", content: `مرحباً ${userName} 👋\nكيف يمكنني مساعدتك؟` });
         }
       } catch {
-        setMessages([{ id: `ai-0`, role: "assistant", content: `مرحباً ${userName} 👋\nكيف يمكنني مساعدتك؟` }]);
+        seedInitialMessage({ id: `ai-0`, role: "assistant", content: `مرحباً ${userName} 👋\nكيف يمكنني مساعدتك؟` });
       }
       setInitialized(true);
     };
     init();
-  }, [userId, userName]);
+  }, [userId, userName, seedInitialMessage]);
 
   const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || sending) return;
-    setMessages(prev => [...prev, { id: `u-${Date.now()}`, role: "user", content: text }]);
+    const trimmedText = text.trim();
+    if (!trimmedText || sending) return;
+
+    appendMessage({ id: `u-${Date.now()}`, role: "user", content: trimmedText });
     setInput("");
     setSending(true);
 
     try {
-      let history: { content: string; sender_type: string }[] = [];
-      setMessages(prev => {
-        history = prev.slice(-12).map(m => ({
-          content: m.content,
-          sender_type: m.role === "user" ? "client" : "ai",
-        }));
-        return prev;
-      });
+      const history = messagesRef.current.slice(-12).map((message) => ({
+        content: message.content,
+        sender_type: message.role === "user" ? "client" : "ai",
+      }));
 
       const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
-          message: text,
+          message: trimmedText,
           is_global_chat: true,
-          conversationHistory: [...history, { content: text, sender_type: "client" }],
+          conversationHistory: history,
           requestContext: { client_user_id: userId },
         },
       });
 
       if (error) throw error;
       if (data?.reply) {
-        setMessages(prev => [...prev, { id: `ai-${Date.now()}`, role: "assistant", content: data.reply }]);
+        appendMessage({ id: `ai-${Date.now()}`, role: "assistant", content: data.reply });
       }
       if (data?.newRequestTriggered) navigate("/client/new-request");
       if (data?.switchedRequestId) navigate(`/client/request/${data.switchedRequestId}`);
     } catch {
-      setMessages(prev => [...prev, { id: `err-${Date.now()}`, role: "assistant", content: AI.errorMessage }]);
+      appendMessage({ id: `err-${Date.now()}`, role: "assistant", content: AI.errorMessage });
     } finally {
       setSending(false);
     }
-  }, [sending, userId, navigate]);
+  }, [sending, userId, navigate, appendMessage]);
 
   return (
     <Card className="overflow-hidden">
