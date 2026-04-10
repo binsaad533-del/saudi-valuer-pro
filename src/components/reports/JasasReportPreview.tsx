@@ -1202,6 +1202,7 @@ export default function JasasReportPreview() {
       <div ref={containerRef} className="space-y-8">
         <CoverPage mode={mode} versionNum={versionNum} />
         <TOCPage onNavigate={scrollToSection} />
+        <ClientSummaryPage />
         <ExecSummaryPage />
         <ScopePage />
         <DocumentsPage />
