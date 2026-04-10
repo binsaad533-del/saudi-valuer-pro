@@ -4,18 +4,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import ReactMarkdown from "react-markdown";
 import {
-  FileText, Loader2, Send, Upload, Download, CheckCircle, User,
+  FileText, Loader2, Upload, Download, CheckCircle,
   ChevronDown, ChevronUp,
 } from "lucide-react";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
 import RaqeemAnimatedLogo from "@/components/client/RaqeemAnimatedLogo";
-import RaqeemTypingIndicator from "@/components/client/chat/RaqeemTypingIndicator";
-import QuickActionButtons from "@/components/client/chat/QuickActionButtons";
-import MessageRating from "@/components/client/chat/MessageRating";
 import PaymentCheckout from "@/components/payments/PaymentCheckout";
 import DraftReportReview from "@/components/client/DraftReportReview";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
@@ -30,123 +25,42 @@ export default function RequestDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const chatEndRef = useRef<HTMLDivElement>(null);
-  const chatFileRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const docFileRef = useRef<HTMLInputElement>(null);
 
   const [request, setRequest] = useState<any>(null);
-  const [messages, setMessages] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [uploading, setUploading] = useState(false);
-  const [aiTyping, setAiTyping] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  const [paymentRefreshKey, setPaymentRefreshKey] = useState(0);
+  const [_paymentRefreshKey, setPaymentRefreshKey] = useState(0);
 
   const loadData = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { navigate("/login"); return; }
     setUser(user);
-    const [reqRes, msgRes, docRes] = await Promise.all([
+    const [reqRes, docRes] = await Promise.all([
       supabase.from("valuation_requests" as any).select("*").eq("id", id!).single(),
-      supabase.from("request_messages" as any).select("*").eq("request_id", id!).order("created_at"),
       supabase.from("request_documents" as any).select("*").eq("request_id", id!).order("created_at"),
     ]);
     setRequest(reqRes.data);
-    setMessages(msgRes.data || []);
     setDocuments(docRes.data || []);
     setLoading(false);
   };
 
-  useEffect(() => {
-    loadData();
-    const channel = supabase
-      .channel(`request-messages-${id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "request_messages", filter: `request_id=eq.${id}` },
-        (payload) => {
-          const newMsg = payload.new as any;
-          setMessages(prev => {
-            const dominated = prev.some(m => m.id === newMsg.id || (m.id?.startsWith("local-ai-") && m.sender_type === newMsg.sender_type && m.content === newMsg.content));
-            if (dominated) return prev.map(m => m.id?.startsWith("local-ai-") && m.sender_type === newMsg.sender_type && m.content === newMsg.content ? newMsg : m);
-            return [...prev, newMsg];
-          });
-        })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [id, navigate]);
+  useEffect(() => { loadData(); }, [id, navigate]);
 
-  useRealtimeAssignment(request?.assignment_id, async (newStatus, oldStatus) => {
+  useRealtimeAssignment(request?.assignment_id, async (newStatus, _oldStatus) => {
     toast({ title: "تحديث حالة الطلب", description: `تم تغيير الحالة إلى: ${getStatusLabel(newStatus)}` });
     loadData();
   });
-
-  useEffect(() => {
-    chatEndRef.current?.parentElement && (chatEndRef.current.parentElement.scrollTop = chatEndRef.current.parentElement.scrollHeight);
-  }, [messages]);
 
   const getStatusLabel = (status: string) => {
     const wf = WF_STATUS_LABELS[status];
     if (wf) return wf.client_ar || wf.ar;
     return status;
-  };
-
-  const callRaqeemAI = async (clientMessage: string) => {
-    setAiTyping(true);
-    try {
-      const conversationHistory = messages.slice(-16).map(m => ({ content: m.content, sender_type: m.sender_type }));
-      const valuationMode = request?.ai_intake_summary?.valuation_mode || request?.inspection_type || "field";
-      const { data: functionData, error } = await supabase.functions.invoke("raqeem-client-chat", {
-        body: {
-          message: clientMessage, request_id: id, conversationHistory,
-          requestContext: {
-            assignment_id: request?.assignment_id, reference_number: request?.reference_number,
-            status: request?.status, status_label: getStatusLabel(request?.status),
-            valuation_mode: valuationMode, total_fees: request?.total_fees,
-          },
-        },
-      });
-      if (error) { toast({ title: "تعذر الرد حالياً", variant: "destructive" }); return; }
-      const reply = functionData?.reply?.trim();
-      if (!reply) return;
-      setMessages(prev => {
-        if (prev.some(m => m.sender_type === "ai" && m.content === reply)) return prev;
-        return [...prev, { id: `local-ai-${Date.now()}`, sender_type: "ai", content: reply, created_at: new Date().toISOString() }];
-      });
-    } catch { toast({ title: "تعذر الرد حالياً", variant: "destructive" }); }
-    finally { setAiTyping(false); }
-  };
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !user) return;
-    const msgText = newMessage.trim();
-    setSending(true);
-    try {
-      await supabase.from("request_messages" as any).insert({ request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msgText });
-      setNewMessage("");
-      callRaqeemAI(msgText);
-    } finally { setSending(false); }
-  };
-
-  const handleChatFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-    setUploading(true);
-    try {
-      const safeName = file.name.replace(/[^\p{L}\p{N}._()-]+/gu, "-");
-      const filePath = `${user.id}/chat/${Date.now()}_${safeName}`;
-      const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
-      if (uploadErr) throw uploadErr;
-      await supabase.from("request_documents" as any).insert({ request_id: id!, uploaded_by: user.id, file_name: file.name, file_path: filePath, file_size: file.size, mime_type: file.type });
-      const icon = file.type.startsWith("image/") ? "🖼️" : "📎";
-      await supabase.from("request_messages" as any).insert({ request_id: id!, sender_id: user.id, sender_type: "client" as any, content: `${icon} مرفق: ${file.name}` });
-      toast({ title: "تم رفع المرفق" });
-      loadData();
-      callRaqeemAI(`تم رفع ملف جديد: ${file.name}`);
-    } catch (err: any) { toast({ title: "خطأ", description: err.message, variant: "destructive" }); }
-    finally { setUploading(false); if (chatFileRef.current) chatFileRef.current.value = ""; }
   };
 
   const handleUploadReceipt = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -165,6 +79,22 @@ export default function RequestDetails() {
       loadData();
     } catch (err: any) { toast({ title: "خطأ", description: err.message, variant: "destructive" }); }
     finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ""; }
+  };
+
+  const handleDocUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploading(true);
+    try {
+      const safeName = file.name.replace(/[^\p{L}\p{N}._()-]+/gu, "-");
+      const filePath = `${user.id}/docs/${Date.now()}_${safeName}`;
+      const { error: uploadErr } = await supabase.storage.from("client-uploads").upload(filePath, file);
+      if (uploadErr) throw uploadErr;
+      await supabase.from("request_documents" as any).insert({ request_id: id!, uploaded_by: user.id, file_name: file.name, file_path: filePath, file_size: file.size, mime_type: file.type });
+      toast({ title: "تم رفع المستند" });
+      loadData();
+    } catch (err: any) { toast({ title: "خطأ", description: err.message, variant: "destructive" }); }
+    finally { setUploading(false); if (docFileRef.current) docFileRef.current.value = ""; }
   };
 
   if (loading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
@@ -211,13 +141,13 @@ export default function RequestDetails() {
       </div>
 
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-4">
-        {/* Primary CTA */}
+        {/* Primary CTA — "المطلوب الآن" */}
         {primaryCTA && (
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-4 space-y-3">
               <p className="text-sm font-bold text-foreground">المطلوب الآن</p>
 
-              {/* SOW Approval inline */}
+              {/* SOW Approval */}
               {primaryCTA.action === "sow" && (
                 <div className="space-y-3">
                   <div className="p-3 bg-card rounded-lg border text-xs max-h-40 overflow-y-auto">
@@ -263,7 +193,7 @@ export default function RequestDetails() {
                 </div>
               )}
 
-              {/* Draft */}
+              {/* Draft Report */}
               {primaryCTA.action === "draft" && (
                 <DraftReportReview requestId={id!} userId={user?.id || ""} paymentStructure={request.payment_structure} onStatusChange={loadData} />
               )}
@@ -280,8 +210,8 @@ export default function RequestDetails() {
               {/* Upload docs */}
               {primaryCTA.action === "upload" && (
                 <div className="space-y-2">
-                  <input ref={chatFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls" onChange={handleChatFileUpload} />
-                  <Button className="w-full" onClick={() => chatFileRef.current?.click()} disabled={uploading}>
+                  <input ref={docFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls" onChange={handleDocUpload} />
+                  <Button className="w-full" onClick={() => docFileRef.current?.click()} disabled={uploading}>
                     {uploading ? <Loader2 className="w-4 h-4 animate-spin ml-1" /> : <Upload className="w-4 h-4 ml-1" />}
                     ارفع المستندات
                   </Button>
@@ -291,7 +221,33 @@ export default function RequestDetails() {
           </Card>
         )}
 
-        {/* Collapsible Details */}
+        {/* No action needed — show raqeem CTA */}
+        {!primaryCTA && (
+          <Card>
+            <CardContent className="p-5 text-center space-y-3">
+              <p className="text-sm text-muted-foreground">طلبك قيد المعالجة — لا يوجد إجراء مطلوب منك الآن</p>
+              <Button variant="outline" className="gap-2" onClick={() => navigate("/client/chat")}>
+                <RaqeemAnimatedLogo size={18} />
+                الذهاب إلى رقيم
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Raqeem navigation — always visible */}
+        {primaryCTA && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs gap-1.5 text-primary"
+            onClick={() => navigate("/client/chat")}
+          >
+            <RaqeemAnimatedLogo size={16} />
+            الذهاب إلى رقيم
+          </Button>
+        )}
+
+        {/* Collapsible Details + Documents */}
         <button
           onClick={() => setShowDetails(!showDetails)}
           className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full"
@@ -311,16 +267,13 @@ export default function RequestDetails() {
               )}
               <div><span className="text-muted-foreground">تاريخ الطلب: </span><span>{formatDate(request.created_at)}</span></div>
 
-              {/* Documents */}
               {documents.length > 0 && (
                 <div className="border-t border-border pt-3 space-y-2">
                   <p className="text-muted-foreground font-medium">المستندات</p>
                   {documents.map((doc: any) => (
-                    <div key={doc.id} className="flex items-center justify-between gap-2 bg-muted/30 rounded p-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <FileText className="w-3 h-3 text-muted-foreground shrink-0" />
-                        <span className="truncate">{doc.file_name}</span>
-                      </div>
+                    <div key={doc.id} className="flex items-center gap-2 bg-muted/30 rounded p-2">
+                      <FileText className="w-3 h-3 text-muted-foreground shrink-0" />
+                      <span className="truncate">{doc.file_name}</span>
                     </div>
                   ))}
                 </div>
@@ -328,74 +281,6 @@ export default function RequestDetails() {
             </CardContent>
           </Card>
         )}
-
-        {/* Chat with Raqeem */}
-        <Card className="min-h-[400px] flex flex-col">
-          <div className="px-4 py-3 border-b border-border flex items-center gap-2">
-            <RaqeemAnimatedLogo size={20} />
-            <span className="text-xs font-bold text-foreground">رقيم — مساعدك الذكي</span>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4 space-y-3 max-h-[50vh]">
-            {messages.map((msg) => {
-              const isClient = msg.sender_type === "client";
-              const isAI = msg.sender_type === "ai";
-              const isSystem = msg.sender_type === "system";
-              if (isSystem) return (
-                <div key={msg.id} className="flex justify-center">
-                  <div className="bg-muted/50 rounded-lg px-3 py-1.5 text-[10px] text-muted-foreground text-center">{msg.content}</div>
-                </div>
-              );
-              return (
-                <div key={msg.id} className={`flex gap-2 ${isClient ? "flex-row-reverse" : ""}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${isClient ? "bg-muted" : ""}`}>
-                    {isAI ? <RaqeemAnimatedLogo size={24} /> : <User className="w-3 h-3 text-muted-foreground" />}
-                  </div>
-                  <div className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${isClient ? "bg-primary text-primary-foreground" : "bg-card border text-foreground"}`}>
-                    {isAI ? <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl"><ReactMarkdown>{msg.content}</ReactMarkdown></div> : <p>{msg.content}</p>}
-                    <div className="flex items-center justify-between mt-1">
-                      <span className={`text-[10px] ${isClient ? "text-primary-foreground/60" : "text-muted-foreground"}`}>
-                        {new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      {isAI && <MessageRating messageId={msg.id} requestId={id!} />}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {aiTyping && <RaqeemTypingIndicator />}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="px-4 py-2 border-t border-border/50">
-            <QuickActionButtons
-              status={request.status}
-              valuationMode={valuationMode}
-              onAction={async (msg) => {
-                if (!user) return;
-                setSending(true);
-                try {
-                  await supabase.from("request_messages" as any).insert({ request_id: id!, sender_id: user.id, sender_type: "client" as any, content: msg });
-                  callRaqeemAI(msg);
-                } finally { setSending(false); }
-              }}
-              disabled={sending || aiTyping}
-            />
-          </div>
-
-          <div className="p-3 border-t border-border">
-            <div className="flex gap-2">
-              <Input value={newMessage} onChange={e => setNewMessage(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSendMessage()} placeholder="اسأل رقيم..." disabled={sending || uploading} className="flex-1 text-sm" />
-              <input ref={chatFileRef} type="file" className="hidden" accept="image/*,.pdf,.xlsx,.xls" onChange={handleChatFileUpload} />
-              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => chatFileRef.current?.click()} disabled={uploading}>
-                {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-              </Button>
-              <Button onClick={handleSendMessage} disabled={!newMessage.trim() || sending} size="icon" className="h-9 w-9">
-                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
-            </div>
-          </div>
-        </Card>
       </main>
     </div>
   );
