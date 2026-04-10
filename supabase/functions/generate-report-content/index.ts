@@ -94,11 +94,16 @@ serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { mode, sectionKey, sectionKeys, existingText, context } = body as {
+    const { mode, sectionKey, sectionKeys, existingText, context, qualityEnforcement } = body as {
       mode: Mode;
       sectionKey?: string;
       sectionKeys?: string[];
       existingText?: string;
+      qualityEnforcement?: {
+        enabled?: boolean;
+        score?: number;
+        warnings?: string[];
+      };
       context: {
         assetType?: string;
         assetDescription?: string;
