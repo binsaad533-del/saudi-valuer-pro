@@ -2,8 +2,8 @@
  * RaqeemChatPage — Universal Raqeem chat accessible to all authenticated users.
  * Supports file/image uploads of all types and sizes.
  */
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { Send, ArrowRight, Paperclip, X, FileText, Image, File, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -109,15 +109,31 @@ function getFileIcon(type: string) {
   return File;
 }
 
+interface PlatformContext {
+  assignment_id?: string;
+  request_id?: string;
+  reference_number?: string;
+  current_status?: string;
+  property_type?: string;
+  client_name?: string;
+  source_page?: string;
+  user_role?: string;
+}
+
 export default function RaqeemChatPage() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<Attachment[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
+  const [platformContext, setPlatformContext] = useState<PlatformContext>({});
+  const [contextLoading, setContextLoading] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -126,6 +142,85 @@ export default function RaqeemChatPage() {
 
   const suggestedPrompts = ROLE_PROMPTS[effectiveRole] || ROLE_PROMPTS.client;
   const quickActions = ROLE_QUICK_ACTIONS[effectiveRole] || ROLE_QUICK_ACTIONS.client;
+
+  // ── Load platform context from URL params or navigation state ──
+  useEffect(() => {
+    const navState = location.state as any;
+    const assignmentId = searchParams.get("assignment_id") || navState?.assignment_id;
+    const requestId = searchParams.get("request_id") || navState?.request_id;
+    const refNumber = searchParams.get("reference_number") || navState?.reference_number;
+    const sourcePage = navState?.source_page || document.referrer || location.pathname;
+
+    if (!assignmentId && !requestId) {
+      setPlatformContext({ user_role: effectiveRole, source_page: sourcePage });
+      return;
+    }
+
+    const ctx: PlatformContext = {
+      assignment_id: assignmentId || undefined,
+      request_id: requestId || undefined,
+      reference_number: refNumber || undefined,
+      user_role: effectiveRole,
+      source_page: sourcePage,
+    };
+
+    // Fetch full assignment details from DB
+    const fetchContext = async () => {
+      setContextLoading(true);
+      try {
+        if (assignmentId) {
+          const { data } = await supabase
+            .from("valuation_assignments")
+            .select("id, reference_number, status, property_type, notes, clients(name_ar)")
+            .eq("id", assignmentId)
+            .maybeSingle();
+          if (data) {
+            ctx.reference_number = ctx.reference_number || data.reference_number || undefined;
+            ctx.current_status = data.status || undefined;
+            ctx.property_type = data.property_type || undefined;
+            ctx.client_name = (data.clients as any)?.name_ar || undefined;
+          }
+          // Also get request_id if not provided
+          if (!requestId) {
+            const { data: reqData } = await supabase
+              .from("valuation_requests")
+              .select("id")
+              .eq("assignment_id", assignmentId)
+              .maybeSingle();
+            if (reqData) ctx.request_id = reqData.id;
+          }
+        } else if (requestId) {
+          const { data } = await supabase
+            .from("valuation_requests")
+            .select("id, assignment_id")
+            .eq("id", requestId)
+            .maybeSingle();
+          if (data?.assignment_id) {
+            ctx.assignment_id = data.assignment_id;
+            // Fetch assignment details
+            const { data: aData } = await supabase
+              .from("valuation_assignments")
+              .select("reference_number, status, property_type, clients(name_ar)")
+              .eq("id", data.assignment_id)
+              .maybeSingle();
+            if (aData) {
+              ctx.reference_number = aData.reference_number || undefined;
+              ctx.current_status = aData.status || undefined;
+              ctx.property_type = aData.property_type || undefined;
+              ctx.client_name = (aData.clients as any)?.name_ar || undefined;
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Context fetch error:", e);
+      } finally {
+        setPlatformContext(ctx);
+        setContextLoading(false);
+      }
+    };
+
+    fetchContext();
+  }, [searchParams, location.state, effectiveRole]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -252,6 +347,7 @@ export default function RaqeemChatPage() {
           userRole: effectiveRole,
           userId: user?.id,
           attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
+          platformContext: (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined,
         }),
       });
 
@@ -299,7 +395,7 @@ export default function RaqeemChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, effectiveRole]);
+  }, [messages, isLoading, effectiveRole, platformContext]);
 
   const handleSend = () => {
     sendMessage(input, attachedFiles);
@@ -361,11 +457,45 @@ export default function RaqeemChatPage() {
           <div className="w-9 h-9 rounded-full flex items-center justify-center bg-primary-foreground">
             <RaqeemIcon size={40} className="text-primary-foreground" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-sm font-bold text-foreground">ChatGPT</h1>
             <p className="text-xs text-muted-foreground">مساعدك الذكي</p>
           </div>
+          {/* Context Badge */}
+          {platformContext.assignment_id && (
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium border border-primary/20">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                {platformContext.reference_number || "طلب مربوط"}
+              </span>
+              {effectiveRole === "owner" && (
+                <button
+                  onClick={() => setShowDebug(prev => !prev)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground px-1.5 py-0.5 rounded border border-border"
+                >
+                  Debug
+                </button>
+              )}
+            </div>
+          )}
         </div>
+        {/* Debug Panel — Admin/Preview only */}
+        {showDebug && platformContext.assignment_id && (
+          <div className="max-w-3xl mx-auto px-4 pb-2">
+            <div className="bg-muted/50 border border-border rounded-lg p-3 text-[11px] font-mono space-y-1">
+              <div className="font-bold text-xs text-foreground mb-1">🔧 Debug: Platform Context</div>
+              <div><span className="text-muted-foreground">route:</span> {location.pathname + location.search}</div>
+              <div><span className="text-muted-foreground">assignment_id:</span> {platformContext.assignment_id || "—"}</div>
+              <div><span className="text-muted-foreground">request_id:</span> {platformContext.request_id || "—"}</div>
+              <div><span className="text-muted-foreground">reference_number:</span> {platformContext.reference_number || "—"}</div>
+              <div><span className="text-muted-foreground">current_status:</span> {platformContext.current_status || "—"}</div>
+              <div><span className="text-muted-foreground">property_type:</span> {platformContext.property_type || "—"}</div>
+              <div><span className="text-muted-foreground">client_name:</span> {platformContext.client_name || "—"}</div>
+              <div><span className="text-muted-foreground">user_role:</span> {effectiveRole}</div>
+              <div><span className="text-muted-foreground">source_page:</span> {platformContext.source_page || "—"}</div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Chat Area */}
