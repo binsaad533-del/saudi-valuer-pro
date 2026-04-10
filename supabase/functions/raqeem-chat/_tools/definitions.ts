@@ -98,6 +98,21 @@ export const TOOLS = [
       }
     }
   },
+  {
+    type: "function",
+    function: {
+      name: "analyze_documents",
+      description: "تحليل مستندات شامل عبر خط أنابيب احترافي (تصنيف → استخراج → تحقق → ربط بالتقييم → امتثال → فجوات → توصيات). ينتج ملخصاً تنفيذياً قابلاً للدفاع أمام CFO/CEO. يدعم الملفات الكبيرة عبر chunking.",
+      parameters: {
+        type: "object",
+        properties: {
+          request_id: { type: "string", description: "معرّف طلب التقييم (UUID)" },
+          assignment_id: { type: "string", description: "معرّف مهمة التقييم (UUID)" },
+          reference_number: { type: "string", description: "الرقم المرجعي" }
+        }
+      }
+    }
+  },
   // ═══════════════════════════════════════════════════
   // EXECUTIVE ACTIONS — Owner/Appraiser Tools
   // ═══════════════════════════════════════════════════
