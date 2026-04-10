@@ -81,7 +81,7 @@ serve(async (req) => {
         inspectionsSummary += "\n";
       }
     } else {
-      inspectionsSummary = "\n- لا توجد معاينات مُسندة حالياً.\n";
+      inspectionsSummary = "\n- لا توجد مهام ميدانية مُسندة حالياً.\n";
     }
 
     // ── Current inspection context ──
@@ -306,7 +306,8 @@ ${inspectionsSummary}${currentInspectionSection}`;
                 if (line.startsWith("data: ")) {
                   const data = line.slice(6).trim();
                   if (data === "[DONE]") {
-                    // Process actions in background
+                    // Sanitize and process actions
+                    fullReply = sanitizeArabicReply(fullReply);
                     const actionResult = await processActions(fullReply);
                     const meta = JSON.stringify({
                       done: true,
@@ -316,13 +317,13 @@ ${inspectionsSummary}${currentInspectionSection}`;
                     controller.enqueue(new TextEncoder().encode(`data: ${meta}\n\n`));
                     controller.close();
 
-                    // Persist to chat messages
+                    // Persist sanitized reply
                     if (inspectorId) {
                       db.from("client_chat_messages").insert({
                         user_id: inspectorId,
                         session_id: `inspector-${inspectorId}`,
                         role: "assistant",
-                        content: actionResult.cleanReply,
+                        content: sanitizeArabicReply(actionResult.cleanReply),
                         metadata: { inspection_id: inspection_id || null },
                       } as any).catch(() => {});
                     }
@@ -364,7 +365,7 @@ ${inspectionsSummary}${currentInspectionSection}`;
     let reply = aiData.choices?.[0]?.message?.content || "عذراً، يرجى المحاولة مرة أخرى.";
 
     const actionResult = await processActions(reply);
-    reply = actionResult.cleanReply;
+    reply = sanitizeArabicReply(actionResult.cleanReply);
 
     // Persist
     if (inspectorId) {
