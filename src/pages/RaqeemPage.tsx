@@ -340,7 +340,7 @@ export default function RaqeemPage() {
                 </div>
               </div>
             ) : (
-              <RaqeemChatMessages messages={messages} isLoading={isLoading} onCorrect={(i) => setCorrectionDialog({ open: true, msgIndex: i, correctedAnswer: messages[i]?.content || "", reason: "" })} />
+              <RaqeemChatMessages messages={messages} isLoading={isLoading} onCorrect={(i) => setCorrectionDialog({ open: true, msgIndex: i, correctedAnswer: messages[i]?.content || "", reason: "" })} onSendMessage={(msg) => send(msg)} />
             )}
           </ScrollArea>
 
