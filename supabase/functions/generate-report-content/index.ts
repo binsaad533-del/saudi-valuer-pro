@@ -269,7 +269,7 @@ ${disciplineInstructions}
 - تاريخ التقييم: ${context.valuationDate || "غير محدد"}
 - الرقم المرجعي: ${context.referenceNumber || "غير محدد"}${machineryBlock}
 ${context.inspectionSummary ? "- ملخص المعاينة: " + context.inspectionSummary : ""}
-${context.comparables?.length ? "- المقارنات:\n" + context.comparables.map((c, i) => `  ${i + 1}. ${c.description} — ${c.value.toLocaleString()} ر.س${c.source ? " (المصدر: " + c.source + ")" : ""}${c.reference_number ? " [رقم المرجع: " + c.reference_number + "]" : ""}${c.source_date ? " [تاريخ المصدر: " + c.source_date + "]" : ""}`).join("\n") : ""}\n\nملاحظة مهمة: يجب ذكر مصدر كل مقارنة بوضوح في التقرير وفقاً لمتطلبات IVS 2025 ومعايير تقييم. عند الإشارة إلى المقارنات في قسم التحليل والحسابات، اذكر اسم المصدر وتاريخ الحصول على البيانات ورقم المرجع إن وُجد.`;
+${context.comparables?.length ? "- المقارنات:\n" + context.comparables.map((c, i) => `  ${i + 1}. ${c.description} — ${c.value.toLocaleString()} ر.س${c.source ? " (المصدر: " + c.source + ")" : ""}${c.reference_number ? " [رقم المرجع: " + c.reference_number + "]" : ""}${c.source_date ? " [تاريخ المصدر: " + c.source_date + "]" : ""}`).join("\n") : ""}\n\nملاحظة مهمة: يجب ذكر مصدر كل مقارنة بوضوح في التقرير وفقاً لمتطلبات IVS 2025 ومعايير تقييم. عند الإشارة إلى المقارنات في قسم التحليل والحسابات، اذكر اسم المصدر وتاريخ الحصول على البيانات ورقم المرجع إن وُجد.${qualityBlock}`;
 
     let userPrompt = "";
     let useToolCalling = false;
