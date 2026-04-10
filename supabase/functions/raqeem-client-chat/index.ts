@@ -172,8 +172,8 @@ serve(async (req) => {
           .select("full_name_ar, full_name_en")
           .eq("user_id", ctx.client_user_id)
           .maybeSingle();
-        if (profile?.full_name) {
-          clientDisplayName = profile.full_name;
+        if (profile?.full_name_ar || profile?.full_name_en) {
+          clientDisplayName = profile.full_name_ar || profile.full_name_en;
         } else {
           const { data: { user: authUser } } = await db.auth.admin.getUserById(ctx.client_user_id);
           clientDisplayName = authUser?.user_metadata?.full_name || authUser?.user_metadata?.name || "";
