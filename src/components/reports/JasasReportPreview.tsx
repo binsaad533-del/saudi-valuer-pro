@@ -687,6 +687,69 @@ function AssumptionsPage() {
   );
 }
 
+/* ── Assumption Impact Analysis ── */
+function AssumptionImpactPage() {
+  const { topAssumptions, valueRange } = SAMPLE.assumptionImpact;
+  return (
+    <PageShell pageNum={11}>
+      <div className="space-y-4">
+        <SectionTitle id="assumption-impact" num={10} title="تحليل تأثير الافتراضات" />
+
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          يوضح هذا القسم أهم الافتراضات المؤثرة على القيمة النهائية ومدى حساسية النتيجة لتغيّر كل افتراض.
+        </p>
+
+        {/* Top 3 assumptions */}
+        <div className="space-y-3">
+          {topAssumptions.map((a, i) => (
+            <div key={i} className="border border-border rounded-lg p-3 space-y-2">
+              <div className="flex items-start gap-2">
+                <span className="text-xs font-bold text-primary shrink-0 mt-0.5">{i + 1}.</span>
+                <p className="text-xs font-semibold text-foreground leading-relaxed">{a.assumption}</p>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-relaxed mr-4">{a.impact}</p>
+              <div className="flex gap-2 mr-4">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-destructive/10 text-destructive font-medium">{a.conservative}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-muted text-foreground font-medium">مرجح: {a.weighted}</span>
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 font-medium">{a.optimistic}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Value Range */}
+        <div className="border-2 border-primary/15 rounded-lg p-4 space-y-3">
+          <p className="text-xs font-bold text-foreground">نطاق القيمة التقديرية (SAR)</p>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground">متحفظة</p>
+              <p className="text-base font-bold text-destructive" dir="ltr">{valueRange.conservative}</p>
+            </div>
+            <div className="space-y-1 border-x border-border/40">
+              <p className="text-[10px] text-muted-foreground">مرجّحة</p>
+              <p className="text-base font-bold text-primary" dir="ltr">{valueRange.weighted}</p>
+            </div>
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground">متفائلة</p>
+              <p className="text-base font-bold text-emerald-600 dark:text-emerald-400" dir="ltr">{valueRange.optimistic}</p>
+            </div>
+          </div>
+          {/* Simple bar */}
+          <div className="relative h-2 rounded-full bg-muted overflow-hidden">
+            <div className="absolute inset-y-0 left-[28%] right-[10%] bg-primary/20 rounded-full" />
+            <div className="absolute inset-y-0 left-[48%] w-1 bg-primary rounded-full" />
+          </div>
+          <div className="flex justify-between text-[9px] text-muted-foreground" dir="ltr">
+            <span>{valueRange.conservative}</span>
+            <span>{valueRange.weighted}</span>
+            <span>{valueRange.optimistic}</span>
+          </div>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
 /* ── Asset Table + Final Value ── */
 function AssetTablePage() {
   const total = SAMPLE.assets
@@ -694,9 +757,9 @@ function AssetTablePage() {
     .toLocaleString("en-US");
 
   return (
-    <PageShell pageNum={11}>
+    <PageShell pageNum={12}>
       <div className="space-y-5">
-        <SectionTitle id="final-value" num={10} title="النتيجة النهائية" />
+        <SectionTitle id="final-value" num={11} title="النتيجة النهائية" />
 
         <table className="w-full text-sm">
           <thead>
