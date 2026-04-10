@@ -225,7 +225,7 @@ function CorrectionsTab() {
     <div className="space-y-4">
       <h3 className="text-sm font-semibold text-foreground">التصحيحات ({corrections.length})</h3>
       <p className="text-xs text-muted-foreground">
-        عند تصحيح رد رقيم في المحادثة، يتم حفظه هنا ويُطبّق تلقائياً في الحالات المشابهة.
+        عند تصحيح رد ChatGPT في المحادثة، يتم حفظه هنا ويُطبّق تلقائياً في الحالات المشابهة.
       </p>
 
       {loading ? (
@@ -234,7 +234,7 @@ function CorrectionsTab() {
         <div className="text-center py-12 text-muted-foreground">
           <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-40" />
           <p className="text-sm">لم يتم تسجيل أي تصحيحات بعد</p>
-          <p className="text-xs mt-1">يمكنك تصحيح رقيم من المحادثة مباشرة</p>
+          <p className="text-xs mt-1">يمكنك تصحيح ChatGPT من المحادثة مباشرة</p>
         </div>
       ) : (
         <div className="space-y-3">

@@ -36,7 +36,7 @@ const translations: Record<string, Record<Language, string>> = {
   export: { ar: "تصدير", en: "Export" },
 
   // Sidebar navigation
-  raqeem: { ar: "رقيم", en: "Raqeem" },
+  raqeem: { ar: "ChatGPT", en: "ChatGPT" },
   coordinatorPanel: { ar: "واجهة المنسق", en: "Coordinator Panel" },
   knowledgeBase: { ar: "المعرفة المهنية", en: "Knowledge Base" },
   auditLog: { ar: "سجل التدقيق", en: "Audit Log" },

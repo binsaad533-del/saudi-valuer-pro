@@ -46,7 +46,7 @@ export default function JourneyRaqeemGuide({ step, valuationMode, fileCount, pro
           </div>
           <div className="flex-1 space-y-2 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-sm font-bold text-foreground">رقيم معك في هذه المرحلة</p>
+              <p className="text-sm font-bold text-foreground">ChatGPT معك في هذه المرحلة</p>
               <Badge variant="outline" className="text-[10px] border-primary/20 text-primary">
                 {getValuationModeLabel(valuationMode, fileCount > 0)}
               </Badge>
