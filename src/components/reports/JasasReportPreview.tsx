@@ -96,10 +96,40 @@ const SAMPLE = {
     { dataPoint: "الإهلاك الاقتصادي", value: "3%", source: "تحليل ظروف السوق الحالية", sourceType: "سوق" as const, reliability: "تقديري" as const },
     { dataPoint: "جدول الإنتاج الشهري", value: "—", source: "غير متوفر", sourceType: "عميل" as const, reliability: "غير مكتمل" as const },
   ],
+  assumptionImpact: {
+    topAssumptions: [
+      {
+        assumption: "جميع الآلات في حالة تشغيلية وقت المعاينة",
+        impact: "تؤثر على تقدير الإهلاك المادي بنسبة تصل إلى ±15% من القيمة الإجمالية",
+        conservative: "-1,900,000",
+        weighted: "0",
+        optimistic: "+950,000",
+      },
+      {
+        assumption: "دقة وصحة المعلومات المقدمة من العميل",
+        impact: "تؤثر على تكلفة الاستبدال ومعدل التشغيل — انحراف محتمل ±8%",
+        conservative: "-1,020,000",
+        weighted: "0",
+        optimistic: "+510,000",
+      },
+      {
+        assumption: "لا توجد التزامات مالية أو رهونات على الأصول",
+        impact: "في حال وجود رهونات غير مفصح عنها قد تنخفض القيمة القابلة للتحقيق بنسبة تصل إلى 20%",
+        conservative: "-2,550,000",
+        weighted: "0",
+        optimistic: "0",
+      },
+    ],
+    valueRange: {
+      conservative: "10,200,000",
+      weighted: "12,750,000",
+      optimistic: "14,210,000",
+    },
+  },
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 14;
+const TOTAL_PAGES = 15;
 
 /* ── Company & Valuer Identity (read-only) ── */
 const COMPANY_IDENTITY = {
@@ -120,10 +150,11 @@ const TOC = [
   { id: "analysis", num: 7, title: "التحليل" },
   { id: "methodology", num: 8, title: "المنهجية" },
   { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
-  { id: "final-value", num: 10, title: "النتيجة النهائية" },
-  { id: "data-sources", num: 11, title: "مصادر البيانات" },
-  { id: "disclosures", num: 12, title: "الإفصاحات" },
-  { id: "accreditation", num: 13, title: "الاعتماد والتوقيع" },
+  { id: "assumption-impact", num: 10, title: "تحليل تأثير الافتراضات" },
+  { id: "final-value", num: 11, title: "النتيجة النهائية" },
+  { id: "data-sources", num: 12, title: "مصادر البيانات" },
+  { id: "disclosures", num: 13, title: "الإفصاحات" },
+  { id: "accreditation", num: 14, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
