@@ -132,6 +132,7 @@ export default function RaqeemChatPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
   const [platformContext, setPlatformContext] = useState<PlatformContext>({});
+  const platformContextRef = useRef<PlatformContext>({});
   const [contextLoading, setContextLoading] = useState(false);
   const [showDebug, setShowDebug] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -166,6 +167,7 @@ export default function RaqeemChatPage() {
 
     // Set context IMMEDIATELY with URL params so it's available for early messages
     setPlatformContext(ctx);
+    platformContextRef.current = ctx;
 
     // Then enrich with DB data asynchronously
     const fetchContext = async () => {
@@ -218,6 +220,7 @@ export default function RaqeemChatPage() {
       } finally {
         // Update with enriched data
         setPlatformContext({ ...ctx });
+        platformContextRef.current = { ...ctx };
         setContextLoading(false);
       }
     };
@@ -335,7 +338,9 @@ export default function RaqeemChatPage() {
       // Get user's session token for proper identification
       const { data: sessionData } = await supabase.auth.getSession();
       const authToken = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const payloadContext = (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined;
+      // Use ref to avoid stale closure issues with platformContext
+      const currentCtx = platformContextRef.current;
+      const payloadContext = (currentCtx.assignment_id || currentCtx.request_id) ? currentCtx : undefined;
       console.log("[RaqeemChat] Sending platformContext:", JSON.stringify(payloadContext || null));
       const resp = await fetch(CHAT_URL, {
         method: "POST",
@@ -400,7 +405,7 @@ export default function RaqeemChatPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [messages, isLoading, effectiveRole, platformContext]);
+  }, [messages, isLoading, effectiveRole]);
 
   const handleSend = () => {
     sendMessage(input, attachedFiles);
