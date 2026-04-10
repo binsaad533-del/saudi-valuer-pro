@@ -362,7 +362,7 @@ export default function RaqeemChatPage() {
             <RaqeemIcon size={40} className="text-primary-foreground" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-foreground">رقيم</h1>
+            <h1 className="text-sm font-bold text-foreground">ChatGPT</h1>
             <p className="text-xs text-muted-foreground">مساعدك الذكي</p>
           </div>
         </div>

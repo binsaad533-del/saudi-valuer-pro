@@ -22,7 +22,7 @@ export default function RaqeemFloatingButton() {
             exit={{ opacity: 0, y: 8, scale: 0.9 }}
             className="absolute bottom-16 left-0 bg-card border border-border rounded-lg px-3 py-2 shadow-lg whitespace-nowrap"
           >
-            <span className="text-xs font-medium text-foreground">رقيم — مساعدك الذكي</span>
+            <span className="text-xs font-medium text-foreground">ChatGPT — مساعدك الذكي</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -34,7 +34,7 @@ export default function RaqeemFloatingButton() {
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
         className="w-14 h-14 rounded-full shadow-lg hover:shadow-xl flex items-center justify-center transition-shadow bg-primary-foreground"
-        aria-label="فتح رقيم"
+        aria-label="فتح ChatGPT"
       >
         <RaqeemIcon size={56} className="text-primary-foreground" />
       </motion.button>
