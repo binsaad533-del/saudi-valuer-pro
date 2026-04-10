@@ -2,13 +2,17 @@ import { useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import RaqeemAnimatedLogo from "./RaqeemAnimatedLogo";
+import {
+  RAQEEM_FLOATING_ELEMENT_ID,
+  useRaqeemFloatingSingleton,
+} from "@/lib/raqeem-floating-singleton";
 
 export default function RaqeemSmartPresence() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const isRaqeemPage = ["/client/chat", "/raqeem-chat"].some(p =>
-    location.pathname.startsWith(p)
+  const isRaqeemPage = ["/client/chat", "/raqeem-chat"].some((path) =>
+    location.pathname.startsWith(path)
   );
 
   const ctx = useMemo(() => {
@@ -19,11 +23,15 @@ export default function RaqeemSmartPresence() {
       { pattern: /\/client\/request\/.*\/review/, context: "review" },
       { pattern: /\/client\/request\//, context: "request_detail" },
     ];
+
     for (const entry of map) {
       if (entry.pattern.test(location.pathname)) return entry.context;
     }
+
     return null;
   }, [location.pathname]);
+
+  const canRender = useRaqeemFloatingSingleton(isRaqeemPage);
 
   const handleClick = useCallback(() => {
     const chatPath = location.pathname.startsWith("/client")
@@ -31,13 +39,12 @@ export default function RaqeemSmartPresence() {
       : "/raqeem-chat";
     const query = ctx ? `?context=${ctx}` : "";
     navigate(`${chatPath}${query}`);
-  }, [navigate, location.pathname, ctx]);
+  }, [ctx, location.pathname, navigate]);
 
-  if (isRaqeemPage) return null;
+  if (isRaqeemPage || !canRender) return null;
 
   return (
-    <div className="fixed bottom-[72px] left-6 z-50">
-      {/* Pulse ring */}
+    <div id={RAQEEM_FLOATING_ELEMENT_ID} className="fixed bottom-[72px] left-6 z-50">
       <motion.span
         className="absolute inset-0 rounded-full pointer-events-none"
         style={{ border: "2px solid hsl(var(--primary)/0.12)" }}
@@ -45,13 +52,11 @@ export default function RaqeemSmartPresence() {
         transition={{ duration: 1.6, repeat: Infinity, repeatDelay: 12, ease: "easeOut" }}
       />
 
-      {/* Single logo button */}
       <motion.button
         onClick={handleClick}
         whileHover={{ scale: 1.06 }}
         whileTap={{ scale: 0.95 }}
-        className="relative w-14 h-14 flex items-center justify-center rounded-full
-          bg-card border border-border cursor-pointer"
+        className="relative flex h-14 w-14 items-center justify-center rounded-full border border-border bg-card cursor-pointer"
         style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
         aria-label="رقيم"
       >
