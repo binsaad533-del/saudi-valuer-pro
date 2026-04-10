@@ -46,9 +46,9 @@ const ROLE_PROMPTS: Record<string, string[]> = {
     "متى سيكون التقرير جاهزاً؟",
   ],
   inspector: [
-    "ما هي المعاينات المطلوبة مني؟",
+    "ما هي المعاينات المُسندة إليّ؟",
     "كيف أرفع صور المعاينة؟",
-    "ما هي متطلبات التقرير الميداني؟",
+    "ما هي المتطلبات الميدانية الحالية؟",
   ],
   financial_manager: [
     "ما هي المدفوعات المعلقة؟",
@@ -71,9 +71,9 @@ const ROLE_QUICK_ACTIONS: Record<string, { label: string; icon: string; message:
     { label: "موعد التسليم", icon: "⏱️", message: "كم باقي على تسليم التقرير؟" },
   ],
   inspector: [
-    { label: "مهامي اليوم", icon: "📋", message: "ما المعاينات المطلوبة مني اليوم؟" },
-    { label: "جدولي", icon: "📅", message: "وريني جدول المعاينات القادمة" },
-    { label: "أدائي", icon: "⭐", message: "كيف أدائي وتقييمي؟" },
+    { label: "مهامي اليوم", icon: "📋", message: "ما المعاينات المُسندة إليّ اليوم؟" },
+    { label: "جدولي", icon: "📅", message: "اعرض جدول المعاينات القادمة" },
+    { label: "أدائي", icon: "⭐", message: "اعرض ملخص أدائي الحالي" },
     { label: "إبلاغ", icon: "⚠️", message: "أريد الإبلاغ عن مشكلة ميدانية" },
   ],
   financial_manager: [
@@ -530,7 +530,7 @@ export default function RaqeemChatPage() {
                 <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا ChatGPT</h2>
                 <p className="text-sm text-muted-foreground">
                   {effectiveRole === "owner" ? "مساعدك التنفيذي — أدير لك العمليات مباشرة" :
-                   effectiveRole === "inspector" ? "مساعدك الميداني — أنسق معاك مهام المعاينة" :
+                   effectiveRole === "inspector" ? "مساعدك الميداني داخل المنصة — أساعدك في المعاينات والموقع والصور والملاحظات وحالة التنفيذ ضمن صلاحياتك فقط" :
                    effectiveRole === "financial_manager" ? "مساعدك المالي — أتابع لك المدفوعات والإيرادات" :
                    "كيف يمكنني مساعدتك اليوم؟"}
                 </p>
