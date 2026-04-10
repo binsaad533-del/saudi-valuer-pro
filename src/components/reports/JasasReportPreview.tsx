@@ -1,7 +1,22 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useState } from "react";
 import { Separator } from "@/components/ui/separator";
 import { QRCodeSVG } from "qrcode.react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Lock, FileText, ShieldCheck, Clock } from "lucide-react";
 import jasasLogo from "@/assets/jasas-logo.png";
+
+/* ══════════════════════════════════════════════
+   Version Control Types
+   ══════════════════════════════════════════════ */
+type ReportMode = "draft" | "final";
+
+interface ReportVersion {
+  number: number;
+  date: string;
+  mode: ReportMode;
+  isLocked: boolean;
+}
 
 /* ══════════════════════════════════════════════
    Sample Data — Executive Style
