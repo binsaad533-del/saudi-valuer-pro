@@ -1,46 +1,23 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import {
-  Plus, FileText, Loader2, Building2, Upload, Download, Eye, X, File,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Loader2, Building2, ArrowLeft } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import { buildSafeStorageObject, getUploadErrorMessage } from "@/lib/storage-path";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
-import { DashboardStats } from "@/components/client/dashboard/DashboardStats";
-import { DashboardTabs, type TabKey } from "@/components/client/dashboard/DashboardTabs";
-import { ContactSupportCard } from "@/components/client/dashboard/ContactSupportCard";
-import { ValuationGuideCard } from "@/components/client/dashboard/ValuationGuideCard";
-import { ClientArchivedReports } from "@/components/client/dashboard/ClientArchivedReports";
+import ActionRequiredCard from "@/components/client/ActionRequiredCard";
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState<any[]>([]);
-  const [userId, setUserId] = useState<string>("");
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
-  const [activeTab, setActiveTab] = useState<TabKey>("requests");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // New request dialog
-  const [showNewRequest, setShowNewRequest] = useState(false);
-  const [newReqNotes, setNewReqNotes] = useState("");
-  const [newReqFiles, setNewReqFiles] = useState<File[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const newReqFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const init = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { navigate("/login"); return; }
-      setUserId(user.id);
 
       const { data: profile } = await supabase
         .from("profiles")
@@ -62,242 +39,82 @@ export default function ClientDashboard() {
     init();
   }, [navigate]);
 
-  const handleFileUpload = () => {
-    toast.success("تم رفع المستند بنجاح (تجريبي)");
-  };
-
-  const handleNewReqFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewReqFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const handleSubmitNewRequest = async () => {
-    if (newReqFiles.length === 0) {
-      toast.error("يرجى رفع مستند واحد على الأقل");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("يرجى تسجيل الدخول أولاً");
-
-      for (const file of newReqFiles) {
-        const { storageKey } = buildSafeStorageObject({ userId: user.id, originalFilename: file.name });
-        const { error } = await supabase.storage.from("client-uploads").upload(storageKey, file);
-        if (error) throw error;
-      }
-
-      toast.success("تم إرسال طلب التقييم بنجاح");
-      setShowNewRequest(false);
-      setNewReqNotes("");
-      setNewReqFiles([]);
-    } catch (err: any) {
-      toast.error(getUploadErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const stats = {
-    total: requests.length,
-    active: requests.filter(r => !["completed", "archived", "cancelled"].includes(r.status)).length,
-    awaitingAction: requests.filter(r => ["quotation_sent", "needs_clarification", "draft_report_sent"].includes(r.status)).length,
-    completed: requests.filter(r => r.status === "completed").length,
-  };
-
-  const readyReports = requests
-    .filter(r => r.status === "completed")
-    .map((r, i) => ({
-      id: r.id,
-      title: r.property_description_ar || `تقرير تقييم #${i + 1}`,
-      date: formatDate(r.updated_at || r.created_at),
-      ref: r.reference_number || `RPT-${String(i + 1).padStart(4, "0")}`,
-    }));
-
-  const mockDocs = [
-    { id: "1", name: "صك الملكية.pdf", date: "2026-03-20", size: "2.4 MB" },
-    { id: "2", name: "رخصة البناء.pdf", date: "2026-03-18", size: "1.1 MB" },
-    { id: "3", name: "مخطط الموقع.jpg", date: "2026-03-15", size: "3.8 MB" },
+  // Find the most actionable request
+  const actionableStatuses = [
+    "scope_generated", "scope_approved", "data_collection_open", "needs_clarification",
+    "draft_report_ready", "client_review", "draft_approved", "issued",
   ];
+  const actionableRequest = requests.find(r => actionableStatuses.includes(r.status))
+    || requests[0] || null;
+
+  const recentRequests = requests.slice(0, 5);
 
   return (
     <div className="bg-background" dir="rtl">
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Welcome */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-foreground">مرحباً، {userName}</h1>
-            <p className="text-sm text-muted-foreground">تابع طلباتك وتقاريرك من مكان واحد</p>
-          </div>
-          <Button onClick={() => navigate("/client/new-request")} className="gap-2">
-            <Plus className="w-4 h-4" /> طلب تقييم جديد
-          </Button>
+        <div>
+          <h1 className="text-lg font-bold text-foreground">مرحباً، {userName}</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">هذا وضع طلبك</p>
         </div>
 
-        <DashboardStats stats={stats} />
+        {/* Action Required */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+          </div>
+        ) : (
+          <>
+            <ActionRequiredCard request={actionableRequest} />
 
-        <DashboardTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          counts={{ requests: stats.total, reports: stats.completed, documents: mockDocs.length }}
-        />
-
-        {/* Tab content */}
-        {activeTab === "requests" && (
-          <Card>
-            <CardContent className="p-0">
-              {loading ? (
-                <div className="flex items-center justify-center py-16">
-                  <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            {/* Recent Requests */}
+            {recentRequests.length > 0 && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-sm font-bold text-foreground">طلباتي</h2>
+                  {requests.length > 5 && (
+                    <Button variant="ghost" size="sm" className="text-xs gap-1" onClick={() => navigate("/client/requests")}>
+                      عرض الكل <ArrowLeft className="w-3 h-3" />
+                    </Button>
+                  )}
                 </div>
-              ) : requests.length === 0 ? (
-                <div className="text-center py-16">
-                  <Building2 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                  <p className="text-muted-foreground text-sm mb-4">لا توجد طلبات تقييم بعد</p>
-                  <Button onClick={() => navigate("/client/new-request")} className="gap-2">
-                    <Plus className="w-4 h-4" /> ابدأ طلب تقييم جديد
-                  </Button>
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {requests.map((req) => (
-                    <Link key={req.id} to={`/client/request/${req.id}`} className="block p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center justify-between gap-3 mb-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
+                <Card>
+                  <CardContent className="p-0 divide-y divide-border">
+                    {recentRequests.map((req) => (
+                      <Link key={req.id} to={`/client/request/${req.id}`} className="block p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <p className="text-sm font-medium text-foreground truncate flex-1">
                             {req.property_description_ar || "طلب تقييم"}
                           </p>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
-                            {req.reference_number && <span className="font-mono" dir="ltr">{req.reference_number}</span>}
-                            {req.property_city_ar && <span>{req.property_city_ar}</span>}
-                            <span>{formatDate(req.created_at)}</span>
-                          </div>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            {formatDate(req.created_at)}
+                          </span>
                         </div>
-                      </div>
-                      <EnhancedRequestTracker status={req.status} createdAt={req.created_at} compact valuationMode={req.ai_intake_summary?.valuation_mode || req.inspection_type || "field"} />
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {activeTab === "reports" && (
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="p-0">
-                {readyReports.length === 0 ? (
-                  <div className="text-center py-16">
-                    <FileText className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-                    <p className="text-muted-foreground text-sm">لا توجد تقارير جاهزة حالياً</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border">
-                    {readyReports.map((rpt) => (
-                      <div key={rpt.id} className="flex items-center justify-between gap-3 p-4">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <FileText className="w-4 h-4 text-primary" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-foreground truncate">{rpt.title}</p>
-                            <p className="text-xs text-muted-foreground">{rpt.ref} · {rpt.date}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Button variant="ghost" size="icon" className="h-8 w-8"><Eye className="w-4 h-4" /></Button>
-                          <Button variant="ghost" size="icon" className="h-8 w-8"><Download className="w-4 h-4" /></Button>
-                        </div>
-                      </div>
+                        <EnhancedRequestTracker
+                          status={req.status}
+                          createdAt={req.created_at}
+                          compact
+                          valuationMode={req.ai_intake_summary?.valuation_mode || req.inspection_type || "field"}
+                        />
+                      </Link>
                     ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            <ClientArchivedReports userId={userId} />
-          </div>
-        )}
-
-        {activeTab === "documents" && (
-          <div className="space-y-4">
-            <Card className="border-dashed border-2 cursor-pointer hover:border-primary/50 transition-colors" onClick={() => fileInputRef.current?.click()}>
-              <CardContent className="flex flex-col items-center justify-center py-10 gap-2">
-                <Upload className="w-8 h-8 text-muted-foreground" />
-                <p className="text-sm font-medium text-foreground">اضغط لرفع مستند جديد</p>
-                <p className="text-xs text-muted-foreground">PDF • صور • Excel (XLSX, CSV) — حتى 20 ميجا</p>
-                <p className="text-[11px] text-primary/70 mt-1">رفع Excel يسرّع إدخال الأصول تلقائياً</p>
-                <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" className="hidden" onChange={handleFileUpload} />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-0 divide-y divide-border">
-                {mockDocs.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">{doc.date} · {doc.size}</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8"><Download className="w-4 h-4" /></Button>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        <Separator className="my-2" />
-        <ValuationGuideCard />
-        <ContactSupportCard />
-      </main>
-
-      {/* New Request Dialog */}
-      <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle>طلب تقييم جديد</DialogTitle>
-            <DialogDescription>ارفع المستندات المتعلقة بالأصل المراد تقييمه وسنتولى الباقي</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            <div className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors" onClick={() => newReqFileRef.current?.click()}>
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
-              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، فواتير شراء — PDF • صور • Excel (XLSX, CSV)</p>
-              <input ref={newReqFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" multiple className="hidden" onChange={handleNewReqFileAdd} />
-            </div>
-            {newReqFiles.length > 0 && (
-              <div className="space-y-2">
-                {newReqFiles.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <File className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm text-foreground truncate">{f.name}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                    </div>
-                    <button onClick={() => setNewReqFiles(prev => prev.filter((_, idx) => idx !== i))} className="text-muted-foreground hover:text-destructive shrink-0">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                  </CardContent>
+                </Card>
               </div>
             )}
-            <div className="space-y-2">
-              <Label htmlFor="req-notes">ملاحظات (اختياري)</Label>
-              <Textarea id="req-notes" placeholder="أي تفاصيل إضافية عن الأصل المراد تقييمه..." value={newReqNotes} onChange={(e) => setNewReqNotes(e.target.value)} rows={3} />
-            </div>
-            <Button onClick={handleSubmitNewRequest} className="w-full gap-2" disabled={submitting || newReqFiles.length === 0}>
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              إرسال الطلب
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+
+            {/* Empty State */}
+            {requests.length === 0 && (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Building2 className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">لا توجد طلبات بعد</p>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+      </main>
     </div>
   );
 }
