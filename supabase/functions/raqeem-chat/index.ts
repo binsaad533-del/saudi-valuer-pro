@@ -3332,6 +3332,7 @@ serve(async (req) => {
     const basePrompt = await buildContextualPrompt(supabaseClient);
     const systemPrompt = basePrompt
       + getRolePromptAddition(effectiveRole)
+      + memoryProfileSection
       + clientContextSection
       + greetingInstruction
       + attachmentIntelligenceSection
