@@ -79,7 +79,7 @@ export default function RaqeemSmartPresence() {
     }
 
     // Initial show after 4s
-    const initialTimer = setTimeout(showStrip, 4000);
+    const initialTimer = setTimeout(showStrip, 2000);
 
     // Repeat every 15s
     loopRef.current = setInterval(showStrip, 15000);
