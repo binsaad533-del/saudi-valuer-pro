@@ -28,8 +28,6 @@ export default function ClientLayout() {
       {/* Header */}
       <header className="bg-card border-b border-border sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center justify-between">
-          {/* Right: Raqeem */}
-          <RaqeemSmartPresence />
 
           {/* Center: Nav */}
           <nav className="flex items-center gap-1">
@@ -54,6 +52,17 @@ export default function ClientLayout() {
           </Button>
         </div>
       </header>
+
+      {/* Content */}
+      <main className="flex-1">
+        <Outlet />
+      </main>
+
+      {/* Footer */}
+      <AppFooter />
+
+      {/* Raqeem floating capsule */}
+      <RaqeemSmartPresence />
     </div>
   );
 }
