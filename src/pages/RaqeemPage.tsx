@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import KnowledgeBaseModule from "@/components/raqeem/KnowledgeBaseModule";
 import CorrectionsModule from "@/components/raqeem/CorrectionsModule";
 import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
@@ -32,13 +35,25 @@ interface Message {
   orchestration?: OrchestrationTool[];
 }
 
+interface PlatformContext {
+  assignment_id?: string;
+  request_id?: string;
+  reference_number?: string;
+  current_status?: string;
+  property_type?: string;
+  client_name?: string;
+  current_route?: string;
+  user_role?: string;
+  source_page?: string;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`;
 
 const SUGGESTED_PROMPTS = [
-  "ما هي منهجيات التقييم العقاري المعتمدة؟",
-  "اشرح لي أسلوب المقارنة بالمبيعات",
-  "ما هي متطلبات تقرير التقييم حسب تقييم؟",
-  "كيف أحسب معدل الرسملة للعقارات الاستثمارية؟",
+  "أعطني ملخص حالة المنصة اليوم",
+  "ما الطلبات المتأخرة أو المعلقة؟",
+  "كم إيرادات هذا الشهر؟",
+  "كيف توزيع المهام على المعاينين؟",
 ];
 
 const ALL_TABS = [
@@ -56,21 +71,75 @@ export default function RaqeemPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [activeTab, setActiveTab] = useState("chat");
+  const [platformContext, setPlatformContext] = useState<PlatformContext>({});
   const [correctionDialog, setCorrectionDialog] = useState<{
     open: boolean; msgIndex: number; correctedAnswer: string; reason: string;
   }>({ open: false, msgIndex: -1, correctedAnswer: "", reason: "" });
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user, role } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // ── Build platform context from URL params, location state, and active data ──
+  useEffect(() => {
+    const ctx: PlatformContext = {
+      current_route: location.pathname,
+      user_role: role || "owner",
+    };
+
+    // From URL search params (e.g., /raqeem-chat?assignment_id=xxx)
+    const assignmentParam = searchParams.get("assignment_id") || searchParams.get("aid");
+    const requestParam = searchParams.get("request_id") || searchParams.get("rid");
+    if (assignmentParam) ctx.assignment_id = assignmentParam;
+    if (requestParam) ctx.request_id = requestParam;
+
+    // From navigation state (e.g., navigate("/raqeem-chat", { state: { assignment_id } }))
+    const navState = location.state as any;
+    if (navState?.assignment_id && !ctx.assignment_id) ctx.assignment_id = navState.assignment_id;
+    if (navState?.request_id && !ctx.request_id) ctx.request_id = navState.request_id;
+    if (navState?.reference_number) ctx.reference_number = navState.reference_number;
+    if (navState?.source_page) ctx.source_page = navState.source_page;
+
+    // Fetch assignment details if we have an ID
+    if (ctx.assignment_id) {
+      supabase
+        .from("valuation_assignments")
+        .select("id, reference_number, status, property_type, client_id, clients(name_ar)")
+        .eq("id", ctx.assignment_id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            ctx.reference_number = data.reference_number || ctx.reference_number;
+            ctx.current_status = data.status || undefined;
+            ctx.property_type = data.property_type || undefined;
+            ctx.client_name = (data.clients as any)?.name_ar || undefined;
+          }
+          setPlatformContext(ctx);
+        });
+    } else {
+      setPlatformContext(ctx);
+    }
+  }, [location.pathname, location.state, searchParams, role]);
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [messages]);
 
   const streamChat = useCallback(async (allMessages: Message[]) => {
+    const token = (await supabase.auth.getSession()).data.session?.access_token;
     const resp = await fetch(CHAT_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
-      body: JSON.stringify({ messages: allMessages.map((m) => ({ role: m.role, content: m.content })) }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+      },
+      body: JSON.stringify({
+        messages: allMessages.map((m) => ({ role: m.role, content: m.content })),
+        userRole: platformContext.user_role || role || "owner",
+        userId: user?.id,
+        platformContext: Object.keys(platformContext).length > 0 ? platformContext : undefined,
+      }),
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => null);
@@ -147,7 +216,7 @@ export default function RaqeemPage() {
         processLine(raw);
       }
     }
-  }, []);
+  }, [platformContext, user, role]);
 
   const send = async (text?: string) => {
     const messageText = text || input.trim();
@@ -196,13 +265,24 @@ export default function RaqeemPage() {
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center"><Sparkles className="w-5 h-5 text-primary-foreground" /></div>
           <div>
-            <h1 className="text-base font-bold text-foreground">ChatGPT — مركز التقييم الذكي</h1>
-            <p className="text-[11px] text-muted-foreground hidden sm:block">مساعد التقييم الذكي الموحد لإدارة المعرفة، التدريب، التحليل، والتقييم</p>
+            <h1 className="text-base font-bold text-foreground">ChatGPT — مركز التنفيذ الذكي</h1>
+            <p className="text-[11px] text-muted-foreground hidden sm:block">
+              {platformContext.reference_number
+                ? `🔗 مرتبط بالطلب ${platformContext.reference_number} — ${platformContext.current_status || ""}`
+                : "وحدة التنفيذ الذكية — مرتبطة بسياق المنصة تلقائياً"}
+            </p>
           </div>
         </div>
-        {activeTab === "chat" && messages.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs"><Trash2 className="w-3.5 h-3.5 ml-1" /> محادثة جديدة</Button>
-        )}
+        <div className="flex items-center gap-2">
+          {platformContext.reference_number && (
+            <Badge variant="secondary" className="text-[10px] gap-1">
+              {platformContext.reference_number}
+            </Badge>
+          )}
+          {activeTab === "chat" && messages.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={clearChat} className="text-muted-foreground text-xs"><Trash2 className="w-3.5 h-3.5 ml-1" /> محادثة جديدة</Button>
+          )}
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col min-h-0 overflow-hidden" dir="rtl">
@@ -231,13 +311,28 @@ export default function RaqeemPage() {
                   <p className="text-sm text-muted-foreground max-w-md">مساعدك الذكي في التقييم — أتعلم فقط مما تزوّدني به. استخدم التبويبات أعلاه لإدارة المعرفة والقواعد والتصحيحات.</p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-lg w-full">
-                  {SUGGESTED_PROMPTS.map((prompt, i) => (
-                    <button key={i} onClick={() => send(prompt)} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">{prompt}</button>
-                  ))}
+                  {platformContext.assignment_id ? (
+                    <>
+                      <button onClick={() => send("ما حالة هذا الطلب الآن؟")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">ما حالة هذا الطلب الآن؟</button>
+                      <button onClick={() => send("ما الخطوة التالية المطلوبة؟")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">ما الخطوة التالية المطلوبة؟</button>
+                      <button onClick={() => send("أعطني ملخص كامل لهذا الطلب")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">أعطني ملخص كامل لهذا الطلب</button>
+                      <button onClick={() => send("هل هناك بيانات ناقصة أو مشاكل؟")} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">هل هناك بيانات ناقصة أو مشاكل؟</button>
+                    </>
+                  ) : (
+                    SUGGESTED_PROMPTS.map((prompt, i) => (
+                      <button key={i} onClick={() => send(prompt)} className="p-3 rounded-xl border border-border bg-card hover:bg-accent/50 text-sm text-right text-foreground transition-colors">{prompt}</button>
+                    ))
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2 justify-center">
-                  <Badge variant="outline" className="text-xs gap-1"><FileText className="w-3 h-3" /> تعلّم متحكم به</Badge>
-                  <Badge variant="outline" className="text-xs gap-1">IVS 2025 + تقييم</Badge>
+                  {platformContext.assignment_id ? (
+                    <Badge variant="outline" className="text-xs gap-1 border-primary/30 text-primary">🔗 سياق الطلب محمّل تلقائياً</Badge>
+                  ) : (
+                    <>
+                      <Badge variant="outline" className="text-xs gap-1"><FileText className="w-3 h-3" /> تنفيذ ذكي</Badge>
+                      <Badge variant="outline" className="text-xs gap-1">سياق المنصة</Badge>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
