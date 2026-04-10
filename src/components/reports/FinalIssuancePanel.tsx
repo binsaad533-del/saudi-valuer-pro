@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { changeStatusByRequestId } from "@/lib/workflow-status";
 import { updateReportDraftStatus } from "@/lib/report-draft-status";
+import { runReportQC, logQCResult, type ReportQCResult } from "@/lib/report-qc-engine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -29,6 +30,8 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const [issuing, setIssuing] = useState(false);
   const [delivering, setDelivering] = useState(false);
   const [archiving, setArchiving] = useState(false);
+  const [qcResult, setQcResult] = useState<ReportQCResult | null>(null);
+  const [runningQC, setRunningQC] = useState(false);
 
   const status = request.status;
   // Show panel after final payment confirmed, or when already issued/archived
@@ -67,7 +70,53 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
   const isIssued = status === "issued" || status === "archived" || draft?.status === "issued";
   const isArchived = status === "archived" || draft?.status === "archived";
 
+  const handleRunQC = async () => {
+    setRunningQC(true);
+    try {
+      const assignmentId = request.assignment_id || draft?.assignment_id;
+      if (!assignmentId) {
+        toast({ title: "خطأ", description: "لم يتم العثور على معرف المهمة", variant: "destructive" });
+        return;
+      }
+      const result = await runReportQC(assignmentId);
+      setQcResult(result);
+      await logQCResult(assignmentId, result, userId);
+
+      if (!result.passed) {
+        toast({
+          title: "لا يمكن إصدار التقرير لعدم اكتمال المتطلبات",
+          description: `${result.failed_mandatory} متطلبات لم تتحقق`,
+          variant: "destructive",
+        });
+      } else {
+        toast({ title: "اجتاز التقرير تدقيق الجودة", description: `النتيجة: ${result.score}%` });
+      }
+    } catch (err: any) {
+      toast({ title: "خطأ في تدقيق الجودة", description: err.message, variant: "destructive" });
+    } finally {
+      setRunningQC(false);
+    }
+  };
+
   const handleIssue = async () => {
+    // Run QC first if not already passed
+    if (!qcResult?.passed) {
+      const assignmentId = request.assignment_id || draft?.assignment_id;
+      if (assignmentId) {
+        const result = await runReportQC(assignmentId);
+        setQcResult(result);
+        await logQCResult(assignmentId, result, userId);
+        if (!result.passed) {
+          toast({
+            title: "لا يمكن إصدار التقرير لعدم اكتمال المتطلبات",
+            description: result.blocked_reasons_ar.join("، "),
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+
     setIssuing(true);
     try {
       const reportNumber = `RPT-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999) + 1).padStart(4, "0")}`;
@@ -90,7 +139,7 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
         supabase.from("request_messages" as any).insert({
           request_id: request.id,
           sender_type: "system" as any,
-          content: `🔒 تم إصدار التقرير النهائي رقم ${reportNumber} — التقرير محمي ولا يمكن تعديله.`,
+          content: `تم إصدار التقرير النهائي رقم ${reportNumber} — التقرير محمي ولا يمكن تعديله.`,
         }),
         supabase.from("audit_logs").insert({
           user_id: userId,
@@ -98,12 +147,12 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
           table_name: "report_issuance",
           record_id: request.id,
           description: `إصدار التقرير النهائي رقم ${reportNumber}`,
-          new_data: { report_number: reportNumber, verification_code: verificationCode },
+          new_data: { report_number: reportNumber, verification_code: verificationCode, qc_score: qcResult?.score },
         }),
       ]);
 
       if (draft) setDraft({ ...draft, status: "issued", report_number: reportNumber });
-      toast({ title: "تم إصدار التقرير النهائي 🔒", description: `رقم التقرير: ${reportNumber}` });
+      toast({ title: "تم إصدار التقرير النهائي", description: `رقم التقرير: ${reportNumber}` });
       onStatusChange?.();
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
@@ -203,6 +252,65 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
+        {/* QC Section — before issuance */}
+        {!isIssued && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${qcResult?.passed ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
+                {qcResult?.passed
+                  ? <CheckCircle className="w-4 h-4 text-green-600" />
+                  : <Shield className="w-4 h-4 text-muted-foreground" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">تدقيق جودة التقرير</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {qcResult
+                    ? qcResult.passed
+                      ? `اجتاز التدقيق — ${qcResult.score}% (${qcResult.passed_checks}/${qcResult.total_checks})`
+                      : `${qcResult.failed_mandatory} متطلبات لم تتحقق`
+                    : "يجب تشغيل تدقيق الجودة قبل الإصدار"}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                variant={qcResult?.passed ? "outline" : "default"}
+                onClick={handleRunQC}
+                disabled={runningQC}
+                className="gap-1 shrink-0"
+              >
+                {runningQC ? <Loader2 className="w-3 h-3 animate-spin" /> : <Shield className="w-3 h-3" />}
+                {qcResult ? "إعادة التدقيق" : "تدقيق الجودة"}
+              </Button>
+            </div>
+
+            {/* QC failures detail */}
+            {qcResult && !qcResult.passed && (
+              <div className="p-3 rounded-lg bg-destructive/5 border border-destructive/20 space-y-1.5">
+                <p className="text-xs font-semibold text-destructive">لا يمكن إصدار التقرير لعدم اكتمال المتطلبات:</p>
+                <ul className="space-y-1">
+                  {qcResult.checks.filter(c => !c.passed && c.mandatory).map(c => (
+                    <li key={c.code} className="text-[10px] text-destructive/80 flex items-start gap-1.5">
+                      <span className="mt-0.5 shrink-0">-</span>
+                      <span>{c.details_ar || c.label_ar}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* QC success detail */}
+            {qcResult?.passed && (
+              <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+                <p className="text-[10px] text-green-700 dark:text-green-300 text-center">
+                  جميع المتطلبات مستوفاة — التقرير جاهز للإصدار
+                </p>
+              </div>
+            )}
+
+            <Separator />
+          </div>
+        )}
+
         {/* Step 1: Issue */}
         <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/30">
           <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isIssued ? "bg-green-100 dark:bg-green-900/30" : "bg-muted"}`}>
