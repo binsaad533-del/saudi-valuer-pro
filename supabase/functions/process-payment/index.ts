@@ -113,12 +113,12 @@ Deno.serve(async (req) => {
           // Log blocked attempt
           await supabase.from("audit_logs").insert({
             user_id: user.id,
-            action: "reject" as any,
+            action: "payment_confirm_blocked" as any,
             table_name: "payments",
             record_id: paymentId,
             assignment_id: (payment as any).assignment_id,
-            description: "رفض تأكيد الدفعة — لا يوجد إثبات سداد مرفق في النظام",
-            new_data: { rejected: true, reason: "no_proof", payment_id: paymentId },
+            description: "منع تأكيد الدفعة — لا يوجد إثبات سداد مرفق في النظام",
+            new_data: { blocked: true, reason: "NO_PROOF", code: "NO_PROOF", payment_id: paymentId },
             user_role: roles?.find((r: any) => r.role)?.role || "unknown",
           } as any).catch(() => {});
 

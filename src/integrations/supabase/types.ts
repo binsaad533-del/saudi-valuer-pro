@@ -6870,6 +6870,7 @@ export type Database = {
         | "link"
         | "generate"
         | "override"
+        | "payment_confirm_blocked"
       basis_of_value:
         | "market_value"
         | "fair_value"
@@ -7217,6 +7218,7 @@ export const Constants = {
         "link",
         "generate",
         "override",
+        "payment_confirm_blocked",
       ],
       basis_of_value: [
         "market_value",
