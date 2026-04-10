@@ -87,7 +87,7 @@ export default function RaqeemExecutiveInsight() {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <RaqeemIcon size={16} />
-          <span className="text-xs font-bold text-foreground">رقيم التنفيذي</span>
+          <span className="text-xs font-bold text-foreground">ChatGPT التنفيذي</span>
         </div>
         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => analyze()} disabled={loading}>
           <RefreshCw className={`w-3 h-3 ${loading ? "animate-spin" : ""}`} />
@@ -97,7 +97,7 @@ export default function RaqeemExecutiveInsight() {
       {loading ? (
         <div className="flex items-center gap-2 py-4">
           <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
-          <span className="text-[11px] text-muted-foreground">رقيم يحلّل...</span>
+          <span className="text-[11px] text-muted-foreground">ChatGPT يحلّل...</span>
         </div>
       ) : (
         <div className="space-y-2">

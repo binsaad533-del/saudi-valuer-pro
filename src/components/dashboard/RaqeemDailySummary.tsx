@@ -121,7 +121,7 @@ export default function RaqeemDailySummary() {
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
         <CardContent className="py-8 flex items-center justify-center gap-2">
           <Loader2 className="w-4 h-4 animate-spin text-primary" />
-          <span className="text-sm text-muted-foreground">رقيم يحلّل البيانات...</span>
+          <span className="text-sm text-muted-foreground">ChatGPT يحلّل البيانات...</span>
         </CardContent>
       </Card>
     );
@@ -137,7 +137,7 @@ export default function RaqeemDailySummary() {
         <div className="flex items-center justify-between">
           <CardTitle className="text-sm flex items-center gap-2">
             <RaqeemIcon size={18} />
-            ملخص رقيم اليومي
+            ملخص ChatGPT اليومي
             {summary.isAiGenerated && (
               <Badge variant="outline" className="text-[9px] font-normal border-primary/30 text-primary">
                 AI

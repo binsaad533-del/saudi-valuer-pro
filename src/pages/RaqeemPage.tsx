@@ -276,7 +276,7 @@ export default function RaqeemPage() {
       {/* Correction Dialog */}
       <Dialog open={correctionDialog.open} onOpenChange={(open) => setCorrectionDialog((p) => ({ ...p, open }))}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>تصحيح إجابة رقيم</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>تصحيح إجابة ChatGPT</DialogTitle></DialogHeader>
           <div className="space-y-3">
             <div>
               <label className="text-xs font-medium text-muted-foreground">الإجابة المصحّحة</label>
