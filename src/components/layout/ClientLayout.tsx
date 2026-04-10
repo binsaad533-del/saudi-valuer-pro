@@ -5,11 +5,12 @@ import ClientNotificationsBell from "@/components/client/ClientNotificationsBell
 import AppFooter from "@/components/layout/AppFooter";
 import logo from "@/assets/logo.png";
 import {
-  LayoutDashboard, FolderOpen, PlusCircle, Settings, LogOut, Bell,
+  LayoutDashboard, FolderOpen, PlusCircle, Settings, LogOut, Bell, MessageSquare,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { path: "/client/dashboard", label: "لوحة التحكم", icon: LayoutDashboard },
+  { path: "/client/chat", label: "مركز التشغيل", icon: MessageSquare },
   { path: "/client/requests", label: "طلباتي", icon: FolderOpen },
   { path: "/client/new-request", label: "طلب جديد", icon: PlusCircle },
   { path: "/client/notifications", label: "الإشعارات", icon: Bell },

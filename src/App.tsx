@@ -64,6 +64,7 @@ import ClientDashboard from "@/pages/client/ClientDashboard";
 import SimplifiedJourney from "@/pages/client/SimplifiedJourney";
 import RequestDetails from "@/pages/client/RequestDetails";
 import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
+import ClientChatPage from "@/pages/client/ClientChatPage";
 
 // Inspector Portal
 import InspectorDashboard from "@/pages/inspector/InspectorDashboard";
@@ -186,6 +187,7 @@ const App = () => (
             <Route path="/client/request/:id" element={<RequestDetails />} />
             <Route path="/client/settings" element={<UserSettingsPage />} />
 
+            <Route path="/client/chat" element={<ClientChatPage />} />
             <Route path="/client/notifications" element={<NotificationsPage />} />
             <Route path="/client/notification-settings" element={<NotificationSettingsPage />} />
           </Route>
