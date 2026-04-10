@@ -146,6 +146,11 @@ const App = () => (
               <InspectorDashboard />
             </ProtectedRoute>
           } />
+          <Route path="/inspector/chat" element={
+            <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
+              <InspectorChatPage />
+            </ProtectedRoute>
+          } />
           <Route path="/inspector/inspection/:inspectionId" element={
             <ProtectedRoute allowedRoles={["inspector"]} redirectTo="/login">
               <MobileInspectionFlow />
