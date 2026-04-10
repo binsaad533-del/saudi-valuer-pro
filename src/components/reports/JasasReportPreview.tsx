@@ -1,5 +1,6 @@
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useMemo } from "react";
 import { Separator } from "@/components/ui/separator";
+import { QRCodeSVG } from "qrcode.react";
 import logo from "@/assets/logo.png";
 
 /* ══════════════════════════════════════════════
@@ -7,8 +8,10 @@ import logo from "@/assets/logo.png";
    ══════════════════════════════════════════════ */
 const SAMPLE = {
   reportNumber: "JV-2026-0412",
+  reportId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
   valuationDate: "2026-04-01",
   issueDate: "2026-04-10",
+  recipient: { name: "محمد العبدالله", email: "m.abdullah@company.sa" },
   objective:
     "تحديد القيمة السوقية العادلة للآلات والمعدات المملوكة للعميل وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين.",
   scope:
@@ -63,8 +66,11 @@ const SAMPLE = {
   currency: "SAR",
 };
 
+const VERIFY_BASE = "https://jsaas-valuation.com/verify";
+const TOTAL_PAGES = 10;
+
 /* ══════════════════════════════════════════════
-   TOC definition — drives section ordering
+   TOC
    ══════════════════════════════════════════════ */
 const TOC = [
   { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
@@ -78,6 +84,35 @@ const TOC = [
   { id: "final-value", num: 9, title: "النتيجة النهائية" },
   { id: "disclosures", num: 10, title: "الإفصاحات" },
 ];
+
+/* ══════════════════════════════════════════════
+   Watermark Overlay — rendered on every page
+   ══════════════════════════════════════════════ */
+function WatermarkOverlay() {
+  const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const text = `CONFIDENTIAL — ${SAMPLE.recipient.name} — ${now}`;
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10" aria-hidden="true">
+      {/* Diagonal repeating watermark */}
+      <div className="absolute inset-0 flex flex-col justify-around">
+        {Array.from({ length: 5 }).map((_, row) => (
+          <div key={row} className="flex justify-around -rotate-[25deg] origin-center">
+            {Array.from({ length: 2 }).map((_, col) => (
+              <span
+                key={col}
+                className="text-[11px] whitespace-nowrap select-none"
+                style={{ color: "hsl(var(--muted-foreground) / 0.08)" }}
+              >
+                {text}
+              </span>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 /* ══════════════════════════════════════════════
    Shared Components
@@ -96,15 +131,16 @@ function PageFooter({ pageNum }: { pageNum: number }) {
   return (
     <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-3 mt-4 border-t border-border/40">
       <span>شركة جساس للتقييم — Jassas Valuation Co.</span>
-      <span>{pageNum}</span>
+      <span>{pageNum} / {TOTAL_PAGES}</span>
     </div>
   );
 }
 
 function PageShell({ children, pageNum, noHeader }: { children: React.ReactNode; pageNum: number; noHeader?: boolean }) {
   return (
-    <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden" style={{ aspectRatio: "210/297" }}>
-      <div className="h-full flex flex-col justify-between p-10">
+    <div className="bg-card border border-border rounded-sm shadow-sm overflow-hidden relative" style={{ aspectRatio: "210/297" }}>
+      <WatermarkOverlay />
+      <div className="h-full flex flex-col justify-between p-10 relative z-20">
         {!noHeader && <PageHeader />}
         <div className="flex-1 overflow-hidden">{children}</div>
         <PageFooter pageNum={pageNum} />
@@ -151,11 +187,32 @@ function NumberedList({ items }: { items: string[] }) {
   );
 }
 
+function VerificationQR({ size = 64 }: { size?: number }) {
+  const url = `${VERIFY_BASE}/${SAMPLE.reportId}`;
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <QRCodeSVG value={url} size={size} level="M" />
+      <p className="text-[8px] text-muted-foreground text-center leading-tight max-w-[120px]" dir="ltr">
+        {url}
+      </p>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-center gap-2">
+      <span className="text-foreground font-medium">{value}</span>
+      <span>{label}</span>
+    </div>
+  );
+}
+
 /* ══════════════════════════════════════════════
    Pages
    ══════════════════════════════════════════════ */
 
-/* ── Cover (no header) ── */
+/* ── Cover ── */
 function CoverPage() {
   return (
     <PageShell pageNum={1} noHeader>
@@ -177,6 +234,10 @@ function CoverPage() {
             <Row label="تاريخ التقييم" value={SAMPLE.valuationDate} />
             <Row label="تاريخ الإصدار" value={SAMPLE.issueDate} />
           </div>
+          {/* QR on cover */}
+          <div className="mt-2">
+            <VerificationQR size={56} />
+          </div>
         </div>
         <div className="space-y-3 text-center">
           <div className="inline-block border border-border rounded px-4 py-1.5">
@@ -187,15 +248,6 @@ function CoverPage() {
         </div>
       </div>
     </PageShell>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-center gap-2">
-      <span className="text-foreground font-medium">{value}</span>
-      <span>{label}</span>
-    </div>
   );
 }
 
@@ -236,20 +288,12 @@ function ExecSummaryPage() {
     <PageShell pageNum={3}>
       <div className="space-y-5">
         <SectionTitle id="exec-summary" num={1} title="الملخص التنفيذي" />
-        <SubSection title="الهدف">
-          <Paragraph text={SAMPLE.objective} />
-        </SubSection>
-        <SubSection title="النطاق">
-          <Paragraph text={SAMPLE.scope} />
-        </SubSection>
-        <SubSection title="المنهج">
-          <Paragraph text={SAMPLE.methodology} />
-        </SubSection>
+        <SubSection title="الهدف"><Paragraph text={SAMPLE.objective} /></SubSection>
+        <SubSection title="النطاق"><Paragraph text={SAMPLE.scope} /></SubSection>
+        <SubSection title="المنهج"><Paragraph text={SAMPLE.methodology} /></SubSection>
         <SubSection title="القيمة التقديرية">
           <div className="bg-primary/5 border border-primary/10 rounded px-4 py-3 text-center">
-            <p className="text-2xl font-bold text-primary">
-              {SAMPLE.estimatedValue} {SAMPLE.currency}
-            </p>
+            <p className="text-2xl font-bold text-primary">{SAMPLE.estimatedValue} {SAMPLE.currency}</p>
           </div>
         </SubSection>
       </div>
@@ -264,7 +308,6 @@ function ScopePage() {
       <div className="space-y-5">
         <SectionTitle id="scope" num={2} title="نطاق العمل" />
         <Paragraph text={SAMPLE.scope} />
-
         <SectionTitle id="asset-def" num={3} title="تعريف الأصل" />
         <Paragraph text={SAMPLE.assetDefinition} />
       </div>
@@ -292,8 +335,6 @@ function InspectionPage() {
       <div className="space-y-5">
         <SectionTitle id="inspection" num={5} title="المعاينة" />
         <Paragraph text={SAMPLE.inspectionNotes} />
-
-        {/* Photo Grid */}
         <div className="grid grid-cols-3 gap-3 mt-4">
           {SAMPLE.inspectionPhotos.map((photo, i) => (
             <div key={i} className="space-y-1.5">
@@ -316,11 +357,8 @@ function AnalysisPage() {
       <div className="space-y-5">
         <SectionTitle id="analysis" num={6} title="التحليل" />
         <Paragraph text={SAMPLE.analysis} />
-
         <SectionTitle id="methodology" num={7} title="المنهجية" />
         <Paragraph text={SAMPLE.methodology} />
-
-        {/* Method comparison table */}
         <table className="w-full text-sm mt-2">
           <thead>
             <tr className="border-b border-border">
@@ -358,12 +396,8 @@ function AssumptionsPage() {
     <PageShell pageNum={8}>
       <div className="space-y-5">
         <SectionTitle id="assumptions" num={8} title="الافتراضات والقيود" />
-        <SubSection title="الافتراضات">
-          <NumberedList items={SAMPLE.assumptions} />
-        </SubSection>
-        <SubSection title="القيود">
-          <NumberedList items={SAMPLE.limitations} />
-        </SubSection>
+        <SubSection title="الافتراضات"><NumberedList items={SAMPLE.assumptions} /></SubSection>
+        <SubSection title="القيود"><NumberedList items={SAMPLE.limitations} /></SubSection>
       </div>
     </PageShell>
   );
@@ -379,7 +413,6 @@ function AssetTablePage() {
     <PageShell pageNum={9}>
       <div className="space-y-5">
         <SectionTitle id="final-value" num={9} title="النتيجة النهائية" />
-
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border">
@@ -407,8 +440,6 @@ function AssetTablePage() {
             </tr>
           </tfoot>
         </table>
-
-        {/* Final value box */}
         <div className="bg-primary/5 border border-primary/10 rounded px-6 py-5 text-center space-y-2 mt-4">
           <p className="text-xs text-muted-foreground">القيمة السوقية العادلة</p>
           <p className="text-3xl font-bold text-primary tracking-tight">
@@ -421,7 +452,7 @@ function AssetTablePage() {
   );
 }
 
-/* ── Disclosures ── */
+/* ── Disclosures + QR ── */
 function DisclosuresPage() {
   return (
     <PageShell pageNum={10}>
@@ -429,10 +460,22 @@ function DisclosuresPage() {
         <SectionTitle id="disclosures" num={10} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
-        <div className="border border-border rounded px-5 py-4 mt-6 space-y-2">
+        <div className="border border-border rounded px-5 py-4 mt-4 space-y-2">
           <p className="text-xs text-muted-foreground leading-relaxed">
             تمثل هذه القيمة رأي المقيّم المعتمد بناءً على المعلومات المتاحة وقت التقييم، وفقاً لمعايير التقييم الدولية IVS 2025 ومتطلبات الهيئة السعودية للمقيمين المعتمدين (تقييم).
           </p>
+        </div>
+
+        {/* Verification QR + Security badges */}
+        <div className="flex items-end justify-between mt-6 pt-4 border-t border-border/40">
+          <VerificationQR size={72} />
+          <div className="text-left space-y-1" dir="ltr">
+            <p className="text-[9px] text-muted-foreground">Print: Disabled</p>
+            <p className="text-[9px] text-muted-foreground">Edit: Disabled</p>
+            <p className="text-[9px] text-muted-foreground">Copy: Disabled</p>
+            <p className="text-[9px] text-muted-foreground">Link expires: 10 min</p>
+            <p className="text-[9px] text-muted-foreground">Download: Single-use</p>
+          </div>
         </div>
       </div>
     </PageShell>
