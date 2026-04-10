@@ -3174,9 +3174,10 @@ async function executeTool(
       return { success: true, result: { message: `تم إرسال ${sentCount} تذكير دفع`, total_overdue: overdueInvoices?.length || 0, sent: sentCount } };
     }
 
+    console.log(`[TOOL_EXEC] ✗ ${toolName} (unknown) | ${Date.now() - _toolStart}ms`);
     return { success: false, result: null, error: `أداة غير معروفة: ${toolName}` };
   } catch (e) {
-    console.error(`Tool execution error (${toolName}):`, e);
+    console.error(`[TOOL_EXEC] ✗✗ ${toolName} EXCEPTION:`, e);
     return { success: false, result: null, error: e instanceof Error ? e.message : "خطأ غير متوقع" };
   }
 }
