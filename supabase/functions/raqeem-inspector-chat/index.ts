@@ -319,51 +319,74 @@ ${inspectionsSummary}${currentInspectionSection}`;
         async start(controller) {
           const reader = aiResponse.body!.getReader();
           const decoder = new TextDecoder();
+          const encoder = new TextEncoder();
           let fullReply = "";
+          let buffer = "";
 
           try {
             while (true) {
               const { done, value } = await reader.read();
               if (done) break;
 
-              const chunk = decoder.decode(value, { stream: true });
-              const lines = chunk.split("\n");
-              for (const line of lines) {
-                if (line.startsWith("data: ")) {
-                  const data = line.slice(6).trim();
-                  if (data === "[DONE]") {
-                    // Sanitize and process actions
-                    fullReply = sanitizeArabicReply(fullReply);
-                    const actionResult = await processActions(fullReply);
-                    const meta = JSON.stringify({
-                      done: true,
-                      suggestedActions: buildSuggestedActions(),
-                      executedActions: actionResult.executedActions,
-                    });
-                    controller.enqueue(new TextEncoder().encode(`data: ${meta}\n\n`));
-                    controller.close();
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split("\n");
+              buffer = lines.pop() ?? "";
 
-                    // Persist sanitized reply
-                    if (inspectorId) {
-                      db.from("client_chat_messages").insert({
-                        user_id: inspectorId,
-                        session_id: `inspector-${inspectorId}`,
-                        role: "assistant",
-                        content: sanitizeArabicReply(actionResult.cleanReply),
-                        metadata: { inspection_id: inspection_id || null },
-                      } as any).catch(() => {});
-                    }
-                    return;
+              for (const rawLine of lines) {
+                const line = rawLine.trimEnd();
+                if (!line.startsWith("data: ")) continue;
+
+                const data = line.slice(6).trim();
+                if (!data) continue;
+
+                if (data === "[DONE]") {
+                  const sanitizedReply = sanitizeArabicReply(fullReply);
+                  const actionResult = await processActions(sanitizedReply);
+                  const finalReply = sanitizeArabicReply(actionResult.cleanReply);
+                  const meta = JSON.stringify({
+                    done: true,
+                    reply: finalReply,
+                    suggestedActions: buildSuggestedActions(),
+                    executedActions: actionResult.executedActions,
+                  });
+                  controller.enqueue(encoder.encode(`data: ${meta}\n\n`));
+                  controller.close();
+
+                  if (inspectorId) {
+                    db.from("client_chat_messages").insert({
+                      user_id: inspectorId,
+                      session_id: `inspector-${inspectorId}`,
+                      role: "assistant",
+                      content: finalReply,
+                      metadata: { inspection_id: inspection_id || null },
+                    } as any).catch(() => {});
                   }
-                  try {
-                    const parsed = JSON.parse(data);
-                    const delta = parsed.choices?.[0]?.delta?.content || "";
-                    if (delta) {
-                      fullReply += delta;
-                      controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ delta })}\n\n`));
-                    }
-                  } catch {}
+                  return;
                 }
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta?.content || "";
+                  if (delta) {
+                    fullReply += delta;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+                  }
+                } catch {}
+              }
+            }
+
+            const remaining = buffer.trim();
+            if (remaining.startsWith("data: ")) {
+              const data = remaining.slice(6).trim();
+              if (data && data !== "[DONE]") {
+                try {
+                  const parsed = JSON.parse(data);
+                  const delta = parsed.choices?.[0]?.delta?.content || "";
+                  if (delta) {
+                    fullReply += delta;
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+                  }
+                } catch {}
               }
             }
           } catch (err) {
