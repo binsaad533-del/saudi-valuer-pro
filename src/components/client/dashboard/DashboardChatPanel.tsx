@@ -79,10 +79,14 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
     setSending(true);
 
     try {
-      const history = messages.slice(-12).map(m => ({
-        content: m.content,
-        sender_type: m.role === "user" ? "client" : "ai",
-      }));
+      let history: { content: string; sender_type: string }[] = [];
+      setMessages(prev => {
+        history = prev.slice(-12).map(m => ({
+          content: m.content,
+          sender_type: m.role === "user" ? "client" : "ai",
+        }));
+        return prev;
+      });
 
       const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
@@ -104,7 +108,7 @@ export default function DashboardChatPanel({ userId, userName }: Props) {
     } finally {
       setSending(false);
     }
-  }, [messages, sending, userId, navigate]);
+  }, [sending, userId, navigate]);
 
   return (
     <Card className="overflow-hidden">

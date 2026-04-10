@@ -137,10 +137,15 @@ export default function ClientChatPage() {
     setSending(true);
 
     try {
-      const history = messages.slice(-20).map(m => ({
-        content: m.content,
-        sender_type: m.role === "user" ? "client" : "ai",
-      }));
+      // Build history from current state snapshot via functional approach
+      let history: { content: string; sender_type: string }[] = [];
+      setMessages(prev => {
+        history = prev.slice(-20).map(m => ({
+          content: m.content,
+          sender_type: m.role === "user" ? "client" : "ai",
+        }));
+        return prev; // no mutation
+      });
 
       const { data, error } = await supabase.functions.invoke("raqeem-client-chat", {
         body: {
@@ -187,7 +192,7 @@ export default function ClientChatPage() {
     } finally {
       setSending(false);
     }
-  }, [messages, sending, userId, navigate, toast]);
+  }, [sending, userId, navigate, toast]);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
