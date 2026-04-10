@@ -5,11 +5,6 @@ import { Lock, FileText, ShieldCheck, Clock } from "lucide-react";
 import jasasLogo from "@/assets/jasas-logo.png";
 
 /* ══════════════════════════════════════════════
-   Version Control Types
-   ══════════════════════════════════════════════ */
-type ReportMode = "draft" | "final";
-
-/* ══════════════════════════════════════════════
    Sample Data — Executive Style
    ══════════════════════════════════════════════ */
 const SAMPLE = {
