@@ -100,12 +100,14 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
 
   const handleIssue = async () => {
     // Run QC first if not already passed
-    if (!qcResult?.passed) {
+    let currentQC = qcResult;
+    if (!currentQC || !currentQC.passed) {
       const assignmentId = request.assignment_id || draft?.assignment_id;
       if (assignmentId) {
         const result = await runReportQC(assignmentId);
         setQcResult(result);
         await logQCResult(assignmentId, result, userId);
+        currentQC = result;
         if (!result.passed) {
           toast({
             title: "لا يمكن إصدار التقرير لعدم اكتمال المتطلبات",
@@ -115,6 +117,16 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
           return;
         }
       }
+    }
+
+    // Enforce 80% minimum for final issuance
+    if (currentQC && currentQC.score < 80) {
+      toast({
+        title: "لا يمكن إصدار التقرير النهائي",
+        description: `النتيجة ${currentQC.score}% — يجب تجاوز 80% للإصدار النهائي. يمكن حفظه كمسودة فقط.`,
+        variant: "destructive",
+      });
+      return;
     }
 
     setIssuing(true);
