@@ -46,9 +46,9 @@ const ROLE_PROMPTS: Record<string, string[]> = {
     "متى سيكون التقرير جاهزاً؟",
   ],
   inspector: [
-    "ما هي المعاينات المطلوبة مني؟",
+    "ما هي المعاينات المُسندة إليّ؟",
     "كيف أرفع صور المعاينة؟",
-    "ما هي متطلبات التقرير الميداني؟",
+    "ما هي المتطلبات الميدانية الحالية؟",
   ],
   financial_manager: [
     "ما هي المدفوعات المعلقة؟",
@@ -71,9 +71,9 @@ const ROLE_QUICK_ACTIONS: Record<string, { label: string; icon: string; message:
     { label: "موعد التسليم", icon: "⏱️", message: "كم باقي على تسليم التقرير؟" },
   ],
   inspector: [
-    { label: "مهامي اليوم", icon: "📋", message: "ما المعاينات المطلوبة مني اليوم؟" },
-    { label: "جدولي", icon: "📅", message: "وريني جدول المعاينات القادمة" },
-    { label: "أدائي", icon: "⭐", message: "كيف أدائي وتقييمي؟" },
+    { label: "مهامي اليوم", icon: "📋", message: "ما المعاينات المُسندة إليّ اليوم؟" },
+    { label: "جدولي", icon: "📅", message: "اعرض جدول المعاينات القادمة" },
+    { label: "أدائي", icon: "⭐", message: "اعرض ملخص أدائي الحالي" },
     { label: "إبلاغ", icon: "⚠️", message: "أريد الإبلاغ عن مشكلة ميدانية" },
   ],
   financial_manager: [
@@ -372,29 +372,39 @@ export default function RaqeemChatPage() {
         const reader = resp.body?.getReader();
         const decoder = new TextDecoder();
         let assistantContent = "";
+        let buffer = "";
         setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
+
+        const processSseLine = (line: string) => {
+          if (!line.startsWith("data: ")) return;
+          const data = line.slice(6).trim();
+          if (!data || data === "[DONE]") return;
+          try {
+            const parsed = JSON.parse(data);
+            const delta = parsed.choices?.[0]?.delta?.content || parsed.content || parsed.response || "";
+            if (!delta) return;
+            assistantContent += delta;
+            setMessages((prev) => {
+              const updated = [...prev];
+              updated[updated.length - 1] = { role: "assistant", content: assistantContent };
+              return updated;
+            });
+          } catch {
+            buffer = `${line}\n${buffer}`;
+          }
+        };
 
         while (reader) {
           const { done, value } = await reader.read();
           if (done) break;
-          const chunk = decoder.decode(value, { stream: true });
-          for (const line of chunk.split("\n")) {
-            if (line.startsWith("data: ")) {
-              const data = line.slice(6);
-              if (data === "[DONE]") break;
-              try {
-                const parsed = JSON.parse(data);
-                const delta = parsed.choices?.[0]?.delta?.content || parsed.content || "";
-                assistantContent += delta;
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = { role: "assistant", content: assistantContent };
-                  return updated;
-                });
-              } catch {}
-            }
-          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() ?? "";
+          for (const rawLine of lines) processSseLine(rawLine.trimEnd());
         }
+
+        const remaining = buffer.trim();
+        if (remaining) processSseLine(remaining);
       } else {
         const data = await resp.json();
         const content = data.choices?.[0]?.message?.content || data.content || data.response || "لم أتمكن من الإجابة";
@@ -520,7 +530,7 @@ export default function RaqeemChatPage() {
                 <h2 className="text-lg font-bold text-foreground mb-1">مرحباً، أنا ChatGPT</h2>
                 <p className="text-sm text-muted-foreground">
                   {effectiveRole === "owner" ? "مساعدك التنفيذي — أدير لك العمليات مباشرة" :
-                   effectiveRole === "inspector" ? "مساعدك الميداني — أنسق معاك مهام المعاينة" :
+                   effectiveRole === "inspector" ? "مساعدك الميداني داخل المنصة — أساعدك في المعاينات والموقع والصور والملاحظات وحالة التنفيذ ضمن صلاحياتك فقط" :
                    effectiveRole === "financial_manager" ? "مساعدك المالي — أتابع لك المدفوعات والإيرادات" :
                    "كيف يمكنني مساعدتك اليوم؟"}
                 </p>
