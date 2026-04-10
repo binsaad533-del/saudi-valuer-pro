@@ -3728,9 +3728,12 @@ serve(async (req) => {
     }
 
     // Build contextual system prompt with role-specific additions
-    const basePrompt = await buildContextualPrompt(supabaseClient);
+    const rolePrompt = getRolePromptAddition(effectiveRole);
+    const basePrompt = effectiveRole === "inspector"
+      ? `أنت "${AI.name}" — مساعد ميداني مخصص للمُعاين داخل المنصة. استخدم العربية الفصحى المهنية فقط، ولا تذكر أي وصف عام عن التقييم العقاري أو الآلات والمعدات أو صلاحيات المالك.`
+      : await buildContextualPrompt(supabaseClient);
     const systemPrompt = basePrompt
-      + getRolePromptAddition(effectiveRole)
+      + rolePrompt
       + memoryProfileSection
       + platformContextSection
       + clientContextSection
