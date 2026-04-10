@@ -209,7 +209,7 @@ export default function AssignmentHubPage() {
         <div className="flex items-center gap-2">
           <Link to="/raqeem">
             <Button variant="outline" size="sm" className="gap-1.5">
-              <Sparkles className="w-3.5 h-3.5" /> رقيم
+              <Sparkles className="w-3.5 h-3.5" /> ChatGPT
             </Button>
           </Link>
         </div>

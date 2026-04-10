@@ -402,10 +402,10 @@ export default function RequestDetails() {
   // ── Export chat as text file ──
   const handleExportChat = () => {
     const welcomeMsg = getRaqeemWelcome(request.status, request);
-    const lines = [`=== سجل محادثة ChatGPT ===`, `الرقم المرجعي: ${request.reference_number || "—"}`, `التاريخ: ${new Date().toLocaleDateString("ar-SA")}`, `الحالة: ${getStatusLabel(request.status)}`, `${"=".repeat(40)}`, "", `رقيم: ${welcomeMsg}`, ""];
+    const lines = [`=== سجل محادثة ChatGPT ===`, `الرقم المرجعي: ${request.reference_number || "—"}`, `التاريخ: ${new Date().toLocaleDateString("ar-SA")}`, `الحالة: ${getStatusLabel(request.status)}`, `${"=".repeat(40)}`, "", `ChatGPT: ${welcomeMsg}`, ""];
     for (const msg of messages) {
       const time = new Date(msg.created_at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
-      const sender = msg.sender_type === "client" ? "العميل" : msg.sender_type === "ai" ? "رقيم" : "النظام";
+      const sender = msg.sender_type === "client" ? "العميل" : msg.sender_type === "ai" ? "ChatGPT" : "النظام";
       lines.push(`[${time}] ${sender}: ${msg.content}`, "");
     }
     const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
