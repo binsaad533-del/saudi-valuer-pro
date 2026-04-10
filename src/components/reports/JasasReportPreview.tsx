@@ -45,6 +45,36 @@ const SAMPLE = {
     { caption: "لوحة التحكم الرئيسية" },
     { caption: "معدات ورشة الصيانة" },
   ],
+  /* ── Real Estate Assets ── */
+  realEstateAssets: [
+    { type: "مبنى المصنع الرئيسي", area: "2,400 م²", value: "8,500,000" },
+    { type: "مستودع التخزين", area: "800 م²", value: "2,200,000" },
+  ],
+  realEstateTotal: "10,700,000",
+  realEstateMethodology: "أسلوب المقارنة السوقية (Sales Comparison) — IVS 400",
+  realEstateMethodReason: "توفر بيانات سوقية كافية لعقارات صناعية مماثلة في المنطقة",
+  realEstateAssumptions: [
+    "الصك مطابق للواقع ولا توجد نزاعات ملكية",
+    "لا توجد أعباء أو رهون غير مفصح عنها",
+    "الحالة الإنشائية بناءً على المعاينة الظاهرية فقط",
+  ],
+  /* ── Machinery Assets ── */
+  machineryAssets: [
+    { type: "خطوط إنتاج", qty: 3, value: "7,200,000" },
+    { type: "مولدات كهربائية", qty: 5, value: "1,850,000" },
+    { type: "رافعات صناعية", qty: 8, value: "1,400,000" },
+    { type: "أنظمة تبريد", qty: 4, value: "980,000" },
+    { type: "معدات مساندة", qty: 12, value: "1,320,000" },
+  ],
+  machineryTotal: "12,750,000",
+  machineryMethodology: "أسلوب التكلفة المستبدلة مع الاستهلاك (DRC) — IVS 300",
+  machineryMethodReason: "أصول متخصصة نادراً ما تُباع في سوق مفتوح، والتكلفة المستبدلة هي الأنسب",
+  machineryAssumptions: [
+    "جميع الآلات في حالة تشغيلية وقت المعاينة",
+    "العمر الإنتاجي المتبقي مقدّر بناءً على ساعات التشغيل وسجلات الصيانة",
+    "لا توجد التزامات مالية أو رهونات على المعدات",
+  ],
+  /* ── Combined ── */
   assets: [
     { type: "خطوط إنتاج", qty: 3, value: "7,200,000" },
     { type: "مولدات كهربائية", qty: 5, value: "1,850,000" },
@@ -52,8 +82,10 @@ const SAMPLE = {
     { type: "أنظمة تبريد", qty: 4, value: "980,000" },
     { type: "معدات مساندة", qty: 12, value: "1,320,000" },
   ],
-  estimatedValue: "12,750,000",
-  estimatedValueText: "اثنا عشر مليوناً وسبعمائة وخمسون ألف ريال سعودي",
+  combinedTotal: "23,450,000",
+  combinedTotalText: "ثلاثة وعشرون مليوناً وأربعمائة وخمسون ألف ريال سعودي",
+  estimatedValue: "23,450,000",
+  estimatedValueText: "ثلاثة وعشرون مليوناً وأربعمائة وخمسون ألف ريال سعودي",
   currency: "SAR",
   attachmentIntelligence: {
     financialMetrics: [
@@ -177,11 +209,13 @@ const TOC = [
   { id: "methodology", num: 9, title: "المنهجية" },
   { id: "assumptions", num: 10, title: "الافتراضات والقيود" },
   { id: "assumption-impact", num: 11, title: "تحليل تأثير الافتراضات" },
-  { id: "final-value", num: 12, title: "النتيجة النهائية" },
-  { id: "data-sources", num: 13, title: "مصادر البيانات" },
-  { id: "risk-statement", num: 14, title: "بيان المخاطر" },
-  { id: "disclosures", num: 15, title: "الإفصاحات" },
-  { id: "accreditation", num: 16, title: "الاعتماد والتوقيع" },
+  { id: "re-valuation", num: 12, title: "تقييم العقار" },
+  { id: "me-valuation", num: 13, title: "تقييم الآلات والمعدات" },
+  { id: "combined-value", num: 14, title: "القيمة الإجمالية المركبة" },
+  { id: "data-sources", num: 15, title: "مصادر البيانات" },
+  { id: "risk-statement", num: 16, title: "بيان المخاطر" },
+  { id: "disclosures", num: 17, title: "الإفصاحات" },
+  { id: "accreditation", num: 18, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
