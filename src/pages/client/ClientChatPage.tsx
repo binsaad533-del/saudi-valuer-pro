@@ -57,10 +57,13 @@ export default function ClientChatPage() {
   const [initialized, setInitialized] = useState(false);
   const [suggestedActions, setSuggestedActions] = useState<SuggestedAction[]>(GLOBAL_QUICK_ACTIONS);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const initCalledRef = useRef(false);
   const messagesRef = useRef<ChatMessage[]>([]);
   const sendingRef = useRef(false);
+  const shouldAutoScrollRef = useRef(true);
+  const scrollBehaviorRef = useRef<ScrollBehavior>("auto");
 
   const replaceMessages = useCallback((nextMessages: ChatMessage[]) => {
     messagesRef.current = nextMessages;
@@ -85,10 +88,42 @@ export default function ClientChatPage() {
     replaceMessages([message]);
   }, [replaceMessages]);
 
-  // Scroll to bottom on new messages
+  const getScrollViewport = useCallback(() => {
+    return scrollAreaRef.current?.querySelector("[data-radix-scroll-area-viewport]") as HTMLDivElement | null;
+  }, []);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
+    const viewport = getScrollViewport();
+    if (!viewport) return;
+
+    viewport.scrollTo({
+      top: viewport.scrollHeight,
+      behavior,
+    });
+  }, [getScrollViewport]);
+
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const viewport = getScrollViewport();
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      const distanceFromBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight;
+      shouldAutoScrollRef.current = distanceFromBottom < 120;
+    };
+
+    handleScroll();
+    viewport.addEventListener("scroll", handleScroll);
+
+    return () => viewport.removeEventListener("scroll", handleScroll);
+  }, [getScrollViewport, initialized]);
+
+  useEffect(() => {
+    if (!messages.length || !shouldAutoScrollRef.current) return;
+
+    const behavior = scrollBehaviorRef.current;
+    requestAnimationFrame(() => scrollToBottom(behavior));
+    scrollBehaviorRef.current = "auto";
+  }, [messages, scrollToBottom]);
 
   // Init: load user, send proactive first message
   useEffect(() => {
@@ -146,6 +181,9 @@ export default function ClientChatPage() {
     const trimmedText = text.trim();
     if (!trimmedText || sendingRef.current) return;
 
+    shouldAutoScrollRef.current = true;
+    scrollBehaviorRef.current = "smooth";
+
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: "user",
@@ -158,7 +196,7 @@ export default function ClientChatPage() {
     setSending(true);
 
     try {
-      const history = messagesRef.current.slice(-20).map((message) => ({
+      const history = messagesRef.current.slice(-8).map((message) => ({
         content: message.content,
         sender_type: message.role === "user" ? "client" : "ai",
       }));
@@ -244,7 +282,7 @@ export default function ClientChatPage() {
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1">
+      <ScrollArea ref={scrollAreaRef} className="flex-1">
         <div className="max-w-3xl mx-auto px-4 py-4 space-y-4">
           {!initialized && (
             <div className="flex items-center justify-center py-16">
