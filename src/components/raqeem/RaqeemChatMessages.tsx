@@ -94,18 +94,24 @@ export default function RaqeemChatMessages({ messages, isLoading, onCorrect, onS
                 <>
                   <div className="prose prose-sm max-w-none dark:prose-invert" dir="rtl" style={{ textAlign: 'right', unicodeBidi: 'plaintext' as any }}><ReactMarkdown>{cleanContent}</ReactMarkdown></div>
                   {actions.length > 0 && !isLoading && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {actions.map((action, ai) => (
-                        <Button
-                          key={ai}
-                          size="sm"
-                          className="gap-1.5 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white"
-                          onClick={() => onSendMessage?.(action)}
-                        >
-                          <Zap className="w-3 h-3" />
-                          {action}
-                        </Button>
-                      ))}
+                    <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                      <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">إجراءات متاحة</span>
+                      <div className="flex flex-wrap gap-2">
+                        {actions.map((action, ai) => {
+                          const isDestructive = /^(ألغِ|أوقف)/.test(action);
+                          return (
+                            <Button
+                              key={ai}
+                              size="sm"
+                              className={`gap-1.5 text-xs font-medium ${isDestructive ? 'bg-destructive hover:bg-destructive/90 text-destructive-foreground' : 'bg-primary hover:bg-primary/90 text-primary-foreground'}`}
+                              onClick={() => onSendMessage?.(action)}
+                            >
+                              <Zap className="w-3 h-3" />
+                              {action}
+                            </Button>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </>
