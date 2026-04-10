@@ -371,12 +371,117 @@ function DocumentsPage() {
   );
 }
 
-/* ── Inspection — Grid + brief notes ── */
-function InspectionPage() {
+/* ── Attachment Intelligence — 2 pages ── */
+function AttachmentIntelPage1() {
+  const ai = SAMPLE.attachmentIntelligence;
+  const statusColor = (s: string) =>
+    s === "good" ? "text-emerald-600" : s === "warning" ? "text-amber-600" : "text-foreground";
+
   return (
     <PageShell pageNum={6}>
       <div className="space-y-4">
-        <SectionTitle id="inspection" num={5} title="المعاينة" />
+        <SectionTitle id="attachment-intel" num={5} title="تحليل المرفقات" />
+
+        <p className="text-xs font-semibold text-foreground">المؤشرات المالية المستخلصة:</p>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-border">
+              <th className="text-right py-2 font-semibold text-foreground">المؤشر</th>
+              <th className="text-center py-2 font-semibold text-foreground w-32">القيمة</th>
+              <th className="text-right py-2 font-semibold text-foreground">المصدر</th>
+            </tr>
+          </thead>
+          <tbody className="text-muted-foreground">
+            {ai.financialMetrics.map((m, i) => (
+              <tr key={i} className="border-b border-border/50">
+                <td className="py-1.5">{m.label}</td>
+                <td className="py-1.5 text-center font-medium text-foreground">{m.value}</td>
+                <td className="py-1.5 text-xs">{m.source}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <p className="text-xs font-semibold text-foreground pt-2">المؤشرات التشغيلية:</p>
+        <div className="space-y-1">
+          {ai.keyIndicators.map((ind, i) => (
+            <div key={i} className="flex items-center justify-between py-1.5 border-b border-border/30 last:border-0">
+              <span className="text-sm text-muted-foreground">{ind.indicator}</span>
+              <span className={`text-sm font-semibold ${statusColor(ind.status)}`}>{ind.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs font-semibold text-foreground pt-2">المخاطر المحددة:</p>
+        <div className="space-y-1">
+          {ai.risks.map((r, i) => (
+            <div key={i} className="flex gap-2 text-sm text-muted-foreground">
+              <span className="text-destructive shrink-0 mt-0.5">⚠</span>
+              <span className="leading-relaxed">{r}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
+function AttachmentIntelPage2() {
+  const ai = SAMPLE.attachmentIntelligence;
+  return (
+    <PageShell pageNum={7}>
+      <div className="space-y-5">
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-1">المرفقات المُستخدمة في التقييم:</p>
+          <div className="space-y-1">
+            {ai.used.map((u, i) => (
+              <div key={i} className="flex gap-2 text-sm text-muted-foreground">
+                <span className="text-emerald-600 shrink-0">✓</span>
+                <span className="leading-relaxed">{u}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-1">المرفقات المُتجاهلة:</p>
+          <div className="space-y-1">
+            {ai.ignored.map((ig, i) => (
+              <div key={i} className="flex gap-2 text-sm text-muted-foreground">
+                <span className="text-muted-foreground/50 shrink-0">—</span>
+                <span className="leading-relaxed">{ig}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold text-foreground mb-1">المرفقات المفقودة:</p>
+          <div className="space-y-1">
+            {ai.missing.map((m, i) => (
+              <div key={i} className="flex gap-2 text-sm text-muted-foreground">
+                <span className="text-destructive shrink-0">✗</span>
+                <span className="leading-relaxed">{m}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-primary/5 border border-primary/15 rounded-lg px-4 py-3 mt-2">
+          <p className="text-xs font-semibold text-foreground mb-1">الأثر على النتيجة النهائية:</p>
+          <p className="text-sm text-muted-foreground leading-relaxed">{ai.valueImpact}</p>
+        </div>
+      </div>
+    </PageShell>
+  );
+}
+
+/* ── Inspection — Grid + brief notes ── */
+function InspectionPage() {
+  return (
+    <PageShell pageNum={8}>
+      <div className="space-y-4">
+        <SectionTitle id="inspection" num={6} title="المعاينة" />
 
         <div className="space-y-1">
           <MetricRow label="تاريخ المعاينة" value="2026-03-25" />
@@ -400,12 +505,12 @@ function InspectionPage() {
   );
 }
 
-/* ── Analysis + Methodology — Structured table, no paragraphs ── */
+/* ── Analysis + Methodology ── */
 function AnalysisPage() {
   return (
-    <PageShell pageNum={7}>
+    <PageShell pageNum={9}>
       <div className="space-y-5">
-        <SectionTitle id="analysis" num={6} title="التحليل" />
+        <SectionTitle id="analysis" num={7} title="التحليل" />
 
         <div className="space-y-1">
           <MetricRow label="متوسط العمر الإنتاجي المتبقي" value="12 عاماً" />
@@ -414,7 +519,7 @@ function AnalysisPage() {
           <MetricRow label="مصادر السوق" value="سوق محلي + دولي" />
         </div>
 
-        <SectionTitle id="methodology" num={7} title="المنهجية" />
+        <SectionTitle id="methodology" num={8} title="المنهجية" />
 
         <table className="w-full text-sm">
           <thead>
@@ -454,12 +559,12 @@ function AnalysisPage() {
   );
 }
 
-/* ── Assumptions — Clean bullets ── */
+/* ── Assumptions ── */
 function AssumptionsPage() {
   return (
-    <PageShell pageNum={8}>
+    <PageShell pageNum={10}>
       <div className="space-y-5">
-        <SectionTitle id="assumptions" num={8} title="الافتراضات والقيود" />
+        <SectionTitle id="assumptions" num={9} title="الافتراضات والقيود" />
 
         <div className="space-y-1">
           <p className="text-xs font-semibold text-foreground mb-1">الافتراضات:</p>
@@ -475,16 +580,16 @@ function AssumptionsPage() {
   );
 }
 
-/* ── Asset Table + Final Value — Prominent box ── */
+/* ── Asset Table + Final Value ── */
 function AssetTablePage() {
   const total = SAMPLE.assets
     .reduce((sum, a) => sum + Number(a.value.replace(/,/g, "")), 0)
     .toLocaleString("en-US");
 
   return (
-    <PageShell pageNum={9}>
+    <PageShell pageNum={11}>
       <div className="space-y-5">
-        <SectionTitle id="final-value" num={9} title="النتيجة النهائية" />
+        <SectionTitle id="final-value" num={10} title="النتيجة النهائية" />
 
         <table className="w-full text-sm">
           <thead>
@@ -527,9 +632,9 @@ function AssetTablePage() {
 /* ── Disclosures + QR ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={10}>
+    <PageShell pageNum={12}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={10} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={11} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -571,6 +676,8 @@ export default function JasasReportPreview() {
       <ExecSummaryPage />
       <ScopePage />
       <DocumentsPage />
+      <AttachmentIntelPage1 />
+      <AttachmentIntelPage2 />
       <InspectionPage />
       <AnalysisPage />
       <AssumptionsPage />
