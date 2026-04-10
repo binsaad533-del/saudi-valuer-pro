@@ -248,6 +248,9 @@ export default function RaqeemPage() {
   const send = async (text?: string) => {
     const messageText = text || input.trim();
     if (!messageText && attachedFiles.length === 0) return;
+    // Prevent duplicate messages
+    const last = messages[messages.length - 1];
+    if (last?.role === "user" && last?.content === messageText) return;
     setActiveTab("chat");
     let fullContent = messageText;
     if (attachedFiles.length > 0) fullContent += `\n\n[مرفقات: ${attachedFiles.map((f) => f.name).join("، ")}]`;
