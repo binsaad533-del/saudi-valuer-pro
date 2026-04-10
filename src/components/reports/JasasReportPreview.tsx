@@ -818,9 +818,9 @@ function DataSourcesPage() {
   const incomplete = SAMPLE.dataSources.filter(d => d.reliability === "غير مكتمل").length;
 
   return (
-    <PageShell pageNum={12}>
+    <PageShell pageNum={13}>
       <div className="space-y-4">
-        <SectionTitle id="data-sources" num={11} title="مصادر البيانات" />
+        <SectionTitle id="data-sources" num={12} title="مصادر البيانات" />
 
         {/* Summary bar */}
         <div className="flex gap-3 text-xs">
@@ -873,9 +873,9 @@ function DataSourcesPage() {
 /* ── Disclosures ── */
 function DisclosuresPage() {
   return (
-    <PageShell pageNum={13}>
+    <PageShell pageNum={14}>
       <div className="space-y-5">
-        <SectionTitle id="disclosures" num={12} title="الإفصاحات" />
+        <SectionTitle id="disclosures" num={13} title="الإفصاحات" />
         <NumberedList items={SAMPLE.disclosures} />
 
         <div className="border border-border rounded px-4 py-3 mt-3">
@@ -891,9 +891,9 @@ function DisclosuresPage() {
 /* ── Accreditation & Signature (read-only, auto-populated) ── */
 function AccreditationPage() {
   return (
-    <PageShell pageNum={14}>
+    <PageShell pageNum={15}>
       <div className="space-y-6">
-        <SectionTitle id="accreditation" num={13} title="الاعتماد والتوقيع" />
+        <SectionTitle id="accreditation" num={14} title="الاعتماد والتوقيع" />
 
         {/* Company */}
         <div className="space-y-3">
@@ -1066,6 +1066,7 @@ export default function JasasReportPreview() {
         <InspectionPage />
         <AnalysisPage />
         <AssumptionsPage />
+        <AssumptionImpactPage />
         <AssetTablePage />
         <DataSourcesPage />
         <DisclosuresPage />
