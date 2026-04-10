@@ -2341,7 +2341,7 @@ async function executeTool(
         action: "status_change",
         table_name: "payments",
         record_id: args.payment_id,
-        description: `تأكيد استلام دفعة عبر ChatGPT${args.notes ? ' — ' + args.notes : ''}`,
+        description: `تأكيد استلام دفعة عبر ${AI.name}${args.notes ? ' — ' + args.notes : ''}`,
       });
 
       return { success: true, result: { message: "تم تأكيد الدفعة بنجاح وتحريك سير العمل" } };
@@ -2632,7 +2632,7 @@ async function executeTool(
       if (args.approve) {
         const { data: result, error } = await db.rpc("update_request_status", {
           _assignment_id: args.assignment_id, _new_status: "draft_approved",
-          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر ChatGPT: ${args.feedback}`,
+          _user_id: null, _action_type: "auto", _reason: `موافقة العميل عبر ${AI.name}: ${args.feedback}`,
         });
         if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
         return { success: true, result: { message: "تمت الموافقة على المسودة بنجاح. الخطوة التالية: سداد الدفعة النهائية." } };
@@ -2649,7 +2649,7 @@ async function executeTool(
       if (args.approved !== false) {
         const { data: result, error } = await db.rpc("update_request_status", {
           _assignment_id: args.assignment_id, _new_status: "scope_approved",
-          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر ChatGPT",
+          _user_id: null, _action_type: "auto", _reason: "موافقة العميل على نطاق العمل عبر ${AI.name}",
         });
         if (error || !result?.success) return { success: false, result: null, error: error?.message || result?.error || "فشل التحديث" };
         return { success: true, result: { message: "تمت الموافقة على نطاق العمل. الخطوة التالية: سداد الدفعة الأولى (50%)." } };

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { AI } from "../_shared/assistantIdentity.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { loadClientMemory, updateClientMemory, buildMemorySection } from "./_shared/memory.ts";
 import { analyzeDocumentReadiness } from "./_shared/document-analysis.ts";
@@ -301,10 +302,10 @@ serve(async (req) => {
     }
 
     // ── Build system prompt with all intelligence layers ──
-    const systemPrompt = `أنت "ChatGPT – مساعدك الذكي"، مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation).
+    const systemPrompt = `أنت "${AI.title}"، مقيّم ذكي متخصص يعمل في شركة جسّاس للتقييم (Jsaas Valuation).
 
 ## هويتك
-- اسمك: "ChatGPT – مساعدك الذكي"
+- اسمك: "${AI.title}"
 - شركة جسّاس للتقييم، مرخصة من الهيئة السعودية للمقيمين المعتمدين (تقييم)
 - تراخيص: عقارات (1210001217) + آلات ومعدات (4114000015)
 - التواصل: 920015029 / 0500668089 | care@jsaas-valuation.com
@@ -541,7 +542,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
             _new_status: "cancelled",
             _user_id: ctx.client_user_id,
             _action_type: "normal",
-            _reason: "إلغاء بطلب العميل عبر ChatGPT",
+            _reason: "إلغاء بطلب العميل عبر ${AI.name}",
           });
           if (cancelResult?.success) {
             cancelExecuted = true;
@@ -567,7 +568,7 @@ ${requestSection}${deadlineAlert}${paymentSection}${documentsSection}${docReadin
             _new_status: "draft_approved",
             _user_id: ctx.client_user_id,
             _action_type: "normal",
-            _reason: "اعتماد المسودة بواسطة العميل عبر ChatGPT",
+            _reason: "اعتماد المسودة بواسطة العميل عبر ${AI.name}",
           });
           if (approveResult?.success) {
             draftApproved = true;

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { AI } from "../_shared/assistantIdentity.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
@@ -156,7 +157,7 @@ serve(async (req) => {
 - اعرض كل قسم بشكل مستقل مع تفاصيله الكاملة ثم اختم بالقيمة الإجمالية الموحدة`;
     }
 
-    const systemPrompt = `أنت "ChatGPT" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم باللغة العربية وفقاً لمعايير IVS 2025 والهيئة السعودية للمقيمين المعتمدين (تقييم).
+    const systemPrompt = `أنت "${AI.name}" — محرك ذكاء اصطناعي متخصص في كتابة تقارير التقييم باللغة العربية وفقاً لمعايير IVS 2025 والهيئة السعودية للمقيمين المعتمدين (تقييم).
 ${disciplineInstructions}
 
 ══════ معايير التقرير المهني الموحد — قواعد ملزمة ══════
