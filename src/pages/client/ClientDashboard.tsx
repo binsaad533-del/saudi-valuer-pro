@@ -19,7 +19,6 @@ import { DashboardTabs, type TabKey } from "@/components/client/dashboard/Dashbo
 import { ContactSupportCard } from "@/components/client/dashboard/ContactSupportCard";
 import { ValuationGuideCard } from "@/components/client/dashboard/ValuationGuideCard";
 import { ClientArchivedReports } from "@/components/client/dashboard/ClientArchivedReports";
-import DashboardChatPanel from "@/components/client/dashboard/DashboardChatPanel";
 
 export default function ClientDashboard() {
   const navigate = useNavigate();
@@ -252,9 +251,6 @@ export default function ClientDashboard() {
             </Card>
           </div>
         )}
-
-        {/* ChatGPT Operating Layer */}
-        <DashboardChatPanel userId={userId} userName={userName} />
 
         <Separator className="my-2" />
         <ValuationGuideCard />
