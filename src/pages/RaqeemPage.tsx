@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import KnowledgeBaseModule from "@/components/raqeem/KnowledgeBaseModule";
 import CorrectionsModule from "@/components/raqeem/CorrectionsModule";
 import RulesEngineModule from "@/components/raqeem/RulesEngineModule";
@@ -32,13 +35,25 @@ interface Message {
   orchestration?: OrchestrationTool[];
 }
 
+interface PlatformContext {
+  assignment_id?: string;
+  request_id?: string;
+  reference_number?: string;
+  current_status?: string;
+  property_type?: string;
+  client_name?: string;
+  current_route?: string;
+  user_role?: string;
+  source_page?: string;
+}
+
 const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/raqeem-chat`;
 
 const SUGGESTED_PROMPTS = [
-  "ما هي منهجيات التقييم العقاري المعتمدة؟",
-  "اشرح لي أسلوب المقارنة بالمبيعات",
-  "ما هي متطلبات تقرير التقييم حسب تقييم؟",
-  "كيف أحسب معدل الرسملة للعقارات الاستثمارية؟",
+  "أعطني ملخص حالة المنصة اليوم",
+  "ما الطلبات المتأخرة أو المعلقة؟",
+  "كم إيرادات هذا الشهر؟",
+  "كيف توزيع المهام على المعاينين؟",
 ];
 
 const ALL_TABS = [
