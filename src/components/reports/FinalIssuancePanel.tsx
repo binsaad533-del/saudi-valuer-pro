@@ -158,9 +158,27 @@ export default function FinalIssuancePanel({ request, userId, onStatusChange }: 
           action: "create" as any,
           table_name: "report_issuance",
           record_id: request.id,
-          description: `إصدار التقرير النهائي رقم ${reportNumber}`,
-          new_data: { report_number: reportNumber, verification_code: verificationCode, qc_score: qcResult?.score },
+          description: `إصدار التقرير النهائي رقم ${reportNumber} — نتيجة الجودة المثبتة: ${currentQC?.score ?? qcResult?.score ?? "N/A"}%`,
+          new_data: {
+            report_number: reportNumber,
+            verification_code: verificationCode,
+            qc_score: currentQC?.score ?? qcResult?.score,
+            qc_grade: currentQC?.score ? (currentQC.score >= 90 ? "ممتاز" : "جيد جداً") : null,
+            qc_frozen: true,
+          },
         }),
+        // Freeze quality score in DB
+        ...(request.assignment_id ? [
+          supabase.from("report_quality_scores" as any).update({
+            details: {
+              ...(typeof (qcResult as any)?.details === "object" ? (qcResult as any).details : {}),
+              frozen_at: new Date().toISOString(),
+              frozen_by: userId,
+              is_final: true,
+            },
+            updated_at: new Date().toISOString(),
+          }).eq("assignment_id", request.assignment_id)
+        ] : []),
       ]);
 
       if (draft) setDraft({ ...draft, status: "issued", report_number: reportNumber });
