@@ -332,6 +332,8 @@ export default function RaqeemChatPage() {
       // Get user's session token for proper identification
       const { data: sessionData } = await supabase.auth.getSession();
       const authToken = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const payloadContext = (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined;
+      console.log("[RaqeemChat] Sending platformContext:", JSON.stringify(payloadContext || null));
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
@@ -339,7 +341,7 @@ export default function RaqeemChatPage() {
           Authorization: `Bearer ${authToken}`,
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
         },
-        const payload = {
+        body: JSON.stringify({
           messages: allMessages.map((m) => ({
             role: m.role,
             content: m.role === "user" && m === userMsg ? messageContent : m.content,
@@ -347,10 +349,8 @@ export default function RaqeemChatPage() {
           userRole: effectiveRole,
           userId: user?.id,
           attachments: files.map((f) => ({ name: f.name, type: f.type, url: f.url })),
-          platformContext: (platformContext.assignment_id || platformContext.request_id) ? platformContext : undefined,
-        };
-        console.log("[RaqeemChat] Sending payload, platformContext:", JSON.stringify(payload.platformContext || null));
-        body: JSON.stringify(payload),
+          platformContext: payloadContext,
+        }),
       });
 
       if (!resp.ok) {
