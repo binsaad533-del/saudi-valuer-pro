@@ -94,7 +94,7 @@ export default function ActionRequiredCard({ request }: ActionRequiredCardProps)
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-5 text-center space-y-3">
           <p className="text-sm text-foreground font-medium">ابدأ أول طلب تقييم</p>
-          <p className="text-xs text-muted-foreground">ارفع مستنداتك وسنتولى الباقي</p>
+          <p className="text-xs text-muted-foreground">ارفع صورك وملفاتك واترك الباقي علينا</p>
           <Button onClick={() => navigate("/client/new-request")} className="w-full">
             طلب تقييم جديد
           </Button>
