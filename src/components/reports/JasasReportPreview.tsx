@@ -147,7 +147,7 @@ const SAMPLE = {
 };
 
 const VERIFY_BASE = "https://jsaas-valuation.com/verify";
-const TOTAL_PAGES = 16;
+const TOTAL_PAGES = 17;
 
 /* ── Company & Valuer Identity (read-only) ── */
 const COMPANY_IDENTITY = {
@@ -159,21 +159,22 @@ const COMPANY_IDENTITY = {
 } as const;
 
 const TOC = [
-  { id: "exec-summary", num: 1, title: "الملخص التنفيذي" },
-  { id: "scope", num: 2, title: "نطاق العمل" },
-  { id: "asset-def", num: 3, title: "تعريف الأصل" },
-  { id: "documents", num: 4, title: "المستندات" },
-  { id: "attachment-intel", num: 5, title: "تحليل المرفقات" },
-  { id: "inspection", num: 6, title: "المعاينة" },
-  { id: "analysis", num: 7, title: "التحليل" },
-  { id: "methodology", num: 8, title: "المنهجية" },
-  { id: "assumptions", num: 9, title: "الافتراضات والقيود" },
-  { id: "assumption-impact", num: 10, title: "تحليل تأثير الافتراضات" },
-  { id: "final-value", num: 11, title: "النتيجة النهائية" },
-  { id: "data-sources", num: 12, title: "مصادر البيانات" },
-  { id: "risk-statement", num: 13, title: "بيان المخاطر" },
-  { id: "disclosures", num: 14, title: "الإفصاحات" },
-  { id: "accreditation", num: 15, title: "الاعتماد والتوقيع" },
+  { id: "client-summary", num: 1, title: "ملخص العميل" },
+  { id: "exec-summary", num: 2, title: "الملخص التنفيذي" },
+  { id: "scope", num: 3, title: "نطاق العمل" },
+  { id: "asset-def", num: 4, title: "تعريف الأصل" },
+  { id: "documents", num: 5, title: "المستندات" },
+  { id: "attachment-intel", num: 6, title: "تحليل المرفقات" },
+  { id: "inspection", num: 7, title: "المعاينة" },
+  { id: "analysis", num: 8, title: "التحليل" },
+  { id: "methodology", num: 9, title: "المنهجية" },
+  { id: "assumptions", num: 10, title: "الافتراضات والقيود" },
+  { id: "assumption-impact", num: 11, title: "تحليل تأثير الافتراضات" },
+  { id: "final-value", num: 12, title: "النتيجة النهائية" },
+  { id: "data-sources", num: 13, title: "مصادر البيانات" },
+  { id: "risk-statement", num: 14, title: "بيان المخاطر" },
+  { id: "disclosures", num: 15, title: "الإفصاحات" },
+  { id: "accreditation", num: 16, title: "الاعتماد والتوقيع" },
 ];
 
 /* ══════════════════════════════════════════════
