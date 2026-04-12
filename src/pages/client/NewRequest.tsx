@@ -60,14 +60,18 @@ interface UploadProgress {
 type Step = "upload" | "processing" | "review" | "submitted";
 
 const PURPOSE_LABELS: Record<string, string> = {
-  financing: "تمويل",
-  sale: "بيع",
-  purchase: "شراء",
-  financial_reporting: "تقارير مالية",
-  zakat_tax: "زكاة / ضريبة",
-  dispute_court: "نزاع / قضاء",
-  expropriation: "نزع ملكية",
-  other: "أخرى",
+  sale_purchase:      "بيع / شراء",
+  mortgage:           "تمويل / رهن عقاري",
+  financial_reporting:"تقارير مالية",
+  insurance:          "تأمين",
+  taxation:           "زكاة / ضريبة",
+  expropriation:      "نزع ملكية",
+  litigation:         "نزاع / قضاء",
+  investment:         "استثمار",
+  lease_renewal:      "تجديد إيجار",
+  internal_decision:  "قرار إداري داخلي",
+  regulatory:         "تنظيمي / رقابي",
+  other:              "أخرى",
 };
 
 const INTENDED_USERS_OPTIONS: Record<string, string> = {
