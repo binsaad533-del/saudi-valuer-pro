@@ -7167,6 +7167,16 @@ export type Database = {
         | "draft_approved"
         | "final_payment_confirmed"
         | "data_collection_open"
+        | "stage_1_processing"
+        | "stage_2_client_review"
+        | "stage_3_owner_scope"
+        | "stage_4_client_scope"
+        | "pending_payment_1"
+        | "stage_5_inspection"
+        | "stage_6_owner_draft"
+        | "stage_7_client_draft"
+        | "pending_payment_2"
+        | "signing"
       assignment_type: "new" | "revaluation"
       attachment_category:
         | "title_deed"
@@ -7276,6 +7286,16 @@ export type Database = {
         | "sow_generated"
         | "sow_sent"
         | "sow_approved"
+        | "stage_1_processing"
+        | "stage_2_client_review"
+        | "stage_3_owner_scope"
+        | "stage_4_client_scope"
+        | "pending_payment_1"
+        | "stage_5_inspection"
+        | "stage_6_owner_draft"
+        | "stage_7_client_draft"
+        | "pending_payment_2"
+        | "signing"
       review_finding_severity: "critical" | "major" | "minor" | "observation"
       valuation_approach:
         | "sales_comparison"
@@ -7513,6 +7533,16 @@ export const Constants = {
         "draft_approved",
         "final_payment_confirmed",
         "data_collection_open",
+        "stage_1_processing",
+        "stage_2_client_review",
+        "stage_3_owner_scope",
+        "stage_4_client_scope",
+        "pending_payment_1",
+        "stage_5_inspection",
+        "stage_6_owner_draft",
+        "stage_7_client_draft",
+        "pending_payment_2",
+        "signing",
       ],
       assignment_type: ["new", "revaluation"],
       attachment_category: [
@@ -7628,6 +7658,16 @@ export const Constants = {
         "sow_generated",
         "sow_sent",
         "sow_approved",
+        "stage_1_processing",
+        "stage_2_client_review",
+        "stage_3_owner_scope",
+        "stage_4_client_scope",
+        "pending_payment_1",
+        "stage_5_inspection",
+        "stage_6_owner_draft",
+        "stage_7_client_draft",
+        "pending_payment_2",
+        "signing",
       ],
       review_finding_severity: ["critical", "major", "minor", "observation"],
       valuation_approach: [
