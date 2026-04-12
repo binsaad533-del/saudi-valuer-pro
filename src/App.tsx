@@ -55,7 +55,6 @@ import RecoveryCallback from "@/pages/client/RecoveryCallback";
 import ResetPassword from "@/pages/client/ResetPassword";
 import ClientDashboard from "@/pages/client/ClientDashboard";
 import NewRequest from "@/pages/client/NewRequest";
-import SimplifiedJourney from "@/pages/client/SimplifiedJourney";
 import RequestDetails from "@/pages/client/RequestDetails";
 import ClientRequestsPage from "@/pages/client/ClientRequestsPage";
 
@@ -180,11 +179,6 @@ const App = () => (
             </ProtectedRoute>
           } />
           <Route path="/client/new-request" element={
-            <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
-              <SimplifiedJourney />
-            </ProtectedRoute>
-          } />
-          <Route path="/client/new-request-advanced" element={
             <ProtectedRoute allowedRoles={["client"]} redirectTo="/login">
               <NewRequest />
             </ProtectedRoute>

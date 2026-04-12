@@ -1,11 +1,15 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerAutomationPipeline } from "@/lib/workflow-engine";
+import { logAudit } from "@/lib/audit-logger";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import ProcessingStatusTracker from "@/components/client/ProcessingStatusTracker";
 import AssetReviewWorkspace from "@/components/client/AssetReviewWorkspace";
@@ -37,12 +41,20 @@ import {
 import logo from "@/assets/logo.png";
 import AssetLocationPicker, { type AssetLocation } from "@/components/client/AssetLocationPicker";
 
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024; // 50 MB
+
 interface UploadedFile {
   id: string;
   name: string;
   size: number;
   type: string;
   path: string;
+}
+
+interface UploadProgress {
+  name: string;
+  status: "pending" | "uploading" | "done" | "error";
+  error?: string;
 }
 
 type Step = "upload" | "processing" | "review" | "submitted";
@@ -81,6 +93,7 @@ export default function NewRequest() {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<UploadProgress[]>([]);
 
   // Processing job
   const [jobId, setJobId] = useState<string | null>(null);
@@ -130,20 +143,47 @@ export default function NewRequest() {
 
   const handleFileUpload = async (fileList: FileList) => {
     if (!user) return;
-    setUploading(true);
-    const newFiles: UploadedFile[] = [];
+    const all = Array.from(fileList);
 
-    for (const file of Array.from(fileList)) {
+    // Validate sizes
+    const oversized = all.filter(f => f.size > MAX_FILE_SIZE_BYTES);
+    if (oversized.length > 0) {
+      oversized.forEach(f =>
+        toast({ title: `الملف "${f.name}" يتجاوز الحد الأقصى 50 ميجابايت`, variant: "destructive" })
+      );
+    }
+    const valid = all.filter(f => f.size <= MAX_FILE_SIZE_BYTES);
+    if (valid.length === 0) return;
+
+    setUploading(true);
+
+    // Initialise progress list
+    const initial: UploadProgress[] = valid.map(f => ({ name: f.name, status: "pending" }));
+    setUploadProgress(initial);
+
+    const BATCH = 10;
+    const results: UploadedFile[] = [];
+
+    const uploadOne = async (file: File): Promise<UploadedFile | null> => {
       const filePath = `${user.id}/${Date.now()}_${file.name}`;
+      setUploadProgress(prev => prev.map(p => p.name === file.name ? { ...p, status: "uploading" } : p));
       const { error } = await supabase.storage.from("client-uploads").upload(filePath, file);
       if (error) {
-        toast({ title: `خطأ في رفع ${file.name}`, description: error.message, variant: "destructive" });
-        continue;
+        setUploadProgress(prev => prev.map(p => p.name === file.name ? { ...p, status: "error", error: error.message } : p));
+        return null;
       }
-      newFiles.push({ id: crypto.randomUUID(), name: file.name, size: file.size, type: file.type, path: filePath });
+      setUploadProgress(prev => prev.map(p => p.name === file.name ? { ...p, status: "done" } : p));
+      return { id: crypto.randomUUID(), name: file.name, size: file.size, type: file.type, path: filePath };
+    };
+
+    // Process in batches of BATCH
+    for (let i = 0; i < valid.length; i += BATCH) {
+      const batch = valid.slice(i, i + BATCH);
+      const batchResults = await Promise.all(batch.map(uploadOne));
+      batchResults.forEach(r => { if (r) results.push(r); });
     }
 
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    setUploadedFiles(prev => [...prev, ...results]);
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -223,6 +263,16 @@ export default function NewRequest() {
     setJobId(null);
   }, []);
 
+  // ── Generate reference number: JAS-YYYY-XXXX ──
+  const generateReferenceNumber = async (): Promise<string> => {
+    const year = new Date().getFullYear();
+    const { count } = await supabase
+      .from("valuation_requests" as any)
+      .select("id", { count: "exact", head: true });
+    const seq = String((count || 0) + 1).padStart(4, "0");
+    return `JAS-${year}-${seq}`;
+  };
+
   // ── Submit from review workspace ──
   const handleSubmitFromReview = async (assets: any[], discipline: string, description: string) => {
     if (!user) return;
@@ -254,10 +304,13 @@ export default function NewRequest() {
         jobId,
       };
 
+      const referenceNumber = await generateReferenceNumber();
+
       const { data, error } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
+          reference_number: referenceNumber,
           valuation_type: (discipline || "real_estate") as any,
           property_description_ar: description || null,
           purpose: (clientInfo.purpose || null) as any,
@@ -265,7 +318,8 @@ export default function NewRequest() {
           intended_users_ar: clientInfo.intendedUsers === "other"
             ? clientInfo.intendedUsersOther
             : (INTENDED_USERS_OPTIONS[clientInfo.intendedUsers] || clientInfo.intendedUsers || null),
-          status: "submitted" as any,
+          notes: clientInfo.additionalNotes || null,
+          status: "draft" as any,
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
             jobId,
@@ -280,18 +334,17 @@ export default function NewRequest() {
         .single();
 
       if (error) throw error;
+      const reqId = (data as any).id as string;
 
       // Link request to processing job
-      if (jobId && data) {
-        await supabase.from("processing_jobs")
-          .update({ request_id: (data as any).id })
-          .eq("id", jobId);
+      if (jobId) {
+        await supabase.from("processing_jobs").update({ request_id: reqId }).eq("id", jobId);
       }
 
       // Insert request_documents
-      if (uploadedFiles.length > 0 && data) {
+      if (uploadedFiles.length > 0) {
         const docs = uploadedFiles.map(f => ({
-          request_id: (data as any).id,
+          request_id: reqId,
           uploaded_by: user.id,
           file_name: f.name,
           file_path: f.path,
@@ -301,9 +354,23 @@ export default function NewRequest() {
         await supabase.from("request_documents" as any).insert(docs);
       }
 
-      setRequestId((data as any)?.id || null);
+      // Audit log
+      await logAudit({
+        action: "create",
+        tableName: "valuation_requests",
+        entityType: "request",
+        recordId: reqId,
+        description: `طلب تقييم جديد ${referenceNumber} — ${assetData.inventory.length} أصل — الغرض: ${clientInfo.purpose}`,
+        newData: { reference_number: referenceNumber, discipline, purpose: clientInfo.purpose, status: "draft" },
+      });
+
+      // Trigger automation pipeline (draft → stage_1_processing → stage_2_client_review)
+      // Run fire-and-forget — do not block UI
+      triggerAutomationPipeline(reqId).catch(console.error);
+
+      setRequestId(reqId);
       setStep("submitted");
-      toast({ title: "تم إرسال طلب التقييم بنجاح" });
+      toast({ title: `تم إرسال الطلب ${referenceNumber} بنجاح`, description: "رقيم يحلل المستندات الآن..." });
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
     } finally {
@@ -503,6 +570,17 @@ export default function NewRequest() {
                     />
                   )}
                 </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-sm">ملاحظات إضافية (اختياري)</Label>
+                  <Textarea
+                    value={clientInfo.additionalNotes}
+                    onChange={(e) => setClientInfo(p => ({ ...p, additionalNotes: e.target.value }))}
+                    placeholder="أي معلومات إضافية تودّ إبلاغنا بها حول الأصول أو طبيعة التقييم..."
+                    rows={3}
+                    className="resize-none"
+                  />
+                </div>
               </CardContent>
             </Card>
 
@@ -550,10 +628,39 @@ export default function NewRequest() {
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv,.txt,.tif,.tiff,.zip,.rar,.7z,.gz,.webp,.heic,.ppt,.pptx,.xml,.json"
                 />
 
+                {/* Upload progress (during active upload) */}
+                {uploading && uploadProgress.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                      <span>جارٍ رفع الملفات...</span>
+                      <span>
+                        {uploadProgress.filter(p => p.status === "done").length} / {uploadProgress.length}
+                      </span>
+                    </div>
+                    <Progress
+                      value={(uploadProgress.filter(p => p.status === "done").length / uploadProgress.length) * 100}
+                      className="h-2"
+                    />
+                    <div className="max-h-[120px] overflow-y-auto space-y-1">
+                      {uploadProgress.map(p => (
+                        <div key={p.name} className="flex items-center gap-2 text-xs py-0.5">
+                          {p.status === "done" && <CheckCircle className="w-3 h-3 text-emerald-500 shrink-0" />}
+                          {p.status === "uploading" && <Loader2 className="w-3 h-3 animate-spin text-primary shrink-0" />}
+                          {p.status === "pending" && <div className="w-3 h-3 rounded-full border border-border shrink-0" />}
+                          {p.status === "error" && <X className="w-3 h-3 text-destructive shrink-0" />}
+                          <span className={`truncate ${p.status === "error" ? "text-destructive" : "text-muted-foreground"}`}>
+                            {p.name}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 {uploadedFiles.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-xs font-semibold text-muted-foreground">
-                      الملفات المرفوعة ({uploadedFiles.length})
+                      الملفات المرفوعة ({uploadedFiles.length}) — الحد الأقصى 50 ميجابايت للملف
                     </p>
                     <div className="max-h-[200px] overflow-y-auto space-y-1">
                       {uploadedFiles.map(file => (
