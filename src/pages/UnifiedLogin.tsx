@@ -51,7 +51,8 @@ export default function UnifiedLogin() {
       .maybeSingle();
 
     const r = roleData?.role;
-    if (r === "owner" || r === "admin_coordinator" || r === "financial_manager") return "/";
+    if (r === "owner") return "/";
+    if (r === "financial_manager") return "/cfo-dashboard";
     if (r === "inspector") return "/inspector";
     return "/client/dashboard";
   };

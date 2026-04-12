@@ -108,7 +108,6 @@ const financialNav: NavGroup[] = [
 const roleKeyMap: Record<string, string> = {
   owner: "platformOwner",
   financial_manager: "financialManager",
-  admin_coordinator: "adminCoordinator",
   inspector: "inspector",
   client: "client",
 };

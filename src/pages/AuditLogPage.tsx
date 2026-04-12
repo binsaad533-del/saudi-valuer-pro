@@ -62,12 +62,9 @@ const ACTION_COLORS: Record<string, string> = {
 
 const ROLE_LABELS: Record<string, string> = {
   owner: "مالك",
-  admin_coordinator: "منسق إداري",
   financial_manager: "مدير مالي",
   inspector: "معاين",
   client: "عميل",
-  valuation_manager: "مدير تقييم",
-  valuer: "مقيّم",
 };
 
 export default function AuditLogPage() {

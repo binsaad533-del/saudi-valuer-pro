@@ -53,7 +53,8 @@ export default function ClientLogin() {
       .eq("user_id", userId)
       .maybeSingle();
     const r = data?.role;
-    if (r === "owner" || r === "admin_coordinator" || r === "financial_manager") return "/";
+    if (r === "owner") return "/";
+    if (r === "financial_manager") return "/cfo-dashboard";
     if (r === "inspector") return "/inspector";
     return "/client/dashboard";
   };

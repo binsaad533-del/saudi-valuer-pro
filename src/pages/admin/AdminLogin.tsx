@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, Loader2, Eye, EyeOff, ShieldCheck } from "lucide-react";
 const logo = "/favicon.png";
 
-const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
+const ADMIN_ROLES = ["owner"];
 
 export default function AdminLogin() {
   const navigate = useNavigate();

@@ -22,13 +22,10 @@ export default function ProtectedRoute({ children, allowedRoles, redirectTo }: P
     return <Navigate to={redirectTo || "/login"} replace />;
   }
 
-  // Backward compat: treat admin_coordinator/valuation_manager as owner-level
-  const effectiveRole = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer"
-    ? "owner" : role;
-
-  if (effectiveRole && !allowedRoles.includes(effectiveRole) && role && !allowedRoles.includes(role)) {
+  if (role && !allowedRoles.includes(role)) {
     if (role === "client") return <Navigate to="/client" replace />;
     if (role === "inspector") return <Navigate to="/inspector" replace />;
+    if (role === "financial_manager") return <Navigate to="/cfo-dashboard" replace />;
     return <Navigate to={redirectTo || "/login"} replace />;
   }
 

@@ -67,7 +67,7 @@ import MobileInspectionFlow from "@/pages/inspector/MobileInspectionFlow";
 import FieldInspectionPage from "@/pages/FieldInspectionPage";
 
 const queryClient = new QueryClient();
-const ADMIN_ROLES = ["owner", "admin_coordinator", "financial_manager"];
+const ADMIN_ROLES = ["owner"];
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -83,7 +83,19 @@ const App = () => (
           <Route path="/client/login" element={<UnifiedLogin />} />
           <Route path="/unsubscribe" element={<UnsubscribePage />} />
 
-          {/* Admin Routes - Protected */}
+          {/* Financial Manager — restricted to CFO routes only */}
+          <Route element={
+            <ProtectedRoute allowedRoles={["owner", "financial_manager"]}>
+              <AppLayout />
+            </ProtectedRoute>
+          }>
+            <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
+            <Route path="/notification-settings" element={<NotificationSettingsPage />} />
+            <Route path="/account" element={<UserSettingsPage />} />
+          </Route>
+
+          {/* Owner-only Admin Routes */}
           <Route element={
             <ProtectedRoute allowedRoles={ADMIN_ROLES}>
               <AppLayout />
@@ -111,12 +123,8 @@ const App = () => (
             <Route path="/clients/:clientId" element={<ClientProfilePage />} />
             <Route path="/inspectors" element={<InspectorsListPage />} />
             <Route path="/inspectors/:userId" element={<InspectorProfilePage />} />
-            <Route path="/cfo-dashboard" element={<CFODashboardPage />} />
             <Route path="/knowledge" element={<KnowledgeBasePage />} />
             <Route path="/analytics" element={<AnalyticsDashboardPage />} />
-            <Route path="/account" element={<UserSettingsPage />} />
-            <Route path="/notifications" element={<NotificationsPage />} />
-            <Route path="/notification-settings" element={<NotificationSettingsPage />} />
             <Route path="/audit-log" element={<AuditLogPage />} />
             <Route path="/commercial" element={<CommercialDashboardPage />} />
             <Route path="/system-monitoring" element={<SystemMonitoringPage />} />

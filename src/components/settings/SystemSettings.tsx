@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useOrgSettings } from "@/hooks/useOrgSettings";
 
-type AppRole = "owner" | "financial_manager" | "admin_coordinator" | "inspector" | "client";
+type AppRole = "owner" | "financial_manager" | "inspector" | "client";
 
 interface RoleUser {
   user_id: string;
@@ -23,7 +23,6 @@ interface RoleUser {
 const roleConfig: { role: AppRole; name: string; nameEn: string; color: "destructive" | "default" | "secondary" | "outline" }[] = [
   { role: "owner", name: "مالك المنصة", nameEn: "Owner", color: "destructive" },
   { role: "financial_manager", name: "مدير مالي", nameEn: "Financial Manager", color: "default" },
-  { role: "admin_coordinator", name: "منسق إداري", nameEn: "Admin Coordinator", color: "default" },
   { role: "inspector", name: "معاين", nameEn: "Inspector", color: "secondary" },
   { role: "client", name: "عميل", nameEn: "Client", color: "outline" },
 ];

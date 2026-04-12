@@ -5,6 +5,8 @@
 
 export type PlatformRole = "owner" | "financial_manager" | "inspector" | "client";
 
+// Canonical roles — no aliases or backward-compat shims.
+
 export type PlatformAction =
   // Request lifecycle
   | "create_request"
@@ -91,24 +93,19 @@ export const JUSTIFICATION_REQUIRED: PlatformAction[] = [
 
 export function hasPermission(role: string | null, action: PlatformAction): boolean {
   if (!role) return false;
-  // Backward compatibility: treat admin_coordinator as owner
-  const normalizedRole = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer"
-    ? "owner" : role;
-  const perms = PERMISSION_MATRIX[normalizedRole as PlatformRole];
+  const perms = PERMISSION_MATRIX[role as PlatformRole];
   if (!perms) return false;
   return perms.has(action);
 }
 
 export function canIssueReport(role: string | null): boolean {
   if (!role) return false;
-  const normalized = role === "admin_coordinator" || role === "valuation_manager" ? "owner" : role;
-  return ISSUANCE_ROLES.includes(normalized as PlatformRole);
+  return ISSUANCE_ROLES.includes(role as PlatformRole);
 }
 
 export function canApproveValue(role: string | null): boolean {
   if (!role) return false;
-  const normalized = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer" ? "owner" : role;
-  return VALUE_APPROVAL_ROLES.includes(normalized as PlatformRole);
+  return VALUE_APPROVAL_ROLES.includes(role as PlatformRole);
 }
 
 export function requiresJustification(action: PlatformAction): boolean {
@@ -117,8 +114,7 @@ export function requiresJustification(action: PlatformAction): boolean {
 
 export function getAllowedActions(role: string | null): PlatformAction[] {
   if (!role) return [];
-  const normalized = role === "admin_coordinator" || role === "valuation_manager" || role === "valuer" ? "owner" : role;
-  const perms = PERMISSION_MATRIX[normalized as PlatformRole];
+  const perms = PERMISSION_MATRIX[role as PlatformRole];
   if (!perms) return [];
   return Array.from(perms);
 }
