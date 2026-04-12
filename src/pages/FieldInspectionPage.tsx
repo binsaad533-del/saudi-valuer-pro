@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { SectionPhoto } from "@/components/inspection/SectionPhotoUpload";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerPostInspectionPipeline } from "@/lib/workflow-engine";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -223,9 +224,10 @@ export default function FieldInspectionPage() {
       if (inspError) { toast.error("خطأ: " + inspError.message); setSubmitting(false); return; }
 
       if (inspection?.id && photos.length > 0) {
-        for (const photo of photos) {
-          if (!photo.file) continue;
-          const filePath = `${inspectorId}/${inspection.id}/${Date.now()}_${photo.file_name}`;
+        const BATCH = 5;
+        const uploadPhoto = async (photo: typeof photos[0]) => {
+          if (!photo.file) return;
+          const filePath = `${inspectorId}/${inspection.id}/${Date.now()}_${Math.random().toString(36).slice(2)}_${photo.file_name}`;
           const { error: uploadErr } = await supabase.storage.from("inspection-photos").upload(filePath, photo.file);
           if (!uploadErr) {
             await supabase.from("inspection_photos").insert({
@@ -233,6 +235,9 @@ export default function FieldInspectionPage() {
               category: photo.category, uploaded_by: inspectorId,
             });
           }
+        };
+        for (let i = 0; i < photos.length; i += BATCH) {
+          await Promise.all(photos.slice(i, i + BATCH).map(uploadPhoto));
         }
       }
 
@@ -242,6 +247,14 @@ export default function FieldInspectionPage() {
           is_checked: item.is_checked, is_required: item.is_required, sort_order: idx,
         }));
         await supabase.from("inspection_checklist_items").insert(checklistRows);
+      }
+
+      // Advance workflow: stage_5_inspection → stage_6_owner_draft
+      if (assignmentId) {
+        toast.info("جاري تشغيل محرك التقييم...");
+        triggerPostInspectionPipeline(assignmentId).catch(err =>
+          console.error("Post-inspection pipeline error:", err)
+        );
       }
 
       localStorage.removeItem("field-inspection-data");

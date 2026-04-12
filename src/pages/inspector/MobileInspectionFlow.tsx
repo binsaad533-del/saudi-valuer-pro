@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { triggerPostInspectionPipeline } from "@/lib/workflow-engine";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -196,6 +197,7 @@ export default function MobileInspectionFlow() {
   // GPS
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [assetCoords, setAssetCoords] = useState<{ lat: number; lng: number } | null>(null);
   // Photos & Checklist
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
@@ -223,6 +225,19 @@ export default function MobileInspectionFlow() {
     }
 
     setInspection(data);
+
+    // Load asset expected coordinates from subjects table
+    if (data.assignment_id) {
+      const { data: subject } = await supabase
+        .from("subjects" as any)
+        .select("latitude, longitude")
+        .eq("assignment_id", data.assignment_id)
+        .maybeSingle();
+      const subjectAny = subject as any;
+      if (subjectAny?.latitude && subjectAny?.longitude) {
+        setAssetCoords({ lat: Number(subjectAny.latitude), lng: Number(subjectAny.longitude) });
+      }
+    }
 
     // Restore saved data
     const saved = data.auto_saved_data as any;
@@ -327,20 +342,16 @@ export default function MobileInspectionFlow() {
     if (!files || !inspectionId) return;
     setSaving(true);
     const { data: { user } } = await supabase.auth.getUser();
+    const fileArr = Array.from(files);
+    const BATCH = 5;
 
-    for (const file of Array.from(files)) {
+    const uploadOne = async (file: File) => {
       const ext = file.name.split(".").pop();
-      const path = `${inspectionId}/${category}/${Date.now()}.${ext}`;
-
+      const path = `${inspectionId}/${category}/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
       const { error: uploadErr } = await supabase.storage
         .from("inspection-photos")
         .upload(path, file);
-
-      if (uploadErr) {
-        toast.error(`فشل رفع ${file.name}`);
-        continue;
-      }
-
+      if (uploadErr) { toast.error(`فشل رفع ${file.name}`); return; }
       const { data: photoRow } = await supabase.from("inspection_photos").insert({
         inspection_id: inspectionId,
         category,
@@ -352,14 +363,18 @@ export default function MobileInspectionFlow() {
         longitude: formData.gps_lng ?? null,
         uploaded_by: user?.id,
       }).select().single();
-
       if (photoRow) {
         setPhotos(prev => [...prev, {
-          id: photoRow.id, category, file_name: file.name, file_path: path,
+          id: (photoRow as any).id, category, file_name: file.name, file_path: path,
           preview: URL.createObjectURL(file),
         }]);
       }
+    };
+
+    for (let i = 0; i < fileArr.length; i += BATCH) {
+      await Promise.all(fileArr.slice(i, i + BATCH).map(uploadOne));
     }
+
     setSaving(false);
     toast.success("تم رفع الصور بنجاح");
   };
@@ -388,7 +403,10 @@ export default function MobileInspectionFlow() {
     await supabase.from("inspection_checklist_items").insert(items);
   };
 
-  const requiredPhotoDone = PHOTO_CATEGORIES.filter(c => c.required).filter(c => photos.some(p => p.category === c.key)).length;
+  const MIN_PHOTOS_PER_CATEGORY = 3;
+  const requiredPhotoDone = PHOTO_CATEGORIES.filter(c => c.required).filter(c =>
+    photos.filter(p => p.category === c.key).length >= MIN_PHOTOS_PER_CATEGORY
+  ).length;
   const requiredPhotoTotal = PHOTO_CATEGORIES.filter(c => c.required).length;
   const checkedRequired = checklist.filter(c => c.is_required && c.is_checked).length;
   const totalRequired = checklist.filter(c => c.is_required).length;
@@ -402,10 +420,32 @@ export default function MobileInspectionFlow() {
     return hasGPS && hasAllPhotos && allChecked && hasCondition && hasDescription;
   };
 
+  // Haversine distance in metres
+  const haversineMetres = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const R = 6371000;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
   const handleSubmit = async () => {
     if (!canSubmit() || !inspectionId) return;
     setSubmitting(true);
     await saveChecklist();
+
+    // GPS verification — compare inspector GPS to asset expected coordinates
+    const inspLat = formData.gps_lat;
+    const inspLng = formData.gps_lng;
+    let gpsVerified = !!(inspLat && inspLng);
+    if (gpsVerified && assetCoords) {
+      const dist = haversineMetres(inspLat!, inspLng!, assetCoords.lat, assetCoords.lng);
+      if (dist > 500) {
+        gpsVerified = false;
+        toast.warning(`موقعك بعيد عن الأصل بمسافة ${Math.round(dist)} متر — تم الإرسال مع تحذير`);
+      }
+    }
 
     // Calculate duration
     const startedAt = inspection?.started_at ? new Date(inspection.started_at) : null;
@@ -415,9 +455,9 @@ export default function MobileInspectionFlow() {
       status: "submitted",
       completed: true,
       submitted_at: new Date().toISOString(),
-      gps_verified: true,
-      latitude: formData.gps_lat,
-      longitude: formData.gps_lng,
+      gps_verified: gpsVerified,
+      latitude: inspLat,
+      longitude: inspLng,
       notes_ar: formData.inspector_final_notes || null,
       findings_ar: formData.asset_description || null,
       weather_conditions: formData.environmental_factors || null,
@@ -428,14 +468,12 @@ export default function MobileInspectionFlow() {
 
     toast.success("تم إرسال المعاينة بنجاح ✅");
 
-    // Trigger AI analysis
-    try {
-      toast.info("جاري تحليل المعاينة بالذكاء الاصطناعي...");
-      supabase.functions.invoke("analyze-inspection", {
-        body: { inspection_id: inspectionId },
-      });
-    } catch (err) {
-      console.error("Failed to trigger AI analysis:", err);
+    // Advance workflow: stage_5_inspection → stage_6_owner_draft
+    if (inspection?.assignment_id) {
+      toast.info("جاري تشغيل محرك التقييم...");
+      triggerPostInspectionPipeline(inspection.assignment_id).catch(err =>
+        console.error("Post-inspection pipeline error:", err)
+      );
     }
 
     setSubmitting(false);
