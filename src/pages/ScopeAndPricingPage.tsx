@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { formatNumber } from "@/lib/utils";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { ownerApproveScopeAndPrice } from "@/lib/workflow-engine";
 import TopBar from "@/components/layout/TopBar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -245,7 +246,9 @@ const MOCK_PRICING: PricingData = {
 export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { requestId } = useParams<{ requestId: string }>();
   const extractedData = location.state?.extractedData || MOCK_EXTRACTED_DATA;
+  const [approving, setApproving] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [scope, setScope] = useState<ScopeData | null>(MOCK_SCOPE);
@@ -1634,13 +1637,55 @@ export default function ScopeAndPricingPage({ embedded }: { embedded?: boolean }
                 <Button
                   className="w-full gap-2 py-5 rounded-xl"
                   size="lg"
-                  onClick={() => {
-                    setSentToManager(true);
-                    toast.success("تم إرسال الطلب والتسعير المقترح للمدير (أواب) والإدارة للاعتماد");
+                  disabled={approving}
+                  onClick={async () => {
+                    if (!pricing) return;
+                    const finalPrice = pricing.totalPrice;
+
+                    // If we have a real requestId, wire to workflow engine
+                    if (requestId) {
+                      setApproving(true);
+                      try {
+                        // Get assignment_id from the request
+                        const { data: req } = await supabase
+                          .from("valuation_requests" as any)
+                          .select("assignment_id")
+                          .eq("id", requestId)
+                          .single();
+
+                        const assignmentId = (req as any)?.assignment_id;
+                        if (!assignmentId) {
+                          toast.error("لا يوجد ملف تقييم مرتبط بهذا الطلب بعد");
+                          return;
+                        }
+
+                        const result = await ownerApproveScopeAndPrice(assignmentId, finalPrice);
+                        if (!result.success) {
+                          toast.error(result.error || "فشل اعتماد النطاق");
+                          return;
+                        }
+
+                        setSentToManager(true);
+                        toast.success(`تم اعتماد النطاق والسعر (${formatNumber(finalPrice)} ر.س) — أُرسل للعميل للموافقة`);
+                        setTimeout(() => navigate("/client-requests"), 1500);
+                      } catch (err: any) {
+                        toast.error(err.message || "حدث خطأ");
+                      } finally {
+                        setApproving(false);
+                      }
+                    } else {
+                      // Demo mode (no requestId in URL)
+                      setSentToManager(true);
+                      toast.success("تم إرسال الطلب والتسعير المقترح للمراجعة");
+                    }
                   }}
                 >
-                  <Send className="w-5 h-5" />
-                  إرسال للمدير والإدارة
+                  {approving ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <Send className="w-5 h-5" />
+                  )}
+                  {requestId ? "اعتماد النطاق والسعر وإرساله للعميل" : "إرسال للمدير والإدارة"}
                 </Button>
               </div>
             )}

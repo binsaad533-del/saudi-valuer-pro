@@ -305,37 +305,50 @@ export default function ClientRequests() {
                           {req.quotation_amount && <span className="text-primary font-medium">💰 {formatNumber(Number(req.quotation_amount))} <SAR /></span>}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap justify-end">
                         {getStatusBadge(req.status)}
 
-                        {/* Action buttons based on status */}
-                        {req.status === "submitted" && (
-                          <Button size="sm" onClick={() => { moveToStatus(req.id, "under_pricing"); }}>
-                            <SARIcon className="w-3 h-3 ml-1" />تسعير
+                        {/* ── New 13-stage action buttons ── */}
+
+                        {/* stage_2_client_review: رقيم يعمل تلقائياً — لا action للمالك */}
+                        {req.status === "stage_2_client_review" && (
+                          <Button size="sm" variant="outline" disabled className="opacity-60">
+                            <Brain className="w-3 h-3 ml-1" />رقيم يعالج
                           </Button>
                         )}
-                        {req.status === "under_pricing" && (
-                          <Button size="sm" onClick={() => openPricing(req)}>
-                            <Send className="w-3 h-3 ml-1" />إعداد العرض
+
+                        {/* stage_3_owner_scope: المالك يعتمد النطاق والسعر */}
+                        {req.status === "stage_3_owner_scope" && (
+                          <Button size="sm" onClick={() => navigate(`/scope-pricing/${req.id}`)}>
+                            <SARIcon className="w-3 h-3 ml-1" />اعتماد النطاق والسعر
                           </Button>
                         )}
-                        {(req.status === "payment_uploaded" || req.status === "final_payment_uploaded") && (
+
+                        {/* stage_4_client_scope / pending_payment_1 / pending_payment_2: بانتظار العميل أو الدفع */}
+                        {(req.status === "stage_4_client_scope") && (
+                          <span className="text-xs text-muted-foreground">بانتظار موافقة العميل</span>
+                        )}
+                        {(req.status === "pending_payment_1" || req.status === "pending_payment_2") && (
+                          <span className="text-xs text-amber-600 font-medium">⏳ بانتظار الدفع</span>
+                        )}
+
+                        {/* stage_5_inspection: المعاينة جارية */}
+                        {req.status === "stage_5_inspection" && (
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/valuation-production/${req.assignment_id || req.id}`)}>
+                            <Eye className="w-3 h-3 ml-1" />متابعة المعاينة
+                          </Button>
+                        )}
+
+                        {/* stage_6_owner_draft: الحكم المهني */}
+                        {req.status === "stage_6_owner_draft" && (
+                          <Button size="sm" onClick={() => navigate(`/professional-judgment/${req.id}`)}>
+                            <Brain className="w-3 h-3 ml-1" />الحكم المهني
+                          </Button>
+                        )}
+
+                        {/* stage_7_client_draft: بانتظار مراجعة العميل للمسودة */}
+                        {req.status === "stage_7_client_draft" && (
                           <Button size="sm" variant="outline" onClick={async () => {
-                            setSelectedRequest(req);
-                            await loadPayments(req.id);
-                            setPaymentReviewDialog(true);
-                          }}>
-                            <Eye className="w-3 h-3 ml-1" />مراجعة الإيصال
-                          </Button>
-                        )}
-                        {req.status === "in_production" && (
-                          <Button size="sm" onClick={() => navigate(`/valuation-production/${req.assignment_id || req.id}`)}>
-                            <Brain className="w-3 h-3 ml-1" />محرك التقييم
-                          </Button>
-                        )}
-                        {(req.status === "draft_report_sent" || req.status === "client_comments") && (
-                          <Button size="sm" variant="outline" onClick={async () => {
-                            // Load report for this assignment
                             const { data: reps } = await supabase.from("reports" as any).select("*").eq("assignment_id", req.assignment_id).order("created_at", { ascending: false }).limit(1);
                             const report = (reps as any[])?.[0];
                             if (report) {
@@ -343,19 +356,37 @@ export default function ClientRequests() {
                               setSelectedAssignmentId(req.assignment_id);
                               setSelectedRequestId(req.id);
                               setRevisionDialog(true);
+                            } else {
+                              navigate(`/professional-judgment/${req.id}`);
                             }
                           }}>
-                            <MessageSquareText className="w-3 h-3 ml-1" />المراجعات
+                            <MessageSquareText className="w-3 h-3 ml-1" />مراجعة المسودة
                           </Button>
                         )}
-                        {req.status === "fully_paid" && !req.draft_report_url && (
-                          <Button size="sm" onClick={() => moveToStatus(req.id, "in_production")}>
-                            بدء الإنتاج
+
+                        {/* signing: توقيع وإصدار */}
+                        {req.status === "signing" && (
+                          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => navigate(`/signing/${req.id}`)}>
+                            <CheckCircle className="w-3 h-3 ml-1" />توقيع وإصدار
                           </Button>
                         )}
-                        {req.status === "final_report_ready" && (
-                          <Button size="sm" onClick={() => moveToStatus(req.id, "completed")}>
-                            <CheckCircle className="w-3 h-3 ml-1" />إصدار نهائي
+
+                        {/* issued / archived */}
+                        {req.status === "issued" && (
+                          <Button size="sm" variant="outline" onClick={() => navigate(`/reports/generate/${req.assignment_id || req.id}`)}>
+                            <Eye className="w-3 h-3 ml-1" />عرض التقرير
+                          </Button>
+                        )}
+
+                        {/* Legacy fallback: old statuses that may still exist in DB */}
+                        {req.status === "submitted" && (
+                          <Button size="sm" variant="ghost" onClick={() => openPricing(req)}>
+                            <Send className="w-3 h-3 ml-1" />تسعير (قديم)
+                          </Button>
+                        )}
+                        {req.status === "in_production" && (
+                          <Button size="sm" variant="ghost" onClick={() => navigate(`/valuation-production/${req.assignment_id || req.id}`)}>
+                            <Brain className="w-3 h-3 ml-1" />محرك التقييم
                           </Button>
                         )}
                       </div>
