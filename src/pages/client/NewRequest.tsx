@@ -318,7 +318,7 @@ export default function NewRequest() {
           intended_users_ar: clientInfo.intendedUsers === "other"
             ? clientInfo.intendedUsersOther
             : (INTENDED_USERS_OPTIONS[clientInfo.intendedUsers] || clientInfo.intendedUsers || null),
-          notes: clientInfo.additionalNotes || null,
+
           status: "draft" as any,
           submitted_at: new Date().toISOString(),
           ai_intake_summary: {
