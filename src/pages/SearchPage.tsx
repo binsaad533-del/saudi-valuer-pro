@@ -39,10 +39,24 @@ interface ArchivedResult {
 type ResultCategory = "clients" | "requests" | "reports" | "archived";
 
 const STATUS_LABELS: Record<string, string> = {
-  draft: "مسودة", submitted: "مقدم", processing: "قيد المعالجة",
-  inspection: "معاينة", under_review: "مراجعة", approved: "معتمد",
-  issued: "صادر", rejected: "مرفوض", cancelled: "ملغي",
-  potential: "محتمل", verified: "مؤكد", portal: "لديه حساب",
+  draft: "مسودة",
+  stage_1_processing: "قيد المعالجة",
+  stage_2_client_review: "مراجعة العميل",
+  stage_3_owner_scope: "تحديد النطاق",
+  stage_4_client_scope: "اعتماد العميل",
+  pending_payment_1: "بانتظار الدفع الأول",
+  stage_5_inspection: "المعاينة الميدانية",
+  stage_6_owner_draft: "مراجعة المالك",
+  stage_7_client_draft: "مراجعة العميل للمسودة",
+  pending_payment_2: "بانتظار الدفع الأخير",
+  signing: "توقيع التقرير",
+  issued: "صادر",
+  archived: "مؤرشف",
+  rejected: "مرفوض",
+  cancelled: "ملغي",
+  potential: "محتمل",
+  verified: "مؤكد",
+  portal: "لديه حساب",
 };
 
 export default function SearchPage() {

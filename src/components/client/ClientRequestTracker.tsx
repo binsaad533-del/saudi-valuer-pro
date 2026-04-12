@@ -2,12 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Clock, FileSearch, Building2, FileText, Truck } from "lucide-react";
 
 const STAGES = [
-  { key: "submitted", label: "تم الإرسال", icon: CheckCircle, statuses: ["submitted", "new"] },
-  { key: "payment", label: "الدفع", icon: Clock, statuses: ["pending_payment", "payment_received"] },
-  { key: "assigned", label: "تم التكليف", icon: Building2, statuses: ["assigned", "in_progress"] },
-  { key: "inspection", label: "المعاينة", icon: FileSearch, statuses: ["inspection", "inspection_complete"] },
-  { key: "report", label: "إعداد التقرير", icon: FileText, statuses: ["report_drafting", "review", "approved"] },
-  { key: "delivered", label: "التسليم", icon: Truck, statuses: ["issued", "delivered", "completed"] },
+  { key: "intake", label: "الاستقبال", icon: CheckCircle, statuses: ["draft", "stage_1_processing", "stage_2_client_review"] },
+  { key: "scope", label: "النطاق", icon: Clock, statuses: ["stage_3_owner_scope", "stage_4_client_scope", "pending_payment_1"] },
+  { key: "inspection", label: "المعاينة", icon: FileSearch, statuses: ["stage_5_inspection"] },
+  { key: "report", label: "إعداد التقرير", icon: FileText, statuses: ["stage_6_owner_draft", "stage_7_client_draft", "pending_payment_2"] },
+  { key: "signing", label: "التوقيع", icon: Building2, statuses: ["signing"] },
+  { key: "issued", label: "الإصدار", icon: Truck, statuses: ["issued", "archived"] },
 ];
 
 interface Props {

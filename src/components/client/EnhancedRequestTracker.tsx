@@ -1,24 +1,21 @@
 import { Progress } from "@/components/ui/progress";
 
 const STAGES = [
-  { key: "submitted", label: "تم التقديم", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح" },
-  { key: "payment", label: "الدفع", color: "bg-red-50 text-red-500 border-red-200", description: "تأكيد الدفع وعرض السعر" },
-  { key: "assigned", label: "تعيين المقيّم", color: "bg-emerald-50 text-emerald-500 border-emerald-200", description: "تم تعيين مقيّم معتمد" },
+  { key: "intake", label: "الاستلام", color: "bg-blue-50 text-blue-500 border-blue-200", description: "تم استلام طلبك بنجاح" },
+  { key: "scope_payment", label: "النطاق والدفع", color: "bg-red-50 text-red-500 border-red-200", description: "اعتماد نطاق العمل ودفع الرسوم" },
   { key: "inspection", label: "المعاينة", color: "bg-indigo-50 text-indigo-500 border-indigo-200", description: "معاينة العقار ميدانياً" },
-  { key: "drafting", label: "إعداد التقرير", color: "bg-amber-50 text-amber-500 border-amber-200", description: "إعداد ومراجعة التقرير" },
-  { key: "delivered", label: "التسليم", color: "bg-violet-50 text-violet-500 border-violet-200", description: "تقريرك جاهز للتحميل" },
+  { key: "drafting", label: "إعداد التقرير", color: "bg-amber-50 text-amber-500 border-amber-200", description: "مراجعة واعتماد التقرير" },
+  { key: "signing", label: "توقيع التقرير", color: "bg-emerald-50 text-emerald-500 border-emerald-200", description: "توقيع المالك وإصدار التقرير" },
+  { key: "issued", label: "الإصدار", color: "bg-violet-50 text-violet-500 border-violet-200", description: "تقريرك جاهز للتحميل" },
 ];
 
 const STATUS_TO_STAGE: Record<string, number> = {
-  draft: 0, ai_review: 0, submitted: 0, needs_clarification: 0,
-  under_pricing: 1, quotation_sent: 1, quotation_approved: 1, quotation_rejected: 1,
-  awaiting_payment: 1, payment_uploaded: 1, payment_under_review: 1,
-  partially_paid: 1, fully_paid: 2,
-  in_production: 2, inspection_scheduled: 3, inspection_completed: 3,
-  report_drafting: 4, draft_report_sent: 4, client_comments: 4,
-  quality_review: 4, final_review: 4,
-  final_payment_pending: 4, final_payment_uploaded: 4, final_payment_approved: 4,
-  final_report_ready: 5, completed: 5, archived: 5,
+  draft: 0, stage_1_processing: 0, stage_2_client_review: 0,
+  stage_3_owner_scope: 1, stage_4_client_scope: 1, pending_payment_1: 1,
+  stage_5_inspection: 2,
+  stage_6_owner_draft: 3, stage_7_client_draft: 3, pending_payment_2: 3,
+  signing: 4,
+  issued: 5, archived: 5,
   cancelled: -1,
 };
 

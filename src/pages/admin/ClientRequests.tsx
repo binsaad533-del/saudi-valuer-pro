@@ -31,11 +31,12 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = Object.f
 );
 
 const ADMIN_TABS = [
-  { value: "intake", label: "الاستقبال", statuses: ["draft", "client_submitted", "under_ai_review", "awaiting_client_info"] },
-  { value: "pricing", label: "التسعير", statuses: ["priced", "awaiting_payment_initial", "payment_received_initial"] },
-  { value: "inspection", label: "المعاينة", statuses: ["inspection_required", "inspection_assigned", "inspection_in_progress", "inspection_submitted"] },
-  { value: "valuation", label: "التقييم والتقرير", statuses: ["valuation_in_progress", "draft_report_ready", "under_client_review", "revision_in_progress"] },
-  { value: "final", label: "الإصدار", statuses: ["awaiting_final_payment", "final_payment_received", "report_issued", "closed"] },
+  { value: "intake", label: "الاستقبال", statuses: ["draft", "stage_1_processing", "stage_2_client_review"] },
+  { value: "scope", label: "النطاق والتسعير", statuses: ["stage_3_owner_scope", "stage_4_client_scope"] },
+  { value: "payment", label: "الدفع", statuses: ["pending_payment_1", "pending_payment_2"] },
+  { value: "inspection", label: "المعاينة", statuses: ["stage_5_inspection"] },
+  { value: "drafting", label: "مسودة التقرير", statuses: ["stage_6_owner_draft", "stage_7_client_draft"] },
+  { value: "final", label: "الإصدار", statuses: ["signing", "issued", "archived"] },
 ];
 
 export default function ClientRequests() {
