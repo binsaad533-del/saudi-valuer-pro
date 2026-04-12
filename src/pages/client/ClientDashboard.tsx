@@ -5,13 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   Plus, FileText, Clock, CheckCircle, AlertCircle, LogOut,
-  Loader2, Building2, Upload, Download, Eye, FolderOpen, X, File,
+  Loader2, Building2, Upload, Download, Eye, FolderOpen,
   Phone, Mail, MessageCircle, FileCheck, Search, BarChart3, ClipboardCheck, Settings,
 } from "lucide-react";
 import { EnhancedRequestTracker } from "@/components/client/EnhancedRequestTracker";
@@ -29,13 +25,7 @@ export default function ClientDashboard() {
   const [userName, setUserName] = useState("");
   const [activeTab, setActiveTab] = useState<"requests" | "reports" | "documents">("requests");
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // New request dialog
-  const [showNewRequest, setShowNewRequest] = useState(false);
-  const [newReqNotes, setNewReqNotes] = useState("");
-  const [newReqFiles, setNewReqFiles] = useState<File[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const newReqFileRef = useRef<HTMLInputElement>(null);
+  const [realDocs, setRealDocs] = useState<any[]>([]);
 
   useEffect(() => {
     const init = async () => {
@@ -58,6 +48,15 @@ export default function ClientDashboard() {
         .order("created_at", { ascending: false });
 
       setRequests(data || []);
+
+      // Load real documents
+      const { data: docsData } = await supabase
+        .from("request_documents" as any)
+        .select("id, file_name, file_path, created_at, file_size, request_id")
+        .eq("uploaded_by", user.id)
+        .order("created_at", { ascending: false });
+      setRealDocs((docsData as any[]) || []);
+
       setLoading(false);
     };
     init();
@@ -68,50 +67,38 @@ export default function ClientDashboard() {
     window.location.replace("/login");
   };
 
-  const handleFileUpload = () => {
-    toast.success("تم رفع المستند بنجاح (تجريبي)");
-  };
-
-  const handleNewReqFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setNewReqFiles(prev => [...prev, ...Array.from(e.target.files!)]);
-    }
-  };
-
-  const handleSubmitNewRequest = async () => {
-    if (newReqFiles.length === 0) {
-      toast.error("يرجى رفع مستند واحد على الأقل");
-      return;
-    }
-    setSubmitting(true);
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("غير مسجل");
-
-      // Upload files to client-uploads bucket
-      const uploadedPaths: string[] = [];
-      for (const file of newReqFiles) {
-        const path = `${user.id}/${Date.now()}-${file.name}`;
-        const { error } = await supabase.storage.from("client-uploads").upload(path, file);
-        if (error) throw error;
-        uploadedPaths.push(path);
-      }
-
-      toast.success("تم إرسال طلب التقييم بنجاح");
-      setShowNewRequest(false);
-      setNewReqNotes("");
-      setNewReqFiles([]);
+      if (!user) return;
+      const path = `${user.id}/${Date.now()}-${file.name}`;
+      const { error } = await supabase.storage.from("client-uploads").upload(path, file);
+      if (error) throw error;
+      await supabase.from("request_documents" as any).insert({
+        file_name: file.name,
+        file_path: path,
+        file_size: file.size,
+        uploaded_by: user.id,
+      });
+      toast.success("تم رفع المستند بنجاح");
+      // Refresh docs
+      const { data: docsData } = await supabase
+        .from("request_documents" as any)
+        .select("id, file_name, file_path, created_at, file_size, request_id")
+        .eq("uploaded_by", user.id)
+        .order("created_at", { ascending: false });
+      setRealDocs((docsData as any[]) || []);
     } catch (err: any) {
-      toast.error(err.message || "حدث خطأ أثناء الإرسال");
-    } finally {
-      setSubmitting(false);
+      toast.error(err.message || "فشل الرفع");
     }
   };
 
   const stats = {
     total: requests.length,
     active: requests.filter(r => !["completed", "archived", "cancelled"].includes(r.status)).length,
-    awaitingAction: requests.filter(r => ["quotation_sent", "needs_clarification", "draft_report_sent"].includes(r.status)).length,
+    awaitingAction: requests.filter(r => ["stage_2_client_review", "stage_4_client_scope", "stage_7_client_draft"].includes(r.status)).length,
     completed: requests.filter(r => r.status === "completed").length,
   };
 
@@ -125,17 +112,10 @@ export default function ClientDashboard() {
       ref: r.reference_number || `RPT-${String(i + 1).padStart(4, "0")}`,
     }));
 
-  // Mock uploaded docs
-  const mockDocs = [
-    { id: "1", name: "صك الملكية.pdf", date: "2026-03-20", size: "2.4 MB" },
-    { id: "2", name: "رخصة البناء.pdf", date: "2026-03-18", size: "1.1 MB" },
-    { id: "3", name: "مخطط الموقع.jpg", date: "2026-03-15", size: "3.8 MB" },
-  ];
-
   const TABS = [
     { key: "requests" as const, label: "طلباتي", icon: FileText, count: stats.total },
     { key: "reports" as const, label: "التقارير الجاهزة", icon: CheckCircle, count: stats.completed },
-    { key: "documents" as const, label: "المستندات", icon: FolderOpen, count: mockDocs.length },
+    { key: "documents" as const, label: "المستندات", icon: FolderOpen, count: realDocs.length },
   ];
 
   return (
@@ -167,7 +147,7 @@ export default function ClientDashboard() {
             <h1 className="text-xl font-bold text-foreground">مرحباً، {userName}</h1>
             <p className="text-sm text-muted-foreground">تابع طلباتك وتقاريرك من مكان واحد</p>
           </div>
-          <Button onClick={() => setShowNewRequest(true)} className="gap-2">
+          <Button onClick={() => navigate("/client/new-request")} className="gap-2">
             <Plus className="w-4 h-4" /> طلب تقييم جديد
           </Button>
         </div>
@@ -330,22 +310,33 @@ export default function ClientDashboard() {
             {/* Docs list */}
             <Card>
               <CardContent className="p-0 divide-y divide-border">
-                {mockDocs.map((doc) => (
-                  <div key={doc.id} className="flex items-center justify-between gap-3 p-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
+                {realDocs.length === 0 ? (
+                  <div className="text-center py-10 text-muted-foreground text-sm">لا توجد مستندات مرفوعة بعد</div>
+                ) : realDocs.map((doc) => {
+                  const sizeLabel = doc.file_size ? `${(doc.file_size / 1024 / 1024).toFixed(1)} MB` : "";
+                  const handleDownload = async () => {
+                    const { data } = supabase.storage.from("client-uploads").getPublicUrl(doc.file_path);
+                    if (data?.publicUrl) window.open(data.publicUrl, "_blank");
+                  };
+                  return (
+                    <div key={doc.id} className="flex items-center justify-between gap-3 p-4">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="w-9 h-9 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                          <FileText className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground truncate">{doc.file_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {doc.created_at?.slice(0, 10)}{sizeLabel ? ` · ${sizeLabel}` : ""}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{doc.name}</p>
-                        <p className="text-xs text-muted-foreground">{doc.date} · {doc.size}</p>
-                      </div>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleDownload}>
+                        <Download className="w-4 h-4" />
+                      </Button>
                     </div>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <Download className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
           </div>
@@ -482,66 +473,6 @@ export default function ClientDashboard() {
 
       </main>
 
-      {/* New Request Dialog */}
-      <Dialog open={showNewRequest} onOpenChange={setShowNewRequest}>
-        <DialogContent className="sm:max-w-md" dir="rtl">
-          <DialogHeader>
-            <DialogTitle>طلب تقييم جديد</DialogTitle>
-            <DialogDescription>ارفع المستندات المتعلقة بالأصل المراد تقييمه وسنتولى الباقي</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 mt-2">
-            {/* Upload area */}
-            <div
-              className="border-2 border-dashed border-border rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-              onClick={() => newReqFileRef.current?.click()}
-            >
-              <Upload className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm font-medium text-foreground">اضغط لرفع المستندات</p>
-              <p className="text-xs text-muted-foreground mt-1">صك، رخصة بناء، فواتير شراء — PDF • صور • Excel (XLSX, CSV)</p>
-              <p className="text-[11px] text-primary/70 mt-1">يمكنك رفع قائمة الأصول بصيغة Excel</p>
-              <input ref={newReqFileRef} type="file" accept=".pdf,.jpg,.jpeg,.png,.xls,.xlsx,.csv" multiple className="hidden" onChange={handleNewReqFileAdd} />
-            </div>
-
-            {/* Selected files */}
-            {newReqFiles.length > 0 && (
-              <div className="space-y-2">
-                {newReqFiles.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 bg-muted/50 rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <File className="w-4 h-4 text-muted-foreground shrink-0" />
-                      <span className="text-sm text-foreground truncate">{f.name}</span>
-                      <span className="text-xs text-muted-foreground shrink-0">{(f.size / 1024 / 1024).toFixed(1)} MB</span>
-                    </div>
-                    <button
-                      onClick={() => setNewReqFiles(prev => prev.filter((_, idx) => idx !== i))}
-                      className="text-muted-foreground hover:text-destructive shrink-0"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Notes */}
-            <div className="space-y-2">
-              <Label htmlFor="req-notes">ملاحظات (اختياري)</Label>
-              <Textarea
-                id="req-notes"
-                placeholder="أي تفاصيل إضافية عن الأصل المراد تقييمه..."
-                value={newReqNotes}
-                onChange={(e) => setNewReqNotes(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            <Button onClick={handleSubmitNewRequest} className="w-full gap-2" disabled={submitting || newReqFiles.length === 0}>
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              إرسال الطلب
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
       <AppFooter />
     </div>
   );

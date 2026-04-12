@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { clientApproveDraft } from "@/lib/workflow-engine";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ function ProgressTracker({ currentStep }: { currentStep: ProgressStep }) {
 interface Props {
   reportId: string;
   requestId: string;
+  assignmentId?: string;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string }> = {
@@ -90,7 +92,7 @@ const STATUS_CONFIG: Record<string, { label: string; icon: any; color: string }>
   rejected: { label: "مرفوض", icon: XCircle, color: "bg-destructive/10 text-destructive" },
 };
 
-export default function ClientReportReview({ reportId, requestId }: Props) {
+export default function ClientReportReview({ reportId, requestId, assignmentId }: Props) {
   const { toast } = useToast();
   const [comments, setComments] = useState<any[]>([]);
   const [report, setReport] = useState<any>(null);
@@ -168,11 +170,21 @@ export default function ClientReportReview({ reportId, requestId }: Props) {
         content: "✅ تم مراجعة المسودة - لا توجد ملاحظات إضافية",
       });
 
-      await supabase.from("valuation_requests" as any)
-        .update({ status: "final_payment_pending" as any })
-        .eq("id", requestId);
+      // Advance workflow: stage_7_client_draft → pending_payment_2
+      if (assignmentId) {
+        const result = await clientApproveDraft(assignmentId);
+        if (!result.success) {
+          toast({ title: "خطأ", description: result.error || "فشل تأكيد المراجعة", variant: "destructive" });
+          return;
+        }
+      } else {
+        // Fallback: direct status update on request
+        await supabase.from("valuation_requests" as any)
+          .update({ status: "pending_payment_2" as any })
+          .eq("id", requestId);
+      }
 
-      toast({ title: "تم تأكيد المراجعة" });
+      toast({ title: "تم تأكيد المراجعة — الانتقال للدفعة النهائية" });
       loadData();
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
