@@ -314,7 +314,6 @@ export default function NewRequest() {
           valuation_type: (discipline || "real_estate") as any,
           property_description_ar: description || null,
           purpose: (clientInfo.purpose || null) as any,
-          purpose_other: clientInfo.purpose === "other" ? clientInfo.purposeOther : null,
           intended_users_ar: clientInfo.intendedUsers === "other"
             ? clientInfo.intendedUsersOther
             : (INTENDED_USERS_OPTIONS[clientInfo.intendedUsers] || clientInfo.intendedUsers || null),
