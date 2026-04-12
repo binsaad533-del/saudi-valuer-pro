@@ -6,6 +6,7 @@ import InvoicesTable from "@/components/cfo/InvoicesTable";
 import CollectionStatus from "@/components/cfo/CollectionStatus";
 import PaymentsLog from "@/components/cfo/PaymentsLog";
 import KPIMetrics from "@/components/cfo/KPIMetrics";
+import PaymentReceiptReview from "@/components/cfo/PaymentReceiptReview";
 
 export default function CFODashboardPage() {
   const [userName, setUserName] = useState("المدير المالي");
@@ -29,6 +30,7 @@ export default function CFODashboardPage() {
       </div>
 
       <FinancialSummaryCards />
+      <PaymentReceiptReview />
       <RevenueChart />
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <CollectionStatus />

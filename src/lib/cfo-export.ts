@@ -25,62 +25,97 @@ function exportPDF(title: string, headers: string[], rows: string[][], filename:
   const cellH = 8;
   const colW = (doc.internal.pageSize.getWidth() - 28) / headers.length;
 
-  // Header
   doc.setFontSize(8);
   doc.setFillColor(240, 240, 240);
   doc.rect(14, startY, colW * headers.length, cellH, "F");
-  headers.forEach((h, i) => {
-    doc.text(h, 14 + i * colW + 2, startY + 5.5);
-  });
+  headers.forEach((h, i) => { doc.text(h, 14 + i * colW + 2, startY + 5.5); });
 
-  // Rows
   doc.setFontSize(7);
   rows.forEach((row, ri) => {
     const y = startY + cellH * (ri + 1);
-    if (y > doc.internal.pageSize.getHeight() - 15) {
-      doc.addPage();
-    }
+    if (y > doc.internal.pageSize.getHeight() - 15) doc.addPage();
     const currentY = y > doc.internal.pageSize.getHeight() - 15 ? 20 : y;
-    row.forEach((cell, ci) => {
-      doc.text(String(cell), 14 + ci * colW + 2, currentY + 5.5);
-    });
+    row.forEach((cell, ci) => { doc.text(String(cell), 14 + ci * colW + 2, currentY + 5.5); });
   });
 
   doc.save(filename);
 }
 
-// Invoices
-import type { Invoice } from "@/data/cfoMockData";
-import { statusLabels } from "@/data/cfoMockData";
-
-const invoiceHeaders = ["Invoice #", "Client", "Type", "Amount (SAR)", "Issue Date", "Due Date", "Status"];
-
-function invoiceToRow(inv: Invoice): string[] {
-  return [inv.invoiceNumber, inv.clientName, inv.valuationType, formatNumber(inv.amount), inv.issueDate, inv.dueDate, statusLabels[inv.status]];
+// ── Invoice export ────────────────────────────────────────────────────────────
+export interface InvoiceExportRow {
+  invoice_number: string | null;
+  client_name: string;
+  total_amount: number;
+  payment_status: string;
+  due_date: string | null;
+  created_at: string;
 }
 
-export function exportInvoicesPDF(data: Invoice[]) {
+const statusLabels: Record<string, string> = {
+  paid: "مدفوعة",
+  pending: "معلقة",
+  overdue: "متأخرة",
+  cancelled: "ملغاة",
+};
+
+const invoiceHeaders = ["Invoice #", "Client", "Amount (SAR)", "Due Date", "Status"];
+
+function invoiceToRow(inv: InvoiceExportRow): string[] {
+  return [
+    inv.invoice_number || "—",
+    inv.client_name,
+    formatNumber(inv.total_amount),
+    inv.due_date || "—",
+    statusLabels[inv.payment_status] || inv.payment_status,
+  ];
+}
+
+export function exportInvoicesPDF(data: InvoiceExportRow[]) {
   exportPDF("Invoices Report", invoiceHeaders, data.map(invoiceToRow), "invoices.pdf");
 }
 
-export function exportInvoicesExcel(data: Invoice[]) {
+export function exportInvoicesExcel(data: InvoiceExportRow[]) {
   exportCSV(invoiceHeaders, data.map(invoiceToRow), "invoices.csv");
 }
 
-// Payments
-import type { Payment } from "@/data/cfoMockData";
-import { methodLabels } from "@/data/cfoMockData";
-
-const paymentHeaders = ["Payment #", "Invoice #", "Client", "Amount (SAR)", "Method", "Date"];
-
-function paymentToRow(p: Payment): string[] {
-  return [p.paymentNumber, p.invoiceNumber, p.clientName, formatNumber(p.amount), methodLabels[p.method], p.date];
+// ── Payment export ────────────────────────────────────────────────────────────
+export interface PaymentExportRow {
+  id: string;
+  amount: number;
+  payment_type: string | null;
+  status: string | null;
+  created_at: string;
+  reference_number?: string | null;
 }
 
-export function exportPaymentsPDF(data: Payment[]) {
+const paymentTypeLabels: Record<string, string> = {
+  first: "الدفعة الأولى",
+  final: "الدفعة النهائية",
+  second: "الدفعة الثانية",
+};
+
+const paymentStatusLabels: Record<string, string> = {
+  pending: "بانتظار المراجعة",
+  approved: "معتمدة",
+  rejected: "مرفوضة",
+};
+
+const paymentHeaders = ["Ref #", "Type", "Amount (SAR)", "Status", "Date"];
+
+function paymentToRow(p: PaymentExportRow): string[] {
+  return [
+    p.reference_number || p.id.slice(0, 8),
+    paymentTypeLabels[p.payment_type || ""] || (p.payment_type || "—"),
+    formatNumber(p.amount),
+    paymentStatusLabels[p.status || ""] || (p.status || "—"),
+    p.created_at.slice(0, 10),
+  ];
+}
+
+export function exportPaymentsPDF(data: PaymentExportRow[]) {
   exportPDF("Payments Report", paymentHeaders, data.map(paymentToRow), "payments.pdf");
 }
 
-export function exportPaymentsExcel(data: Payment[]) {
+export function exportPaymentsExcel(data: PaymentExportRow[]) {
   exportCSV(paymentHeaders, data.map(paymentToRow), "payments.csv");
 }
