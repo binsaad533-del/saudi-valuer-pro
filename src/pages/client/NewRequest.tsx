@@ -310,12 +310,21 @@ export default function NewRequest() {
 
       const referenceNumber = await generateReferenceNumber();
 
+      // Normalize discipline → valuation_type enum ("real_estate" | "machinery" | "mixed")
+      const valuationTypeMap: Record<string, string> = {
+        real_estate:         "real_estate",
+        machinery_equipment: "machinery",
+        machinery:           "machinery",
+        mixed:               "mixed",
+      };
+      const valuationType = valuationTypeMap[discipline] || "real_estate";
+
       const { data, error } = await supabase
         .from("valuation_requests" as any)
         .insert({
           client_user_id: user.id,
           reference_number: referenceNumber,
-          valuation_type: (discipline || "real_estate") as any,
+          valuation_type: valuationType as any,
           property_description_ar: description || null,
           purpose: (clientInfo.purpose || null) as any,
           intended_users_ar: clientInfo.intendedUsers === "other"
