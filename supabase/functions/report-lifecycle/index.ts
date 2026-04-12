@@ -21,7 +21,7 @@ serve(async (req) => {
     const action = body.action || "expire_reports";
 
     if (action === "expire_reports") {
-      // Find all issued (final) reports past 90 days that aren't already expired
+      // Find all issued (final) reports past 10 years (3650 days) that aren't already expired
       const { data: expiredReports, error } = await sb
         .from("reports")
         .select("id, issue_date, status, assignment_id")
@@ -37,7 +37,7 @@ serve(async (req) => {
       for (const report of expiredReports || []) {
         const issueDate = new Date(report.issue_date);
         const expiryDate = new Date(issueDate);
-        expiryDate.setDate(expiryDate.getDate() + 90);
+        expiryDate.setDate(expiryDate.getDate() + 3650); // 10 years per Jassas spec
 
         if (now > expiryDate) {
           // Mark as expired — we only set expired_at, not modify locked report
@@ -55,7 +55,7 @@ serve(async (req) => {
             action: "update" as any,
             record_id: report.id,
             assignment_id: report.assignment_id,
-            description: "Report automatically expired after 90 days",
+            description: "Report automatically expired after 10 years (3650 days)",
             new_data: { status: "expired", expired_at: now.toISOString() },
           });
 

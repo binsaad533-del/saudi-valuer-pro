@@ -3,6 +3,7 @@ import QRCode from "qrcode";
 import type { Report } from "@/types/report";
 import { getStatusLabel } from "@/utils/reportWorkflow";
 import { formatDate, formatNumber } from "@/lib/utils";
+import logoUrl from "@/assets/logo.png";
 
 const PAGE_WIDTH = 210;
 const PAGE_HEIGHT = 297;
@@ -14,38 +15,100 @@ const GRAY: [number, number, number] = [120, 120, 120];
 const LIGHT_BG: [number, number, number] = [245, 247, 250];
 const GOLD: [number, number, number] = [180, 140, 50];
 
-// ─── Drawing Helpers ───
+// Owner password applied to every final (non-draft) PDF.
+// Prevents editing, printing, and copying in compliant PDF viewers.
+const OWNER_PASSWORD = "jassas-valuation-restricted-2025";
 
+// ─── Deposit Number ───────────────────────────────────────────────────────────
+
+/**
+ * Generates a deposit number in the format DEP-YYYY-XXXX.
+ * Derived from the numeric tail of the report number so it is deterministic.
+ */
+export function generateDepositNumber(reportNumber: string): string {
+  const year = new Date().getFullYear();
+  const digits = reportNumber.replace(/\D/g, "").slice(-4).padStart(4, "0");
+  return `DEP-${year}-${digits}`;
+}
+
+// ─── Logo Cache ───────────────────────────────────────────────────────────────
+
+let _logoDataUrl: string | null = null;
+
+async function getLogoDataUrl(): Promise<string | null> {
+  if (_logoDataUrl) return _logoDataUrl;
+  try {
+    _logoDataUrl = await loadImage(logoUrl);
+    return _logoDataUrl;
+  } catch {
+    return null;
+  }
+}
+
+// ─── Drawing Helpers ──────────────────────────────────────────────────────────
+
+/** Stamp "مسودة / DRAFT" diagonally on every page (drafts only). */
 function drawDraftWatermark(doc: jsPDF) {
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    doc.setGState(new doc.GState({ opacity: 0.12 }));
     doc.setTextColor(220, 220, 220);
     doc.setFontSize(55);
     doc.text("مسودة / DRAFT", PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: "center", angle: 45 });
+    doc.setGState(new doc.GState({ opacity: 1 }));
   }
 }
 
-function addPageNumbers(doc: jsPDF, startPage = 2) {
+/** Faint watermark with client name + report number on every page of final reports. */
+function drawFinalWatermark(doc: jsPDF, clientName: string, reportNumber: string) {
+  const label = `${clientName} | ${reportNumber}`;
+  const pageCount = doc.getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setGState(new doc.GState({ opacity: 0.05 }));
+    doc.setTextColor(...PRIMARY_COLOR);
+    doc.setFontSize(22);
+    doc.text(label, PAGE_WIDTH / 2, PAGE_HEIGHT / 2, { align: "center", angle: 35 });
+    doc.setGState(new doc.GState({ opacity: 1 }));
+  }
+}
+
+/** Page numbers + deposit number in footer, starting from startPage. */
+function addPageNumbers(doc: jsPDF, depositNumber: string, startPage = 2) {
   const total = doc.getNumberOfPages();
   for (let i = startPage; i <= total; i++) {
     doc.setPage(i);
-    doc.setFontSize(8);
-    doc.setTextColor(...GRAY);
-    doc.text(`${i - startPage + 1} / ${total - startPage + 1}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 8, { align: "center" });
-    // Footer line
     doc.setDrawColor(200, 200, 200);
     doc.line(MARGIN, PAGE_HEIGHT - 12, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 12);
+    doc.setFontSize(7);
+    doc.setTextColor(...GRAY);
+    doc.text(`${i - startPage + 1} / ${total - startPage + 1}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 8, { align: "center" });
+    doc.text(depositNumber, PAGE_WIDTH - MARGIN, PAGE_HEIGHT - 8, { align: "right" });
   }
 }
 
-function addHeader(doc: jsPDF, reportNumber: string, startPage = 2) {
+/** Header on every inner page: logo (right) + report number + confidential label. */
+function addHeader(
+  doc: jsPDF,
+  reportNumber: string,
+  logoDataUrl: string | null,
+  startPage = 2,
+) {
   const total = doc.getNumberOfPages();
   for (let i = startPage; i <= total; i++) {
     doc.setPage(i);
+    // Logo — 12×12 mm in upper-right corner
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, "PNG", PAGE_WIDTH - MARGIN - 12, 3, 12, 12);
+      } catch {
+        // skip if image fails to embed
+      }
+    }
     doc.setFontSize(7);
     doc.setTextColor(...GRAY);
-    doc.text(reportNumber, PAGE_WIDTH - MARGIN, 10, { align: "right" });
+    doc.text(reportNumber, PAGE_WIDTH - MARGIN - 14, 10, { align: "right" });
     doc.text("سري وخاص — Confidential", MARGIN, 10);
     doc.setDrawColor(200, 200, 200);
     doc.line(MARGIN, 12, PAGE_WIDTH - MARGIN, 12);
@@ -55,7 +118,7 @@ function addHeader(doc: jsPDF, reportNumber: string, startPage = 2) {
 function checkPageBreak(doc: jsPDF, y: number, needed = 30): number {
   if (y > PAGE_HEIGHT - needed) {
     doc.addPage();
-    return MARGIN + 5;
+    return MARGIN + 15; // leave room for header
   }
   return y;
 }
@@ -106,9 +169,9 @@ function drawTableRow(doc: jsPDF, cells: string[], y: number, isHeader: boolean,
   return y + 7;
 }
 
-// ─── Cover Page ───
+// ─── Cover Page ───────────────────────────────────────────────────────────────
 
-function drawCover(doc: jsPDF, report: Report) {
+function drawCover(doc: jsPDF, report: Report, depositNumber: string, logoDataUrl: string | null) {
   // Full bleed top bar
   doc.setFillColor(...PRIMARY_COLOR);
   doc.rect(0, 0, PAGE_WIDTH, 100, "F");
@@ -117,32 +180,38 @@ function drawCover(doc: jsPDF, report: Report) {
   doc.setFillColor(...GOLD);
   doc.rect(0, 100, PAGE_WIDTH, 3, "F");
 
+  // Logo on cover — top-left, larger
+  if (logoDataUrl) {
+    try {
+      doc.addImage(logoDataUrl, "PNG", MARGIN, 8, 20, 20);
+    } catch { /* skip */ }
+  }
+
   // White text on blue
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(28);
-  doc.text("تقرير تقييم", PAGE_WIDTH / 2, 35, { align: "center" });
+  doc.text("تقرير تقييم", PAGE_WIDTH / 2, 40, { align: "center" });
   doc.setFontSize(16);
-  doc.text("Valuation Report", PAGE_WIDTH / 2, 48, { align: "center" });
+  doc.text("Valuation Report", PAGE_WIDTH / 2, 52, { align: "center" });
 
   // Divider line
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.5);
-  doc.line(PAGE_WIDTH / 2 - 30, 55, PAGE_WIDTH / 2 + 30, 55);
+  doc.line(PAGE_WIDTH / 2 - 30, 58, PAGE_WIDTH / 2 + 30, 58);
 
   doc.setFontSize(12);
-  doc.text(report.reportNumber, PAGE_WIDTH / 2, 65, { align: "center" });
+  doc.text(report.reportNumber, PAGE_WIDTH / 2, 68, { align: "center" });
   doc.setFontSize(10);
-  doc.text(formatDate(report.createdAt), PAGE_WIDTH / 2, 75, { align: "center" });
+  doc.text(formatDate(report.createdAt), PAGE_WIDTH / 2, 78, { align: "center" });
 
   const statusLabel = getStatusLabel(report.status);
   doc.setFontSize(9);
-  doc.text(`الحالة: ${statusLabel}`, PAGE_WIDTH / 2, 90, { align: "center" });
+  doc.text(`الحالة: ${statusLabel}`, PAGE_WIDTH / 2, 92, { align: "center" });
 
   // Client info block
   let y = 120;
   doc.setTextColor(...DARK);
 
-  // Decorative box for client info
   doc.setFillColor(...LIGHT_BG);
   doc.roundedRect(MARGIN, y - 5, CONTENT_WIDTH, 55, 3, 3, "F");
   doc.setDrawColor(...PRIMARY_COLOR);
@@ -156,9 +225,11 @@ function drawCover(doc: jsPDF, report: Report) {
 
   doc.setTextColor(...DARK);
   doc.setFontSize(10);
-  const assetLabel = report.assetType === "real_estate" ? "عقار" : report.assetType === "equipment" ? "معدات" : "مركبة";
+  const assetLabel =
+    report.assetType === "real_estate" ? "عقار" :
+    report.assetType === "equipment" ? "معدات" : "مركبة";
 
-  const coverFields = [
+  const coverFields: [string, string][] = [
     ["العميل", report.clientName],
     ["نوع الأصل", assetLabel],
     ["الموقع", report.assetLocation],
@@ -174,7 +245,13 @@ function drawCover(doc: jsPDF, report: Report) {
     y += 8;
   });
 
-  // Company info at bottom
+  // Deposit number on cover
+  y += 6;
+  doc.setTextColor(...GRAY);
+  doc.setFontSize(8);
+  doc.text(`رقم الإيداع: ${depositNumber}`, PAGE_WIDTH - MARGIN - 8, y, { align: "right" });
+
+  // Company info footer band
   y = PAGE_HEIGHT - 50;
   doc.setFillColor(...PRIMARY_COLOR);
   doc.rect(0, y, PAGE_WIDTH, 50, "F");
@@ -184,16 +261,19 @@ function drawCover(doc: jsPDF, report: Report) {
   doc.setFontSize(9);
   doc.text("Jassas Valuation Company", PAGE_WIDTH / 2, y + 23, { align: "center" });
   doc.setFontSize(8);
-  doc.text("سجل تجاري: 1010625839 | الرقم الضريبي: 310625839900003 | ترخيص تقييم معتمد", PAGE_WIDTH / 2, y + 33, { align: "center" });
+  doc.text(
+    "سجل تجاري: 1010625839 | الرقم الضريبي: 310625839900003 | ترخيص تقييم معتمد",
+    PAGE_WIDTH / 2, y + 33, { align: "center" },
+  );
   doc.setFillColor(...GOLD);
   doc.rect(0, y, PAGE_WIDTH, 2, "F");
 }
 
-// ─── Table of Contents ───
+// ─── Table of Contents ────────────────────────────────────────────────────────
 
 function drawTableOfContents(doc: jsPDF, report: Report) {
   doc.addPage();
-  let y = MARGIN + 5;
+  let y = MARGIN + 15;
 
   doc.setFillColor(...PRIMARY_COLOR);
   doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 10, 1, 1, "F");
@@ -219,7 +299,6 @@ function drawTableOfContents(doc: jsPDF, report: Report) {
     doc.setFontSize(11);
     doc.text(item, PAGE_WIDTH - MARGIN - 8, y, { align: "right" });
 
-    // Dotted line
     doc.setDrawColor(200, 200, 200);
     doc.setLineDashPattern([1, 2], 0);
     doc.line(MARGIN + 10, y, PAGE_WIDTH - MARGIN - 80, y);
@@ -232,21 +311,39 @@ function drawTableOfContents(doc: jsPDF, report: Report) {
   });
 }
 
-// ─── Main Export Function ───
+// ─── Main Export Function ─────────────────────────────────────────────────────
 
 export async function exportReportToPDF(report: Report): Promise<Blob> {
-  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const isDraft = report.status === "draft" || report.status === "review";
+  const depositNumber = generateDepositNumber(report.reportNumber);
+  const logoDataUrl = await getLogoDataUrl();
+
+  // Final reports get AES-128 encryption: open freely (userPassword=""),
+  // but owner password blocks editing / copying / printing.
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+    ...(isDraft
+      ? {}
+      : {
+          encryption: {
+            userPassword: "",
+            ownerPassword: OWNER_PASSWORD,
+            userPermissions: [] as any[], // no print, copy, or modify
+          },
+        }),
+  });
 
   // 1. Cover
-  drawCover(doc, report);
+  drawCover(doc, report, depositNumber, logoDataUrl);
 
   // 2. Table of Contents
   drawTableOfContents(doc, report);
 
   // 3. Content pages
   doc.addPage();
-  let y = MARGIN + 5;
+  let y = MARGIN + 15;
 
   y = drawSectionTitle(doc, "1. بيانات التكليف والعميل", y);
   y = drawKeyValue(doc, "العميل", report.clientName, y);
@@ -290,12 +387,12 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
       ],
       y,
       false,
-      colWidths
+      colWidths,
     );
   });
   y += 8;
 
-  // Final Value - prominent box
+  // Final Value
   y = checkPageBreak(doc, y, 50);
   y = drawSectionTitle(doc, "6. القيمة التقديرية النهائية", y);
 
@@ -306,7 +403,6 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
   doc.roundedRect(MARGIN, y, CONTENT_WIDTH, 35, 3, 3, "S");
   doc.setLineWidth(0.2);
 
-  // Gold accent
   doc.setFillColor(...GOLD);
   doc.rect(MARGIN, y, 3, 35, "F");
 
@@ -326,9 +422,9 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
     y += 5;
   }
 
-  // Signature Page
+  // 4. Signature Page
   doc.addPage();
-  y = MARGIN + 5;
+  y = MARGIN + 15;
 
   y = drawSectionTitle(doc, "التوقيع والاعتماد", y);
   y += 5;
@@ -381,18 +477,26 @@ export async function exportReportToPDF(report: Report): Promise<Blob> {
     }
   }
 
-  // Post-processing
-  addHeader(doc, report.reportNumber, 2);
-  addPageNumbers(doc, 2);
+  // Deposit number on signature page
+  y += 10;
+  doc.setFontSize(8);
+  doc.setTextColor(...GRAY);
+  doc.text(`رقم الإيداع: ${depositNumber}`, PAGE_WIDTH / 2, y, { align: "center" });
+
+  // ── Post-processing (order matters: headers/footers first, watermarks last) ──
+  addHeader(doc, report.reportNumber, logoDataUrl, 2);
+  addPageNumbers(doc, depositNumber, 2);
 
   if (isDraft) {
     drawDraftWatermark(doc);
+  } else {
+    drawFinalWatermark(doc, report.clientName, report.reportNumber);
   }
 
   return doc.output("blob");
 }
 
-// ─── Utilities ───
+// ─── Utilities ────────────────────────────────────────────────────────────────
 
 async function loadImage(url: string): Promise<string> {
   return new Promise((resolve, reject) => {
