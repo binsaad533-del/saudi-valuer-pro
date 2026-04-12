@@ -11,11 +11,16 @@
 
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://vprxcirjtzsxyllqjjyr.supabase.co";
-const ANON_KEY     = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZwcnhjaXJqdHpzeHlsbHFqanlyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3MjA3NTAsImV4cCI6MjA5MDI5Njc1MH0.ALFQ8dYJpAyn11a16fgGqemLPUOak00ack9iYE6MTF8";
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://bulddgyouutnktheqszz.supabase.co";
+const ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "";
 
 // Use service_role key if provided in env (bypasses RLS)
 const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || ANON_KEY;
+
+if (!KEY) {
+  console.error("❌ Set SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_PUBLISHABLE_KEY in env.");
+  process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, KEY);
 
