@@ -297,13 +297,23 @@ export async function ownerApproveScopeAndPrice(
     .update({ fee_amount: price } as any)
     .eq("id", assignmentId);
 
-  return transitionStatus(
+  const result = await transitionStatus(
     assignmentId,
     "stage_3_owner_scope",
     "stage_4_client_scope",
     "اعتماد المالك للنطاق والسعر",
     "owner_approve_scope"
   );
+
+  if (result.success) {
+    // Fire-and-forget: let رقيم generate the scope-of-work document to assist the owner.
+    // This does NOT block the workflow transition.
+    supabase.functions
+      .invoke("generate-scope-work", { body: { assignment_id: assignmentId } })
+      .catch((err: unknown) => console.error("[رقيم] generate-scope-work error:", err));
+  }
+
+  return result;
 }
 
 // ── Gate 3: Client approves scope → pending_payment_1 ────────────────────────
@@ -402,12 +412,31 @@ export async function ownerApproveDraft(
     });
   }
 
-  return transitionStatus(
+  const result = await transitionStatus(
     assignmentId,
     "stage_6_owner_draft",
     "stage_7_client_draft",
     notes || "اعتماد المالك للمسودة"
   );
+
+  if (result.success) {
+    // رقيم generates the client-facing draft report now that professional judgment is applied.
+    // Sequential: content must be ready before PDF is built.
+    (async () => {
+      try {
+        await supabase.functions.invoke("generate-report-content", {
+          body: { assignment_id: assignmentId, mode: "full_report" },
+        });
+        await supabase.functions.invoke("generate-report-pdf", {
+          body: { assignment_id: assignmentId, type: "draft" },
+        });
+      } catch (err) {
+        console.error("[رقيم] draft report generation error:", err);
+      }
+    })();
+  }
+
+  return result;
 }
 
 // ── Gate 6: Client approves draft → pending_payment_2 ────────────────────────
@@ -462,15 +491,33 @@ export async function ownerSignReport(
 // ── AI automation: draft → stage_1_processing → stage_2_client_review ─────────
 export async function triggerAutomationPipeline(assignmentId: string) {
   try {
+    // Step 1: move to processing
     await transitionStatus(assignmentId, "draft", "stage_1_processing", undefined, "بدء التحليل الذكي");
-    await supabase.functions.invoke("ai-intake", { body: { assignment_id: assignmentId } });
-    await transitionStatus(
-      assignmentId,
-      "stage_1_processing",
-      "stage_2_client_review",
-      undefined,
-      "اكتمال التحليل — انتظار مراجعة العميل"
-    );
+
+    // Step 2: invoke the correct document-analysis orchestrator
+    const { data, error } = await supabase.functions.invoke("asset-extraction-orchestrator", {
+      body: { action: "process", assignment_id: assignmentId },
+    });
+
+    if (error) {
+      console.error("[رقيم] asset-extraction-orchestrator error:", error);
+      // Stay in stage_1_processing — admin or retry mechanism can advance manually
+      return;
+    }
+
+    // Step 3: only advance to stage_2 once orchestrator confirms completion
+    const status = data?.status as string | undefined;
+    if (status === "completed" || status === "ready") {
+      await transitionStatus(
+        assignmentId,
+        "stage_1_processing",
+        "stage_2_client_review",
+        undefined,
+        "اكتمال تحليل رقيم — انتظار مراجعة العميل"
+      );
+    }
+    // If status is "processing" / "pending" the orchestrator will advance the
+    // status itself via its own callback once the job finishes.
   } catch (err) {
     console.error("Automation pipeline error:", err);
   }
@@ -486,9 +533,13 @@ export async function triggerPostInspectionPipeline(assignmentId: string) {
       undefined,
       "المعاينة مكتملة"
     );
-    await supabase.functions.invoke("valuation-engine",   { body: { assignment_id: assignmentId } });
-    await supabase.functions.invoke("analyze-inspection", { body: { assignment_id: assignmentId } });
-    await supabase.functions.invoke("generate-report-pdf", { body: { assignment_id: assignmentId } });
+    // Run valuation + inspection analysis in parallel — both inform the owner's draft
+    await Promise.all([
+      supabase.functions.invoke("valuation-engine",   { body: { assignment_id: assignmentId } }),
+      supabase.functions.invoke("analyze-inspection", { body: { assignment_id: assignmentId } }),
+    ]);
+    // generate-report-pdf removed here — the report (draft) is generated only after
+    // the owner applies professional judgment and calls ownerApproveDraft (stage_6 → stage_7).
   } catch (err) {
     console.error("Post-inspection pipeline error:", err);
   }
